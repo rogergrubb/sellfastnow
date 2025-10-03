@@ -119,28 +119,29 @@ function SettingsForm({ user }: { user: User }) {
 export default function Dashboard() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  
   const [activeTab, setActiveTab] = useState("my-listings");
   const [listingFilter, setListingFilter] = useState("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Fetch current user
-  const { data: user, isLoading: userLoading } = useQuery<{ user: User }>({
-    queryKey: ["/api/auth/user"],
-  });
-
-  // Redirect if not logged in
+  // Sync active tab with URL query parameter
   useEffect(() => {
-    if (!userLoading && !user?.user) {
-      navigate("/");
-      toast({
-        title: "Authentication required",
-        description: "Please log in to access your dashboard",
-        variant: "destructive",
-      });
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get("tab");
+    if (tabParam === "favorites" || tabParam === "settings") {
+      setActiveTab(tabParam);
+    } else {
+      setActiveTab("my-listings");
     }
-  }, [user, userLoading, navigate, toast]);
+  }, []);
+
+  // Fetch current user
+  const { data: user, isLoading: userLoading, isSuccess, isError } = useQuery<{ user: User }>({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+  });
 
   // Fetch dashboard stats
   const { data: stats } = useQuery<DashboardStats>({
@@ -190,7 +191,29 @@ export default function Dashboard() {
     },
   });
 
-  if (userLoading || !user?.user) {
+  // Redirect if auth fails or user not found
+  useEffect(() => {
+    if (isError || (isSuccess && !user?.user)) {
+      navigate("/");
+      toast({
+        title: "Authentication required",
+        description: "Please log in to access your dashboard",
+        variant: "destructive",
+      });
+    }
+  }, [isError, isSuccess, user, navigate, toast]);
+
+  // Show loading state while checking auth
+  if (userLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-lg text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  // If not logged in or error, don't render (useEffect will redirect)
+  if (!isSuccess || !user?.user) {
     return null;
   }
 

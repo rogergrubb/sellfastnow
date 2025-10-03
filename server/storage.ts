@@ -186,14 +186,14 @@ export class DatabaseStorage implements IStorage {
     const totalActive = userListings.filter(l => l.status === 'active').length;
     const totalSold = userListings.filter(l => l.status === 'sold').length;
     
-    const listingIds = userListings.map(l => l.id);
     let totalMessages = 0;
     
-    if (listingIds.length > 0) {
+    if (userListings.length > 0) {
+      const listingIds = userListings.map(l => l.id);
       const messagesResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(messages)
-        .where(sql`${messages.listingId} IN (${sql.join(listingIds.map(id => sql`${id}`), sql`, `)})`);
+        .where(or(...listingIds.map(id => eq(messages.listingId, id))));
       
       totalMessages = Number(messagesResult[0]?.count || 0);
     }

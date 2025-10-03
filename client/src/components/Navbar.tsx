@@ -15,12 +15,12 @@ export default function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Query for authenticated user
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading, isSuccess } = useQuery({
     queryKey: ['/api/auth/user'],
     retry: false,
   });
 
-  const isLoggedIn = !!user;
+  const isLoggedIn = isSuccess && !!user;
 
   useEffect(() => {
     const root = document.documentElement;
@@ -104,7 +104,7 @@ export default function Navbar() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem 
                       data-testid="menu-my-listings"
-                      onClick={() => window.location.href = '/my-listings'}
+                      onClick={() => window.location.href = '/dashboard'}
                     >
                       My Listings
                     </DropdownMenuItem>
@@ -116,14 +116,14 @@ export default function Navbar() {
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       data-testid="menu-favorites"
-                      onClick={() => window.location.href = '/favorites'}
+                      onClick={() => window.location.href = '/dashboard?tab=favorites'}
                     >
                       Favorites
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       data-testid="menu-profile"
-                      onClick={() => window.location.href = '/profile'}
+                      onClick={() => window.location.href = '/dashboard?tab=settings'}
                     >
                       Profile
                     </DropdownMenuItem>
