@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -39,6 +40,81 @@ type DashboardStats = {
   totalMessages: number;
   totalSold: number;
 };
+
+// Settings Form Component
+function SettingsForm({ user }: { user: User }) {
+  const { toast } = useToast();
+  const [firstName, setFirstName] = useState(user.firstName || "");
+  const [lastName, setLastName] = useState(user.lastName || "");
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: { firstName: string; lastName: string }) => {
+      return apiRequest("/api/users/profile", "PUT", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateProfileMutation.mutate({ firstName, lastName });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4" data-testid="form-settings">
+      <div className="space-y-2">
+        <Label htmlFor="firstName">First Name</Label>
+        <Input
+          id="firstName"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          placeholder="Enter first name"
+          data-testid="input-first-name"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="lastName">Last Name</Label>
+        <Input
+          id="lastName"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          placeholder="Enter last name"
+          data-testid="input-last-name"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          value={user.email || ""}
+          disabled
+          className="bg-muted"
+          data-testid="input-email"
+        />
+        <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+      </div>
+      <Button
+        type="submit"
+        disabled={updateProfileMutation.isPending}
+        data-testid="button-save-profile"
+      >
+        {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+      </Button>
+    </form>
+  );
+}
 
 export default function Dashboard() {
   const [, navigate] = useLocation();
@@ -602,13 +678,26 @@ export default function Dashboard() {
             </TabsContent>
 
             {/* Settings Tab */}
-            <TabsContent value="settings" className="m-0">
+            <TabsContent value="settings" className="m-0 space-y-6">
+              {/* Profile Settings */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Settings</CardTitle>
+                  <CardTitle>Profile Settings</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">Settings coming soon...</p>
+                  <SettingsForm user={currentUser} />
+                </CardContent>
+              </Card>
+
+              {/* Notification Preferences */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Notification Preferences</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Manage your notification settings (coming soon)
+                  </p>
                 </CardContent>
               </Card>
             </TabsContent>
