@@ -890,32 +890,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Cancel transaction with comment
-  app.post("/api/transactions/:transactionId/cancel", isAuthenticated, async (req: any, res) => {
+  app.post("/api/listings/:listingId/cancel", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { transactionId } = req.params;
-      const { cancelledBy, reasonCategory, comment, isPublic, scheduledMeetupTime } = req.body;
+      const { listingId } = req.params;
+      const { reasonCategory, comment, isPublic, scheduledMeetupTime } = req.body;
+
+      // Get transaction details to verify user eligibility
+      const transactionDetails = await storage.getTransactionDetails(listingId, userId);
+      
+      if (!transactionDetails) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+
+      // Verify user can cancel this transaction
+      if (!transactionDetails.canCancelTransaction) {
+        return res.status(403).json({ 
+          message: "You are not authorized to cancel this transaction" 
+        });
+      }
+
+      // Determine the actual role from the transaction details
+      const cancelledBy = transactionDetails.userRole;
+      
+      if (!cancelledBy) {
+        return res.status(403).json({ 
+          message: "Could not determine your role in this transaction" 
+        });
+      }
 
       // Import cancellation utils
       const { calculateCancellationTiming } = await import("./cancellationUtils");
       
       // Calculate timing if meetup time provided
       const cancellationTiming = calculateCancellationTiming(scheduledMeetupTime);
-
-      // Create transaction event for cancellation
-      const eventType = cancelledBy === "buyer" ? "buyer_cancelled" : "seller_cancelled";
-      
-      // Get transaction details to find listing ID
-      const [existingEvent] = await db
-        .select()
-        .from(transactionEvents)
-        .where(eq(transactionEvents.id, transactionId));
-
-      if (!existingEvent) {
-        return res.status(404).json({ message: "Transaction not found" });
-      }
-
-      const listingId = existingEvent.listingId;
 
       // Create cancellation event
       await db.insert(transactionEvents).values({

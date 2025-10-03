@@ -26,10 +26,10 @@ import { useToast } from "@/hooks/use-toast";
 interface CancelTransactionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  listingTitle: string;
-  listingPrice: string;
-  otherPartyName: string;
-  transactionId: string;
+  listingTitle?: string;
+  listingPrice?: string;
+  otherPartyName?: string;
+  listingId: string;
   userRole: "buyer" | "seller";
   scheduledMeetupTime?: Date;
   onSuccess?: () => void;
@@ -52,7 +52,7 @@ export function CancelTransactionModal({
   listingTitle,
   listingPrice,
   otherPartyName,
-  transactionId,
+  listingId,
   userRole,
   scheduledMeetupTime,
   onSuccess,
@@ -64,14 +64,14 @@ export function CancelTransactionModal({
 
   const cancelMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest(`/api/transactions/${transactionId}/cancel`, "POST", data);
+      return await apiRequest("POST", `/api/listings/${listingId}/cancel`, data);
     },
     onSuccess: () => {
       toast({
         title: "Transaction cancelled",
         description: "The other party has been notified.",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/transactions/${transactionId}/details`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/transactions/${listingId}/details`] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
       setReasonCategory("");
       setComment("");
@@ -98,7 +98,6 @@ export function CancelTransactionModal({
     }
 
     cancelMutation.mutate({
-      cancelledBy: userRole,
       reasonCategory,
       comment: comment.trim() || undefined,
       isPublic,
@@ -121,14 +120,20 @@ export function CancelTransactionModal({
 
         <div className="space-y-4">
           {/* Listing Info */}
-          <div className="border-b pb-4">
-            <p className="font-semibold" data-testid="text-listing-info">
-              {listingTitle} - ${listingPrice}
-            </p>
-            <p className="text-sm text-muted-foreground" data-testid="text-other-party">
-              {userRole === "buyer" ? "Seller" : "Buyer"}: {otherPartyName}
-            </p>
-          </div>
+          {(listingTitle || listingPrice || otherPartyName) && (
+            <div className="border-b pb-4">
+              {(listingTitle || listingPrice) && (
+                <p className="font-semibold" data-testid="text-listing-info">
+                  {listingTitle} {listingPrice && `- $${listingPrice}`}
+                </p>
+              )}
+              {otherPartyName && (
+                <p className="text-sm text-muted-foreground" data-testid="text-other-party">
+                  {userRole === "buyer" ? "Seller" : "Buyer"}: {otherPartyName}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Refund Info */}
           <div className="bg-muted/50 p-4 rounded-md space-y-2">
