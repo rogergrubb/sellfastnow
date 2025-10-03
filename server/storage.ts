@@ -98,7 +98,8 @@ export interface IStorage {
 
   // Cancellation comment operations
   createCancellationComment(comment: InsertCancellationComment): Promise<CancellationComment>;
-  respondToCancellationComment(commentId: string, userId: string, responseText: string): Promise<CancellationComment>;
+  getCancellationComment(commentId: string): Promise<CancellationComment | undefined>;
+  respondToCancellationComment(commentId: string, userId: string, responseText: string, responseIsPublic: boolean): Promise<CancellationComment>;
   voteOnCancellationComment(commentId: string, userId: string, voteType: string): Promise<{ helpful: number; notHelpful: number }>;
 
   // Statistics operations
@@ -600,12 +601,21 @@ export class DatabaseStorage implements IStorage {
     return comment;
   }
 
-  async respondToCancellationComment(commentId: string, userId: string, responseText: string): Promise<CancellationComment> {
+  async getCancellationComment(commentId: string): Promise<CancellationComment | undefined> {
+    const [comment] = await db
+      .select()
+      .from(cancellationComments)
+      .where(eq(cancellationComments.id, commentId));
+    return comment;
+  }
+
+  async respondToCancellationComment(commentId: string, userId: string, responseText: string, responseIsPublic: boolean): Promise<CancellationComment> {
     const [comment] = await db
       .update(cancellationComments)
       .set({
         responseByUserId: userId,
         responseText,
+        responseIsPublic,
         responseAt: new Date(),
       })
       .where(eq(cancellationComments.id, commentId))

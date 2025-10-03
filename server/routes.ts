@@ -752,14 +752,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { commentId } = req.params;
-      const { responseText } = req.body;
+      const { responseText, isPublic = true } = req.body;
 
-      if (!responseText) {
+      // Validate response text
+      if (!responseText || responseText.trim() === "") {
         return res.status(400).json({ message: "Response text is required" });
       }
 
-      const comment = await storage.respondToCancellationComment(commentId, userId, responseText);
-      res.json(comment);
+      if (responseText.length > 500) {
+        return res.status(400).json({ message: "Response must be 500 characters or less" });
+      }
+
+      // Get the cancellation comment
+      const comment = await storage.getCancellationComment(commentId);
+      if (!comment) {
+        return res.status(404).json({ message: "Cancellation comment not found" });
+      }
+
+      // Check if user has already responded
+      if (comment.responseByUserId) {
+        return res.status(403).json({ message: "You have already responded to this cancellation comment" });
+      }
+
+      // Get listing to verify user is the other party
+      const listing = await storage.getListing(comment.listingId);
+      if (!listing) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+
+      // Verify user is the OTHER party in the transaction
+      const isBuyer = listing.buyerId === userId;
+      const isSeller = listing.sellerId === userId;
+
+      if (!isBuyer && !isSeller) {
+        return res.status(403).json({ message: "You are not a participant in this transaction" });
+      }
+
+      // Verify user is the OTHER party (not the one who cancelled)
+      const cancellerRole = comment.cancelledRole; // 'buyer' or 'seller'
+      if (
+        (cancellerRole === 'buyer' && isBuyer) ||
+        (cancellerRole === 'seller' && isSeller)
+      ) {
+        return res.status(403).json({ 
+          message: "You cannot respond to your own cancellation comment" 
+        });
+      }
+
+      // Create response
+      const updatedComment = await storage.respondToCancellationComment(
+        commentId, 
+        userId, 
+        responseText, 
+        isPublic
+      );
+      res.json(updatedComment);
     } catch (error: any) {
       console.error("Error responding to cancellation comment:", error);
       res.status(400).json({ message: error.message || "Failed to respond to cancellation comment" });
