@@ -10,6 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**October 3, 2025 - Automatic Statistics Updates System**
+- Implemented database triggers for automatic user statistics updates on transaction events
+- Created trigger functions: completion tracking, cancellation tracking, no-show tracking, review aggregation
+- Added `recalculate_success_rates()` SQL function for automatic percentage calculations
+- Built API endpoints for manual statistics updates and recalculation
+- Statistics now auto-update for: successful sales/purchases, cancellations, no-shows, review counts/averages
+- Success rates (seller, buyer, overall) calculated automatically on every transaction change
+- Tested and verified: 3 completions increment counters correctly, cancellations update both parties
+
 **October 3, 2025 - Review System Type Safety & Bug Fixes**
 - Created shared `ReviewWithMetadata` type in schema for type-safe reviewer metadata across frontend/backend
 - Fixed backend `getUserReviews()` to return properly typed `ReviewWithMetadata[]` with joined reviewer info
