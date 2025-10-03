@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import Home from "./pages/Home";
 import PostAd from "./pages/PostAd";
 import ListingDetail from "./pages/ListingDetail";
+import Dashboard from "./pages/Dashboard";
 import Navbar from "@/components/Navbar";
 
 function Router() {
@@ -15,6 +16,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/post-ad" component={PostAd} />
       <Route path="/listings/:id" component={ListingDetail} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>
   );
