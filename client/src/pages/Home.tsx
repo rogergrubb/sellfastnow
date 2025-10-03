@@ -1,10 +1,18 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Hero from "@/components/Hero";
 import CategoryFilters from "@/components/CategoryFilters";
 import FilterSidebar from "@/components/FilterSidebar";
 import ListingCard from "@/components/ListingCard";
 import { Button } from "@/components/ui/button";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -12,118 +20,172 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-
-//todo: remove mock functionality
-const mockListings = [
-  {
-    id: "1",
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop",
-    title: "Premium Wireless Headphones",
-    price: 149,
-    location: "San Francisco, CA",
-    timePosted: "2h ago",
-  },
-  {
-    id: "2",
-    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=300&fit=crop",
-    title: "Modern Sofa - Excellent Condition",
-    price: 450,
-    location: "Oakland, CA",
-    timePosted: "5h ago",
-  },
-  {
-    id: "3",
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=300&fit=crop",
-    title: "Nike Running Shoes - Size 10",
-    price: 85,
-    location: "San Jose, CA",
-    timePosted: "1d ago",
-  },
-  {
-    id: "4",
-    image: "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=400&h=300&fit=crop",
-    title: "MacBook Pro 2021 - M1 Chip",
-    price: 1299,
-    location: "Berkeley, CA",
-    timePosted: "3h ago",
-  },
-  {
-    id: "5",
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop",
-    title: "Vintage Watch Collection",
-    price: 350,
-    location: "Palo Alto, CA",
-    timePosted: "6h ago",
-  },
-  {
-    id: "6",
-    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop",
-    title: "Desk Chair - Ergonomic Design",
-    price: 220,
-    location: "Mountain View, CA",
-    timePosted: "8h ago",
-  },
-  {
-    id: "7",
-    image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=300&fit=crop",
-    title: "Designer Sunglasses",
-    price: 120,
-    location: "Santa Clara, CA",
-    timePosted: "4h ago",
-  },
-  {
-    id: "8",
-    image: "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=400&h=300&fit=crop",
-    title: "Gaming Console Bundle",
-    price: 380,
-    location: "San Mateo, CA",
-    timePosted: "12h ago",
-  },
-];
+import type { Listing } from "@shared/schema";
 
 export default function Home() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCondition, setSelectedCondition] = useState("");
+  const [priceMin, setPriceMin] = useState("");
+  const [priceMax, setPriceMax] = useState("");
+  const [location, setLocation] = useState("");
+  const [sortBy, setSortBy] = useState<'newest' | 'price-low' | 'price-high'>('newest');
+
+  // Build query params for search
+  const buildQueryParams = () => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.append('q', searchQuery);
+    if (selectedCategory) params.append('category', selectedCategory);
+    if (selectedCondition) params.append('condition', selectedCondition);
+    if (priceMin) params.append('priceMin', priceMin);
+    if (priceMax) params.append('priceMax', priceMax);
+    if (location) params.append('location', location);
+    if (sortBy) params.append('sortBy', sortBy);
+    return params.toString();
+  };
+
+  const queryParams = buildQueryParams();
+
+  // Fetch listings with filters
+  const { data: listings = [], isLoading } = useQuery<Listing[]>({
+    queryKey: ['/api/listings/search', queryParams],
+    queryFn: async () => {
+      const url = queryParams 
+        ? `/api/listings/search?${queryParams}`
+        : '/api/listings';
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch listings');
+      return response.json();
+    },
+  });
+
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category === selectedCategory ? "" : category);
+  };
+
+  const handleFiltersChange = (filters: {
+    condition?: string;
+    priceMin?: string;
+    priceMax?: string;
+    location?: string;
+  }) => {
+    if (filters.condition !== undefined) setSelectedCondition(filters.condition);
+    if (filters.priceMin !== undefined) setPriceMin(filters.priceMin);
+    if (filters.priceMax !== undefined) setPriceMax(filters.priceMax);
+    if (filters.location !== undefined) setLocation(filters.location);
+  };
+
+  const formatPrice = (price: string) => {
+    return parseFloat(price).toFixed(0);
+  };
+
+  const getTimeAgo = (date: Date | string) => {
+    const now = new Date();
+    const created = new Date(date);
+    const diffMs = now.getTime() - created.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+  };
 
   return (
     <div>
-      <Hero />
-      <CategoryFilters />
+      <Hero onSearch={setSearchQuery} />
+      <CategoryFilters 
+        selectedCategory={selectedCategory}
+        onCategorySelect={handleCategorySelect}
+      />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-8">
           <aside className="hidden lg:block w-64 flex-shrink-0">
             <div className="sticky top-32">
-              <FilterSidebar />
+              <FilterSidebar 
+                filters={{
+                  condition: selectedCondition,
+                  priceMin,
+                  priceMax,
+                  location,
+                }}
+                onFiltersChange={handleFiltersChange}
+              />
             </div>
           </aside>
 
           <div className="flex-1">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">All Listings</h2>
+              <h2 className="text-2xl font-bold">
+                {listings.length} {listings.length === 1 ? 'Listing' : 'Listings'}
+              </h2>
               
-              <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" className="lg:hidden" data-testid="button-mobile-filters">
-                    <SlidersHorizontal className="h-4 w-4 mr-2" />
-                    Filters
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left">
-                  <SheetHeader>
-                    <SheetTitle>Filters</SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-6">
-                    <FilterSidebar />
-                  </div>
-                </SheetContent>
-              </Sheet>
+              <div className="flex items-center gap-3">
+                <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                  <SelectTrigger className="w-[180px]" data-testid="select-sort">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="price-low">Price: Low to High</SelectItem>
+                    <SelectItem value="price-high">Price: High to Low</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" className="lg:hidden" data-testid="button-mobile-filters">
+                      <SlidersHorizontal className="h-4 w-4 mr-2" />
+                      Filters
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left">
+                    <SheetHeader>
+                      <SheetTitle>Filters</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-6">
+                      <FilterSidebar 
+                        filters={{
+                          condition: selectedCondition,
+                          priceMin,
+                          priceMax,
+                          location,
+                        }}
+                        onFiltersChange={handleFiltersChange}
+                      />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockListings.map((listing) => (
-                <ListingCard key={listing.id} {...listing} />
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : listings.length === 0 ? (
+              <div className="text-center py-16">
+                <p className="text-muted-foreground text-lg">No listings found</p>
+                <p className="text-sm text-muted-foreground mt-2">Try adjusting your filters or search query</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {listings.map((listing) => (
+                  <ListingCard 
+                    key={listing.id}
+                    id={listing.id}
+                    image={listing.images[0] ? `/public-objects/${listing.images[0]}` : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop'}
+                    title={listing.title}
+                    price={parseFloat(formatPrice(listing.price))}
+                    location={listing.location}
+                    timePosted={getTimeAgo(listing.createdAt!)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

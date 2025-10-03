@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -12,20 +12,54 @@ import {
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 
-export default function FilterSidebar() {
-  const [priceRange, setPriceRange] = useState([0, 5000]);
-  const [condition, setCondition] = useState("");
-  const [location, setLocation] = useState("");
+interface FilterSidebarProps {
+  filters: {
+    condition: string;
+    priceMin: string;
+    priceMax: string;
+    location: string;
+  };
+  onFiltersChange: (filters: {
+    condition?: string;
+    priceMin?: string;
+    priceMax?: string;
+    location?: string;
+  }) => void;
+}
+
+export default function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) {
+  const [priceMin, setPriceMin] = useState(filters.priceMin || "");
+  const [priceMax, setPriceMax] = useState(filters.priceMax || "");
+  const [condition, setCondition] = useState(filters.condition || "");
+  const [location, setLocation] = useState(filters.location || "");
+
+  useEffect(() => {
+    setPriceMin(filters.priceMin || "");
+    setPriceMax(filters.priceMax || "");
+    setCondition(filters.condition || "");
+    setLocation(filters.location || "");
+  }, [filters]);
 
   const handleReset = () => {
-    setPriceRange([0, 5000]);
+    setPriceMin("");
+    setPriceMax("");
     setCondition("");
     setLocation("");
-    console.log("Filters reset");
+    onFiltersChange({
+      priceMin: "",
+      priceMax: "",
+      condition: "",
+      location: "",
+    });
   };
 
   const handleApply = () => {
-    console.log("Filters applied:", { priceRange, condition, location });
+    onFiltersChange({
+      priceMin,
+      priceMax,
+      condition,
+      location,
+    });
   };
 
   return (
@@ -35,29 +69,21 @@ export default function FilterSidebar() {
       <div className="space-y-6">
         <div>
           <Label className="mb-3 block">Price Range</Label>
-          <div className="px-2">
-            <Slider
-              value={priceRange}
-              onValueChange={setPriceRange}
-              max={5000}
-              step={50}
-              className="mb-4"
-              data-testid="slider-price"
-            />
-          </div>
           <div className="flex items-center gap-2">
             <Input
               type="number"
-              value={priceRange[0]}
-              onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+              placeholder="Min"
+              value={priceMin}
+              onChange={(e) => setPriceMin(e.target.value)}
               className="h-9"
               data-testid="input-price-min"
             />
             <span className="text-muted-foreground">to</span>
             <Input
               type="number"
-              value={priceRange[1]}
-              onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+              placeholder="Max"
+              value={priceMax}
+              onChange={(e) => setPriceMax(e.target.value)}
               className="h-9"
               data-testid="input-price-max"
             />
@@ -66,15 +92,17 @@ export default function FilterSidebar() {
 
         <div>
           <Label htmlFor="condition" className="mb-3 block">Condition</Label>
-          <Select value={condition} onValueChange={setCondition}>
+          <Select value={condition || "any"} onValueChange={(value) => setCondition(value === "any" ? "" : value)}>
             <SelectTrigger id="condition" data-testid="select-condition">
               <SelectValue placeholder="Any condition" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="any">Any condition</SelectItem>
               <SelectItem value="new">New</SelectItem>
               <SelectItem value="like-new">Like New</SelectItem>
               <SelectItem value="good">Good</SelectItem>
               <SelectItem value="fair">Fair</SelectItem>
+              <SelectItem value="poor">Poor</SelectItem>
             </SelectContent>
           </Select>
         </div>

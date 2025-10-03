@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,7 +6,12 @@ import heroImage from "@assets/generated_images/Marketplace_hero_collage_image_0
 
 const categories = ["Electronics", "Furniture", "Clothing", "Vehicles", "Services", "More"];
 
-export default function Hero() {
+interface HeroProps {
+  onSearch: (query: string) => void;
+}
+
+export default function Hero({ onSearch }: HeroProps) {
+  const [searchInput, setSearchInput] = useState("");
   return (
     <div className="relative h-[70vh] min-h-[500px] flex items-center justify-center overflow-hidden">
       <div 
@@ -30,13 +36,16 @@ export default function Hero() {
               placeholder="What are you looking for?"
               className="pl-10 h-12 text-base bg-white/95 backdrop-blur-sm border-white/20"
               data-testid="input-hero-search"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && onSearch(searchInput)}
             />
           </div>
           <Button 
             size="lg" 
             className="h-12 px-8 bg-secondary hover:bg-secondary text-secondary-foreground"
             data-testid="button-hero-search"
-            onClick={() => console.log("Search triggered")}
+            onClick={() => onSearch(searchInput)}
           >
             Search
           </Button>
