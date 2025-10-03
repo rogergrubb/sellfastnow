@@ -575,6 +575,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/reviews/create", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const { listingId } = req.body;
+
+      // Verify user is eligible to review this listing
+      const transactionDetails = await storage.getTransactionDetails(listingId, userId);
+      if (!transactionDetails || !transactionDetails.eligibleForReview) {
+        return res.status(403).json({ 
+          message: "You are not eligible to review this transaction. Only buyers who completed a transaction can leave reviews." 
+        });
+      }
+
       const validatedData = insertReviewSchema.parse({
         ...req.body,
         reviewerId: userId,
@@ -664,16 +674,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cancellation Comment Routes
   // ======================
 
-  // Create cancellation comment
+  // Create cancellation comment (new format matching modal)
+  app.post("/api/cancellations/create", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { 
+        listingId, 
+        cancellationReason,
+        cancellationComment, 
+        whoInitiated,
+        commenterRole 
+      } = req.body;
+
+      // Verify user is eligible to report cancellation for this listing
+      const transactionDetails = await storage.getTransactionDetails(listingId, userId);
+      if (!transactionDetails || !transactionDetails.eligibleForCancellationReport) {
+        return res.status(403).json({ 
+          message: "You are not eligible to report a cancellation for this transaction." 
+        });
+      }
+
+      // Build data with server-controlled identity fields
+      const validatedData = insertCancellationCommentSchema.parse({
+        listingId,
+        cancelledByUserId: userId, // Always use authenticated user ID
+        comment: cancellationComment,
+        cancelledRole: commenterRole, // Role from client, but user ID is verified
+        cancellationTiming: whoInitiated,
+        cancellationReasonCategory: cancellationReason,
+      });
+
+      const comment = await storage.createCancellationComment(validatedData);
+      res.json(comment);
+    } catch (error: any) {
+      console.error("Error creating cancellation comment:", error);
+      res.status(400).json({ message: error.message || "Failed to create cancellation comment" });
+    }
+  });
+
+  // Create cancellation comment (legacy format - now with eligibility check)
   app.post("/api/cancellations/:listingId/comment", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { listingId } = req.params;
+      const { comment, cancelledRole, cancellationTiming, cancellationReasonCategory } = req.body;
+
+      // Verify user is eligible to report cancellation for this listing
+      const transactionDetails = await storage.getTransactionDetails(listingId, userId);
+      if (!transactionDetails || !transactionDetails.eligibleForCancellationReport) {
+        return res.status(403).json({ 
+          message: "You are not eligible to report a cancellation for this transaction." 
+        });
+      }
       
+      // Build data with server-controlled identity fields
       const validatedData = insertCancellationCommentSchema.parse({
-        ...req.body,
         listingId,
-        cancelledByUserId: userId,
+        cancelledByUserId: userId, // Always use authenticated user ID
+        comment,
+        cancelledRole,
+        cancellationTiming,
+        cancellationReasonCategory,
       });
 
       const comment = await storage.createCancellationComment(validatedData);
@@ -771,10 +832,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get transaction details with reviews and comments
-  app.get("/api/transactions/:listingId/details", async (req, res) => {
+  // Note: Accessible by both authenticated and unauthenticated users
+  // Eligibility flags are only computed for authenticated users
+  app.get("/api/transactions/:listingId/details", async (req: any, res) => {
     try {
       const { listingId } = req.params;
-      const details = await storage.getTransactionDetails(listingId);
+      // req.user is populated by session middleware if user is logged in
+      const currentUserId = req.user?.claims?.sub || null;
+      
+      const details = await storage.getTransactionDetails(listingId, currentUserId);
       if (!details) {
         return res.status(404).json({ message: "Transaction not found" });
       }

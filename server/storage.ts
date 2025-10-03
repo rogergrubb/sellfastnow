@@ -690,7 +690,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(orderByClause);
   }
 
-  async getTransactionDetails(listingId: string): Promise<any> {
+  async getTransactionDetails(listingId: string, currentUserId?: string | null): Promise<any> {
     const listing = await this.getListingWithSeller(listingId);
     
     if (!listing) {
@@ -709,10 +709,47 @@ export class DatabaseStorage implements IStorage {
       .from(cancellationComments)
       .where(eq(cancellationComments.listingId, listingId));
 
+    // Get transaction events for this listing
+    const events = await db
+      .select()
+      .from(transactionEvents)
+      .where(eq(transactionEvents.listingId, listingId))
+      .orderBy(desc(transactionEvents.createdAt));
+
+    // Determine eligibility for review/cancellation
+    let eligibleForReview = false;
+    let eligibleForCancellationReport = false;
+    
+    if (currentUserId && listing.listing.userId !== currentUserId) {
+      // Check if there's a completed transaction with this user
+      // Note: Transaction events must be created when a transaction completes, 
+      // with eventType='completed' or 'confirmed' and userId set to the buyer
+      const completedEvent = events.find(
+        (e: any) => 
+          (e.eventType === 'completed' || e.eventType === 'confirmed') && 
+          e.userId === currentUserId
+      );
+      
+      if (completedEvent) {
+        eligibleForReview = true;
+      }
+
+      // Check if user can report cancellation (had an interaction but transaction didn't complete)
+      const hasInteraction = events.some((e: any) => e.userId === currentUserId);
+      const hasCancellation = events.some((e: any) => e.eventType === 'cancelled');
+      
+      if (hasInteraction && (hasCancellation || listing.listing.status === 'cancelled')) {
+        eligibleForCancellationReport = true;
+      }
+    }
+
     return {
       ...listing,
       reviews: listingReviews,
       cancellationComments: comments,
+      transactionEvents: events,
+      eligibleForReview,
+      eligibleForCancellationReport,
     };
   }
 

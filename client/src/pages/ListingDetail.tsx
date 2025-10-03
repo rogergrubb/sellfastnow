@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { LeaveReviewModal } from "@/components/LeaveReviewModal";
+import { CancellationCommentModal } from "@/components/CancellationCommentModal";
 import {
   MapPin,
   Heart,
@@ -18,6 +20,8 @@ import {
   AlertTriangle,
   DollarSign,
   Clock,
+  Star,
+  XCircle,
 } from "lucide-react";
 import type { Listing, User } from "@shared/schema";
 
@@ -31,11 +35,25 @@ export default function ListingDetail() {
   const { toast } = useToast();
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isCancellationModalOpen, setIsCancellationModalOpen] = useState(false);
+
+  // Fetch current user
+  const { data: currentUser } = useQuery<User>({
+    queryKey: ['/api/auth/user'],
+    retry: false,
+  });
 
   // Fetch listing with seller info
   const { data, isLoading } = useQuery<ListingWithSeller>({
     queryKey: [`/api/listings/${id}`],
     enabled: !!id,
+  });
+
+  // Fetch transaction details to check eligibility
+  const { data: transactionDetails } = useQuery<any>({
+    queryKey: [`/api/transactions/${id}/details`],
+    enabled: !!id && !!currentUser,
   });
 
   // Fetch similar listings
@@ -278,10 +296,52 @@ export default function ListingDetail() {
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full" data-testid="button-view-profile">
-                View Profile
-              </Button>
+              <Link href={`/profile/${seller.id}`}>
+                <Button variant="outline" className="w-full" data-testid="button-view-profile">
+                  View Profile
+                </Button>
+              </Link>
             </Card>
+
+            {/* Review/Transaction Actions Card */}
+            {currentUser && currentUser.id !== seller.id && (
+              <Card className="p-6">
+                <h3 className="font-semibold mb-3">Transaction Actions</h3>
+                <div className="space-y-2">
+                  {transactionDetails?.eligibleForReview ? (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setIsReviewModalOpen(true)}
+                      data-testid="button-leave-review"
+                    >
+                      <Star className="h-4 w-4 mr-2" />
+                      Leave a Review
+                    </Button>
+                  ) : (
+                    <div className="text-sm text-muted-foreground p-3 bg-muted rounded-md">
+                      Complete a transaction to leave a review
+                    </div>
+                  )}
+                  
+                  {transactionDetails?.eligibleForCancellationReport ? (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setIsCancellationModalOpen(true)}
+                      data-testid="button-report-cancellation"
+                    >
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Report Cancellation
+                    </Button>
+                  ) : transactionDetails && !transactionDetails.eligibleForReview && (
+                    <div className="text-sm text-muted-foreground p-3 bg-muted rounded-md">
+                      Only available for cancelled transactions
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )}
 
             {/* Action Buttons - Desktop */}
             <Card className="p-6 hidden lg:block" data-testid="card-desktop-actions">
@@ -372,6 +432,30 @@ export default function ListingDetail() {
       
       {/* Spacer for mobile sticky buttons */}
       <div className="h-20 lg:hidden"></div>
+
+      {/* Modals */}
+      {currentUser && (
+        <>
+          <LeaveReviewModal
+            open={isReviewModalOpen}
+            onOpenChange={setIsReviewModalOpen}
+            listingId={id!}
+            reviewedUserId={seller.id}
+            reviewerRole="buyer"
+            currentUserId={currentUser.id}
+            queryKey={['/api/reviews/listing', id]}
+          />
+          <CancellationCommentModal
+            open={isCancellationModalOpen}
+            onOpenChange={setIsCancellationModalOpen}
+            listingId={id!}
+            otherUserId={seller.id}
+            currentUserId={currentUser.id}
+            userRole="buyer"
+            queryKey={['/api/cancellations/listing', id]}
+          />
+        </>
+      )}
     </div>
   );
 }
