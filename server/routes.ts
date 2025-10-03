@@ -76,18 +76,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get single listing
+  // Get single listing with seller info
   app.get("/api/listings/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const listing = await storage.getListing(id);
-      if (!listing) {
+      const result = await storage.getListingWithSeller(id);
+      if (!result) {
         return res.status(404).json({ message: "Listing not found" });
       }
-      res.json(listing);
+      res.json(result);
     } catch (error) {
       console.error("Error fetching listing:", error);
       res.status(500).json({ message: "Failed to fetch listing" });
+    }
+  });
+
+  // Get similar listings
+  app.get("/api/listings/similar/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 6;
+      const listings = await storage.getSimilarListings(id, limit);
+      res.json(listings);
+    } catch (error) {
+      console.error("Error fetching similar listings:", error);
+      res.status(500).json({ message: "Failed to fetch similar listings" });
     }
   });
 
@@ -339,9 +352,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Check if listing is favorited
-  app.get("/api/favorites/:listingId", isAuthenticated, async (req: any, res) => {
+  // Check if listing is favorited (public endpoint, returns false if not authenticated)
+  app.get("/api/favorites/:listingId", async (req: any, res) => {
     try {
+      // If not authenticated, return false
+      if (!req.user || !req.user.claims || !req.user.claims.sub) {
+        return res.json({ isFavorited: false });
+      }
+      
       const userId = req.user.claims.sub;
       const { listingId } = req.params;
       const isFavorited = await storage.isFavorited(userId, listingId);
@@ -378,6 +396,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error removing favorite:", error);
       res.status(500).json({ message: "Failed to remove favorite" });
+    }
+  });
+
+  // Toggle favorite
+  app.post("/api/favorites/toggle", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { listingId } = req.body;
+      
+      if (!listingId) {
+        return res.status(400).json({ message: "listingId is required" });
+      }
+
+      const result = await storage.toggleFavorite(userId, listingId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      res.status(500).json({ message: "Failed to toggle favorite" });
     }
   });
 

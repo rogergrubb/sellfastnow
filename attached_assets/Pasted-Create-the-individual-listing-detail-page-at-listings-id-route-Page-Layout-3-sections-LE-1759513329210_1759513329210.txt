@@ -1,0 +1,80 @@
+Create the individual listing detail page at /listings/:id route.
+
+**Page Layout (3 sections):**
+
+LEFT SECTION (Main Content - 65% width):
+1. Image Gallery Component:
+   - Large main image display (800x600px)
+   - Thumbnail strip below (horizontal scroll, 5 visible)
+   - Click thumbnail to change main image
+   - Zoom button (magnifying glass icon from lucide-react)
+   - Image counter: "3 / 7"
+
+2. Listing Details Card:
+   - Title (h1, large font)
+   - Price (prominent, green text, $XX.XX)
+   - Condition badge (colored pill based on condition)
+   - Posted date (relative: "Posted 2 hours ago")
+   - Views count icon + number
+   - Location with MapPin icon + city
+   - Category tag (clickable, links to search)
+   
+3. Description Card:
+   - "Description" heading
+   - Full text with proper line breaks
+   - "Read more" button if text > 300 chars (expand/collapse)
+
+4. Similar Listings Section:
+   - "You Might Also Like" heading
+   - Horizontal scroll of 6 listing cards
+   - Query: same category, exclude current listing
+   - Use existing ListingCard component
+
+RIGHT SIDEBAR (35% width):
+1. Seller Info Card:
+   - Avatar (use first letter of name, colored circle)
+   - Seller name (bold)
+   - "Member since" date (format: "Jan 2024")
+   - Star rating display: ⭐ 4.8 (23 reviews)
+   - Response time badge: "Usually responds in 1 hour"
+   - "View Profile" link button
+
+2. Action Buttons (stacked):
+   - "Message Seller" (primary button, blue)
+   - "Make Offer" (secondary button, outlined)
+   - Save button (heart icon, toggle saved state)
+   - Share button (share icon, copy link to clipboard)
+
+3. Safety Tips Card:
+   - Warning icon (AlertTriangle from lucide-react)
+   - "Safety Tips" heading
+   - 4 bullet points:
+     * Meet in public places
+     * Inspect item before payment
+     * Use secure payment methods
+     * Trust your instincts
+   - Yellow/orange background tint
+
+**Mobile Layout:**
+- Single column
+- Action buttons fixed at bottom (sticky)
+- Gallery full width at top
+- Seller card after description
+
+**API Integration:**
+- GET /api/listings/:id - Fetch listing details
+- GET /api/listings/similar/:id - Fetch similar listings
+- POST /api/favorites/toggle - Save/unsave listing
+
+**Create these backend endpoints if they don't exist:**
+```typescript
+// GET /api/listings/:id - Single listing with seller info
+// GET /api/listings/similar/:id?limit=6 - Similar listings
+// POST /api/favorites/toggle - { listingId: number }
+Test:
+
+Click any listing from homepage
+Verify all data displays correctly
+Test image gallery navigation
+Test similar listings load
+Test mobile responsive layout

@@ -2,6 +2,7 @@ import { Heart, MapPin, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { Link } from "wouter";
 
 interface ListingCardProps {
   id: string;
@@ -25,11 +26,11 @@ export default function ListingCard({
   const [favorite, setFavorite] = useState(isFavorite);
 
   return (
-    <Card className="overflow-hidden hover-elevate cursor-pointer group" data-testid={`card-listing-${id}`}>
-      <div 
-        className="relative aspect-[4/3] bg-muted overflow-hidden"
-        onClick={() => console.log(`Listing ${id} clicked`)}
-      >
+    <Link href={`/listings/${id}`}>
+      <Card className="overflow-hidden hover-elevate cursor-pointer group" data-testid={`card-listing-${id}`}>
+        <div 
+          className="relative aspect-[4/3] bg-muted overflow-hidden"
+        >
         {image ? (
           <img 
             src={image} 
@@ -75,5 +76,6 @@ export default function ListingCard({
         </div>
       </div>
     </Card>
+    </Link>
   );
 }

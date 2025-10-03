@@ -38,6 +38,8 @@ export interface IStorage {
   // Listing operations
   createListing(listing: InsertListing): Promise<Listing>;
   getListing(id: string): Promise<Listing | undefined>;
+  getListingWithSeller(id: string): Promise<{ listing: Listing; seller: User } | undefined>;
+  getSimilarListings(listingId: string, limit?: number): Promise<Listing[]>;
   getUserListings(userId: string): Promise<Listing[]>;
   getAllListings(): Promise<Listing[]>;
   getListingsByCategory(category: string): Promise<Listing[]>;
@@ -55,6 +57,7 @@ export interface IStorage {
   // Favorite operations
   addFavorite(favorite: InsertFavorite): Promise<Favorite>;
   removeFavorite(userId: string, listingId: string): Promise<void>;
+  toggleFavorite(userId: string, listingId: string): Promise<{ isFavorited: boolean }>;
   getUserFavorites(userId: string): Promise<Listing[]>;
   isFavorited(userId: string, listingId: string): Promise<boolean>;
 }
@@ -113,6 +116,38 @@ export class DatabaseStorage implements IStorage {
       .from(listings)
       .where(eq(listings.id, id));
     return listing;
+  }
+
+  async getListingWithSeller(id: string): Promise<{ listing: Listing; seller: User } | undefined> {
+    const result = await db
+      .select({
+        listing: listings,
+        seller: users,
+      })
+      .from(listings)
+      .innerJoin(users, eq(listings.userId, users.id))
+      .where(eq(listings.id, id));
+    
+    if (result.length === 0) return undefined;
+    return result[0];
+  }
+
+  async getSimilarListings(listingId: string, limit: number = 6): Promise<Listing[]> {
+    const currentListing = await this.getListing(listingId);
+    if (!currentListing) return [];
+
+    return await db
+      .select()
+      .from(listings)
+      .where(
+        and(
+          eq(listings.category, currentListing.category),
+          eq(listings.status, "active"),
+          sql`${listings.id} != ${listingId}`
+        )
+      )
+      .orderBy(desc(listings.createdAt))
+      .limit(limit);
   }
 
   async getUserListings(userId: string): Promise<Listing[]> {
@@ -284,6 +319,18 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(eq(favorites.userId, userId), eq(favorites.listingId, listingId))
       );
+  }
+
+  async toggleFavorite(userId: string, listingId: string): Promise<{ isFavorited: boolean }> {
+    const existing = await this.isFavorited(userId, listingId);
+    
+    if (existing) {
+      await this.removeFavorite(userId, listingId);
+      return { isFavorited: false };
+    } else {
+      await this.addFavorite({ userId, listingId });
+      return { isFavorited: true };
+    }
   }
 
   async getUserFavorites(userId: string): Promise<Listing[]> {
