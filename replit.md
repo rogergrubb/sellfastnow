@@ -10,6 +10,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**October 3, 2025 - Transaction History Page**
+- Created comprehensive transaction history page at `/users/:userId/history`
+- Features: filterable transaction list (status, role), status badges (completed/cancelled/no-show), transaction cards with listing details
+- Displays: other party info with ratings, reviews from both parties, cancellation comments with timing
+- Filter bar updates URL params and triggers re-fetch for persistent filter state
+- Empty state with "Browse Listings" CTA for users with no transactions
+- Navigation to user profiles and listing details from transaction cards
+- Mobile responsive with flex-wrap layouts
+- Fixed database trigger ambiguous column reference in review aggregation function
+
 **October 3, 2025 - Automatic Statistics Updates System**
 - Implemented database triggers for automatic user statistics updates on transaction events
 - Created trigger functions: completion tracking, cancellation tracking, no-show tracking, review aggregation
