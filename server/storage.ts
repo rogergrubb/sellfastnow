@@ -860,27 +860,50 @@ export class DatabaseStorage implements IStorage {
     // Determine eligibility for review/cancellation
     let eligibleForReview = false;
     let eligibleForCancellationReport = false;
+    let canCancelTransaction = false;
+    let userRole: 'buyer' | 'seller' | null = null;
     
-    if (currentUserId && listing.listing.userId !== currentUserId) {
-      // Check if there's a completed transaction with this user
-      // Note: Transaction events must be created when a transaction completes, 
-      // with eventType='completed' or 'confirmed' and userId set to the buyer
-      const completedEvent = events.find(
-        (e: any) => 
-          (e.eventType === 'completed' || e.eventType === 'confirmed') && 
-          e.userId === currentUserId
-      );
+    if (currentUserId) {
+      const isSeller = listing.listing.userId === currentUserId;
+      const isBuyer = !isSeller && events.some((e: any) => e.userId === currentUserId);
       
-      if (completedEvent) {
-        eligibleForReview = true;
+      if (isSeller) {
+        userRole = 'seller';
+      } else if (isBuyer) {
+        userRole = 'buyer';
       }
 
-      // Check if user can report cancellation (had an interaction but transaction didn't complete)
-      const hasInteraction = events.some((e: any) => e.userId === currentUserId);
-      const hasCancellation = events.some((e: any) => e.eventType === 'cancelled');
+      // Check if there's a completed transaction
+      const hasCompleted = events.some(
+        (e: any) => e.eventType === 'completed' || e.eventType === 'confirmed'
+      );
       
-      if (hasInteraction && (hasCancellation || listing.listing.status === 'cancelled')) {
-        eligibleForCancellationReport = true;
+      // Check if already cancelled
+      const hasCancellation = events.some((e: any) => e.eventType === 'cancelled');
+
+      // User can cancel if they're buyer or seller, and transaction is not completed or cancelled
+      if ((isSeller || isBuyer) && !hasCompleted && !hasCancellation) {
+        canCancelTransaction = true;
+      }
+
+      if (!isSeller) {
+        // Check if eligible for review (completed transaction as buyer)
+        const completedEvent = events.find(
+          (e: any) => 
+            (e.eventType === 'completed' || e.eventType === 'confirmed') && 
+            e.userId === currentUserId
+        );
+        
+        if (completedEvent) {
+          eligibleForReview = true;
+        }
+
+        // Check if user can report cancellation (had an interaction but transaction didn't complete)
+        const hasInteraction = events.some((e: any) => e.userId === currentUserId);
+        
+        if (hasInteraction && (hasCancellation || listing.listing.status === 'cancelled')) {
+          eligibleForCancellationReport = true;
+        }
       }
     }
 
@@ -891,6 +914,8 @@ export class DatabaseStorage implements IStorage {
       transactionEvents: events,
       eligibleForReview,
       eligibleForCancellationReport,
+      canCancelTransaction,
+      userRole,
     };
   }
 

@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { LeaveReviewModal } from "@/components/LeaveReviewModal";
 import { CancellationCommentModal } from "@/components/CancellationCommentModal";
+import { CancelTransactionModal } from "@/components/CancelTransactionModal";
 import {
   MapPin,
   Heart,
@@ -37,6 +38,7 @@ export default function ListingDetail() {
   const [isFavorited, setIsFavorited] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isCancellationModalOpen, setIsCancellationModalOpen] = useState(false);
+  const [isCancelTransactionModalOpen, setIsCancelTransactionModalOpen] = useState(false);
 
   // Fetch current user
   const { data: currentUser } = useQuery<User>({
@@ -304,10 +306,22 @@ export default function ListingDetail() {
             </Card>
 
             {/* Review/Transaction Actions Card */}
-            {currentUser && currentUser.id !== seller.id && (
+            {currentUser && (
               <Card className="p-6">
                 <h3 className="font-semibold mb-3">Transaction Actions</h3>
                 <div className="space-y-2">
+                  {transactionDetails?.canCancelTransaction && (
+                    <Button
+                      variant="destructive"
+                      className="w-full"
+                      onClick={() => setIsCancelTransactionModalOpen(true)}
+                      data-testid="button-cancel-transaction"
+                    >
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Cancel Transaction
+                    </Button>
+                  )}
+
                   {transactionDetails?.eligibleForReview ? (
                     <Button
                       variant="outline"
@@ -454,6 +468,18 @@ export default function ListingDetail() {
             userRole="buyer"
             queryKey={['/api/cancellations/listing', id]}
           />
+          {transactionDetails?.canCancelTransaction && (
+            <CancelTransactionModal
+              open={isCancelTransactionModalOpen}
+              onOpenChange={setIsCancelTransactionModalOpen}
+              listingId={id!}
+              userRole={transactionDetails.userRole || 'buyer'}
+              onSuccess={() => {
+                queryClient.invalidateQueries({ queryKey: [`/api/transactions/${id}/details`] });
+                queryClient.invalidateQueries({ queryKey: [`/api/listings/${id}`] });
+              }}
+            />
+          )}
         </>
       )}
     </div>
