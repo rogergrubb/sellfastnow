@@ -2,6 +2,7 @@ import { Search, Plus, User, Menu, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +13,14 @@ import {
 
 export default function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(true); //todo: remove mock functionality
+
+  // Query for authenticated user
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['/api/auth/user'],
+    retry: false,
+  });
+
+  const isLoggedIn = !!user;
 
   useEffect(() => {
     const root = document.documentElement;
@@ -23,6 +31,16 @@ export default function Navbar() {
     }
   }, [isDarkMode]);
 
+  const handleLogin = () => {
+    // Trigger backend OAuth flow
+    window.location.href = '/api/login';
+  };
+
+  const handleLogout = async () => {
+    // Logout via backend
+    window.location.href = '/api/logout';
+  };
+
   return (
     <nav className="sticky top-0 z-50 bg-background border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -31,7 +49,7 @@ export default function Navbar() {
             <button 
               className="text-2xl font-bold text-primary hover-elevate active-elevate-2 px-2 py-1 rounded-md"
               data-testid="link-home"
-              onClick={() => console.log("Navigate to home")}
+              onClick={() => window.location.href = '/'}
             >
               SellFast.Now
             </button>
@@ -59,13 +77,15 @@ export default function Navbar() {
               {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
 
-            {isLoggedIn ? (
+            {isLoading ? (
+              <div className="w-20 h-9" />
+            ) : isLoggedIn ? (
               <>
                 <Button 
                   variant="default" 
                   className="hidden sm:flex bg-secondary hover:bg-secondary"
                   data-testid="button-post-ad"
-                  onClick={() => console.log("Post ad clicked")}
+                  onClick={() => window.location.href = '/post-ad'}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Post Ad
@@ -82,12 +102,37 @@ export default function Navbar() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem data-testid="menu-my-listings">My Listings</DropdownMenuItem>
-                    <DropdownMenuItem data-testid="menu-messages">Messages</DropdownMenuItem>
-                    <DropdownMenuItem data-testid="menu-favorites">Favorites</DropdownMenuItem>
+                    <DropdownMenuItem 
+                      data-testid="menu-my-listings"
+                      onClick={() => window.location.href = '/my-listings'}
+                    >
+                      My Listings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      data-testid="menu-messages"
+                      onClick={() => window.location.href = '/messages'}
+                    >
+                      Messages
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      data-testid="menu-favorites"
+                      onClick={() => window.location.href = '/favorites'}
+                    >
+                      Favorites
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem data-testid="menu-profile">Profile</DropdownMenuItem>
-                    <DropdownMenuItem data-testid="menu-logout">Logout</DropdownMenuItem>
+                    <DropdownMenuItem 
+                      data-testid="menu-profile"
+                      onClick={() => window.location.href = '/profile'}
+                    >
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      data-testid="menu-logout"
+                      onClick={handleLogout}
+                    >
+                      Logout
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </>
@@ -96,14 +141,14 @@ export default function Navbar() {
                 <Button 
                   variant="ghost"
                   data-testid="button-login"
-                  onClick={() => console.log("Login clicked")}
+                  onClick={handleLogin}
                 >
                   Login
                 </Button>
                 <Button 
                   variant="default"
                   data-testid="button-signup"
-                  onClick={() => console.log("Sign up clicked")}
+                  onClick={handleLogin}
                 >
                   Sign Up
                 </Button>
