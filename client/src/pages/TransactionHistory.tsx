@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearch, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { CheckCircle2, XCircle, AlertTriangle, Star, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
+import { RespondToCancellationModal } from "@/components/RespondToCancellationModal";
 
 interface TransactionHistoryItem {
   eventType: string;
@@ -37,9 +39,14 @@ interface TransactionHistoryItem {
   };
   reviews: any[];
   cancellationComment?: {
+    id: string;
     comment: string;
     cancelledRole: string;
     cancellationTiming?: string;
+    cancellationReasonCategory?: string;
+    responseText?: string;
+    responseByUserId?: string;
+    responseAt?: string;
   };
 }
 
@@ -48,6 +55,16 @@ export default function TransactionHistory() {
   const userId = params.userId;
   const searchString = useSearch();
   const [, setLocation] = useLocation();
+  
+  // Response modal state
+  const [respondModalOpen, setRespondModalOpen] = useState(false);
+  const [selectedComment, setSelectedComment] = useState<{
+    id: string;
+    comment: string;
+    listingTitle: string;
+    listingPrice: string;
+    commenterName: string;
+  } | null>(null);
 
   // Parse query params
   const searchParams = new URLSearchParams(searchString);
@@ -317,18 +334,68 @@ export default function TransactionHistory() {
 
                   {/* Cancellation Comment */}
                   {transaction.cancellationComment && (
-                    <div className="border-t pt-3 mt-3" data-testid={`cancellation-comment-${transaction.listing.id}`}>
-                      <div className="flex items-center gap-1 mb-1">
-                        <MessageCircle className="w-4 h-4" />
-                        <p className="text-sm font-medium">Cancellation Comment:</p>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        "{transaction.cancellationComment.comment}"
-                      </p>
-                      {transaction.cancellationComment.cancellationTiming && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {transaction.cancellationComment.cancellationTiming}
+                    <div className="border-t pt-3 mt-3 space-y-3" data-testid={`cancellation-comment-${transaction.listing.id}`}>
+                      {/* Original Comment */}
+                      <div>
+                        <div className="flex items-center gap-1 mb-1">
+                          <MessageCircle className="w-4 h-4" />
+                          <p className="text-sm font-medium">
+                            {transaction.otherParty.firstName}'s Cancellation Comment:
+                          </p>
+                        </div>
+                        {transaction.cancellationComment.cancellationReasonCategory && (
+                          <p className="text-xs text-muted-foreground mb-1">
+                            Reason: {transaction.cancellationComment.cancellationReasonCategory.replace(/_/g, ' ')}
+                          </p>
+                        )}
+                        <p className="text-sm text-muted-foreground">
+                          "{transaction.cancellationComment.comment}"
                         </p>
+                        {transaction.cancellationComment.cancellationTiming && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {transaction.cancellationComment.cancellationTiming}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Response Section */}
+                      {transaction.cancellationComment.responseText ? (
+                        <div className="pl-4 border-l-2 border-muted">
+                          <div className="flex items-center gap-1 mb-1">
+                            <MessageCircle className="w-4 h-4" />
+                            <p className="text-sm font-medium">Your Response:</p>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            "{transaction.cancellationComment.responseText}"
+                          </p>
+                          {transaction.cancellationComment.responseAt && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Posted: {format(new Date(transaction.cancellationComment.responseAt), "MMM d, yyyy 'at' h:mm a")}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        // Show respond button if user is the other party and hasn't responded
+                        transaction.cancellationComment.cancelledRole !== transaction.role && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedComment({
+                                id: transaction.cancellationComment!.id,
+                                comment: transaction.cancellationComment!.comment,
+                                listingTitle: transaction.listing.title,
+                                listingPrice: transaction.listing.price,
+                                commenterName: `${transaction.otherParty.firstName} ${transaction.otherParty.lastName}`,
+                              });
+                              setRespondModalOpen(true);
+                            }}
+                            data-testid={`button-respond-cancellation-${transaction.listing.id}`}
+                          >
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            Respond to Comment
+                          </Button>
+                        )
                       )}
                     </div>
                   )}
@@ -349,6 +416,23 @@ export default function TransactionHistory() {
           </div>
         )}
       </div>
+
+      {/* Respond to Cancellation Modal */}
+      {selectedComment && (
+        <RespondToCancellationModal
+          open={respondModalOpen}
+          onOpenChange={setRespondModalOpen}
+          commentId={selectedComment.id}
+          listingTitle={selectedComment.listingTitle}
+          listingPrice={selectedComment.listingPrice}
+          originalComment={selectedComment.comment}
+          originalCommenterName={selectedComment.commenterName}
+          onSuccess={() => {
+            // Refetch transactions after successful response
+            setSelectedComment(null);
+          }}
+        />
+      )}
     </div>
   );
 }
