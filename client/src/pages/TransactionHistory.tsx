@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle2, XCircle, AlertTriangle, Star } from "lucide-react";
+import { CheckCircle2, XCircle, AlertTriangle, Star, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 
 interface TransactionHistoryItem {
@@ -54,8 +54,14 @@ export default function TransactionHistory() {
   const statusFilter = searchParams.get("status") || "all";
   const roleFilter = searchParams.get("role") || "all";
 
+  // Build query params for API
+  const queryParams = new URLSearchParams();
+  if (statusFilter !== "all") queryParams.set("status", statusFilter);
+  if (roleFilter !== "all") queryParams.set("role", roleFilter);
+  const queryString = queryParams.toString();
+
   const { data: transactions, isLoading } = useQuery<TransactionHistoryItem[]>({
-    queryKey: ["/api/transactions/user", userId, "history", { status: statusFilter !== "all" ? statusFilter : undefined, role: roleFilter !== "all" ? roleFilter : undefined }],
+    queryKey: [`/api/transactions/user/${userId}/history${queryString ? `?${queryString}` : ""}`],
   });
 
   const updateFilter = (key: string, value: string) => {
@@ -312,7 +318,10 @@ export default function TransactionHistory() {
                   {/* Cancellation Comment */}
                   {transaction.cancellationComment && (
                     <div className="border-t pt-3 mt-3" data-testid={`cancellation-comment-${transaction.listing.id}`}>
-                      <p className="text-sm font-medium mb-1">💬 Cancellation Comment:</p>
+                      <div className="flex items-center gap-1 mb-1">
+                        <MessageCircle className="w-4 h-4" />
+                        <p className="text-sm font-medium">Cancellation Comment:</p>
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         "{transaction.cancellationComment.comment}"
                       </p>
