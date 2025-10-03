@@ -8,9 +8,10 @@ const categories = ["Electronics", "Furniture", "Clothing", "Vehicles", "Service
 
 interface HeroProps {
   onSearch: (query: string) => void;
+  onCategorySelect: (category: string) => void;
 }
 
-export default function Hero({ onSearch }: HeroProps) {
+export default function Hero({ onSearch, onCategorySelect }: HeroProps) {
   const [searchInput, setSearchInput] = useState("");
   return (
     <div className="relative h-[70vh] min-h-[500px] flex items-center justify-center overflow-hidden">
@@ -59,7 +60,7 @@ export default function Hero({ onSearch }: HeroProps) {
               size="sm"
               className="bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20"
               data-testid={`button-category-${category.toLowerCase()}`}
-              onClick={() => console.log(`Category ${category} clicked`)}
+              onClick={() => onCategorySelect(category.toLowerCase())}
             >
               {category}
             </Button>

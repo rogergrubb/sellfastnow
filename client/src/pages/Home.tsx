@@ -95,7 +95,7 @@ export default function Home() {
 
   return (
     <div>
-      <Hero onSearch={setSearchQuery} />
+      <Hero onSearch={setSearchQuery} onCategorySelect={handleCategorySelect} />
       <CategoryFilters 
         selectedCategory={selectedCategory}
         onCategorySelect={handleCategorySelect}
