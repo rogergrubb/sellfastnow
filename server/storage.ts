@@ -25,10 +25,18 @@ export interface SearchFilters {
   sortBy?: 'newest' | 'price-low' | 'price-high';
 }
 
+export interface DashboardStats {
+  totalActive: number;
+  totalViews: number;
+  totalMessages: number;
+  totalSold: number;
+}
+
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUserProfile(userId: string, data: Partial<User>): Promise<User>;
   updateUserStripeInfo(
     userId: string,
     customerId: string,
@@ -41,9 +49,11 @@ export interface IStorage {
   getListingWithSeller(id: string): Promise<{ listing: Listing; seller: User } | undefined>;
   getSimilarListings(listingId: string, limit?: number): Promise<Listing[]>;
   getUserListings(userId: string): Promise<Listing[]>;
+  getUserListingsStats(userId: string): Promise<DashboardStats>;
   getAllListings(): Promise<Listing[]>;
   getListingsByCategory(category: string): Promise<Listing[]>;
   updateListing(id: string, listing: Partial<InsertListing>): Promise<Listing>;
+  updateListingStatus(id: string, status: string): Promise<Listing>;
   deleteListing(id: string): Promise<void>;
   searchListings(query: string): Promise<Listing[]>;
   advancedSearch(filters: SearchFilters): Promise<Listing[]>;
@@ -80,6 +90,18 @@ export class DatabaseStorage implements IStorage {
           updatedAt: new Date(),
         },
       })
+      .returning();
+    return user;
+  }
+
+  async updateUserProfile(userId: string, data: Partial<User>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
       .returning();
     return user;
   }
@@ -158,6 +180,32 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(listings.createdAt));
   }
 
+  async getUserListingsStats(userId: string): Promise<DashboardStats> {
+    const userListings = await this.getUserListings(userId);
+    
+    const totalActive = userListings.filter(l => l.status === 'active').length;
+    const totalSold = userListings.filter(l => l.status === 'sold').length;
+    
+    const listingIds = userListings.map(l => l.id);
+    let totalMessages = 0;
+    
+    if (listingIds.length > 0) {
+      const messagesResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(messages)
+        .where(sql`${messages.listingId} IN (${sql.join(listingIds.map(id => sql`${id}`), sql`, `)})`);
+      
+      totalMessages = Number(messagesResult[0]?.count || 0);
+    }
+    
+    return {
+      totalActive,
+      totalViews: 0,
+      totalMessages,
+      totalSold,
+    };
+  }
+
   async getAllListings(): Promise<Listing[]> {
     return await db
       .select()
@@ -184,6 +232,18 @@ export class DatabaseStorage implements IStorage {
       .update(listings)
       .set({
         ...listingData,
+        updatedAt: new Date(),
+      })
+      .where(eq(listings.id, id))
+      .returning();
+    return listing;
+  }
+
+  async updateListingStatus(id: string, status: string): Promise<Listing> {
+    const [listing] = await db
+      .update(listings)
+      .set({
+        status,
         updatedAt: new Date(),
       })
       .where(eq(listings.id, id))

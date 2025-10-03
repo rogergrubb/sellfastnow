@@ -194,6 +194,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's own listings
+  app.get("/api/listings/mine", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const listings = await storage.getUserListings(userId);
+      res.json(listings);
+    } catch (error) {
+      console.error("Error fetching user listings:", error);
+      res.status(500).json({ message: "Failed to fetch user listings" });
+    }
+  });
+
+  // Get dashboard stats
+  app.get("/api/listings/stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const stats = await storage.getUserListingsStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // Update listing status
+  app.put("/api/listings/:id/status", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const userId = req.user.claims.sub;
+      
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+
+      const listing = await storage.getListing(id);
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+      
+      if (listing.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized to update this listing" });
+      }
+
+      const updated = await storage.updateListingStatus(id, status);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating listing status:", error);
+      res.status(500).json({ message: "Failed to update listing status" });
+    }
+  });
+
+  // ======================
+  // User Profile Routes
+  // ======================
+
+  // Update user profile
+  app.put("/api/users/profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { firstName, lastName, profileImageUrl } = req.body;
+      
+      const updateData: any = {};
+      if (firstName !== undefined) updateData.firstName = firstName;
+      if (lastName !== undefined) updateData.lastName = lastName;
+      if (profileImageUrl !== undefined) updateData.profileImageUrl = profileImageUrl;
+
+      const updated = await storage.updateUserProfile(userId, updateData);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
   // ======================
   // Image Upload Routes (Object Storage)
   // ======================
