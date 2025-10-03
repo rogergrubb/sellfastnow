@@ -9,6 +9,7 @@ import PostAd from "./pages/PostAd";
 import ListingDetail from "./pages/ListingDetail";
 import Dashboard from "./pages/Dashboard";
 import UserProfile from "./pages/UserProfile";
+import TransactionHistory from "./pages/TransactionHistory";
 import Navbar from "@/components/Navbar";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/listings/:id" component={ListingDetail} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/users/:userId" component={UserProfile} />
+      <Route path="/users/:userId/history" component={TransactionHistory} />
       <Route component={NotFound} />
     </Switch>
   );
