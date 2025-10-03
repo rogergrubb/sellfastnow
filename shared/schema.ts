@@ -213,6 +213,7 @@ export const cancellationComments = pgTable("cancellation_comments", {
   // Response from other party
   responseByUserId: varchar("response_by_user_id").references(() => users.id),
   responseText: text("response_text"),
+  responseIsPublic: boolean("response_is_public").default(true),
   responseAt: timestamp("response_at"),
   
   // Community feedback
@@ -231,6 +232,7 @@ export const insertCancellationCommentSchema = createInsertSchema(cancellationCo
   notHelpfulCount: true,
   responseByUserId: true,
   responseText: true,
+  responseIsPublic: true,
   responseAt: true,
 });
 

@@ -1,0 +1,261 @@
+Allow the other party to respond to cancellation comments:
+
+REQUIREMENTS:
+
+1. ADD "RESPOND" BUTTON TO CANCELLATION COMMENTS
+
+In transaction history, when viewing a cancellation where YOU are the other party:
+
+┌─────────────────────────────────────────────┐
+│ ❌ CANCELLED BY BUYER - September 28, 2024 │
+│                                             │
+│ 💻 MacBook Pro 16" - $2,200                │
+│ Buyer: John Davis ⭐ 3.6/5.0               │
+│ Role: Seller (you)                          │
+│ Status: Cancelled 2 hours before meetup     │
+│                                             │
+│ 💬 John's Cancellation Comment:             │
+│ Reason: Personal emergency                  │
+│ "I'm really sorry for the late             │
+│  cancellation. My wife surprised me with   │
+│  the same laptop as an early birthday      │
+│  gift. I tried to cancel earlier but just  │
+│  found out an hour ago. Again, my          │
+│  apologies for any inconvenience."          │
+│ Posted: Sep 28, 2024 at 2:15 PM             │
+│                                             │
+│ [Respond to Comment]  ← ADD THIS BUTTON     │
+│ (Only visible if you haven't responded yet) │
+└─────────────────────────────────────────────┘
+
+2. RESPONSE MODAL
+
+When "Respond to Comment" clicked, show modal:
+
+┌─────────────────────────────────────────────┐
+│ Respond to Cancellation Comment             │
+│ ─────────────────────────────────────────── │
+│                                             │
+│ Transaction: MacBook Pro 16" - $2,200       │
+│                                             │
+│ John's comment:                             │
+│ "I'm really sorry for the late             │
+│  cancellation. My wife just surprised me   │
+│  with the same laptop as an early          │
+│  birthday gift..."                          │
+│                                             │
+│ ─────────────────────────────────────────── │
+│                                             │
+│ Your response:                              │
+│                                             │
+│ ┌───────────────────────────────────────┐   │
+│ │ Thanks for explaining! I completely   │   │
+│ │ understand - family comes first.      │   │
+│ │ Congratulations on the gift!          │   │
+│ │                                       │   │
+│ │                                       │   │
+│ └───────────────────────────────────────┘   │
+│ 98 / 500 characters                         │
+│                                             │
+│ ☑️ Make this response public                │
+│    (Recommended - shows you're professional)│
+│                                             │
+│ Note: Your response will be visible on both │
+│ your profile and John's profile. Being      │
+│ understanding builds your reputation.       │
+│                                             │
+│ Tips for good responses:                    │
+│ • Be professional and courteous             │
+│ • Acknowledge their explanation             │
+│ • Keep it brief                             │
+│ • No personal attacks                       │
+│                                             │
+│    [Post Response] [Cancel]                 │
+└─────────────────────────────────────────────┘
+
+3. API ENDPOINT
+
+POST /api/cancellations/:commentId/response
+
+Request body:
+{
+  responseText: "Thanks for explaining! I understand...",
+  isPublic: true
+}
+
+Backend logic:
+1. Verify user is the OTHER party in the transaction
+   - Get cancellation comment
+   - Get transaction 
+   - If comment.cancelled_by = buyer, verify current user = seller
+   - If comment.cancelled_by = seller, verify current user = buyer
+2. Check user hasn't already responded (one response per person)
+3. Update cancellation_comments table:
+   - response_by_user_id = current user
+   - response_text = provided text
+   - response_at = NOW()
+4. Send email notification to original commenter
+5. Return success
+
+Security checks:
+- 403 if user is not the other party
+- 403 if user already responded
+- 403 if transaction doesn't exist
+- 400 if response text empty or > 500 chars
+
+4. DISPLAY BOTH COMMENT AND RESPONSE
+
+After response posted, display both in transaction history:
+
+┌─────────────────────────────────────────────┐
+│ ❌ CANCELLED BY BUYER - September 28, 2024 │
+│                                             │
+│ 💻 MacBook Pro 16" - $2,200                │
+│ Buyer: John Davis ⭐ 3.6/5.0               │
+│ Seller: David Chen ⭐ 4.9/5.0              │
+│ Role: Seller (viewing as David)             │
+│ Status: Cancelled 2 hours before meetup     │
+│                                             │
+│ 💬 John's Cancellation Comment:             │
+│ Reason: Personal emergency                  │
+│ "I'm really sorry for the late             │
+│  cancellation. My wife surprised me with   │
+│  the same laptop as an early birthday      │
+│  gift. I tried to cancel earlier but just  │
+│  found out an hour ago. Again, my          │
+│  apologies for any inconvenience."          │
+│ Posted: Sep 28, 2024 at 2:15 PM             │
+│                                             │
+│ 💬 David's Response:                        │
+│ "Thanks for explaining! Would have         │
+│  appreciated more notice, but I            │
+│  understand. Congratulations on the gift!" │
+│ Posted: Sep 28, 2024 at 3:30 PM             │
+│                                             │
+│ 👍 Helpful (23)  👎 (1)  [Report]           │
+│ ↑ Community can vote if exchange was       │
+│   professional/reasonable                   │
+└─────────────────────────────────────────────┘
+
+5. DISPLAY ON PUBLIC PROFILES
+
+When viewing someone else's profile, show both sides:
+
+On John's profile (the canceller):
+Shows his comment AND the seller's response
+
+On David's profile (the cancelled party):
+Shows the buyer's comment AND his response
+
+Both appear on both profiles for transparency.
+
+6. EMAIL NOTIFICATION
+
+When someone responds to your cancellation comment:
+
+Subject: David responded to your cancellation comment
+
+Hi John,
+
+David Chen has responded to your cancellation comment on:
+MacBook Pro 16" - $2,200
+
+YOUR COMMENT:
+"I'm really sorry for the late cancellation. My wife 
+just surprised me with the same laptop as an early 
+birthday gift..."
+
+DAVID'S RESPONSE:
+"Thanks for explaining! Would have appreciated more 
+notice, but I understand. Congratulations on the gift!"
+
+This response is now visible on both of your public 
+profiles.
+
+[View Full Conversation]
+
+- SellFast.now Team
+
+7. EDIT RESTRICTIONS
+
+Once posted:
+- Responses cannot be edited (only deleted by admin)
+- Only ONE response per person per cancellation
+- After 48 hours, responses are permanent
+
+If user wants to "respond again":
+- Show message: "You've already responded to this cancellation"
+- Display their existing response
+
+8. HELPFUL VOTING (Optional for this step)
+
+Add voting to comment + response thread:
+- Users can vote if the exchange was professional
+- Thumbs up / Thumbs down
+- Shows community sentiment
+- (Can implement in later polish phase if time)
+
+TESTING:
+
+Test Case 1: Respond to cancellation comment
+1. User A cancels with comment
+2. User B (other party) sees cancellation in their history
+3. User B clicks "Respond to Comment"
+4. User B writes: "Thanks for explaining!"
+5. Submit response
+6. Verify:
+   - Response saved in database
+   - Response visible in transaction history
+   - Email sent to User A
+   - Button changes to "Edit Response" or disappears
+
+Test Case 2: Security - wrong user tries to respond
+1. User C (not involved in transaction) tries to respond
+2. Should get 403 Forbidden error
+3. No response saved
+
+Test Case 3: Can't respond twice
+1. User B responds to comment
+2. User B tries to respond again
+3. Should see message: "You already responded"
+4. Can view their existing response
+
+Test Case 4: View on public profile
+1. Navigate to User A's profile (the canceller)
+2. View transaction history
+3. See cancellation with their comment
+4. See User B's response below
+5. Both are public
+
+Test Case 5: Private comment handling
+1. User A cancels with private comment
+2. User B can still respond
+3. Both comment and response remain private
+4. Only involved parties see them
+
+Test Case 6: Email notification
+1. User B responds
+2. User A receives email
+3. Email contains both comment and response
+4. "View Full Conversation" link works
+
+Test Case 7: Empty response
+1. Try to submit empty response
+2. Should show validation error
+3. "Response cannot be empty"
+
+Test Case 8: Character limit
+1. Write 501 character response
+2. Should show error
+3. "Response must be 500 characters or less"
+4. Character counter turns red
+
+DELIVERABLES:
+1. "Respond" button on cancellation comments
+2. Response modal with character counter
+3. API endpoint with security checks
+4. Display of comment + response together
+5. Email notification system
+6. One-response-per-user enforcement
+7. Public/private handling
+8. All test cases passing
