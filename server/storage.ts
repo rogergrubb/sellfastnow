@@ -739,21 +739,96 @@ export class DatabaseStorage implements IStorage {
 
   // Transaction history operations
   async getUserTransactionHistory(userId: string, role?: string, status?: string, sort?: string): Promise<any[]> {
-    // For now, return listings as transactions
-    // This would be replaced with actual transaction data
-    const conditions = [eq(listings.userId, userId)];
-    
-    if (status) {
-      conditions.push(eq(listings.status, status));
+    // Get all transaction events for this user
+    const events = await db
+      .select({
+        event: transactionEvents,
+        listing: listings,
+        seller: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+        },
+      })
+      .from(transactionEvents)
+      .innerJoin(listings, eq(transactionEvents.listingId, listings.id))
+      .innerJoin(users, eq(listings.userId, users.id))
+      .where(
+        or(
+          eq(transactionEvents.userId, userId), // user was buyer
+          eq(listings.userId, userId) // user was seller
+        )
+      )
+      .orderBy(desc(transactionEvents.createdAt));
+
+    // Enrich with buyer info, reviews, and cancellation comments
+    const enrichedTransactions = await Promise.all(
+      events.map(async (item) => {
+        const { event, listing, seller } = item;
+        const isSeller = listing.userId === userId;
+        const buyerId = event.userId;
+
+        // Get buyer info
+        const [buyer] = await db
+          .select({
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            profileImageUrl: users.profileImageUrl,
+          })
+          .from(users)
+          .where(eq(users.id, buyerId));
+
+        // Get statistics for the other party
+        const otherPartyId = isSeller ? buyerId : seller.id;
+        const [otherPartyStats] = await db
+          .select()
+          .from(userStatistics)
+          .where(eq(userStatistics.userId, otherPartyId));
+
+        // Get reviews for this listing
+        const listingReviews = await db
+          .select()
+          .from(reviews)
+          .where(eq(reviews.listingId, listing.id));
+
+        // Get cancellation comment if cancelled
+        const cancellationComment =
+          event.eventType === "cancelled"
+            ? await db
+                .select()
+                .from(cancellationComments)
+                .where(eq(cancellationComments.listingId, listing.id))
+                .limit(1)
+            : [];
+
+        return {
+          ...event,
+          listing,
+          seller,
+          buyer,
+          role: isSeller ? "seller" : "buyer",
+          otherParty: isSeller ? buyer : seller,
+          otherPartyStats,
+          reviews: listingReviews,
+          cancellationComment: cancellationComment[0] || null,
+        };
+      })
+    );
+
+    // Apply filters
+    let filtered = enrichedTransactions;
+
+    if (role) {
+      filtered = filtered.filter((t) => t.role === role);
     }
 
-    const orderByClause = sort === 'recent' ? desc(listings.createdAt) : desc(listings.createdAt);
+    if (status) {
+      filtered = filtered.filter((t) => t.eventType === status);
+    }
 
-    return await db
-      .select()
-      .from(listings)
-      .where(and(...conditions))
-      .orderBy(orderByClause);
+    return filtered;
   }
 
   async getTransactionDetails(listingId: string, currentUserId?: string | null): Promise<any> {

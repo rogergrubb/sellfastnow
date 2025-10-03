@@ -1,0 +1,142 @@
+Build the complete transaction history page:
+
+REQUIREMENTS:
+
+1. CREATE NEW PAGE: /profile/history (or /profile/[userId]/history)
+
+2. PAGE LAYOUT:
+
+Header Section:
+┌─────────────────────────────────────────────┐
+│ Transaction History                         │
+│                                             │
+│ Showing 15 transactions                     │
+│ ✅ 12 completed  ❌ 2 cancelled  ⚠️ 1 no-show │
+└─────────────────────────────────────────────┘
+
+Filter Bar:
+┌─────────────────────────────────────────────┐
+│ Status: [All ▼] [Completed] [Cancelled]     │
+│ Role: [All ▼] [As Buyer] [As Seller]       │
+│ Date: [All Time ▼] [Last 90 days] [Custom] │
+└─────────────────────────────────────────────┘
+
+3. TRANSACTION LIST (Descending by date):
+
+Each transaction shows:
+┌─────────────────────────────────────────────┐
+│ ✅ COMPLETED - October 1, 2024             │
+│                                             │
+│ 📱 iPhone 15 Pro - $800                    │
+│ Seller: Sarah Martinez ⭐ 4.8/5.0          │
+│ [View Sarah's reviews]                      │
+│ Role: Buyer                                 │
+│                                             │
+│ ⭐ Your Review: ⭐⭐⭐⭐⭐ "Great seller!"    │
+│ ⭐ Sarah's Review: ⭐⭐⭐⭐⭐ "Great buyer!"  │
+│                                             │
+│ [View Transaction Details]                  │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ ❌ CANCELLED BY BUYER - September 28, 2024 │
+│                                             │
+│ 💻 MacBook Pro 16" - $2,200                │
+│ Seller: David Chen ⭐ 4.9/5.0              │
+│ [View David's reviews]                      │
+│ Role: Buyer                                 │
+│ Status: Cancelled 2 hours before meetup     │
+│                                             │
+│ 💬 Cancellation Comment:                    │
+│ (Will be added in Step 3)                   │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ ⚠️ NO-SHOW BY BUYER - September 15, 2024   │
+│                                             │
+│ 🎧 AirPods Max - $450                      │
+│ Seller: Maria Rodriguez ⭐ 4.9/5.0         │
+│ [View Maria's reviews]                      │
+│ Role: Buyer                                 │
+│ Status: Did not check in at scheduled time  │
+│                                             │
+│ ⭐⭐ Maria's Review: "Buyer no-showed"      │
+└─────────────────────────────────────────────┘
+
+4. DATABASE QUERY:
+
+API Endpoint: GET /api/transactions/user/:userId/history
+
+Query params:
+- ?status=all|completed|cancelled|noshow
+- &role=all|buyer|seller
+- &date=all|90days|12months
+
+Return from offers table joined with:
+- listings (for item details)
+- users (for other party details)
+- user_statistics (for ratings)
+- reviews (for review text if exists)
+
+Order by: created_at DESC
+
+5. STATUS BADGES:
+
+Map offer.status to display:
+- "completed" → ✅ COMPLETED (green)
+- "buyer_cancelled" → ❌ CANCELLED BY BUYER (red)
+- "seller_cancelled" → ❌ CANCELLED BY SELLER (red)
+- "buyer_noshow" → ⚠️ NO-SHOW BY BUYER (orange)
+- "seller_noshow" → ⚠️ NO-SHOW BY SELLER (orange)
+- "mutual_cancel" → ↔️ MUTUALLY CANCELLED (gray)
+
+6. FILTERING LOGIC:
+
+When user selects filter:
+- Update URL query params
+- Re-fetch from API with filters
+- Update "Showing X transactions" count
+- Maintain filter state on page refresh
+
+7. MOBILE RESPONSIVE:
+
+On mobile, stack information vertically:
+- Date on top
+- Item + image
+- Other party + rating
+- Status badge
+- Reviews (if exist)
+- Expandable details
+
+TESTING:
+
+Test Case 1: View all transactions
+- Navigate to /profile/history
+- Should see all transactions in chronological order
+- Verify counts match: "3 completed, 1 cancelled, 1 no-show"
+
+Test Case 2: Filter by completed only
+- Click "Completed" filter
+- Should only show transactions with ✅ status
+- Count should update: "Showing 3 transactions"
+
+Test Case 3: Filter by role (as buyer)
+- Select "As Buyer" 
+- Should only show transactions where user was buyer
+- Verify correct
+
+Test Case 4: Click "View reviews" link
+- Should go to other party's review page
+- Should show their complete reviews
+
+Test Case 5: Empty state
+- New user with no transactions
+- Should show: "No transactions yet. Start browsing!"
+
+DELIVERABLES:
+1. Transaction history page UI
+2. Filter functionality working
+3. Correct status badges
+4. Links to reviews functional
+5. Mobile responsive
+6. All test cases passing
