@@ -376,32 +376,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ======================
-  // Stripe Payment Routes (Optional - for premium features)
+  // Stripe Payment Routes
   // ======================
 
-  // Note: Stripe routes will need STRIPE_SECRET_KEY to be set
-  // Uncomment and configure when ready to use
-
-  /*
   if (process.env.STRIPE_SECRET_KEY) {
+    const { Stripe } = await import("stripe");
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2023-10-16",
+      apiVersion: "2025-09-30.clover",
     });
 
+    // Create payment intent for listing promotion or premium features
     app.post("/api/create-payment-intent", isAuthenticated, async (req, res) => {
       try {
-        const { amount } = req.body;
+        const { amount, description } = req.body;
+        
+        if (!amount || amount <= 0) {
+          return res.status(400).json({ message: "Invalid amount" });
+        }
+
         const paymentIntent = await stripe.paymentIntents.create({
-          amount: Math.round(amount * 100),
+          amount: Math.round(amount * 100), // Convert to cents
           currency: "usd",
+          description: description || "SellFast.Now payment",
+          automatic_payment_methods: {
+            enabled: true,
+          },
         });
+
         res.json({ clientSecret: paymentIntent.client_secret });
       } catch (error: any) {
+        console.error("Stripe payment intent error:", error);
         res.status(500).json({ message: "Error creating payment intent: " + error.message });
       }
     });
+
+    // Get payment status
+    app.get("/api/payment-status/:paymentIntentId", isAuthenticated, async (req, res) => {
+      try {
+        const { paymentIntentId } = req.params;
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        res.json({ status: paymentIntent.status });
+      } catch (error: any) {
+        console.error("Error retrieving payment status:", error);
+        res.status(500).json({ message: "Error retrieving payment status: " + error.message });
+      }
+    });
   }
-  */
 
   const httpServer = createServer(app);
   return httpServer;
