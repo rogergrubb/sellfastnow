@@ -15,6 +15,16 @@ import {
 import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
 
+export interface SearchFilters {
+  query?: string;
+  category?: string;
+  condition?: string;
+  priceMin?: number;
+  priceMax?: number;
+  location?: string;
+  sortBy?: 'newest' | 'price-low' | 'price-high';
+}
+
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
@@ -34,6 +44,7 @@ export interface IStorage {
   updateListing(id: string, listing: Partial<InsertListing>): Promise<Listing>;
   deleteListing(id: string): Promise<void>;
   searchListings(query: string): Promise<Listing[]>;
+  advancedSearch(filters: SearchFilters): Promise<Listing[]>;
 
   // Message operations
   createMessage(message: InsertMessage): Promise<Message>;
@@ -163,6 +174,67 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(listings.createdAt));
+  }
+
+  async advancedSearch(filters: SearchFilters): Promise<Listing[]> {
+    const conditions = [eq(listings.status, "active")];
+
+    // Text search in title and description
+    if (filters.query) {
+      conditions.push(
+        or(
+          sql`${listings.title} ILIKE ${`%${filters.query}%`}`,
+          sql`${listings.description} ILIKE ${`%${filters.query}%`}`
+        )!
+      );
+    }
+
+    // Category filter
+    if (filters.category) {
+      conditions.push(eq(listings.category, filters.category));
+    }
+
+    // Condition filter
+    if (filters.condition) {
+      conditions.push(eq(listings.condition, filters.condition));
+    }
+
+    // Price range filter
+    if (filters.priceMin !== undefined) {
+      conditions.push(sql`${listings.price}::numeric >= ${filters.priceMin}`);
+    }
+    if (filters.priceMax !== undefined) {
+      conditions.push(sql`${listings.price}::numeric <= ${filters.priceMax}`);
+    }
+
+    // Location filter (case-insensitive partial match)
+    if (filters.location) {
+      conditions.push(
+        sql`${listings.location} ILIKE ${`%${filters.location}%`}`
+      );
+    }
+
+    // Build query
+    let query = db
+      .select()
+      .from(listings)
+      .where(and(...conditions));
+
+    // Apply sorting
+    switch (filters.sortBy) {
+      case 'price-low':
+        query = query.orderBy(sql`${listings.price}::numeric ASC`);
+        break;
+      case 'price-high':
+        query = query.orderBy(sql`${listings.price}::numeric DESC`);
+        break;
+      case 'newest':
+      default:
+        query = query.orderBy(desc(listings.createdAt));
+        break;
+    }
+
+    return await query;
   }
 
   // Message operations

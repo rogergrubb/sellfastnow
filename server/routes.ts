@@ -55,14 +55,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Search listings
+  // Advanced search with filters
   app.get("/api/listings/search", async (req, res) => {
     try {
-      const query = req.query.q as string;
-      if (!query) {
-        return res.status(400).json({ message: "Search query required" });
-      }
-      const listings = await storage.searchListings(query);
+      const filters = {
+        query: req.query.q as string | undefined,
+        category: req.query.category as string | undefined,
+        condition: req.query.condition as string | undefined,
+        priceMin: req.query.priceMin ? parseFloat(req.query.priceMin as string) : undefined,
+        priceMax: req.query.priceMax ? parseFloat(req.query.priceMax as string) : undefined,
+        location: req.query.location as string | undefined,
+        sortBy: req.query.sortBy as 'newest' | 'price-low' | 'price-high' | undefined,
+      };
+
+      const listings = await storage.advancedSearch(filters);
       res.json(listings);
     } catch (error) {
       console.error("Error searching listings:", error);
