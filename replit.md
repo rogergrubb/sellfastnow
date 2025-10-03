@@ -8,6 +8,16 @@ SellFast.Now is a local classified ads marketplace platform that enables users t
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+**October 3, 2025 - Review System Type Safety & Bug Fixes**
+- Created shared `ReviewWithMetadata` type in schema for type-safe reviewer metadata across frontend/backend
+- Fixed backend `getUserReviews()` to return properly typed `ReviewWithMetadata[]` with joined reviewer info
+- Updated UserProfile and ReviewCard components to use `ReviewWithMetadata` type consistently
+- Fixed ReviewCard optimistic update logic to preserve reviewer metadata during vote mutations
+- Fixed critical API bug in LeaveReviewModal where fetch parameters were in wrong order (method/url swapped)
+- All review interactions now maintain type safety and preserve reviewer name/avatar throughout optimistic updates
+
 ## System Architecture
 
 ### Frontend Architecture

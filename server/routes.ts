@@ -737,8 +737,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cancellationReasonCategory,
       });
 
-      const comment = await storage.createCancellationComment(validatedData);
-      res.json(comment);
+      const result = await storage.createCancellationComment(validatedData);
+      res.json(result);
     } catch (error: any) {
       console.error("Error creating cancellation comment:", error);
       res.status(400).json({ message: error.message || "Failed to create cancellation comment" });

@@ -19,6 +19,7 @@ import {
   type InsertFavorite,
   type Review,
   type InsertReview,
+  type ReviewWithMetadata,
   type CancellationComment,
   type InsertCancellationComment,
   type UserStatistics,
@@ -464,7 +465,7 @@ export class DatabaseStorage implements IStorage {
     return review;
   }
 
-  async getUserReviews(userId: string, role?: string, sort?: string, limit: number = 20): Promise<Review[]> {
+  async getUserReviews(userId: string, role?: string, sort?: string, limit: number = 20): Promise<ReviewWithMetadata[]> {
     const conditions = [eq(reviews.reviewedUserId, userId)];
     
     if (role) {
@@ -476,12 +477,30 @@ export class DatabaseStorage implements IStorage {
       sort === 'rating-low' ? reviews.overallRating :
       desc(reviews.createdAt);
 
-    return await db
-      .select()
+    const result = await db
+      .select({
+        review: reviews,
+        reviewer: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+        },
+      })
       .from(reviews)
+      .innerJoin(users, eq(reviews.reviewerId, users.id))
       .where(and(...conditions))
       .orderBy(orderByClause)
       .limit(limit);
+
+    // Transform to include reviewer data in flat structure
+    return result.map((row) => ({
+      ...row.review,
+      reviewerName: row.reviewer.firstName && row.reviewer.lastName
+        ? `${row.reviewer.firstName} ${row.reviewer.lastName}`
+        : row.reviewer.firstName || row.reviewer.lastName || 'Anonymous',
+      reviewerProfileImage: row.reviewer.profileImageUrl || undefined,
+    }));
   }
 
   async respondToReview(reviewId: string, userId: string, responseText: string): Promise<Review> {

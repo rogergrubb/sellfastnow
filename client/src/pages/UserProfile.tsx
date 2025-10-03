@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Star, MapPin, Calendar, Package, TrendingUp, MessageCircle } from "lucide-react";
 import { useState } from "react";
+import { ReviewCard } from "@/components/ReviewCard";
+import type { ReviewWithMetadata } from "@shared/schema";
 
 export default function UserProfile() {
   const { userId } = useParams<{ userId: string }>();
@@ -21,7 +23,7 @@ export default function UserProfile() {
     queryKey: ["/api/statistics/user", userId],
   });
 
-  const { data: reviews, isLoading: reviewsLoading } = useQuery<any[]>({
+  const { data: reviews, isLoading: reviewsLoading } = useQuery<ReviewWithMetadata[]>({
     queryKey: ["/api/reviews/user", userId],
   });
 
@@ -289,63 +291,11 @@ export default function UserProfile() {
             </Card>
           ) : reviews && reviews.length > 0 ? (
             reviews.map((review) => (
-              <Card key={review.id} data-testid={`card-review-${review.id}`}>
-                <CardContent className="pt-6 space-y-4">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              className={`h-4 w-4 ${
-                                star <= review.overallRating
-                                  ? "fill-primary text-primary"
-                                  : "fill-muted text-muted"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-sm font-medium">{review.overallRating}.0</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(review.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    {review.isVerifiedPurchase && (
-                      <Badge variant="secondary" data-testid={`badge-verified-${review.id}`}>
-                        Verified Purchase
-                      </Badge>
-                    )}
-                  </div>
-
-                  {review.reviewText && (
-                    <p className="text-sm" data-testid={`text-review-${review.id}`}>{review.reviewText}</p>
-                  )}
-
-                  {review.sellerResponse && (
-                    <div className="bg-muted rounded-lg p-4 space-y-2">
-                      <p className="text-sm font-medium">Seller Response:</p>
-                      <p className="text-sm text-muted-foreground" data-testid={`text-response-${review.id}`}>
-                        {review.sellerResponse}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(review.sellerResponseAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-4 text-sm">
-                    <button
-                      className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-                      data-testid={`button-helpful-${review.id}`}
-                    >
-                      <TrendingUp className="h-4 w-4" />
-                      Helpful ({review.helpfulCount || 0})
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
+              <ReviewCard 
+                key={review.id} 
+                review={review}
+                queryKey={["/api/reviews/user", userId]}
+              />
             ))
           ) : (
             <Card>

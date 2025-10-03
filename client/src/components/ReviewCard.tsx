@@ -19,13 +19,10 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Review } from "@shared/schema";
+import { ReviewWithMetadata } from "@shared/schema";
 
 interface ReviewCardProps {
-  review: Review & { 
-    reviewerName?: string;
-    reviewerProfileImage?: string;
-  };
+  review: ReviewWithMetadata;
   currentUserId?: string;
   showReviewer?: boolean;
   onRespond?: (reviewId: string) => void;
@@ -57,7 +54,7 @@ export function ReviewCard({
       // Optimistically update counts
       queryClient.setQueryData(queryKey, (old: any) => {
         if (Array.isArray(old)) {
-          return old.map((r: Review) => {
+          return old.map((r: ReviewWithMetadata) => {
             if (r.id === review.id) {
               const helpfulDelta = voteType === "helpful" && userVote !== "helpful" ? 1 : userVote === "helpful" ? -1 : 0;
               const notHelpfulDelta = voteType === "not_helpful" && userVote !== "not_helpful" ? 1 : userVote === "not_helpful" ? -1 : 0;

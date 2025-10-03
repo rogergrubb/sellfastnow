@@ -185,6 +185,12 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
 export type InsertReview = z.infer<typeof insertReviewSchema>;
 export type Review = typeof reviews.$inferSelect;
 
+// Review with enriched metadata for display
+export type ReviewWithMetadata = Review & {
+  reviewerName?: string;
+  reviewerProfileImage?: string;
+};
+
 // Cancellation Comments table
 export const cancellationComments = pgTable("cancellation_comments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

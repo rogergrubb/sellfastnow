@@ -61,7 +61,7 @@ export function LeaveReviewModal({
 
   const createReviewMutation = useMutation({
     mutationFn: async (reviewData: any) => {
-      return await apiRequest("/api/reviews/create", "POST", reviewData);
+      return await apiRequest("POST", "/api/reviews/create", reviewData);
     },
     onSuccess: () => {
       toast({
