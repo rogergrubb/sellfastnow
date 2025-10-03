@@ -1,7 +1,7 @@
 // Comprehensive API routes for SellFast.Now marketplace
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage, db } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import {
   ObjectStorageService,
@@ -16,7 +16,9 @@ import {
   insertReviewVoteSchema,
   insertCancellationCommentSchema,
   insertCancellationCommentVoteSchema,
+  transactionEvents,
 } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -884,6 +886,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching transaction details:", error);
       res.status(500).json({ message: "Failed to fetch transaction details" });
+    }
+  });
+
+  // Cancel transaction with comment
+  app.post("/api/transactions/:transactionId/cancel", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { transactionId } = req.params;
+      const { cancelledBy, reasonCategory, comment, isPublic, scheduledMeetupTime } = req.body;
+
+      // Import cancellation utils
+      const { calculateCancellationTiming } = await import("./cancellationUtils");
+      
+      // Calculate timing if meetup time provided
+      const cancellationTiming = calculateCancellationTiming(scheduledMeetupTime);
+
+      // Create transaction event for cancellation
+      const eventType = cancelledBy === "buyer" ? "buyer_cancelled" : "seller_cancelled";
+      
+      // Get transaction details to find listing ID
+      const [existingEvent] = await db
+        .select()
+        .from(transactionEvents)
+        .where(eq(transactionEvents.id, transactionId));
+
+      if (!existingEvent) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+
+      const listingId = existingEvent.listingId;
+
+      // Create cancellation event
+      await db.insert(transactionEvents).values({
+        listingId,
+        userId,
+        eventType: "cancelled",
+        eventData: { cancelledBy, timing: cancellationTiming },
+      });
+
+      // Create cancellation comment if provided
+      if (comment && comment.trim()) {
+        const validatedData = insertCancellationCommentSchema.parse({
+          listingId,
+          cancelledByUserId: userId,
+          comment: comment.trim(),
+          cancelledRole: cancelledBy,
+          cancellationTiming,
+          cancellationReasonCategory: reasonCategory,
+          isPublic: isPublic ?? true,
+        });
+
+        await storage.createCancellationComment(validatedData);
+      }
+
+      // TODO: Process deposit refund
+      // TODO: Send email notification
+
+      res.json({ 
+        success: true, 
+        message: "Transaction cancelled successfully",
+        timing: cancellationTiming,
+      });
+    } catch (error: any) {
+      console.error("Error cancelling transaction:", error);
+      res.status(400).json({ message: error.message || "Failed to cancel transaction" });
     }
   });
 
