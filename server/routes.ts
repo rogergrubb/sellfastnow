@@ -811,6 +811,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update statistics on transaction completion (triggers auto-update)
+  app.post("/api/statistics/update-on-completion/:transactionId", isAuthenticated, async (req: any, res) => {
+    try {
+      const { transactionId } = req.params;
+      await storage.updateStatisticsOnCompletion(transactionId);
+      res.json({ success: true, message: "Statistics updated on completion" });
+    } catch (error: any) {
+      console.error("Error updating statistics on completion:", error);
+      res.status(400).json({ message: error.message || "Failed to update statistics" });
+    }
+  });
+
+  // Update statistics on transaction cancellation (triggers auto-update)
+  app.post("/api/statistics/update-on-cancellation/:transactionId", isAuthenticated, async (req: any, res) => {
+    try {
+      const { transactionId } = req.params;
+      await storage.updateStatisticsOnCancellation(transactionId);
+      res.json({ success: true, message: "Statistics updated on cancellation" });
+    } catch (error: any) {
+      console.error("Error updating statistics on cancellation:", error);
+      res.status(400).json({ message: error.message || "Failed to update statistics" });
+    }
+  });
+
+  // Manually recalculate user statistics
+  app.post("/api/statistics/recalculate/:userId", isAuthenticated, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const stats = await storage.recalculateUserStatistics(userId);
+      res.json(stats);
+    } catch (error: any) {
+      console.error("Error recalculating user statistics:", error);
+      res.status(400).json({ message: error.message || "Failed to recalculate statistics" });
+    }
+  });
+
   // ======================
   // Transaction History Routes
   // ======================
