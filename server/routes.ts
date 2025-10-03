@@ -8,7 +8,15 @@ import {
   ObjectNotFoundError,
 } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
-import { insertListingSchema, insertMessageSchema, insertFavoriteSchema } from "@shared/schema";
+import {
+  insertListingSchema,
+  insertMessageSchema,
+  insertFavoriteSchema,
+  insertReviewSchema,
+  insertReviewVoteSchema,
+  insertCancellationCommentSchema,
+  insertCancellationCommentVoteSchema,
+} from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -539,6 +547,224 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
   }
+
+  // ======================
+  // Review Routes
+  // ======================
+
+  // Create a review
+  app.post("/api/reviews/create", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const validatedData = insertReviewSchema.parse({
+        ...req.body,
+        reviewerId: userId,
+      });
+
+      const review = await storage.createReview(validatedData);
+      res.json(review);
+    } catch (error: any) {
+      console.error("Error creating review:", error);
+      res.status(400).json({ message: error.message || "Failed to create review" });
+    }
+  });
+
+  // Get reviews for a user
+  app.get("/api/reviews/user/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const role = req.query.role as string | undefined;
+      const sort = req.query.sort as string | undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+
+      const reviews = await storage.getUserReviews(userId, role, sort, limit);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching user reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  // Respond to a review
+  app.post("/api/reviews/:reviewId/response", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { reviewId } = req.params;
+      const { responseText } = req.body;
+
+      if (!responseText) {
+        return res.status(400).json({ message: "Response text is required" });
+      }
+
+      const review = await storage.respondToReview(reviewId, userId, responseText);
+      res.json(review);
+    } catch (error: any) {
+      console.error("Error responding to review:", error);
+      res.status(400).json({ message: error.message || "Failed to respond to review" });
+    }
+  });
+
+  // Vote on a review
+  app.post("/api/reviews/:reviewId/vote", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { reviewId } = req.params;
+      const { voteType } = req.body;
+
+      if (!voteType || !['helpful', 'not_helpful'].includes(voteType)) {
+        return res.status(400).json({ message: "Valid voteType is required (helpful or not_helpful)" });
+      }
+
+      const result = await storage.voteOnReview(reviewId, userId, voteType);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error voting on review:", error);
+      res.status(400).json({ message: error.message || "Failed to vote on review" });
+    }
+  });
+
+  // Flag a review
+  app.put("/api/reviews/:reviewId/flag", isAuthenticated, async (req: any, res) => {
+    try {
+      const { reviewId } = req.params;
+      const { reason } = req.body;
+
+      if (!reason) {
+        return res.status(400).json({ message: "Flag reason is required" });
+      }
+
+      const review = await storage.flagReview(reviewId, reason);
+      res.json(review);
+    } catch (error: any) {
+      console.error("Error flagging review:", error);
+      res.status(400).json({ message: error.message || "Failed to flag review" });
+    }
+  });
+
+  // ======================
+  // Cancellation Comment Routes
+  // ======================
+
+  // Create cancellation comment
+  app.post("/api/cancellations/:listingId/comment", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { listingId } = req.params;
+      
+      const validatedData = insertCancellationCommentSchema.parse({
+        ...req.body,
+        listingId,
+        cancelledByUserId: userId,
+      });
+
+      const comment = await storage.createCancellationComment(validatedData);
+      res.json(comment);
+    } catch (error: any) {
+      console.error("Error creating cancellation comment:", error);
+      res.status(400).json({ message: error.message || "Failed to create cancellation comment" });
+    }
+  });
+
+  // Respond to cancellation comment
+  app.post("/api/cancellations/:commentId/response", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { commentId } = req.params;
+      const { responseText } = req.body;
+
+      if (!responseText) {
+        return res.status(400).json({ message: "Response text is required" });
+      }
+
+      const comment = await storage.respondToCancellationComment(commentId, userId, responseText);
+      res.json(comment);
+    } catch (error: any) {
+      console.error("Error responding to cancellation comment:", error);
+      res.status(400).json({ message: error.message || "Failed to respond to cancellation comment" });
+    }
+  });
+
+  // Vote on cancellation comment
+  app.post("/api/cancellations/:commentId/vote", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { commentId } = req.params;
+      const { voteType } = req.body;
+
+      if (!voteType || !['helpful', 'not_helpful'].includes(voteType)) {
+        return res.status(400).json({ message: "Valid voteType is required (helpful or not_helpful)" });
+      }
+
+      const result = await storage.voteOnCancellationComment(commentId, userId, voteType);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error voting on cancellation comment:", error);
+      res.status(400).json({ message: error.message || "Failed to vote on cancellation comment" });
+    }
+  });
+
+  // ======================
+  // User Statistics Routes
+  // ======================
+
+  // Get user statistics
+  app.get("/api/statistics/user/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const stats = await storage.getUserStatistics(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching user statistics:", error);
+      res.status(500).json({ message: "Failed to fetch user statistics" });
+    }
+  });
+
+  // Get user transaction timeline
+  app.get("/api/statistics/user/:userId/timeline", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const timeline = await storage.getUserTransactionTimeline(userId);
+      res.json(timeline);
+    } catch (error) {
+      console.error("Error fetching user timeline:", error);
+      res.status(500).json({ message: "Failed to fetch user timeline" });
+    }
+  });
+
+  // ======================
+  // Transaction History Routes
+  // ======================
+
+  // Get user transaction history
+  app.get("/api/transactions/user/:userId/history", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const role = req.query.role as string | undefined;
+      const status = req.query.status as string | undefined;
+      const sort = req.query.sort as string | undefined;
+
+      const history = await storage.getUserTransactionHistory(userId, role, status, sort);
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching transaction history:", error);
+      res.status(500).json({ message: "Failed to fetch transaction history" });
+    }
+  });
+
+  // Get transaction details with reviews and comments
+  app.get("/api/transactions/:listingId/details", async (req, res) => {
+    try {
+      const { listingId } = req.params;
+      const details = await storage.getTransactionDetails(listingId);
+      if (!details) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+      res.json(details);
+    } catch (error) {
+      console.error("Error fetching transaction details:", error);
+      res.status(500).json({ message: "Failed to fetch transaction details" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

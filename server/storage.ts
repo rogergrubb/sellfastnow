@@ -3,6 +3,12 @@ import {
   listings,
   messages,
   favorites,
+  reviews,
+  cancellationComments,
+  userStatistics,
+  reviewVotes,
+  cancellationCommentVotes,
+  transactionEvents,
   type User,
   type UpsertUser,
   type Listing,
@@ -11,6 +17,17 @@ import {
   type InsertMessage,
   type Favorite,
   type InsertFavorite,
+  type Review,
+  type InsertReview,
+  type CancellationComment,
+  type InsertCancellationComment,
+  type UserStatistics,
+  type ReviewVote,
+  type InsertReviewVote,
+  type CancellationCommentVote,
+  type InsertCancellationCommentVote,
+  type TransactionEvent,
+  type InsertTransactionEvent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
@@ -70,6 +87,26 @@ export interface IStorage {
   toggleFavorite(userId: string, listingId: string): Promise<{ isFavorited: boolean }>;
   getUserFavorites(userId: string): Promise<Listing[]>;
   isFavorited(userId: string, listingId: string): Promise<boolean>;
+
+  // Review operations
+  createReview(review: InsertReview): Promise<Review>;
+  getUserReviews(userId: string, role?: string, sort?: string, limit?: number): Promise<Review[]>;
+  respondToReview(reviewId: string, userId: string, responseText: string): Promise<Review>;
+  voteOnReview(reviewId: string, userId: string, voteType: string): Promise<{ helpful: number; notHelpful: number }>;
+  flagReview(reviewId: string, reason: string): Promise<Review>;
+
+  // Cancellation comment operations
+  createCancellationComment(comment: InsertCancellationComment): Promise<CancellationComment>;
+  respondToCancellationComment(commentId: string, userId: string, responseText: string): Promise<CancellationComment>;
+  voteOnCancellationComment(commentId: string, userId: string, voteType: string): Promise<{ helpful: number; notHelpful: number }>;
+
+  // Statistics operations
+  getUserStatistics(userId: string): Promise<UserStatistics | undefined>;
+  getUserTransactionTimeline(userId: string): Promise<TransactionEvent[]>;
+
+  // Transaction history operations
+  getUserTransactionHistory(userId: string, role?: string, status?: string, sort?: string): Promise<any[]>;
+  getTransactionDetails(listingId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -412,6 +449,317 @@ export class DatabaseStorage implements IStorage {
         and(eq(favorites.userId, userId), eq(favorites.listingId, listingId))
       );
     return !!favorite;
+  }
+
+  // Review operations
+  async createReview(reviewData: InsertReview): Promise<Review> {
+    const [review] = await db
+      .insert(reviews)
+      .values(reviewData)
+      .returning();
+    
+    // Update user statistics
+    await this.updateUserStatisticsAfterReview(review);
+    
+    return review;
+  }
+
+  async getUserReviews(userId: string, role?: string, sort?: string, limit: number = 20): Promise<Review[]> {
+    const conditions = [eq(reviews.reviewedUserId, userId)];
+    
+    if (role) {
+      conditions.push(eq(reviews.reviewerRole, role));
+    }
+
+    const orderByClause = 
+      sort === 'rating-high' ? desc(reviews.overallRating) :
+      sort === 'rating-low' ? reviews.overallRating :
+      desc(reviews.createdAt);
+
+    return await db
+      .select()
+      .from(reviews)
+      .where(and(...conditions))
+      .orderBy(orderByClause)
+      .limit(limit);
+  }
+
+  async respondToReview(reviewId: string, userId: string, responseText: string): Promise<Review> {
+    const [review] = await db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.id, reviewId));
+
+    if (!review) {
+      throw new Error("Review not found");
+    }
+
+    if (review.reviewedUserId !== userId) {
+      throw new Error("Only the reviewed user can respond to this review");
+    }
+
+    const [updatedReview] = await db
+      .update(reviews)
+      .set({
+        sellerResponse: responseText,
+        sellerResponseAt: new Date(),
+      })
+      .where(eq(reviews.id, reviewId))
+      .returning();
+
+    return updatedReview;
+  }
+
+  async voteOnReview(reviewId: string, userId: string, voteType: string): Promise<{ helpful: number; notHelpful: number }> {
+    // Check if user already voted
+    const [existingVote] = await db
+      .select()
+      .from(reviewVotes)
+      .where(and(eq(reviewVotes.reviewId, reviewId), eq(reviewVotes.userId, userId)));
+
+    if (existingVote) {
+      // Update existing vote if different
+      if (existingVote.voteType !== voteType) {
+        await db
+          .update(reviewVotes)
+          .set({ voteType })
+          .where(eq(reviewVotes.id, existingVote.id));
+      }
+    } else {
+      // Create new vote
+      await db
+        .insert(reviewVotes)
+        .values({ reviewId, userId, voteType });
+    }
+
+    // Count votes
+    const helpfulVotes = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(reviewVotes)
+      .where(and(eq(reviewVotes.reviewId, reviewId), eq(reviewVotes.voteType, 'helpful')));
+
+    const notHelpfulVotes = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(reviewVotes)
+      .where(and(eq(reviewVotes.reviewId, reviewId), eq(reviewVotes.voteType, 'not_helpful')));
+
+    const helpful = Number(helpfulVotes[0]?.count || 0);
+    const notHelpful = Number(notHelpfulVotes[0]?.count || 0);
+
+    // Update review counts
+    await db
+      .update(reviews)
+      .set({ helpfulCount: helpful, notHelpfulCount: notHelpful })
+      .where(eq(reviews.id, reviewId));
+
+    return { helpful, notHelpful };
+  }
+
+  async flagReview(reviewId: string, reason: string): Promise<Review> {
+    const [review] = await db
+      .update(reviews)
+      .set({ isFlagged: true, flagReason: reason })
+      .where(eq(reviews.id, reviewId))
+      .returning();
+
+    if (!review) {
+      throw new Error("Review not found");
+    }
+
+    return review;
+  }
+
+  // Cancellation comment operations
+  async createCancellationComment(commentData: InsertCancellationComment): Promise<CancellationComment> {
+    const [comment] = await db
+      .insert(cancellationComments)
+      .values(commentData)
+      .returning();
+    return comment;
+  }
+
+  async respondToCancellationComment(commentId: string, userId: string, responseText: string): Promise<CancellationComment> {
+    const [comment] = await db
+      .update(cancellationComments)
+      .set({
+        responseByUserId: userId,
+        responseText,
+        responseAt: new Date(),
+      })
+      .where(eq(cancellationComments.id, commentId))
+      .returning();
+
+    if (!comment) {
+      throw new Error("Cancellation comment not found");
+    }
+
+    return comment;
+  }
+
+  async voteOnCancellationComment(commentId: string, userId: string, voteType: string): Promise<{ helpful: number; notHelpful: number }> {
+    // Check if user already voted
+    const [existingVote] = await db
+      .select()
+      .from(cancellationCommentVotes)
+      .where(and(eq(cancellationCommentVotes.commentId, commentId), eq(cancellationCommentVotes.userId, userId)));
+
+    if (existingVote) {
+      // Update existing vote if different
+      if (existingVote.voteType !== voteType) {
+        await db
+          .update(cancellationCommentVotes)
+          .set({ voteType })
+          .where(eq(cancellationCommentVotes.id, existingVote.id));
+      }
+    } else {
+      // Create new vote
+      await db
+        .insert(cancellationCommentVotes)
+        .values({ commentId, userId, voteType });
+    }
+
+    // Count votes
+    const helpfulVotes = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(cancellationCommentVotes)
+      .where(and(eq(cancellationCommentVotes.commentId, commentId), eq(cancellationCommentVotes.voteType, 'helpful')));
+
+    const notHelpfulVotes = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(cancellationCommentVotes)
+      .where(and(eq(cancellationCommentVotes.commentId, commentId), eq(cancellationCommentVotes.voteType, 'not_helpful')));
+
+    const helpful = Number(helpfulVotes[0]?.count || 0);
+    const notHelpful = Number(notHelpfulVotes[0]?.count || 0);
+
+    // Update comment counts
+    await db
+      .update(cancellationComments)
+      .set({ helpfulCount: helpful, notHelpfulCount: notHelpful })
+      .where(eq(cancellationComments.id, commentId));
+
+    return { helpful, notHelpful };
+  }
+
+  // Statistics operations
+  async getUserStatistics(userId: string): Promise<UserStatistics | undefined> {
+    const [stats] = await db
+      .select()
+      .from(userStatistics)
+      .where(eq(userStatistics.userId, userId));
+
+    if (!stats) {
+      // Create default statistics for new users
+      const [newStats] = await db
+        .insert(userStatistics)
+        .values({
+          userId,
+          memberSince: new Date(),
+        })
+        .returning();
+      return newStats;
+    }
+
+    return stats;
+  }
+
+  async getUserTransactionTimeline(userId: string): Promise<TransactionEvent[]> {
+    return await db
+      .select()
+      .from(transactionEvents)
+      .where(eq(transactionEvents.userId, userId))
+      .orderBy(desc(transactionEvents.createdAt));
+  }
+
+  // Transaction history operations
+  async getUserTransactionHistory(userId: string, role?: string, status?: string, sort?: string): Promise<any[]> {
+    // For now, return listings as transactions
+    // This would be replaced with actual transaction data
+    const conditions = [eq(listings.userId, userId)];
+    
+    if (status) {
+      conditions.push(eq(listings.status, status));
+    }
+
+    const orderByClause = sort === 'recent' ? desc(listings.createdAt) : desc(listings.createdAt);
+
+    return await db
+      .select()
+      .from(listings)
+      .where(and(...conditions))
+      .orderBy(orderByClause);
+  }
+
+  async getTransactionDetails(listingId: string): Promise<any> {
+    const listing = await this.getListingWithSeller(listingId);
+    
+    if (!listing) {
+      return null;
+    }
+
+    // Get reviews for this listing
+    const listingReviews = await db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.listingId, listingId));
+
+    // Get cancellation comments for this listing
+    const comments = await db
+      .select()
+      .from(cancellationComments)
+      .where(eq(cancellationComments.listingId, listingId));
+
+    return {
+      ...listing,
+      reviews: listingReviews,
+      cancellationComments: comments,
+    };
+  }
+
+  // Helper method to update user statistics after a review
+  private async updateUserStatisticsAfterReview(review: Review): Promise<void> {
+    const stats = await this.getUserStatistics(review.reviewedUserId);
+    
+    if (!stats) return;
+
+    const totalReviews = (stats.totalReviewsReceived || 0) + 1;
+    const updates: Partial<typeof userStatistics.$inferInsert> = {
+      totalReviewsReceived: totalReviews,
+    };
+
+    // Update star counts
+    switch (review.overallRating) {
+      case 5:
+        updates.fiveStarReviews = (stats.fiveStarReviews || 0) + 1;
+        break;
+      case 4:
+        updates.fourStarReviews = (stats.fourStarReviews || 0) + 1;
+        break;
+      case 3:
+        updates.threeStarReviews = (stats.threeStarReviews || 0) + 1;
+        break;
+      case 2:
+        updates.twoStarReviews = (stats.twoStarReviews || 0) + 1;
+        break;
+      case 1:
+        updates.oneStarReviews = (stats.oneStarReviews || 0) + 1;
+        break;
+    }
+
+    // Calculate average rating
+    const totalStars = 
+      (updates.fiveStarReviews || stats.fiveStarReviews || 0) * 5 +
+      (updates.fourStarReviews || stats.fourStarReviews || 0) * 4 +
+      (updates.threeStarReviews || stats.threeStarReviews || 0) * 3 +
+      (updates.twoStarReviews || stats.twoStarReviews || 0) * 2 +
+      (updates.oneStarReviews || stats.oneStarReviews || 0) * 1;
+
+    updates.averageRating = String(totalStars / totalReviews);
+
+    await db
+      .update(userStatistics)
+      .set(updates)
+      .where(eq(userStatistics.userId, review.reviewedUserId));
   }
 }
 
