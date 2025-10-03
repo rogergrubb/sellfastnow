@@ -10,6 +10,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**October 3, 2025 - Transaction Cancellation System**
+- Implemented secure transaction cancellation feature for buyers and sellers
+- Created CancelTransactionModal component with reason dropdown (8 categories), optional comment (500 char limit), public/private toggle
+- Built API endpoint POST /api/listings/:listingId/cancel with comprehensive security checks
+- Security: Backend derives user role server-side, validates transaction participation, enforces canCancelTransaction eligibility
+- Cancellation timing calculation utility (early/on-time/late based on scheduled meetup time)
+- Creates transaction events and optional cancellation comments in database
+- Integrated into ListingDetail page with "Cancel Transaction" button (only shown when eligible)
+- E2E tested: cancellation flow, role verification, database persistence, UI updates
+- Fixed critical security vulnerability: removed client-controlled role selection, all authorization now server-side
+
 **October 3, 2025 - Transaction History Page**
 - Created comprehensive transaction history page at `/users/:userId/history`
 - Features: filterable transaction list (status, role), status badges (completed/cancelled/no-show), transaction cards with listing details
