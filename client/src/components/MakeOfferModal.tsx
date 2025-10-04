@@ -35,7 +35,7 @@ export function MakeOfferModal({
 
   const createOfferMutation = useMutation({
     mutationFn: async (data: { offerAmount: number; depositAmount: number; message: string }) => {
-      return await apiRequest(`/api/listings/${listingId}/offers`, "POST", data);
+      return await apiRequest("POST", `/api/listings/${listingId}/offers`, data);
     },
     onSuccess: () => {
       toast({

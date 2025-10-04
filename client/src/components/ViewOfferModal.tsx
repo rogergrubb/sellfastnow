@@ -47,7 +47,7 @@ export function ViewOfferModal({
 
   const acceptMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/offers/${offer.id}/accept`, "PATCH", {});
+      return await apiRequest("PATCH", `/api/offers/${offer.id}/accept`, {});
     },
     onSuccess: () => {
       toast({
@@ -69,7 +69,7 @@ export function ViewOfferModal({
 
   const declineMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/offers/${offer.id}/decline`, "PATCH", {});
+      return await apiRequest("PATCH", `/api/offers/${offer.id}/decline`, {});
     },
     onSuccess: () => {
       toast({
@@ -91,7 +91,7 @@ export function ViewOfferModal({
 
   const counterMutation = useMutation({
     mutationFn: async (data: { counterOfferAmount: number; counterOfferMessage: string }) => {
-      return await apiRequest(`/api/offers/${offer.id}/counter`, "PATCH", data);
+      return await apiRequest("PATCH", `/api/offers/${offer.id}/counter`, data);
     },
     onSuccess: () => {
       toast({
