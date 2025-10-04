@@ -1,0 +1,346 @@
+Allow reviewed users (sellers/buyers) to respond publicly to reviews:
+
+REQUIREMENTS:
+
+1. ADD "RESPOND" BUTTON TO REVIEWS
+
+On reviews where YOU are the reviewed user, add respond button:
+
+┌─────────────────────────────────────────────────────────┐
+│ ⭐⭐⭐⭐⭐ 5.0 out of 5 stars                             │
+│ Great seller - highly recommend!                        │
+│                                                         │
+│ Reviewed in United States on October 1, 2024           │
+│ Verified Purchase ✓                                     │
+│                                                         │
+│ Mike L. ⭐ 4.9                                          │
+│ "Sarah was amazing! Met me exactly on time at the       │
+│  Starbucks we agreed on. iPhone was in perfect         │
+│  condition, even better than the photos. Very          │
+│  professional and friendly. Would definitely buy       │
+│  from again. Highly recommend!"                         │
+│                                                         │
+│ 👍 Helpful (12)  👎 (0)  [Report]                       │
+│                                                         │
+│ [Respond to Review]  ← ADD THIS (only if you're Sarah) │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+
+Conditions to show button:
+- Current user IS the reviewed user
+- Review does NOT already have a response
+- Review is verified/real
+
+2. RESPONSE MODAL
+
+When "Respond to Review" clicked:
+
+┌─────────────────────────────────────────────────────────┐
+│ Respond to Mike's Review                                │
+│ ─────────────────────────────────────────────────────── │
+│                                                         │
+│ Transaction: iPhone 15 Pro - $800                       │
+│ Reviewed by: Mike L. ⭐ 4.9                             │
+│                                                         │
+│ Mike's Review:                                          │
+│ ⭐⭐⭐⭐⭐ "Sarah was amazing! Met me exactly on time..."  │
+│                                                         │
+│ ─────────────────────────────────────────────────────── │
+│                                                         │
+│ Your Response:                                          │
+│                                                         │
+│ ┌───────────────────────────────────────────────────┐   │
+│ │ Thank you Mike! It was a pleasure doing          │   │
+│ │ business with you. Hope you enjoy the phone! 😊  │   │
+│ │                                                   │   │
+│ │                                                   │   │
+│ └───────────────────────────────────────────────────┘   │
+│ 68 / 500 characters                                     │
+│                                                         │
+│ ─────────────────────────────────────────────────────── │
+│                                                         │
+│ 💡 TIPS FOR GOOD RESPONSES:                             │
+│                                                         │
+│ ✓ Thank the reviewer                                    │
+│ ✓ Keep it brief and professional                        │
+│ ✓ Address specific points they mentioned                │
+│ ✓ Remain courteous even for negative reviews            │
+│                                                         │
+│ ✗ Don't argue or be defensive                           │
+│ ✗ Don't share personal contact information              │
+│ ✗ Don't request removal of negative reviews             │
+│                                                         │
+│ Note: Your response will be public and cannot be        │
+│ edited after 48 hours. Be professional and thoughtful.  │
+│                                                         │
+│    [Post Response] [Cancel]                             │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+
+3. API ENDPOINT
+
+POST /api/reviews/:reviewId/response
+
+Request body:
+{
+  responseText: "Thank you Mike! It was a pleasure..."
+}
+
+Backend logic:
+1. Verify current user IS the reviewed user
+   - Get review by reviewId
+   - Check review.reviewed_user_id === current_user_id
+2. Verify review doesn't already have response
+   - Check review.seller_response IS NULL
+3. Validate response text
+   - Not empty
+   - Max 500 characters
+   - No profanity (optional content filter)
+4. Update reviews table:
+   UPDATE reviews 
+   SET seller_response = $1,
+       seller_response_at = NOW()
+   WHERE id = $2
+5. Send email notification to reviewer
+6. Return success
+
+Security:
+- 403 if user is not the reviewed user
+- 400 if response already exists
+- 400 if text empty or > 500 chars
+- 429 rate limit (max 10 responses per hour)
+
+4. DISPLAY RESPONSE UNDER REVIEW
+
+After response posted:
+
+┌─────────────────────────────────────────────────────────┐
+│ ⭐⭐⭐⭐⭐ 5.0 out of 5 stars                             │
+│ Great seller - highly recommend!                        │
+│                                                         │
+│ Reviewed in United States on October 1, 2024           │
+│ Verified Purchase ✓                                     │
+│                                                         │
+│ Mike L. ⭐ 4.9                                          │
+│ "Sarah was amazing! Met me exactly on time at the       │
+│  Starbucks we agreed on. iPhone was in perfect         │
+│  condition, even better than the photos. Very          │
+│  professional and friendly. Would definitely buy       │
+│  from again. Highly recommend!"                         │
+│                                                         │
+│ 👍 Helpful (12)  👎 (0)  [Report]                       │
+│                                                         │
+│ ─────────────────────────────────────────────────────── │
+│                                                         │
+│ 💬 SELLER RESPONSE (Replied Oct 1, 2024):              │
+│                                                         │
+│ Sarah Martinez ⭐ 4.8                                   │
+│ "Thank you Mike! It was a pleasure doing business      │
+│  with you. Hope you enjoy the phone! 😊"                │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+
+Response styling:
+- Light gray background
+- Slightly indented
+- Smaller font than main review
+- Shows responder's name and rating
+- Shows response date
+
+5. RESPONSE TO NEGATIVE REVIEWS
+
+Example of professional response to 2-star review:
+
+┌─────────────────────────────────────────────────────────┐
+│ ⭐⭐ 2.0 out of 5 stars                                  │
+│ Cancelled last minute                                   │
+│                                                         │
+│ Reviewed in United States on September 15, 2024        │
+│ Transaction Cancelled                                   │
+│                                                         │
+│ Maria R. ⭐ 4.9                                         │
+│ "Had everything arranged, I turned down 2 other        │
+│  buyers, and she cancelled 2 hours before our meetup.  │
+│  Really frustrating. Wish sellers would commit when    │
+│  they accept offers."                                   │
+│                                                         │
+│ 👍 Helpful (15)  👎 (3)  [Report]                       │
+│                                                         │
+│ ─────────────────────────────────────────────────────── │
+│                                                         │
+│ 💬 SELLER RESPONSE (Replied Sep 16, 2024):             │
+│                                                         │
+│ Sarah Martinez ⭐ 4.8                                   │
+│ "I sincerely apologize for the inconvenience. My       │
+│  daughter had a medical emergency and I had to rush    │
+│  to the hospital. I messaged as soon as I could but    │
+│  understand this was very last minute and frustrating. │
+│  I take full responsibility and feel terrible."         │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+
+Shows professionalism even when responding to criticism.
+
+6. EDIT/DELETE RESTRICTIONS
+
+Response rules:
+- Can edit within 24 hours of posting
+- After 24 hours, response is permanent
+- Only admins can delete responses
+- One response per review (can't respond multiple times)
+
+If user tries to respond again:
+"You've already responded to this review. Responses can be edited 
+within 24 hours but cannot be deleted."
+
+[Edit Response] button appears if within 24 hours.
+
+7. EMAIL NOTIFICATION
+
+When someone responds to your review:
+
+Subject: Sarah responded to your review
+
+Hi Mike,
+
+Sarah Martinez has responded to your review of their 
+iPhone 15 Pro listing:
+
+YOUR REVIEW (⭐⭐⭐⭐⭐):
+"Sarah was amazing! Met me exactly on time at the 
+Starbucks we agreed on..."
+
+SARAH'S RESPONSE:
+"Thank you Mike! It was a pleasure doing business 
+with you. Hope you enjoy the phone! 😊"
+
+[View Full Review & Response]
+
+This response is now visible on Sarah's public profile.
+
+- SellFast.now Team
+
+8. RESPONSE STATISTICS
+
+Track response metrics in user_statistics:
+
+- total_reviews_received: 47
+- reviews_with_response: 42
+- response_rate: 89%
+
+Show on profile:
+"Responds to 89% of reviews"
+
+This shows seller engagement with feedback.
+
+9. RESPONSE IN REVIEW SUMMARY
+
+When viewing someone's profile, show if they respond to reviews:
+
+┌─────────────────────────────────────────────────────────┐
+│ Sarah Martinez                                          │
+│ ⭐⭐⭐⭐⭐ 4.8/5.0 (47 reviews)                           │
+│                                                         │
+│ 📝 Review Engagement:                                   │
+│ • Responds to 89% of reviews                            │
+│ • Average response time: 2 days                         │
+│ • Professional and courteous responses                  │
+│                                                         │
+│ [View All Reviews →]                                    │
+└─────────────────────────────────────────────────────────┘
+
+10. REPORTING INAPPROPRIATE RESPONSES
+
+If response violates guidelines:
+- Users can flag response
+- Admin reviews flagged responses
+- Response can be hidden or user warned
+- Repeated violations = response privilege removed
+
+TESTING:
+
+Test Case 1: Respond to positive review
+1. View a 5-star review of yourself
+2. Click "Respond to Review"
+3. Write: "Thank you! Great working with you too."
+4. Submit
+5. Verify:
+   - Response saved in database
+   - Response visible under review
+   - "Respond" button replaced with response
+   - Email sent to reviewer
+
+Test Case 2: Respond to negative review
+1. View a 2-star review
+2. Respond professionally
+3. Verify response shows below review
+4. Demonstrates professionalism publicly
+
+Test Case 3: Security - wrong user tries to respond
+1. User A views review of User B
+2. No "Respond" button visible
+3. If User A tries API call directly: 403 error
+
+Test Case 4: Already responded
+1. Respond to review
+2. Try to respond again
+3. Button not visible
+4. Shows message: "You already responded"
+
+Test Case 5: Character limit
+1. Write 501 character response
+2. Validation error
+3. Character counter turns red
+4. Cannot submit
+
+Test Case 6: Empty response
+1. Leave response blank
+2. Try to submit
+3. Error: "Response cannot be empty"
+
+Test Case 7: Edit response (within 24 hours)
+1. Post response
+2. Within 24 hours, click "Edit Response"
+3. Make changes
+4. Save
+5. Updated response visible
+
+Test Case 8: Cannot edit (after 24 hours)
+1. Response posted 25 hours ago
+2. No "Edit" button visible
+3. Response is permanent
+
+Test Case 9: Email notification
+1. Post response
+2. Reviewer receives email
+3. Email contains review and response
+4. Link works correctly
+
+Test Case 10: Response statistics
+1. User responds to 42 out of 47 reviews
+2. Profile shows: "Responds to 89% of reviews"
+3. Metric updates when new response added
+
+Test Case 11: Mobile view
+1. View review on mobile
+2. "Respond" button accessible
+3. Modal opens properly
+4. Text area usable
+5. Response displays correctly
+
+Test Case 12: Response to old review
+1. Review from 6 months ago
+2. Can still respond
+3. No time limit on when you can respond
+4. Only limit is 24-hour edit window after responding
+
+DELIVERABLES:
+1. "Respond to Review" button on reviews
+2. Response modal with character counter
+3. API endpoint with security checks
+4. Response display under reviews
+5. Edit capability (24-hour window)
+6. Email notifications
+7. Response rate tracking
+8. Professional response tips in modal
+9. All test cases passing

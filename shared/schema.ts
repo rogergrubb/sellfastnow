@@ -198,6 +198,7 @@ export const reviews = pgTable("reviews", {
   // Response from reviewed user
   sellerResponse: text("seller_response"),
   sellerResponseAt: timestamp("seller_response_at"),
+  sellerResponseEditedAt: timestamp("seller_response_edited_at"),
   
   // Community feedback
   helpfulCount: integer("helpful_count").default(0),
@@ -220,6 +221,7 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
   notHelpfulCount: true,
   sellerResponse: true,
   sellerResponseAt: true,
+  sellerResponseEditedAt: true,
   isFlagged: true,
   flagReason: true,
 });
