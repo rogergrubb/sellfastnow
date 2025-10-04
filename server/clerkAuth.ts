@@ -1,6 +1,10 @@
 import { clerkMiddleware, getAuth, clerkClient } from "@clerk/express";
 import type { Express, RequestHandler } from "express";
 import { storage } from "./storage";
+import { clerkConfig } from "../clerk.config";
+
+process.env.CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY || clerkConfig.secretKey;
+process.env.CLERK_PUBLISHABLE_KEY = process.env.CLERK_PUBLISHABLE_KEY || clerkConfig.publishableKey;
 
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
