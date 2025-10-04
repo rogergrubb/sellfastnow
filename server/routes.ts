@@ -885,6 +885,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user statistics summary (for offer decision-making)
+  app.get("/api/statistics/user/:userId/summary", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const summary = await storage.getUserStatisticsSummary(userId);
+      
+      if (!summary) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching user statistics summary:", error);
+      res.status(500).json({ message: "Failed to fetch user statistics summary" });
+    }
+  });
+
   // Update statistics on transaction completion (triggers auto-update)
   app.post("/api/statistics/update-on-completion/:transactionId", isAuthenticated, async (req: any, res) => {
     try {
@@ -1031,6 +1048,210 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error cancelling transaction:", error);
       res.status(400).json({ message: error.message || "Failed to cancel transaction" });
+    }
+  });
+
+  // ======================
+  // Offer Routes
+  // ======================
+
+  // Create a new offer on a listing
+  app.post("/api/listings/:listingId/offers", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { listingId } = req.params;
+      const { offerAmount, depositAmount, message } = req.body;
+
+      // Get listing to verify it exists and get seller ID
+      const listing = await storage.getListing(listingId);
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+
+      // Prevent user from making offer on their own listing
+      if (listing.userId === userId) {
+        return res.status(400).json({ message: "You cannot make an offer on your own listing" });
+      }
+
+      // Create offer
+      const offer = await storage.createOffer({
+        listingId,
+        buyerId: userId,
+        sellerId: listing.userId,
+        offerAmount,
+        depositAmount: depositAmount || 0,
+        message: message || null,
+        status: "pending",
+      });
+
+      res.status(201).json(offer);
+    } catch (error: any) {
+      console.error("Error creating offer:", error);
+      res.status(400).json({ message: error.message || "Failed to create offer" });
+    }
+  });
+
+  // Get all offers for a listing (seller only)
+  app.get("/api/listings/:listingId/offers", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { listingId } = req.params;
+
+      // Verify user is the seller
+      const listing = await storage.getListing(listingId);
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+
+      if (listing.userId !== userId) {
+        return res.status(403).json({ message: "You can only view offers on your own listings" });
+      }
+
+      const offers = await storage.getListingOffers(listingId);
+      res.json(offers);
+    } catch (error: any) {
+      console.error("Error fetching listing offers:", error);
+      res.status(500).json({ message: "Failed to fetch offers" });
+    }
+  });
+
+  // Get offers made by user
+  app.get("/api/offers/made", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const offers = await storage.getUserOffersMade(userId);
+      res.json(offers);
+    } catch (error: any) {
+      console.error("Error fetching user offers:", error);
+      res.status(500).json({ message: "Failed to fetch offers" });
+    }
+  });
+
+  // Get offers received by user
+  app.get("/api/offers/received", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const offers = await storage.getUserOffersReceived(userId);
+      res.json(offers);
+    } catch (error: any) {
+      console.error("Error fetching received offers:", error);
+      res.status(500).json({ message: "Failed to fetch received offers" });
+    }
+  });
+
+  // Accept an offer
+  app.patch("/api/offers/:offerId/accept", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { offerId } = req.params;
+
+      // Get offer details
+      const offerDetails = await storage.getOffer(offerId);
+      if (!offerDetails) {
+        return res.status(404).json({ message: "Offer not found" });
+      }
+
+      // Verify user is the seller
+      if (offerDetails.offer.sellerId !== userId) {
+        return res.status(403).json({ message: "Only the seller can accept offers" });
+      }
+
+      // Update offer status
+      const updatedOffer = await storage.updateOfferStatus(offerId, "accepted");
+
+      // TODO: Create transaction event
+      // TODO: Process deposit
+      // TODO: Send notifications
+
+      res.json(updatedOffer);
+    } catch (error: any) {
+      console.error("Error accepting offer:", error);
+      res.status(400).json({ message: error.message || "Failed to accept offer" });
+    }
+  });
+
+  // Decline an offer
+  app.patch("/api/offers/:offerId/decline", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { offerId } = req.params;
+
+      // Get offer details
+      const offerDetails = await storage.getOffer(offerId);
+      if (!offerDetails) {
+        return res.status(404).json({ message: "Offer not found" });
+      }
+
+      // Verify user is the seller
+      if (offerDetails.offer.sellerId !== userId) {
+        return res.status(403).json({ message: "Only the seller can decline offers" });
+      }
+
+      // Update offer status
+      const updatedOffer = await storage.updateOfferStatus(offerId, "declined");
+
+      res.json(updatedOffer);
+    } catch (error: any) {
+      console.error("Error declining offer:", error);
+      res.status(400).json({ message: error.message || "Failed to decline offer" });
+    }
+  });
+
+  // Counter an offer
+  app.patch("/api/offers/:offerId/counter", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { offerId } = req.params;
+      const { counterOfferAmount, counterOfferMessage } = req.body;
+
+      // Get offer details
+      const offerDetails = await storage.getOffer(offerId);
+      if (!offerDetails) {
+        return res.status(404).json({ message: "Offer not found" });
+      }
+
+      // Verify user is the seller
+      if (offerDetails.offer.sellerId !== userId) {
+        return res.status(403).json({ message: "Only the seller can counter offers" });
+      }
+
+      // Update offer with counter
+      const updatedOffer = await storage.updateOfferStatus(offerId, "countered", {
+        counterOfferAmount,
+        counterOfferMessage: counterOfferMessage || null,
+      });
+
+      res.json(updatedOffer);
+    } catch (error: any) {
+      console.error("Error countering offer:", error);
+      res.status(400).json({ message: error.message || "Failed to counter offer" });
+    }
+  });
+
+  // Withdraw an offer (buyer)
+  app.patch("/api/offers/:offerId/withdraw", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { offerId } = req.params;
+
+      // Get offer details
+      const offerDetails = await storage.getOffer(offerId);
+      if (!offerDetails) {
+        return res.status(404).json({ message: "Offer not found" });
+      }
+
+      // Verify user is the buyer
+      if (offerDetails.offer.buyerId !== userId) {
+        return res.status(403).json({ message: "Only the buyer can withdraw their offer" });
+      }
+
+      // Update offer status
+      const updatedOffer = await storage.updateOfferStatus(offerId, "withdrawn");
+
+      res.json(updatedOffer);
+    } catch (error: any) {
+      console.error("Error withdrawing offer:", error);
+      res.status(400).json({ message: error.message || "Failed to withdraw offer" });
     }
   });
 
