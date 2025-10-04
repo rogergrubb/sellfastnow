@@ -10,6 +10,8 @@ import ListingDetail from "./pages/ListingDetail";
 import Dashboard from "./pages/Dashboard";
 import UserProfile from "./pages/UserProfile";
 import TransactionHistory from "./pages/TransactionHistory";
+import CreateReview from "./pages/CreateReview";
+import Unsubscribe from "./pages/Unsubscribe";
 import Navbar from "@/components/Navbar";
 
 function Router() {
@@ -21,6 +23,8 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/users/:userId" component={UserProfile} />
       <Route path="/users/:userId/history" component={TransactionHistory} />
+      <Route path="/create-review/:token" component={CreateReview} />
+      <Route path="/unsubscribe" component={Unsubscribe} />
       <Route component={NotFound} />
     </Switch>
   );
