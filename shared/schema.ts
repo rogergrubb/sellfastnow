@@ -123,6 +123,48 @@ export const insertFavoriteSchema = createInsertSchema(favorites).omit({
 export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;
 export type Favorite = typeof favorites.$inferSelect;
 
+// Offers table
+export const offers = pgTable("offers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  listingId: varchar("listing_id")
+    .notNull()
+    .references(() => listings.id, { onDelete: "cascade" }),
+  buyerId: varchar("buyer_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  sellerId: varchar("seller_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  
+  // Offer details
+  offerAmount: decimal("offer_amount", { precision: 10, scale: 2 }).notNull(),
+  depositAmount: decimal("deposit_amount", { precision: 10, scale: 2 }).default("0"),
+  message: text("message"),
+  
+  // Status: pending, accepted, declined, countered, expired, withdrawn
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  
+  // Counter offer tracking
+  counterOfferAmount: decimal("counter_offer_amount", { precision: 10, scale: 2 }),
+  counterOfferMessage: text("counter_offer_message"),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  respondedAt: timestamp("responded_at"),
+  expiresAt: timestamp("expires_at"),
+});
+
+export const insertOfferSchema = createInsertSchema(offers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  respondedAt: true,
+});
+
+export type InsertOffer = z.infer<typeof insertOfferSchema>;
+export type Offer = typeof offers.$inferSelect;
+
 // Reviews table
 export const reviews = pgTable("reviews", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

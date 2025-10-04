@@ -1,0 +1,394 @@
+Display user statistics at key decision points (when evaluating offers):
+
+REQUIREMENTS:
+
+1. WHEN SELLER RECEIVES AN OFFER
+
+Update the "New Offer Received" modal/page to include buyer statistics:
+
+┌─────────────────────────────────────────────────────────┐
+│ 💰 New Offer: $800                                      │
+│ On: iPhone 15 Pro                                       │
+│ ─────────────────────────────────────────────────────── │
+│                                                         │
+│ From: John Davis                                        │
+│ ⭐⭐⭐⭐ 3.6/5.0 (12 reviews)                            │
+│ Member since: March 2024                                │
+│                                                         │
+│ 💳 Deposit: $50 PLACED ✅                               │
+│                                                         │
+│ ═══════════════════════════════════════════════════════ │
+│                                                         │
+│ 📊 BUYER'S TRACK RECORD                                 │
+│                                                         │
+│ As Buyer:                                               │
+│ • Total Purchases: 12                                   │
+│ • Completed Successfully: 9 (75%)                       │
+│ • Cancelled by Buyer: 3 (25%)                           │
+│ • No-Shows: 1 (8%)                                      │
+│                                                         │
+│ Recent Activity (Last 90 Days):                         │
+│ • Transactions: 5                                       │
+│ • Cancellations: 3 ⚠️                                   │
+│ • No-Shows: 1 ⚠️                                        │
+│ • Last Cancellation: 5 days ago                         │
+│                                                         │
+│ Communication:                                          │
+│ • Average Response: 45 minutes                          │
+│ • Response Rate: 87%                                    │
+│                                                         │
+│ ═══════════════════════════════════════════════════════ │
+│                                                         │
+│ ⚠️ PLATFORM ASSESSMENT                                  │
+│                                                         │
+│ This buyer has 3 cancellations in the last 90 days,    │
+│ which is ABOVE the platform average of 0.5/90 days.    │
+│                                                         │
+│ Recent Pattern:                                         │
+│ • Sep 28: Cancelled MacBook (2 hrs before meetup)       │
+│   Comment: "Wife bought same as gift"                   │
+│                                                         │
+│ • Sep 15: No-show on AirPods                            │
+│   Comment: "Daughter broke arm, hospital emergency"     │
+│   Seller response: "Family first, I understand"         │
+│                                                         │
+│ • Aug 22: Cancelled Apple Watch (1 day before)          │
+│   Comment: "Found better deal for $100 less"            │
+│                                                         │
+│ [View John's Full Statistics]                           │
+│ [View John's Complete Transaction History]             │
+│                                                         │
+│ ═══════════════════════════════════════════════════════ │
+│                                                         │
+│ RECOMMENDATION:                                         │
+│                                                         │
+│ ⚠️ PROCEED WITH CAUTION                                 │
+│                                                         │
+│ This buyer has recent reliability concerns. However:    │
+│ • They placed a deposit (shows commitment)              │
+│ • Some cancellations had valid reasons                  │
+│ • 75% overall success rate                              │
+│                                                         │
+│ Consider:                                               │
+│ • Asking for larger deposit                             │
+│ • Scheduling meetup soon (less time to cancel)          │
+│ • Keeping other offers open until check-in              │
+│ • Messaging to confirm commitment                       │
+│                                                         │
+│ OR wait for offers from more reliable buyers (4.5+      │
+│ rating, <1 cancellation in 90 days).                    │
+│                                                         │
+│ ─────────────────────────────────────────────────────── │
+│                                                         │
+│ Buyer's Message:                                        │
+│ "Hi! Very interested. Can meet today or tomorrow."      │
+│                                                         │
+│    [Accept Offer] [Decline] [Counter Offer] [Message]  │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+
+2. WHEN BUYER MAKES AN OFFER (View Seller Stats)
+
+Before submitting offer, show seller statistics:
+
+┌─────────────────────────────────────────────────────────┐
+│ Make Offer on: iPhone 15 Pro                            │
+│ Asking Price: $800                                      │
+│ ─────────────────────────────────────────────────────── │
+│                                                         │
+│ Seller: Sarah Martinez                                  │
+│ ⭐⭐⭐⭐⭐ 4.8/5.0 (47 reviews)                           │
+│ Member since: January 2024                              │
+│                                                         │
+│ ═══════════════════════════════════════════════════════ │
+│                                                         │
+│ 📊 SELLER'S TRACK RECORD                                │
+│                                                         │
+│ As Seller:                                              │
+│ • Total Sales: 47                                       │
+│ • Completed Successfully: 46 (98%)                      │
+│ • Cancelled by Seller: 1 (2%)                           │
+│ • No-Shows: 0 (0%)                                      │
+│                                                         │
+│ Recent Activity (Last 90 Days):                         │
+│ • Transactions: 8                                       │
+│ • Cancellations: 0 ✅                                   │
+│ • No-Shows: 0 ✅                                        │
+│                                                         │
+│ Communication:                                          │
+│ • Average Response: 12 minutes ✅                       │
+│ • Response Rate: 98%                                    │
+│ • On-time check-ins: 100%                               │
+│                                                         │
+│ ═══════════════════════════════════════════════════════ │
+│                                                         │
+│ ✅ PLATFORM ASSESSMENT                                  │
+│                                                         │
+│ HIGHLY RELIABLE SELLER                                  │
+│                                                         │
+│ This seller has excellent statistics:                   │
+│ • 98% success rate (platform avg: 90%)                  │
+│ • 0 cancellations in last 90 days                       │
+│ • 0 no-shows ever                                       │
+│ • Responds in 12 minutes on average                     │
+│                                                         │
+│ Recent Reviews:                                         │
+│ ⭐⭐⭐⭐⭐ "Super reliable! Item perfect." - Mike L.      │
+│ ⭐⭐⭐⭐⭐ "Met on time, very professional" - Jennifer K. │
+│ ⭐⭐⭐⭐⭐ "Great seller, would buy again!" - Tom W.      │
+│                                                         │
+│ [View Sarah's Full Statistics]                          │
+│ [View All 47 Reviews]                                   │
+│                                                         │
+│ ✅ Your deposit is safe with this seller.               │
+│                                                         │
+│ ─────────────────────────────────────────────────────── │
+│                                                         │
+│ Your Offer: $[____]                                     │
+│                                                         │
+│ Add Deposit (Optional but recommended):                 │
+│ Amount: $[____]                                         │
+│                                                         │
+│ Message to Seller:                                      │
+│ ┌───────────────────────────────────────────────────┐   │
+│ │ Hi Sarah, very interested in your iPhone.         │   │
+│ │ Can we meet this weekend?                         │   │
+│ └───────────────────────────────────────────────────┘   │
+│                                                         │
+│    [Submit Offer]                                       │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+
+3. API ENDPOINT
+
+GET /api/statistics/user/:userId/summary
+
+Returns condensed stats for decision-making:
+
+{
+  userId: 123,
+  displayName: "John Davis",
+  averageRating: 3.6,
+  totalReviews: 12,
+  memberSince: "2024-03-15",
+  
+  // As buyer (if viewing someone making offer to you)
+  asBuyer: {
+    totalPurchases: 12,
+    successfulPurchases: 9,
+    successRate: 75.0,
+    cancelledByBuyer: 3,
+    buyerNoShows: 1,
+    
+    // Recent
+    recentTransactions90d: 5,
+    recentCancellations90d: 3,
+    recentNoShows90d: 1,
+    lastCancellationDaysAgo: 5,
+    
+    // Communication
+    avgResponseMinutes: 45,
+    responseRate: 87.0
+  },
+  
+  // As seller (if viewing someone you want to buy from)
+  asSeller: {
+    totalSales: 5,
+    successfulSales: 5,
+    successRate: 100.0,
+    cancelledBySeller: 0,
+    sellerNoShows: 0,
+    
+    // Recent
+    recentTransactions90d: 2,
+    recentCancellations90d: 0,
+    recentNoShows90d: 0,
+    
+    // Communication
+    avgResponseMinutes: 12,
+    responseRate: 98.0
+  },
+  
+  // Recent cancellations with details
+  recentCancellations: [
+    {
+      date: "2024-09-28",
+      item: "MacBook Pro 16\"",
+      role: "buyer",
+      timing: "last_minute",
+      comment: "Wife bought same as gift",
+      hasResponse: true
+    },
+    // ... more
+  ],
+  
+  // Top reviews
+  topReviews: [
+    {
+      rating: 5,
+      text: "Great seller! On time and professional.",
+      reviewerName: "Mike L.",
+      date: "2024-10-01"
+    },
+    // ... more (max 3)
+  ]
+}
+
+4. RECOMMENDATION SYSTEM
+
+Based on statistics, show recommendation:
+
+EXCELLENT (5.0-4.5 rating, <1 cancellation/90d, 0 no-shows):
+✅ HIGHLY RECOMMENDED
+"This user has excellent reliability statistics."
+Green background
+
+GOOD (4.4-4.0 rating, 1-2 cancellations/90d, 0-1 no-shows):
+✅ RECOMMENDED
+"This user has good reliability statistics."
+Light green background
+
+FAIR (3.9-3.5 rating, 3-4 cancellations/90d, 1-2 no-shows):
+⚠️ PROCEED WITH CAUTION
+"This user has some reliability concerns."
+Yellow background
+
+POOR (3.4-3.0 rating, 5+ cancellations/90d, 2+ no-shows):
+⚠️ HIGH RISK
+"This user has significant reliability concerns."
+Orange background
+
+VERY POOR (<3.0 rating, chronic issues):
+🔴 NOT RECOMMENDED
+"This user has poor reliability. Consider other options."
+Red background
+
+5. SHOW RECENT CANCELLATION DETAILS
+
+If user has cancellations in last 90 days, show up to 3 most recent:
+
+Recent Pattern:
+- Sep 28: Cancelled MacBook (2 hrs before meetup)
+  Comment: "Wife bought same as gift"
+  Seller response: "Wish you'd let me match price"
+  
+- Sep 15: No-show on AirPods
+  Comment: "Daughter broke arm, hospital emergency"
+  Seller response: "Family first, I understand"
+  
+[View All Cancellations]
+
+This gives CONTEXT - some cancellations have legitimate reasons.
+
+6. INTEGRATION POINTS
+
+Add statistics preview to:
+
+A) Offer List Page
+   When seller views all pending offers:
+   ┌─────────────────────────────────┐
+   │ John D. - $800                  │
+   │ ⭐ 3.6  |  75% success  |  3 recent cancellations ⚠️  │
+   │ [View Details]                  │
+   └─────────────────────────────────┘
+
+B) Messages
+   In chat header, show quick stats:
+   💬 Chat with John Davis
+   ⭐ 3.6 (12 reviews) | 75% success | ⚠️ 3 recent cancellations
+   [View Full Stats]
+
+C) Listing Page
+   Show seller stats on listing:
+   Seller: Sarah Martinez ⭐ 4.8/5.0
+   98% success rate | 47 sales | Quick responder
+   [View Full Statistics]
+
+7. MOBILE OPTIMIZATION
+
+On mobile, show condensed version:
+- Overall rating + review count
+- Success rate
+- Recent activity summary
+- Expandable "View Full Stats" section
+
+8. CACHING
+
+Cache statistics for performance:
+- Cache for 1 hour
+- Invalidate when new transaction completes
+- Refresh when user views their own stats
+
+TESTING:
+
+Test Case 1: Receive offer from good buyer
+1. Seller receives offer
+2. Buyer has 4.8 rating, 95% success, 0 recent cancellations
+3. Shows: "✅ HIGHLY RECOMMENDED"
+4. Green indicator
+5. No warning messages
+
+Test Case 2: Receive offer from problematic buyer
+1. Seller receives offer
+2. Buyer has 3.2 rating, 60% success, 5 recent cancellations
+3. Shows: "⚠️ HIGH RISK"
+4. Orange/red indicator
+5. Warning message visible
+6. Shows recent cancellation details
+
+Test Case 3: View seller stats before offering
+1. Buyer clicks "Make Offer"
+2. Seller stats load automatically
+3. Shows seller's track record
+4. Shows recommendation
+5. Can click to view full statistics
+
+Test Case 4: Statistics not available
+1. New user with no transaction history
+2. Shows: "New user - no transaction history yet"
+3. No recommendation shown
+4. Neutral indicator
+
+Test Case 5: Link to full statistics works
+1. Click "View Full Statistics"
+2. Opens user's statistics tab in new window/tab
+3. Shows complete dashboard
+
+Test Case 6: Recent cancellations with context
+1. User has 2 cancellations
+2. Both have comments explaining reasons
+3. One has positive response from other party
+4. Context is visible inline
+
+Test Case 7: Mobile view
+1. View on mobile
+2. Stats display in condensed format
+3. "Show More" expands details
+4. All information accessible
+
+Test Case 8: Performance
+1. Page loads with stats in <1 second
+2. Stats cached appropriately
+3. No multiple API calls
+
+Test Case 9: Multiple offers comparison
+1. Seller has 3 pending offers
+2. Can see stats preview for each
+3. Can sort by reliability
+4. Makes informed decision
+
+Test Case 10: Real-time updates
+1. User completes transaction
+2. Their stats update
+3. Others viewing their offers see updated stats
+4. Recommendation changes if thresholds crossed
+
+DELIVERABLES:
+1. Statistics display in offer received modal
+2. Statistics display in make offer modal
+3. Recommendation system working
+4. Recent cancellations with context
+5. Links to full statistics functional
+6. Mobile responsive
+7. Performance optimized (caching)
+8. All test cases passing
