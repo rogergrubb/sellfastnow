@@ -105,6 +105,8 @@ export default function PostAdEnhanced() {
   const [isAnalyzingPricing, setIsAnalyzingPricing] = useState(false);
   const [qualityScore, setQualityScore] = useState(0);
   const [achievements, setAchievements] = useState<string[]>([]);
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<{[key: string]: boolean}>({});
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -209,6 +211,58 @@ export default function PostAdEnhanced() {
     },
   });
 
+  const analyzeImageForAutopopulate = async (imageUrl: string) => {
+    setIsAnalyzingImage(true);
+    try {
+      const response = await fetch('/api/ai/analyze-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl }),
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const analysis = await response.json();
+        
+        // Auto-populate form fields with AI suggestions
+        if (analysis.title && !form.getValues('title')) {
+          form.setValue('title', analysis.title);
+          setAiSuggestions(prev => ({ ...prev, title: true }));
+        }
+        
+        if (analysis.description && !form.getValues('description')) {
+          form.setValue('description', analysis.description);
+          setAiSuggestions(prev => ({ ...prev, description: true }));
+        }
+        
+        if (analysis.category && !form.getValues('category')) {
+          form.setValue('category', analysis.category);
+          setAiSuggestions(prev => ({ ...prev, category: true }));
+        }
+        
+        if (analysis.usedPrice && !form.getValues('price')) {
+          form.setValue('price', analysis.usedPrice.toString());
+          setAiSuggestions(prev => ({ ...prev, price: true }));
+        }
+        
+        if (analysis.condition && !form.getValues('condition')) {
+          form.setValue('condition', analysis.condition);
+          setAiSuggestions(prev => ({ ...prev, condition: true }));
+        }
+
+        toast({
+          title: "AI Analysis Complete!",
+          description: `Detected: ${analysis.title}. Review and edit the suggested details.`,
+        });
+      }
+    } catch (error) {
+      console.error("Error analyzing image:", error);
+      // Fail gracefully - don't show error to user
+    } finally {
+      setIsAnalyzingImage(false);
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -242,6 +296,11 @@ export default function PostAdEnhanced() {
       const allImages = [...uploadedImages, ...uploadedUrls];
       setUploadedImages(allImages);
       form.setValue('images', allImages);
+
+      // Analyze the first uploaded image to auto-populate listing details
+      if (uploadedUrls.length > 0 && uploadedImages.length === 0) {
+        analyzeImageForAutopopulate(uploadedUrls[0]);
+      }
     } catch (error) {
       toast({
         title: "Upload Error",
