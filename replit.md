@@ -10,6 +10,18 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**October 4, 2025 - Cancellation Response System**
+- Implemented bidirectional response capability for cancellation comments
+- Created RespondToCancellationModal component with 500-character limit and public/private toggle
+- Built API endpoint POST /api/cancellations/:commentId/response with comprehensive authorization
+- Security: Properly identifies buyer from transaction events and seller from listing, validates both as participants
+- Authorization: Only the non-cancelling party can respond; canceller and third parties blocked with 403
+- One response per user enforcement: responseByUserId check prevents multiple responses
+- UI integration: "Respond to Comment" button in TransactionHistory, displays responses below original comments
+- Character limit validation: Real-time counter, red styling over 500 chars, button disabled when invalid
+- E2E tested: Both buyer-responds and seller-responds scenarios, security checks (canceller/third-party blocks)
+- Fixed critical authorization bug: Initially failed when seller cancelled (buyer couldn't respond), resolved by fetching buyer from transaction events
+
 **October 3, 2025 - Transaction Cancellation System**
 - Implemented secure transaction cancellation feature for buyers and sellers
 - Created CancelTransactionModal component with reason dropdown (8 categories), optional comment (500 char limit), public/private toggle
