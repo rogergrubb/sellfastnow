@@ -8,6 +8,7 @@ import {
   ObjectNotFoundError,
 } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
+import { upload } from "./cloudinary";
 import {
   insertListingSchema,
   insertMessageSchema,
@@ -299,43 +300,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ======================
-  // Image Upload Routes (Object Storage)
+  // Image Upload Routes (Cloudinary)
   // ======================
 
-  // Get upload URL for images
-  app.post("/api/images/upload", isAuthenticated, async (_req, res) => {
+  // Upload image to Cloudinary
+  app.post("/api/images/upload", isAuthenticated, upload.single("image"), async (req: any, res) => {
     try {
-      const objectStorageService = new ObjectStorageService();
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-      res.json({ uploadURL });
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file provided" });
+      }
+
+      // Multer with CloudinaryStorage automatically uploads to Cloudinary
+      // The file object contains the Cloudinary URL
+      const imageUrl = (req.file as any).path; // Cloudinary URL
+      
+      res.json({ 
+        imageUrl,
+        publicId: (req.file as any).filename,
+      });
     } catch (error) {
-      console.error("Error getting upload URL:", error);
-      res.status(500).json({ message: "Failed to get upload URL" });
+      console.error("Error uploading image:", error);
+      res.status(500).json({ message: "Failed to upload image" });
     }
   });
 
-  // Set ACL policy for uploaded image
-  app.post("/api/images/set-policy", isAuthenticated, async (req: any, res) => {
+  // Upload multiple images to Cloudinary
+  app.post("/api/images/upload-multiple", isAuthenticated, upload.array("images", 10), async (req: any, res) => {
     try {
-      const { imageURL } = req.body;
-      if (!imageURL) {
-        return res.status(400).json({ message: "imageURL is required" });
+      if (!req.files || (req.files as any[]).length === 0) {
+        return res.status(400).json({ message: "No image files provided" });
       }
 
-      const userId = req.auth.userId;
-      const objectStorageService = new ObjectStorageService();
-      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
-        imageURL,
-        {
-          owner: userId,
-          visibility: "public",
-        }
-      );
+      const images = (req.files as any[]).map((file) => ({
+        imageUrl: file.path,
+        publicId: file.filename,
+      }));
 
-      res.json({ objectPath });
+      res.json({ images });
     } catch (error) {
-      console.error("Error setting image policy:", error);
-      res.status(500).json({ message: "Failed to set image policy" });
+      console.error("Error uploading images:", error);
+      res.status(500).json({ message: "Failed to upload images" });
     }
   });
 

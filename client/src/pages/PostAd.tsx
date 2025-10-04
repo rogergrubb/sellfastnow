@@ -95,32 +95,20 @@ export default function PostAd() {
       const uploadedUrls: string[] = [];
 
       for (const file of files) {
-        // Get upload URL
-        const uploadResponse = await fetch('/api/images/upload', {
-          method: 'POST',
-        });
-        const { uploadURL } = await uploadResponse.json();
-
-        // Upload image to object storage
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('image', file);
 
-        await fetch(uploadURL, {
+        const uploadResponse = await fetch('/api/images/upload', {
           method: 'POST',
           body: formData,
         });
 
-        // Set ACL policy
-        const policyResponse = await fetch('/api/images/set-policy', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ imageURL: uploadURL }),
-        });
-        const { objectPath } = await policyResponse.json();
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload image');
+        }
 
-        uploadedUrls.push(objectPath);
+        const { imageUrl } = await uploadResponse.json();
+        uploadedUrls.push(imageUrl);
       }
 
       const allImages = [...uploadedImages, ...uploadedUrls];

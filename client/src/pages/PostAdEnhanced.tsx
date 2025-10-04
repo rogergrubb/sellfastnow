@@ -217,20 +217,20 @@ export default function PostAdEnhanced() {
       const uploadedUrls: string[] = [];
 
       for (const file of files) {
-        const uploadResponse = await fetch('/api/images/upload', { method: 'POST' });
-        const { uploadURL } = await uploadResponse.json();
-
         const formData = new FormData();
-        formData.append('file', file);
-        await fetch(uploadURL, { method: 'POST', body: formData });
+        formData.append('image', file);
 
-        const policyResponse = await fetch('/api/images/set-policy', {
+        const uploadResponse = await fetch('/api/images/upload', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageURL: uploadURL }),
+          body: formData,
         });
-        const { objectPath } = await policyResponse.json();
-        uploadedUrls.push(objectPath);
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload image');
+        }
+
+        const { imageUrl } = await uploadResponse.json();
+        uploadedUrls.push(imageUrl);
 
         if (mode === "coached") {
           analyzePhoto(file, uploadedImages.length + uploadedUrls.length);
