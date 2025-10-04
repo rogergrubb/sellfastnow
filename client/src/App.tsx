@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "./pages/Home";
-import PostAd from "./pages/PostAd";
+import PostAdEnhanced from "./pages/PostAdEnhanced";
 import ListingDetail from "./pages/ListingDetail";
 import Dashboard from "./pages/Dashboard";
 import UserProfile from "./pages/UserProfile";
@@ -18,7 +18,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/post-ad" component={PostAd} />
+      <Route path="/post-ad" component={PostAdEnhanced} />
       <Route path="/listings/:id" component={ListingDetail} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/users/:userId" component={UserProfile} />

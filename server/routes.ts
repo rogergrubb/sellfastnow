@@ -339,6 +339,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ======================
+  // AI Coaching Routes
+  // ======================
+
+  // Analyze photo quality
+  app.post("/api/ai/analyze-photo", isAuthenticated, async (req, res) => {
+    try {
+      const { base64Image, photoNumber } = req.body;
+      
+      if (!base64Image) {
+        return res.status(400).json({ message: "base64Image is required" });
+      }
+
+      const { aiService } = await import("./aiService");
+      const analysis = await aiService.analyzePhotoQuality(
+        base64Image,
+        photoNumber || 1
+      );
+      
+      res.json(analysis);
+    } catch (error: any) {
+      console.error("Error analyzing photo:", error);
+      res.status(500).json({ message: "Failed to analyze photo" });
+    }
+  });
+
+  // Analyze description
+  app.post("/api/ai/analyze-description", isAuthenticated, async (req, res) => {
+    try {
+      const { description, title, category } = req.body;
+      
+      if (!description) {
+        return res.status(400).json({ message: "description is required" });
+      }
+
+      const { aiService } = await import("./aiService");
+      const analysis = await aiService.analyzeDescription(
+        description,
+        title || "",
+        category || "other"
+      );
+      
+      res.json(analysis);
+    } catch (error: any) {
+      console.error("Error analyzing description:", error);
+      res.status(500).json({ message: "Failed to analyze description" });
+    }
+  });
+
+  // Analyze pricing
+  app.post("/api/ai/analyze-pricing", isAuthenticated, async (req, res) => {
+    try {
+      const { title, description, category, condition, userPrice } = req.body;
+
+      const { aiService } = await import("./aiService");
+      const analysis = await aiService.analyzePricing(
+        title || "",
+        description || "",
+        category || "other",
+        condition || "used",
+        userPrice
+      );
+      
+      res.json(analysis);
+    } catch (error: any) {
+      console.error("Error analyzing pricing:", error);
+      res.status(500).json({ message: "Failed to analyze pricing" });
+    }
+  });
+
   // Serve protected images
   app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
     try {
