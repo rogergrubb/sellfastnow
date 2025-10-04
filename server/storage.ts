@@ -3,6 +3,7 @@ import {
   listings,
   messages,
   favorites,
+  offers,
   reviews,
   cancellationComments,
   userStatistics,
@@ -17,6 +18,8 @@ import {
   type InsertMessage,
   type Favorite,
   type InsertFavorite,
+  type Offer,
+  type InsertOffer,
   type Review,
   type InsertReview,
   type ReviewWithMetadata,
@@ -104,6 +107,8 @@ export interface IStorage {
 
   // Statistics operations
   getUserStatistics(userId: string): Promise<UserStatistics | undefined>;
+  getUserStatisticsSummary(userId: string): Promise<any>;
+  getUserMonthlyStatistics(userId: string): Promise<any[]>;
   getUserTransactionTimeline(userId: string): Promise<TransactionEvent[]>;
   recalculateUserStatistics(userId: string): Promise<UserStatistics>;
   updateStatisticsOnCompletion(transactionId: string): Promise<void>;
@@ -112,6 +117,14 @@ export interface IStorage {
   // Transaction history operations
   getUserTransactionHistory(userId: string, role?: string, status?: string, sort?: string): Promise<any[]>;
   getTransactionDetails(listingId: string): Promise<any>;
+  
+  // Offer operations
+  createOffer(offer: any): Promise<any>;
+  getListingOffers(listingId: string): Promise<any[]>;
+  getOffer(offerId: string): Promise<any>;
+  updateOfferStatus(offerId: string, status: string, updates?: any): Promise<any>;
+  getUserOffersMade(userId: string): Promise<any[]>;
+  getUserOffersReceived(userId: string): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -695,6 +708,137 @@ export class DatabaseStorage implements IStorage {
     return stats;
   }
 
+  async getUserStatisticsSummary(userId: string): Promise<any> {
+    // Get user basic info
+    const [user] = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImageUrl: users.profileImageUrl,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .where(eq(users.id, userId));
+
+    if (!user) {
+      return null;
+    }
+
+    // Get statistics
+    const stats = await this.getUserStatistics(userId);
+    if (!stats) {
+      return null;
+    }
+
+    // Get recent cancellations (last 90 days, max 3)
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    const recentCancellations = await db
+      .select({
+        cancellation: cancellationComments,
+        listing: {
+          id: listings.id,
+          title: listings.title,
+        },
+      })
+      .from(cancellationComments)
+      .innerJoin(listings, eq(cancellationComments.listingId, listings.id))
+      .where(
+        and(
+          eq(cancellationComments.cancelledByUserId, userId),
+          eq(cancellationComments.isPublic, true),
+          sql`${cancellationComments.createdAt} >= ${ninetyDaysAgo.toISOString()}`
+        )
+      )
+      .orderBy(desc(cancellationComments.createdAt))
+      .limit(3);
+
+    // Get top reviews (max 3, highest rated)
+    const topReviews = await db
+      .select({
+        review: reviews,
+        reviewer: {
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+      })
+      .from(reviews)
+      .innerJoin(users, eq(reviews.reviewerId, users.id))
+      .where(
+        and(
+          eq(reviews.reviewedUserId, userId),
+          eq(reviews.isPublic, true)
+        )
+      )
+      .orderBy(desc(reviews.overallRating), desc(reviews.createdAt))
+      .limit(3);
+
+    // Calculate days since last cancellation
+    let lastCancellationDaysAgo = null;
+    if (recentCancellations.length > 0) {
+      const lastCancellation = recentCancellations[0].cancellation.createdAt;
+      if (lastCancellation) {
+        const daysDiff = Math.floor((Date.now() - new Date(lastCancellation).getTime()) / (1000 * 60 * 60 * 24));
+        lastCancellationDaysAgo = daysDiff;
+      }
+    }
+
+    // Format response
+    return {
+      userId: user.id,
+      displayName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+      profileImageUrl: user.profileImageUrl,
+      averageRating: Number(stats.averageRating) || 0,
+      totalReviews: stats.totalReviewsReceived || 0,
+      memberSince: stats.memberSince || user.createdAt,
+
+      asBuyer: {
+        totalPurchases: stats.totalPurchases || 0,
+        successfulPurchases: stats.successfulPurchases || 0,
+        successRate: Number(stats.buyerSuccessRate) || 0,
+        cancelledByBuyer: stats.cancelledByBuyer || 0,
+        buyerNoShows: stats.buyerNoShows || 0,
+        recentTransactions90d: stats.recentTransactions90d || 0,
+        recentCancellations90d: stats.recentCancellations90d || 0,
+        recentNoShows90d: stats.recentNoShows90d || 0,
+        lastCancellationDaysAgo,
+        avgResponseMinutes: stats.avgResponseTimeMinutes || 0,
+        responseRate: Number(stats.responseRatePercent) || 0,
+      },
+
+      asSeller: {
+        totalSales: stats.totalSales || 0,
+        successfulSales: stats.successfulSales || 0,
+        successRate: Number(stats.sellerSuccessRate) || 0,
+        cancelledBySeller: stats.cancelledBySeller || 0,
+        sellerNoShows: stats.sellerNoShows || 0,
+        recentTransactions90d: stats.recentTransactions90d || 0,
+        recentCancellations90d: stats.recentCancellations90d || 0,
+        recentNoShows90d: stats.recentNoShows90d || 0,
+        avgResponseMinutes: stats.avgResponseTimeMinutes || 0,
+        responseRate: Number(stats.responseRatePercent) || 0,
+      },
+
+      recentCancellations: recentCancellations.map((rc) => ({
+        date: rc.cancellation.createdAt,
+        item: rc.listing.title,
+        role: rc.cancellation.cancelledRole,
+        timing: rc.cancellation.cancellationTiming,
+        comment: rc.cancellation.comment,
+        hasResponse: !!rc.cancellation.responseText,
+      })),
+
+      topReviews: topReviews.map((tr) => ({
+        rating: tr.review.overallRating,
+        text: tr.review.reviewText,
+        reviewerName: `${tr.reviewer.firstName || ''} ${tr.reviewer.lastName || ''}`.trim(),
+        date: tr.review.createdAt,
+      })),
+    };
+  }
+
   async getUserTransactionTimeline(userId: string): Promise<TransactionEvent[]> {
     return await db
       .select()
@@ -1003,6 +1147,124 @@ export class DatabaseStorage implements IStorage {
       .update(userStatistics)
       .set(updates)
       .where(eq(userStatistics.userId, review.reviewedUserId));
+  }
+
+  // Offer operations
+  async createOffer(offerData: any): Promise<any> {
+    const [offer] = await db
+      .insert(offers)
+      .values(offerData)
+      .returning();
+    return offer;
+  }
+
+  async getListingOffers(listingId: string): Promise<any[]> {
+    const allOffers = await db
+      .select({
+        offer: offers,
+        buyer: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+        },
+      })
+      .from(offers)
+      .innerJoin(users, eq(offers.buyerId, users.id))
+      .where(eq(offers.listingId, listingId))
+      .orderBy(desc(offers.createdAt));
+
+    return allOffers;
+  }
+
+  async getOffer(offerId: string): Promise<any> {
+    const [offer] = await db
+      .select({
+        offer: offers,
+        buyer: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+        },
+        seller: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+        },
+      })
+      .from(offers)
+      .innerJoin(users as any, eq(offers.buyerId, users.id))
+      .innerJoin(users as any, eq(offers.sellerId, users.id))
+      .where(eq(offers.id, offerId));
+
+    return offer;
+  }
+
+  async updateOfferStatus(offerId: string, status: string, updates: any = {}): Promise<any> {
+    const [offer] = await db
+      .update(offers)
+      .set({
+        status,
+        respondedAt: new Date(),
+        ...updates,
+      })
+      .where(eq(offers.id, offerId))
+      .returning();
+    return offer;
+  }
+
+  async getUserOffersMade(userId: string): Promise<any[]> {
+    const userOffers = await db
+      .select({
+        offer: offers,
+        listing: {
+          id: listings.id,
+          title: listings.title,
+          price: listings.price,
+          images: listings.images,
+        },
+        seller: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+        },
+      })
+      .from(offers)
+      .innerJoin(listings, eq(offers.listingId, listings.id))
+      .innerJoin(users, eq(offers.sellerId, users.id))
+      .where(eq(offers.buyerId, userId))
+      .orderBy(desc(offers.createdAt));
+
+    return userOffers;
+  }
+
+  async getUserOffersReceived(userId: string): Promise<any[]> {
+    const receivedOffers = await db
+      .select({
+        offer: offers,
+        listing: {
+          id: listings.id,
+          title: listings.title,
+          price: listings.price,
+          images: listings.images,
+        },
+        buyer: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+        },
+      })
+      .from(offers)
+      .innerJoin(listings, eq(offers.listingId, listings.id))
+      .innerJoin(users, eq(offers.buyerId, users.id))
+      .where(eq(offers.sellerId, userId))
+      .orderBy(desc(offers.createdAt));
+
+    return receivedOffers;
   }
 }
 
