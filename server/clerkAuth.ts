@@ -8,7 +8,11 @@ process.env.CLERK_PUBLISHABLE_KEY = process.env.CLERK_PUBLISHABLE_KEY || clerkCo
 
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
-  app.use(clerkMiddleware());
+  
+  // Apply Clerk middleware globally (lax mode - doesn't enforce auth)
+  app.use(clerkMiddleware({
+    debug: process.env.NODE_ENV === 'development',
+  }));
 }
 
 async function syncUserFromClerk(userId: string) {

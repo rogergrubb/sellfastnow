@@ -39,12 +39,28 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // Global error handler - must be after all routes
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    // Handle Clerk handshake errors gracefully (old session from different Clerk instance)
+    if (err.message?.includes('handshake') || err.message?.includes('kid') || err.code === 'invalid_handshake_code') {
+      log(`Clerk handshake error (gracefully handled): ${err.message.substring(0, 100)}...`);
+      // Send 401 for handshake errors - Clerk client will handle it
+      if (!res.headersSent) {
+        return res.status(401).json({ 
+          error: 'Session verification failed',
+          code: 'HANDSHAKE_FAILED'
+        });
+      }
+      return;
+    }
+
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
+    log(`Error: ${message}`);
+    if (!res.headersSent) {
+      res.status(status).json({ message });
+    }
   });
 
   // importantly only setup vite in development and after
