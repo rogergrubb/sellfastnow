@@ -94,7 +94,25 @@ export interface IStorage {
 
   // Review operations
   createReview(review: InsertReview): Promise<Review>;
-  getUserReviews(userId: string, role?: string, sort?: string, limit?: number): Promise<Review[]>;
+  getUserReviews(
+    userId: string, 
+    filters?: {
+      stars?: number;
+      role?: 'seller' | 'buyer';
+      period?: '30d' | '3m' | '6m' | '12m' | 'all';
+      sort?: 'recent' | 'oldest' | 'highest' | 'lowest' | 'helpful';
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<ReviewWithMetadata[]>;
+  getUserReviewsCount(
+    userId: string,
+    filters?: {
+      stars?: number;
+      role?: 'seller' | 'buyer';
+      period?: '30d' | '3m' | '6m' | '12m' | 'all';
+    }
+  ): Promise<number>;
   respondToReview(reviewId: string, userId: string, responseText: string): Promise<Review>;
   voteOnReview(reviewId: string, userId: string, voteType: string): Promise<{ helpful: number; notHelpful: number }>;
   flagReview(reviewId: string, reason: string): Promise<Review>;
@@ -482,17 +500,61 @@ export class DatabaseStorage implements IStorage {
     return review;
   }
 
-  async getUserReviews(userId: string, role?: string, sort?: string, limit: number = 20): Promise<ReviewWithMetadata[]> {
+  async getUserReviews(
+    userId: string, 
+    filters?: {
+      stars?: number;
+      role?: 'seller' | 'buyer';
+      period?: '30d' | '3m' | '6m' | '12m' | 'all';
+      sort?: 'recent' | 'oldest' | 'highest' | 'lowest' | 'helpful';
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<ReviewWithMetadata[]> {
     const conditions = [eq(reviews.reviewedUserId, userId)];
     
-    if (role) {
-      conditions.push(eq(reviews.reviewerRole, role));
+    // Filter by stars
+    if (filters?.stars) {
+      conditions.push(eq(reviews.overallRating, filters.stars));
+    }
+    
+    // Filter by role (if user wants reviews "as seller", show reviews from buyers)
+    if (filters?.role) {
+      const reviewerRole = filters.role === 'seller' ? 'buyer' : 'seller';
+      conditions.push(eq(reviews.reviewerRole, reviewerRole));
+    }
+    
+    // Filter by period
+    if (filters?.period && filters.period !== 'all') {
+      const periodMap = {
+        '30d': sql`NOW() - INTERVAL '30 days'`,
+        '3m': sql`NOW() - INTERVAL '3 months'`,
+        '6m': sql`NOW() - INTERVAL '6 months'`,
+        '12m': sql`NOW() - INTERVAL '12 months'`,
+      };
+      conditions.push(sql`${reviews.createdAt} >= ${periodMap[filters.period]}`);
     }
 
-    const orderByClause = 
-      sort === 'rating-high' ? desc(reviews.overallRating) :
-      sort === 'rating-low' ? reviews.overallRating :
-      desc(reviews.createdAt);
+    // Sort options
+    let orderByClause;
+    switch (filters?.sort) {
+      case 'oldest':
+        orderByClause = [reviews.createdAt];
+        break;
+      case 'highest':
+        orderByClause = [desc(reviews.overallRating), desc(reviews.createdAt)];
+        break;
+      case 'lowest':
+        orderByClause = [reviews.overallRating, desc(reviews.createdAt)];
+        break;
+      case 'helpful':
+        orderByClause = [desc(reviews.helpfulCount), desc(reviews.createdAt)];
+        break;
+      case 'recent':
+      default:
+        orderByClause = [desc(reviews.createdAt)];
+        break;
+    }
 
     const result = await db
       .select({
@@ -507,8 +569,9 @@ export class DatabaseStorage implements IStorage {
       .from(reviews)
       .innerJoin(users, eq(reviews.reviewerId, users.id))
       .where(and(...conditions))
-      .orderBy(orderByClause)
-      .limit(limit);
+      .orderBy(...orderByClause)
+      .limit(filters?.limit || 20)
+      .offset(filters?.offset || 0);
 
     // Transform to include reviewer data in flat structure
     return result.map((row) => ({
@@ -518,6 +581,46 @@ export class DatabaseStorage implements IStorage {
         : row.reviewer.firstName || row.reviewer.lastName || 'Anonymous',
       reviewerProfileImage: row.reviewer.profileImageUrl || undefined,
     }));
+  }
+
+  async getUserReviewsCount(
+    userId: string,
+    filters?: {
+      stars?: number;
+      role?: 'seller' | 'buyer';
+      period?: '30d' | '3m' | '6m' | '12m' | 'all';
+    }
+  ): Promise<number> {
+    const conditions = [eq(reviews.reviewedUserId, userId)];
+    
+    // Filter by stars
+    if (filters?.stars) {
+      conditions.push(eq(reviews.overallRating, filters.stars));
+    }
+    
+    // Filter by role
+    if (filters?.role) {
+      const reviewerRole = filters.role === 'seller' ? 'buyer' : 'seller';
+      conditions.push(eq(reviews.reviewerRole, reviewerRole));
+    }
+    
+    // Filter by period
+    if (filters?.period && filters.period !== 'all') {
+      const periodMap = {
+        '30d': sql`NOW() - INTERVAL '30 days'`,
+        '3m': sql`NOW() - INTERVAL '3 months'`,
+        '6m': sql`NOW() - INTERVAL '6 months'`,
+        '12m': sql`NOW() - INTERVAL '12 months'`,
+      };
+      conditions.push(sql`${reviews.createdAt} >= ${periodMap[filters.period]}`);
+    }
+
+    const result = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(reviews)
+      .where(and(...conditions));
+
+    return result[0]?.count || 0;
   }
 
   async respondToReview(reviewId: string, userId: string, responseText: string): Promise<Review> {

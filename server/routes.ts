@@ -604,15 +604,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reviews/user/:userId", async (req, res) => {
     try {
       const { userId } = req.params;
-      const role = req.query.role as string | undefined;
-      const sort = req.query.sort as string | undefined;
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+      const filters = {
+        stars: req.query.stars ? parseInt(req.query.stars as string) : undefined,
+        role: req.query.role as 'seller' | 'buyer' | undefined,
+        period: req.query.period as '30d' | '3m' | '6m' | '12m' | 'all' | undefined,
+        sort: req.query.sort as 'recent' | 'oldest' | 'highest' | 'lowest' | 'helpful' | undefined,
+        limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
+        offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
+      };
 
-      const reviews = await storage.getUserReviews(userId, role, sort, limit);
+      const reviews = await storage.getUserReviews(userId, filters);
       res.json(reviews);
     } catch (error) {
       console.error("Error fetching user reviews:", error);
       res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  // Get count of reviews for a user
+  app.get("/api/reviews/user/:userId/count", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const filters = {
+        stars: req.query.stars ? parseInt(req.query.stars as string) : undefined,
+        role: req.query.role as 'seller' | 'buyer' | undefined,
+        period: req.query.period as '30d' | '3m' | '6m' | '12m' | 'all' | undefined,
+      };
+
+      const count = await storage.getUserReviewsCount(userId, filters);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching review count:", error);
+      res.status(500).json({ message: "Failed to fetch review count" });
     }
   });
 
