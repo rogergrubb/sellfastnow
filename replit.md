@@ -65,6 +65,14 @@ Preferred communication style: Simple, everyday language.
 
 ### Feature Specifications
 
+- **Intelligent Listing Creation (AI-Powered Coaching):** Revolutionary listing creation experience that educates users to be better sellers through AI-powered coaching across 5 phases:
+  - **Phase 1 - Smart Photo Upload:** Real-time quality analysis of uploaded photos with scores for lighting, focus, framing, and background. Progressive tips teach photography best practices (natural light, clean backgrounds, multiple angles, close-ups, size reference).
+  - **Phase 2 - Description Coaching:** Strength meter (0-10) analyzes descriptions and identifies missing information. AI-generated enhanced descriptions available with one click. Suggestions include adding measurements, materials, condition details, and purchase history.
+  - **Phase 3 - Pricing Intelligence:** Market-based pricing recommendations with "Sell Fast" and "Maximize Value" strategies. Pricing psychology tips (e.g., $99 vs $100). Mock market data when OpenAI API key unavailable.
+  - **Phase 4 - Real-time Quality Score:** Live 0-100 score that updates as users fill the form. Gamification with achievements: "Photographer Pro" (5+ photos), "Perfect Shot" (90+ photo score), "Master Wordsmith" (8+ description score), "Listing Legend" (90+ overall score), "Perfection Achieved!" (100 score).
+  - **Phase 5 - Seller Academy:** Sidebar with Quick Tips (photo essentials, description must-haves, pricing psychology) and Success Stats showing impact metrics (+67% views with 5+ photos, +45% sales with detailed descriptions, 3x faster sale with competitive pricing).
+  - **Skip to Simple Form:** One-click toggle to bypass all AI coaching and use a traditional listing form. Users can switch between coached and simple modes at any time.
+  - **Graceful Fallback:** Works without OpenAI API key by using realistic mock data for all AI analysis endpoints, ensuring feature availability even without AI credentials.
 - **Review System:** Public response capability for reviews with a 24-hour edit window and 500-character limit.
 - **Advanced Review Filtering and Sorting:** UI on user profiles with filtering by stars, role, period, and sorting options. Includes active filter badges, clear-all functionality, and URL parameter persistence.
 - **Offer System:** Buyers can make offers, and sellers can accept, decline, counter, or withdraw offers. Includes displaying seller/buyer statistics and recommendations during the offer process.
@@ -82,6 +90,10 @@ Preferred communication style: Simple, everyday language.
 - Google Cloud Storage (via Replit sidecar)
 - Replit Object Storage
 
+**AI & Machine Learning (Optional):**
+- OpenAI API (gpt-5 model for intelligent listing coaching)
+- Falls back to realistic mock data when API key unavailable
+
 **Payment Integration (Prepared):**
 - Stripe (scaffolded in schema)
 
@@ -92,6 +104,7 @@ Preferred communication style: Simple, everyday language.
 - TanStack Query
 - Zod (Runtime type validation)
 - React Hook Form
+- OpenAI SDK (for AI-powered listing coaching)
 
 **Development Tools:**
 - TypeScript
