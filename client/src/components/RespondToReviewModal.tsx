@@ -37,7 +37,7 @@ export function RespondToReviewModal({
 
   const respondMutation = useMutation({
     mutationFn: async (text: string) => {
-      return await apiRequest("POST", `/api/reviews/${review.id}/response`, { responseText: text });
+      return await apiRequest(`/api/reviews/${review.id}/response`, "POST", { responseText: text });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });

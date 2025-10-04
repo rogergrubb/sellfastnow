@@ -640,10 +640,15 @@ export class DatabaseStorage implements IStorage {
     // Check if editing an existing response
     const isEditing = !!review.sellerResponse;
     
-    if (isEditing && review.sellerResponseAt) {
-      // Only allow editing within 24 hours
-      const hoursSinceResponse = (Date.now() - new Date(review.sellerResponseAt).getTime()) / (1000 * 60 * 60);
-      if (hoursSinceResponse > 24) {
+    if (isEditing) {
+      // Check 24-hour window against original post time (sellerResponseAt)
+      // This prevents infinite editing by always measuring from the original post
+      if (!review.sellerResponseAt) {
+        throw new Error("Invalid review state: response exists but no post timestamp found");
+      }
+      
+      const hoursSinceOriginalPost = (Date.now() - new Date(review.sellerResponseAt).getTime()) / (1000 * 60 * 60);
+      if (hoursSinceOriginalPost > 24) {
         throw new Error("Response can only be edited within 24 hours of posting");
       }
     }
@@ -653,8 +658,10 @@ export class DatabaseStorage implements IStorage {
     };
 
     if (isEditing) {
+      // Set edited timestamp when modifying existing response
       updateData.sellerResponseEditedAt = new Date();
     } else {
+      // Set initial response timestamp when creating new response
       updateData.sellerResponseAt = new Date();
     }
 
