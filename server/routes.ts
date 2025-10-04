@@ -872,6 +872,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user monthly statistics
+  app.get("/api/statistics/user/:userId/monthly", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const months = req.query.months ? parseInt(req.query.months as string) : 3;
+      const monthlyStats = await storage.getUserMonthlyStatistics(userId, months);
+      res.json(monthlyStats);
+    } catch (error) {
+      console.error("Error fetching user monthly statistics:", error);
+      res.status(500).json({ message: "Failed to fetch user monthly statistics" });
+    }
+  });
+
   // Update statistics on transaction completion (triggers auto-update)
   app.post("/api/statistics/update-on-completion/:transactionId", isAuthenticated, async (req: any, res) => {
     try {

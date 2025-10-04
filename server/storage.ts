@@ -703,6 +703,36 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(transactionEvents.createdAt));
   }
 
+  async getUserMonthlyStatistics(userId: string, months: number = 3): Promise<any[]> {
+    const monthsAgo = new Date();
+    monthsAgo.setMonth(monthsAgo.getMonth() - months);
+
+    const result = await db.execute(sql`
+      SELECT 
+        TO_CHAR(created_at, 'YYYY-MM') as month,
+        COUNT(*) as total,
+        COUNT(*) FILTER (WHERE event_type = 'completed') as completed,
+        COUNT(*) FILTER (WHERE event_type = 'cancelled') as cancelled,
+        COUNT(*) FILTER (WHERE event_type = 'no_show') as no_shows
+      FROM transaction_events te
+      WHERE 
+        (te.user_id = ${userId} OR 
+         te.listing_id IN (SELECT id FROM listings WHERE user_id = ${userId}))
+        AND te.created_at >= ${monthsAgo.toISOString()}
+      GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+      ORDER BY month DESC
+      LIMIT ${months}
+    `);
+
+    return result.rows.map((row: any) => ({
+      month: row.month,
+      total: Number(row.total),
+      completed: Number(row.completed),
+      cancelled: Number(row.cancelled),
+      noShows: Number(row.no_shows),
+    }));
+  }
+
   async recalculateUserStatistics(userId: string): Promise<UserStatistics> {
     // Call the PostgreSQL function to recalculate
     await db.execute(sql`SELECT recalculate_success_rates(${userId})`);
