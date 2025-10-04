@@ -107,6 +107,7 @@ export default function PostAdEnhanced() {
   const [achievements, setAchievements] = useState<string[]>([]);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<{[key: string]: boolean}>({});
+  const [userEditedFields, setUserEditedFields] = useState<Set<string>>(new Set());
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -224,36 +225,50 @@ export default function PostAdEnhanced() {
       if (response.ok) {
         const analysis = await response.json();
         
-        // Auto-populate form fields with AI suggestions
-        if (analysis.title && !form.getValues('title')) {
+        // Auto-populate form fields with AI suggestions (only if user hasn't edited them)
+        const currentTitle = form.getValues('title');
+        if (analysis.title && !currentTitle && !userEditedFields.has('title')) {
           form.setValue('title', analysis.title);
           setAiSuggestions(prev => ({ ...prev, title: true }));
         }
         
-        if (analysis.description && !form.getValues('description')) {
+        const currentDescription = form.getValues('description');
+        if (analysis.description && !currentDescription && !userEditedFields.has('description')) {
           form.setValue('description', analysis.description);
           setAiSuggestions(prev => ({ ...prev, description: true }));
         }
         
-        if (analysis.category && !form.getValues('category')) {
+        const currentCategory = form.getValues('category');
+        if (analysis.category && !currentCategory && !userEditedFields.has('category')) {
           form.setValue('category', analysis.category);
           setAiSuggestions(prev => ({ ...prev, category: true }));
         }
         
-        if (analysis.usedPrice && !form.getValues('price')) {
-          form.setValue('price', analysis.usedPrice.toString());
+        const currentPrice = form.getValues('price');
+        if (analysis.usedPrice && (!currentPrice || currentPrice === '0') && !userEditedFields.has('price')) {
+          // Explicitly coerce to string to ensure type consistency
+          form.setValue('price', String(analysis.usedPrice));
           setAiSuggestions(prev => ({ ...prev, price: true }));
         }
         
-        if (analysis.condition && !form.getValues('condition')) {
+        const currentCondition = form.getValues('condition');
+        if (analysis.condition && !userEditedFields.has('condition')) {
           form.setValue('condition', analysis.condition);
           setAiSuggestions(prev => ({ ...prev, condition: true }));
         }
 
-        toast({
-          title: "AI Analysis Complete!",
-          description: `Detected: ${analysis.title}. Review and edit the suggested details.`,
-        });
+        // Show toast only if we got useful analysis data
+        if (analysis.title) {
+          toast({
+            title: "AI Analysis Complete!",
+            description: `Detected: ${analysis.title}. Review and edit the suggested details.`,
+          });
+        } else {
+          toast({
+            title: "AI Analysis Complete!",
+            description: "Review and edit the suggested details.",
+          });
+        }
       }
     } catch (error) {
       console.error("Error analyzing image:", error);

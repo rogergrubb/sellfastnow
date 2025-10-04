@@ -71,6 +71,16 @@ Preferred communication style: Simple, everyday language.
 
 ### Feature Specifications
 
+- **AI-Powered Image Recognition & Auto-Population:** Automatic listing creation from product photos using OpenAI GPT-5 Vision API. After uploading the first image, the system:
+  - Analyzes the product photo to identify the item.
+  - Auto-populates title, description, category, price, and condition fields.
+  - Shows "AI Suggestion" badges with sparkles icon on auto-filled fields.
+  - Tracks user edits to prevent overwriting manually entered data.
+  - Displays "AI is analyzing your item..." spinner during analysis.
+  - Shows toast notification "AI Analysis Complete!" with detected product name.
+  - Gracefully degrades if OpenAI API key unavailable (uses mock data).
+  - Works in both simple and enhanced coaching modes.
+  - POST /api/ai/analyze-image endpoint uses GPT-5 with vision capabilities.
 - **Intelligent Listing Creation (AI-Powered Coaching):** Revolutionary listing creation experience that educates users to be better sellers through AI-powered coaching across 5 phases:
   - **Phase 1 - Smart Photo Upload:** Real-time quality analysis of uploaded photos with scores for lighting, focus, framing, and background. Progressive tips teach photography best practices (natural light, clean backgrounds, multiple angles, close-ups, size reference).
   - **Phase 2 - Description Coaching:** Strength meter (0-10) analyzes descriptions and identifies missing information. AI-generated enhanced descriptions available with one click. Suggestions include adding measurements, materials, condition details, and purchase history.
