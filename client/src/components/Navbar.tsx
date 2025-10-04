@@ -2,7 +2,7 @@ import { Search, Plus, User, Menu, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useAuth, useUser, UserButton, SignInButton, SignUpButton } from "@clerk/clerk-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,14 +13,8 @@ import {
 
 export default function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // Query for authenticated user
-  const { data: user, isLoading, isSuccess } = useQuery({
-    queryKey: ['/api/auth/user'],
-    retry: false,
-  });
-
-  const isLoggedIn = isSuccess && !!user;
+  const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
 
   useEffect(() => {
     const root = document.documentElement;
@@ -30,16 +24,6 @@ export default function Navbar() {
       root.classList.remove("dark");
     }
   }, [isDarkMode]);
-
-  const handleLogin = () => {
-    // Trigger backend OAuth flow
-    window.location.href = '/api/login';
-  };
-
-  const handleLogout = async () => {
-    // Logout via backend
-    window.location.href = '/api/logout';
-  };
 
   return (
     <nav className="sticky top-0 z-50 bg-background border-b">
@@ -77,9 +61,9 @@ export default function Navbar() {
               {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
 
-            {isLoading ? (
+            {!isLoaded ? (
               <div className="w-20 h-9" />
-            ) : isLoggedIn ? (
+            ) : isSignedIn ? (
               <>
                 <Button 
                   variant="default" 
@@ -90,68 +74,35 @@ export default function Navbar() {
                   <Plus className="h-4 w-4 mr-2" />
                   Post Ad
                 </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      className="rounded-full"
-                      data-testid="button-user-menu"
-                    >
-                      <User className="h-5 w-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem 
-                      data-testid="menu-my-listings"
-                      onClick={() => window.location.href = '/dashboard'}
-                    >
-                      My Listings
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      data-testid="menu-messages"
-                      onClick={() => window.location.href = '/messages'}
-                    >
-                      Messages
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      data-testid="menu-favorites"
-                      onClick={() => window.location.href = '/dashboard?tab=favorites'}
-                    >
-                      Favorites
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      data-testid="menu-profile"
-                      onClick={() => window.location.href = '/dashboard?tab=settings'}
-                    >
-                      Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      data-testid="menu-logout"
-                      onClick={handleLogout}
-                    >
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div data-testid="user-button">
+                  <UserButton 
+                    afterSignOutUrl="/"
+                    appearance={{
+                      elements: {
+                        avatarBox: "w-9 h-9"
+                      }
+                    }}
+                  />
+                </div>
               </>
             ) : (
               <>
-                <Button 
-                  variant="ghost"
-                  data-testid="button-login"
-                  onClick={handleLogin}
-                >
-                  Login
-                </Button>
-                <Button 
-                  variant="default"
-                  data-testid="button-signup"
-                  onClick={handleLogin}
-                >
-                  Sign Up
-                </Button>
+                <SignInButton mode="modal">
+                  <Button 
+                    variant="ghost"
+                    data-testid="button-login"
+                  >
+                    Login
+                  </Button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <Button 
+                    variant="default"
+                    data-testid="button-signup"
+                  >
+                    Sign Up
+                  </Button>
+                </SignUpButton>
               </>
             )}
           </div>

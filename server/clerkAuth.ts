@@ -1,42 +1,28 @@
-import { clerkMiddleware, requireAuth as clerkRequireAuth } from "@clerk/backend";
+import { clerkMiddleware, getAuth, clerkClient } from "@clerk/express";
 import type { Express, RequestHandler } from "express";
 import { storage } from "./storage";
 
-export function setupAuth(app: Express) {
+export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
-  app.use(
-    clerkMiddleware({
-      secretKey: process.env.CLERK_SECRET_KEY,
-    })
-  );
+  app.use(clerkMiddleware());
 }
 
-async function syncUserFromClerk(req: any) {
-  const auth = req.auth;
-  if (!auth?.userId) {
-    return null;
-  }
-
-  const clerkUserId = auth.userId;
-  
+async function syncUserFromClerk(userId: string) {
   try {
-    let user = await storage.getUser(clerkUserId);
+    let user = await storage.getUser(userId);
     
     if (!user) {
-      const firstName = (req.auth.sessionClaims?.firstName as string) || "";
-      const lastName = (req.auth.sessionClaims?.lastName as string) || "";
-      const email = (req.auth.sessionClaims?.email as string) || "";
-      const profileImageUrl = (req.auth.sessionClaims?.imageUrl as string) || "";
-
+      const clerkUser = await clerkClient.users.getUser(userId);
+      
       await storage.upsertUser({
-        id: clerkUserId,
-        email: email,
-        firstName: firstName,
-        lastName: lastName,
-        profileImageUrl: profileImageUrl,
+        id: userId,
+        email: clerkUser.emailAddresses[0]?.emailAddress || "",
+        firstName: clerkUser.firstName || "",
+        lastName: clerkUser.lastName || "",
+        profileImageUrl: clerkUser.imageUrl || "",
       });
       
-      user = await storage.getUser(clerkUserId);
+      user = await storage.getUser(userId);
     }
     
     return user;
@@ -47,10 +33,13 @@ async function syncUserFromClerk(req: any) {
 }
 
 export const isAuthenticated: RequestHandler = async (req: any, res, next) => {
-  if (!req.auth?.userId) {
+  const auth = getAuth(req);
+  
+  if (!auth?.userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  await syncUserFromClerk(req);
+  req.auth = auth;
+  await syncUserFromClerk(auth.userId);
   next();
 };
