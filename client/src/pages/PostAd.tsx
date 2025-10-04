@@ -39,12 +39,6 @@ export default function PostAd() {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Check if user is authenticated
-  const { data: user, isLoading: userLoading } = useQuery({
-    queryKey: ['/api/auth/user'],
-    retry: false,
-  });
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -160,7 +154,7 @@ export default function PostAd() {
     }
   }, [isLoaded, isSignedIn, setLocation]);
 
-  if (!isLoaded || userLoading) {
+  if (!isLoaded) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -168,7 +162,7 @@ export default function PostAd() {
     );
   }
 
-  if (!isSignedIn || !user) {
+  if (!isSignedIn) {
     return null;
   }
 

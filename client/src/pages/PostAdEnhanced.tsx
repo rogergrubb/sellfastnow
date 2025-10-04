@@ -106,11 +106,6 @@ export default function PostAdEnhanced() {
   const [qualityScore, setQualityScore] = useState(0);
   const [achievements, setAchievements] = useState<string[]>([]);
 
-  const { data: user, isLoading: userLoading } = useQuery({
-    queryKey: ['/api/auth/user'],
-    retry: false,
-  });
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -381,7 +376,7 @@ export default function PostAdEnhanced() {
     }
   }, [isLoaded, isSignedIn, setLocation]);
 
-  if (!isLoaded || userLoading) {
+  if (!isLoaded) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -389,7 +384,7 @@ export default function PostAdEnhanced() {
     );
   }
 
-  if (!isSignedIn || !user) {
+  if (!isSignedIn) {
     return null;
   }
 
