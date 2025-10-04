@@ -2,12 +2,9 @@ import { clerkMiddleware, getAuth, clerkClient } from "@clerk/express";
 import type { Express, RequestHandler } from "express";
 import { storage } from "./storage";
 
-// Verify Clerk environment variables are set
+// Verify Clerk secret key is set
 if (!process.env.CLERK_SECRET_KEY) {
   throw new Error("Missing CLERK_SECRET_KEY environment variable");
-}
-if (!process.env.CLERK_PUBLISHABLE_KEY) {
-  throw new Error("Missing CLERK_PUBLISHABLE_KEY environment variable");
 }
 
 export async function setupAuth(app: Express) {
