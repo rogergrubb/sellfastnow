@@ -382,27 +382,27 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
-    // Build query
-    let query = db
-      .select()
-      .from(listings)
-      .where(and(...conditions));
-
-    // Apply sorting
+    // Determine sort order
+    let orderByClause;
     switch (filters.sortBy) {
       case 'price-low':
-        query = query.orderBy(sql`${listings.price}::numeric ASC`);
+        orderByClause = sql`${listings.price}::numeric ASC`;
         break;
       case 'price-high':
-        query = query.orderBy(sql`${listings.price}::numeric DESC`);
+        orderByClause = sql`${listings.price}::numeric DESC`;
         break;
       case 'newest':
       default:
-        query = query.orderBy(desc(listings.createdAt));
+        orderByClause = desc(listings.createdAt);
         break;
     }
 
-    return await query;
+    // Build and execute query
+    return await db
+      .select()
+      .from(listings)
+      .where(and(...conditions))
+      .orderBy(orderByClause);
   }
 
   // Message operations
