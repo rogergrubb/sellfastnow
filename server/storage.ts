@@ -637,12 +637,30 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Only the reviewed user can respond to this review");
     }
 
+    // Check if editing an existing response
+    const isEditing = !!review.sellerResponse;
+    
+    if (isEditing && review.sellerResponseAt) {
+      // Only allow editing within 24 hours
+      const hoursSinceResponse = (Date.now() - new Date(review.sellerResponseAt).getTime()) / (1000 * 60 * 60);
+      if (hoursSinceResponse > 24) {
+        throw new Error("Response can only be edited within 24 hours of posting");
+      }
+    }
+
+    const updateData: any = {
+      sellerResponse: responseText,
+    };
+
+    if (isEditing) {
+      updateData.sellerResponseEditedAt = new Date();
+    } else {
+      updateData.sellerResponseAt = new Date();
+    }
+
     const [updatedReview] = await db
       .update(reviews)
-      .set({
-        sellerResponse: responseText,
-        sellerResponseAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(reviews.id, reviewId))
       .returning();
 

@@ -646,15 +646,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { reviewId } = req.params;
       const { responseText } = req.body;
 
-      if (!responseText) {
+      if (!responseText || responseText.trim().length === 0) {
         return res.status(400).json({ message: "Response text is required" });
+      }
+
+      if (responseText.length > 500) {
+        return res.status(400).json({ message: "Response text must be 500 characters or less" });
       }
 
       const review = await storage.respondToReview(reviewId, userId, responseText);
       res.json(review);
     } catch (error: any) {
       console.error("Error responding to review:", error);
-      res.status(400).json({ message: error.message || "Failed to respond to review" });
+      const statusCode = error.message.includes("can only be edited within") ? 403 : 
+                         error.message.includes("Only the reviewed user") ? 403 : 400;
+      res.status(statusCode).json({ message: error.message || "Failed to respond to review" });
     }
   });
 
