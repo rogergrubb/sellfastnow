@@ -10,6 +10,20 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**October 4, 2025 - Offer System with Integrated User Statistics**
+- Implemented complete offer system enabling buyers to make offers on listings with seller decision flow
+- Created offers table with full CRUD support: offer/deposit amounts, status tracking (pending/accepted/declined/countered/withdrawn), counter-offer capability
+- Built GET /api/statistics/user/:userId/summary endpoint delivering condensed statistics with recent cancellations and top reviews
+- Developed UserStatsSummary component with intelligent recommendation system (excellent/good/fair/poor/very poor) based on success rates and warnings
+- Created MakeOfferModal component displaying seller statistics and recommendations before buyers submit offers
+- Built ViewOfferModal component showing buyer statistics when sellers review, accept, decline, or counter offers
+- Integrated offer flow into ListingDetail page with desktop and mobile "Make Offer" buttons
+- Authorization: buyers create offers, sellers manage decisions (accept/decline/counter/withdraw)
+- Fixed critical bug: corrected apiRequest parameter order from (url, method, data) to (method, url, data) in all offer mutations
+- E2E tested: full offer flow validated including buyer viewing seller stats, submitting offer, database persistence
+- Recommendation logic: combines success rates, cancellation history, no-shows, and response metrics to guide decision-making
+- New users display "fair" recommendation with "No transaction history yet" warning to inform other parties
+
 **October 4, 2025 - Comprehensive Statistics Dashboard**
 - Implemented comprehensive statistics dashboard on user profiles with 7 sections
 - Dashboard sections: Overall Summary, As Buyer, As Seller, Recent Activity (90 days), Communication & Timing, Reviews Received, Verification Status
