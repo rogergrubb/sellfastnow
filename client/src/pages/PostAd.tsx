@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { SignInButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -166,9 +167,11 @@ export default function PostAd() {
         <p className="text-muted-foreground mb-6">
           You need to be logged in to post a listing.
         </p>
-        <Button onClick={() => window.location.href = '/api/login'}>
-          Log In
-        </Button>
+        <SignInButton mode="modal">
+          <Button>
+            Log In
+          </Button>
+        </SignInButton>
       </div>
     );
   }
