@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { SignInButton } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,7 @@ const formSchema = insertListingSchema.omit({ userId: true });
 export default function PostAd() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { isSignedIn, isLoaded } = useAuth();
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -152,7 +153,14 @@ export default function PostAd() {
     createListingMutation.mutate(data);
   };
 
-  if (userLoading) {
+  // Redirect to sign-in if not authenticated
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      setLocation('/sign-in');
+    }
+  }, [isLoaded, isSignedIn, setLocation]);
+
+  if (!isLoaded || userLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -160,20 +168,8 @@ export default function PostAd() {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <h2 className="text-2xl font-bold mb-4">Please Log In</h2>
-        <p className="text-muted-foreground mb-6">
-          You need to be logged in to post a listing.
-        </p>
-        <SignInButton mode="modal">
-          <Button>
-            Log In
-          </Button>
-        </SignInButton>
-      </div>
-    );
+  if (!isSignedIn || !user) {
+    return null;
   }
 
   return (

@@ -12,12 +12,16 @@ import UserProfile from "./pages/UserProfile";
 import TransactionHistory from "./pages/TransactionHistory";
 import CreateReview from "./pages/CreateReview";
 import Unsubscribe from "./pages/Unsubscribe";
+import SignInPage from "./pages/SignIn";
+import SignUpPage from "./pages/SignUp";
 import Navbar from "@/components/Navbar";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/sign-in" component={SignInPage} />
+      <Route path="/sign-up" component={SignUpPage} />
       <Route path="/post-ad" component={PostAdEnhanced} />
       <Route path="/listings/:id" component={ListingDetail} />
       <Route path="/dashboard" component={Dashboard} />
