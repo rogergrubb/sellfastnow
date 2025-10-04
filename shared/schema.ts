@@ -35,6 +35,7 @@ export const users = pgTable("users", {
   location: varchar("location", { length: 100 }),
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
+  reviewEmailsEnabled: boolean("review_emails_enabled").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -415,3 +416,52 @@ export const insertTransactionEventSchema = createInsertSchema(transactionEvents
 
 export type InsertTransactionEvent = z.infer<typeof insertTransactionEventSchema>;
 export type TransactionEvent = typeof transactionEvents.$inferSelect;
+
+// Review Request Emails tracking table
+export const reviewRequestEmails = pgTable("review_request_emails", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  listingId: varchar("listing_id")
+    .notNull()
+    .references(() => listings.id, { onDelete: "cascade" }),
+  recipientUserId: varchar("recipient_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  emailType: varchar("email_type", { length: 50 }).notNull(), // 'initial' or 'reminder'
+  sentAt: timestamp("sent_at").defaultNow(),
+  reviewLeft: boolean("review_left").notNull().default(false),
+  reviewLeftAt: timestamp("review_left_at"),
+});
+
+export const insertReviewRequestEmailSchema = createInsertSchema(reviewRequestEmails).omit({
+  id: true,
+  sentAt: true,
+  reviewLeft: true,
+  reviewLeftAt: true,
+});
+
+export type InsertReviewRequestEmail = z.infer<typeof insertReviewRequestEmailSchema>;
+export type ReviewRequestEmail = typeof reviewRequestEmails.$inferSelect;
+
+// Review Tokens table (for email authentication)
+export const reviewTokens = pgTable("review_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  token: varchar("token").notNull().unique(),
+  listingId: varchar("listing_id")
+    .notNull()
+    .references(() => listings.id, { onDelete: "cascade" }),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  used: boolean("used").notNull().default(false),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertReviewTokenSchema = createInsertSchema(reviewTokens).omit({
+  id: true,
+  used: true,
+  createdAt: true,
+});
+
+export type InsertReviewToken = z.infer<typeof insertReviewTokenSchema>;
+export type ReviewToken = typeof reviewTokens.$inferSelect;

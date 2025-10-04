@@ -593,6 +593,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const review = await storage.createReview(validatedData);
+      
+      // Mark review request email as completed
+      await storage.markReviewAsLeft(listingId, userId);
+      
       res.json(review);
     } catch (error: any) {
       console.error("Error creating review:", error);
@@ -1281,6 +1285,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error withdrawing offer:", error);
       res.status(400).json({ message: error.message || "Failed to withdraw offer" });
+    }
+  });
+
+  // ======================
+  // Review Request Email Routes
+  // ======================
+
+  // Send review request emails for a completed transaction (manual trigger)
+  app.post("/api/email/review-request/:listingId", isAuthenticated, async (req: any, res) => {
+    try {
+      const { listingId } = req.params;
+      const { sendReviewRequestEmails } = await import("./reviewEmailService");
+      
+      await sendReviewRequestEmails(listingId);
+      
+      res.json({ success: true, message: "Review request emails sent" });
+    } catch (error: any) {
+      console.error("Error sending review request emails:", error);
+      res.status(500).json({ message: error.message || "Failed to send review request emails" });
+    }
+  });
+
+  // Validate review token
+  app.get("/api/reviews/validate-token/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const reviewToken = await storage.getReviewToken(token);
+      
+      if (!reviewToken) {
+        return res.status(404).json({ message: "Invalid token" });
+      }
+      
+      if (reviewToken.used) {
+        return res.status(400).json({ message: "Token already used" });
+      }
+      
+      if (new Date() > reviewToken.expiresAt) {
+        return res.status(400).json({ message: "Token expired" });
+      }
+      
+      const listing = await storage.getListing(reviewToken.listingId);
+      const user = await storage.getUser(reviewToken.userId);
+      
+      res.json({
+        valid: true,
+        listingId: reviewToken.listingId,
+        userId: reviewToken.userId,
+        listing,
+        user,
+      });
+    } catch (error: any) {
+      console.error("Error validating token:", error);
+      res.status(500).json({ message: "Failed to validate token" });
+    }
+  });
+
+  // Unsubscribe from review reminder emails
+  app.get("/api/unsubscribe/review-reminders", async (req, res) => {
+    try {
+      const { user: userId } = req.query;
+      
+      if (!userId || typeof userId !== 'string') {
+        return res.status(400).json({ message: "User ID required" });
+      }
+      
+      await storage.updateUserProfile(userId, { reviewEmailsEnabled: false });
+      
+      res.json({ 
+        success: true, 
+        message: "You've been unsubscribed from review reminder emails" 
+      });
+    } catch (error: any) {
+      console.error("Error unsubscribing from review reminders:", error);
+      res.status(500).json({ message: "Failed to unsubscribe" });
+    }
+  });
+
+  // Cron job endpoint for sending review reminders (should be called by external scheduler)
+  app.post("/api/cron/send-review-reminders", async (req, res) => {
+    try {
+      const { sendReviewReminders } = await import("./reviewEmailService");
+      await sendReviewReminders();
+      
+      res.json({ success: true, message: "Review reminders sent" });
+    } catch (error: any) {
+      console.error("Error sending review reminders:", error);
+      res.status(500).json({ message: error.message || "Failed to send review reminders" });
     }
   });
 

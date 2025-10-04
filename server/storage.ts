@@ -10,6 +10,8 @@ import {
   reviewVotes,
   cancellationCommentVotes,
   transactionEvents,
+  reviewRequestEmails,
+  reviewTokens,
   type User,
   type UpsertUser,
   type Listing,
@@ -32,6 +34,10 @@ import {
   type InsertCancellationCommentVote,
   type TransactionEvent,
   type InsertTransactionEvent,
+  type ReviewRequestEmail,
+  type InsertReviewRequestEmail,
+  type ReviewToken,
+  type InsertReviewToken,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
@@ -143,6 +149,16 @@ export interface IStorage {
   updateOfferStatus(offerId: string, status: string, updates?: any): Promise<any>;
   getUserOffersMade(userId: string): Promise<any[]>;
   getUserOffersReceived(userId: string): Promise<any[]>;
+
+  // Review request email operations
+  trackReviewRequestEmail(data: InsertReviewRequestEmail): Promise<ReviewRequestEmail>;
+  markReviewAsLeft(listingId: string, userId: string): Promise<void>;
+  getPendingReviewReminders(daysAgo: number): Promise<Array<{listing: Listing, user: User, recipientUserId: string}>>;
+  
+  // Review token operations
+  createReviewToken(data: InsertReviewToken): Promise<ReviewToken>;
+  getReviewToken(token: string): Promise<ReviewToken | undefined>;
+  markTokenAsUsed(tokenId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1393,6 +1409,98 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(offers.createdAt));
 
     return receivedOffers;
+  }
+
+  // Review request email operations
+  async trackReviewRequestEmail(data: InsertReviewRequestEmail): Promise<ReviewRequestEmail> {
+    const [email] = await db
+      .insert(reviewRequestEmails)
+      .values(data)
+      .onConflictDoNothing()
+      .returning();
+    return email;
+  }
+
+  async markReviewAsLeft(listingId: string, userId: string): Promise<void> {
+    await db
+      .update(reviewRequestEmails)
+      .set({
+        reviewLeft: true,
+        reviewLeftAt: new Date(),
+      })
+      .where(
+        and(
+          eq(reviewRequestEmails.listingId, listingId),
+          eq(reviewRequestEmails.recipientUserId, userId)
+        )
+      );
+  }
+
+  async getPendingReviewReminders(daysAgo: number): Promise<Array<{listing: Listing, user: User, recipientUserId: string}>> {
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.setDate(-daysAgo));
+    
+    const pendingReminders = await db
+      .select({
+        listing: listings,
+        user: users,
+        recipientUserId: reviewRequestEmails.recipientUserId,
+      })
+      .from(reviewRequestEmails)
+      .innerJoin(listings, eq(reviewRequestEmails.listingId, listings.id))
+      .innerJoin(users, eq(reviewRequestEmails.recipientUserId, users.id))
+      .where(
+        and(
+          eq(reviewRequestEmails.emailType, 'initial'),
+          eq(reviewRequestEmails.reviewLeft, false),
+          eq(users.reviewEmailsEnabled, true),
+          sql`DATE(${reviewRequestEmails.sentAt}) = DATE(${targetDate})`
+        )
+      );
+
+    const pendingWithoutReminder = [];
+    for (const item of pendingReminders) {
+      const [existingReminder] = await db
+        .select()
+        .from(reviewRequestEmails)
+        .where(
+          and(
+            eq(reviewRequestEmails.listingId, item.listing.id),
+            eq(reviewRequestEmails.recipientUserId, item.recipientUserId),
+            eq(reviewRequestEmails.emailType, 'reminder')
+          )
+        );
+      
+      if (!existingReminder) {
+        pendingWithoutReminder.push(item);
+      }
+    }
+
+    return pendingWithoutReminder;
+  }
+
+  // Review token operations
+  async createReviewToken(data: InsertReviewToken): Promise<ReviewToken> {
+    const [token] = await db
+      .insert(reviewTokens)
+      .values(data)
+      .returning();
+    return token;
+  }
+
+  async getReviewToken(token: string): Promise<ReviewToken | undefined> {
+    const [reviewToken] = await db
+      .select()
+      .from(reviewTokens)
+      .where(eq(reviewTokens.token, token));
+    return reviewToken;
+  }
+
+  async markTokenAsUsed(tokenId: string): Promise<void> {
+    await db
+      .update(reviewTokens)
+      .set({ used: true })
+      .where(eq(reviewTokens.id, tokenId));
   }
 }
 
