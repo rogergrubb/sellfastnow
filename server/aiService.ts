@@ -43,6 +43,16 @@ interface PricingAnalysis {
   pricingTip: string;
 }
 
+export interface ProductAnalysis {
+  title: string;
+  description: string;
+  category: string;
+  retailPrice: number;
+  usedPrice: number;
+  condition: string;
+  confidence: number;
+}
+
 export async function analyzePhotoQuality(
   base64Image: string,
   photoNumber: number
@@ -323,8 +333,88 @@ function getMockPricingAnalysis(userPrice?: string): PricingAnalysis {
   };
 }
 
+// AI-powered product recognition from image
+export async function analyzeProductImage(imageUrl: string): Promise<ProductAnalysis> {
+  const openai = getOpenAI();
+  
+  if (!openai) {
+    // Return mock data if no API key
+    return getMockProductAnalysis();
+  }
+
+  try {
+    // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+    const response = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert product analyst for online marketplaces. Analyze product images and provide detailed, accurate information to help sellers create compelling listings.`,
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Analyze this product image and provide:
+1. A concise, descriptive product title (5-10 words max)
+2. A detailed product description (100-150 words) including:
+   - What the item is
+   - Visible features and characteristics
+   - Apparent condition based on the image
+   - Any notable details (brand, model, materials, etc.)
+3. The most appropriate category from: Electronics, Furniture, Clothing, Home & Garden, Sports & Outdoors, Books & Media, Toys & Games, Automotive, Other
+4. Estimated retail price if bought new (realistic market value)
+5. Estimated current used price based on apparent condition
+6. Condition assessment: new, like-new, good, fair, or poor
+7. Confidence score (0-100) in your analysis
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "title": string,
+  "description": string,
+  "category": string,
+  "retailPrice": number,
+  "usedPrice": number,
+  "condition": string,
+  "confidence": number
+}`,
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: imageUrl,
+              },
+            },
+          ],
+        },
+      ],
+      response_format: { type: "json_object" },
+      max_completion_tokens: 2048,
+    });
+
+    return JSON.parse(response.choices[0].message.content!);
+  } catch (error: any) {
+    console.error("Error analyzing product image:", error);
+    return getMockProductAnalysis();
+  }
+}
+
+function getMockProductAnalysis(): ProductAnalysis {
+  return {
+    title: "Product Item",
+    description: "This item appears to be in good condition based on the uploaded image. It features quality construction and has been well-maintained. The item shows minimal signs of wear and is ready for a new owner. Please review the photos carefully and feel free to ask any questions about specific details or condition.",
+    category: "Other",
+    retailPrice: 100,
+    usedPrice: 65,
+    condition: "good",
+    confidence: 50,
+  };
+}
+
 export const aiService = {
   analyzePhotoQuality,
   analyzeDescription,
   analyzePricing,
+  analyzeProductImage,
 };

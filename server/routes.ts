@@ -413,6 +413,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI-powered product recognition from image
+  app.post("/api/ai/analyze-image", isAuthenticated, async (req, res) => {
+    try {
+      const { imageUrl } = req.body;
+      
+      if (!imageUrl) {
+        return res.status(400).json({ message: "imageUrl is required" });
+      }
+
+      const { analyzeProductImage } = await import("./aiService");
+      const analysis = await analyzeProductImage(imageUrl);
+      
+      res.json(analysis);
+    } catch (error: any) {
+      console.error("Error analyzing product image:", error);
+      res.status(500).json({ message: "Failed to analyze product image" });
+    }
+  });
+
   // Serve protected images
   app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
     try {
