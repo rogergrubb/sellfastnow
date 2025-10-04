@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Star, MapPin, Calendar, Package, TrendingUp, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { ReviewCard } from "@/components/ReviewCard";
+import { StatisticsDashboard } from "@/components/StatisticsDashboard";
 import type { ReviewWithMetadata } from "@shared/schema";
 
 export default function UserProfile() {
@@ -197,86 +198,7 @@ export default function UserProfile() {
         </TabsContent>
 
         <TabsContent value="statistics" className="space-y-4">
-          {statsLoading ? (
-            <Card>
-              <CardContent className="py-8">
-                <div className="animate-pulse space-y-4">
-                  <div className="h-8 bg-muted rounded"></div>
-                  <div className="h-24 bg-muted rounded"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              {/* Rating Breakdown */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Rating Breakdown</CardTitle>
-                  <CardDescription>Distribution of customer reviews</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {[5, 4, 3, 2, 1].map((stars) => {
-                    const count = statistics?.[`${["one", "two", "three", "four", "five"][stars - 1]}StarReviews`] || 0;
-                    const total = statistics?.totalReviewsReceived || 1;
-                    const percentage = (count / total) * 100;
-                    
-                    return (
-                      <div key={stars} className="flex items-center gap-3">
-                        <div className="flex items-center gap-1 w-20">
-                          <span className="text-sm font-medium">{stars}</span>
-                          <Star className="h-3 w-3 fill-primary text-primary" />
-                        </div>
-                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary transition-all"
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                        <span className="text-sm text-muted-foreground w-12 text-right" data-testid={`text-${stars}-star-count`}>
-                          {count}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-
-              {/* Performance Metrics */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Performance Metrics</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">Avg. Response Time</p>
-                      <p className="text-lg font-bold" data-testid="text-avg-response-time">
-                        {statistics?.avgResponseTime || "N/A"}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">Repeat Customers</p>
-                      <p className="text-lg font-bold" data-testid="text-repeat-customers">
-                        {statistics?.repeatCustomers || 0}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">Total Revenue</p>
-                      <p className="text-lg font-bold" data-testid="text-total-revenue">
-                        ${statistics?.totalRevenue || "0"}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">Cancellation Rate</p>
-                      <p className="text-lg font-bold" data-testid="text-cancellation-rate">
-                        {statistics?.cancellationRate || 0}%
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          )}
+          <StatisticsDashboard userId={userId!} />
         </TabsContent>
 
         <TabsContent value="reviews" className="space-y-4">
