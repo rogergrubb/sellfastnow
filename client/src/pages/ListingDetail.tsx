@@ -12,6 +12,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { LeaveReviewModal } from "@/components/LeaveReviewModal";
 import { CancellationCommentModal } from "@/components/CancellationCommentModal";
 import { CancelTransactionModal } from "@/components/CancelTransactionModal";
+import { MakeOfferModal } from "@/components/MakeOfferModal";
 import {
   MapPin,
   Heart,
@@ -39,6 +40,7 @@ export default function ListingDetail() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isCancellationModalOpen, setIsCancellationModalOpen] = useState(false);
   const [isCancelTransactionModalOpen, setIsCancelTransactionModalOpen] = useState(false);
+  const [isMakeOfferModalOpen, setIsMakeOfferModalOpen] = useState(false);
 
   // Fetch current user
   const { data: currentUser } = useQuery<User>({
@@ -365,10 +367,18 @@ export default function ListingDetail() {
                   Message Seller
                 </Button>
                 
-                <Button variant="outline" className="w-full" size="lg" data-testid="button-make-offer">
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  Make Offer
-                </Button>
+                {currentUser && data?.listing.userId !== currentUser.id && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    size="lg" 
+                    onClick={() => setIsMakeOfferModalOpen(true)}
+                    data-testid="button-make-offer"
+                  >
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Make Offer
+                  </Button>
+                )}
 
                 <Button
                   variant="outline"
@@ -437,9 +447,21 @@ export default function ListingDetail() {
           >
             <Share2 className="h-5 w-5" />
           </Button>
+          {currentUser && data?.listing.userId !== currentUser.id && (
+            <Button 
+              variant="outline" 
+              className="flex-1" 
+              size="lg"
+              onClick={() => setIsMakeOfferModalOpen(true)}
+              data-testid="button-mobile-make-offer"
+            >
+              <DollarSign className="h-4 w-4 mr-2" />
+              Make Offer
+            </Button>
+          )}
           <Button className="flex-1" size="lg" data-testid="button-mobile-message">
             <MessageCircle className="h-4 w-4 mr-2" />
-            Message Seller
+            Message
           </Button>
         </div>
       </div>
@@ -478,6 +500,16 @@ export default function ListingDetail() {
                 queryClient.invalidateQueries({ queryKey: [`/api/transactions/${id}/details`] });
                 queryClient.invalidateQueries({ queryKey: [`/api/listings/${id}`] });
               }}
+            />
+          )}
+          {data?.listing.userId !== currentUser.id && (
+            <MakeOfferModal
+              open={isMakeOfferModalOpen}
+              onOpenChange={setIsMakeOfferModalOpen}
+              listingId={id!}
+              sellerId={seller.id}
+              askingPrice={Number(listing.price)}
+              listingTitle={listing.title}
             />
           )}
         </>
