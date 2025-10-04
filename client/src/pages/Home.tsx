@@ -173,7 +173,7 @@ export default function Home() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {listings.map((listing) => (
+                {listings.map((listing: any) => (
                   <ListingCard 
                     key={listing.id}
                     id={listing.id}
@@ -182,6 +182,8 @@ export default function Home() {
                     price={parseFloat(formatPrice(listing.price))}
                     location={listing.location}
                     timePosted={getTimeAgo(listing.createdAt!)}
+                    seller={listing.seller}
+                    sellerStats={listing.sellerStats}
                   />
                 ))}
               </div>

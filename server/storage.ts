@@ -360,7 +360,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(listings.createdAt));
   }
 
-  async advancedSearch(filters: SearchFilters): Promise<Listing[]> {
+  async advancedSearch(filters: SearchFilters): Promise<any[]> {
     const conditions = [eq(listings.status, "active")];
 
     // Text search in title and description
@@ -413,12 +413,56 @@ export class DatabaseStorage implements IStorage {
         break;
     }
 
-    // Build and execute query
-    return await db
+    // Get listings
+    const listingResults = await db
       .select()
       .from(listings)
       .where(and(...conditions))
       .orderBy(orderByClause);
+
+    // Get unique user IDs
+    const userIds = [...new Set(listingResults.map(l => l.userId))];
+
+    // Fetch seller information for all unique users
+    const sellersData = await db
+      .select({
+        userId: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImageUrl: users.profileImageUrl,
+        averageRating: userStatistics.averageRating,
+        totalReviews: userStatistics.totalReviewsReceived,
+        successRate: userStatistics.sellerSuccessRate,
+      })
+      .from(users)
+      .leftJoin(userStatistics, eq(users.id, userStatistics.userId))
+      .where(sql`${users.id} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`);
+
+    // Create a map for quick lookup
+    const sellersMap = new Map(
+      sellersData.map(seller => [
+        seller.userId,
+        {
+          seller: {
+            id: seller.userId,
+            firstName: seller.firstName,
+            lastName: seller.lastName,
+            profileImageUrl: seller.profileImageUrl,
+          },
+          sellerStats: {
+            averageRating: seller.averageRating,
+            totalReviews: seller.totalReviews || 0,
+            successRate: seller.successRate,
+          },
+        },
+      ])
+    );
+
+    // Combine listings with seller data
+    return listingResults.map(listing => ({
+      ...listing,
+      ...(sellersMap.get(listing.userId) || {}),
+    }));
   }
 
   // Message operations
