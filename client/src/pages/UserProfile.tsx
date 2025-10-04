@@ -11,6 +11,7 @@ import { Star, MapPin, Calendar, Package, TrendingUp, MessageCircle, X, Filter }
 import { useState, useEffect } from "react";
 import { ReviewCard } from "@/components/ReviewCard";
 import { StatisticsDashboard } from "@/components/StatisticsDashboard";
+import { RespondToReviewModal } from "@/components/RespondToReviewModal";
 import type { ReviewWithMetadata } from "@shared/schema";
 
 interface ReviewFilters {
@@ -27,6 +28,8 @@ export default function UserProfile() {
   const [showFilters, setShowFilters] = useState(false);
   const [offset, setOffset] = useState(0);
   const [allReviews, setAllReviews] = useState<ReviewWithMetadata[]>([]);
+  const [respondModalOpen, setRespondModalOpen] = useState(false);
+  const [selectedReviewForResponse, setSelectedReviewForResponse] = useState<ReviewWithMetadata | null>(null);
   
   // Parse filters from URL
   const getFiltersFromURL = (): ReviewFilters => {
@@ -53,6 +56,11 @@ export default function UserProfile() {
     const newPath = `/users/${userId}${query ? `?${query}` : ''}`;
     window.history.replaceState({}, '', newPath);
   }, [filters, userId]);
+
+  const { data: currentUser } = useQuery<any>({
+    queryKey: ['/api/auth/user'],
+    retry: false,
+  });
 
   const { data: user, isLoading: userLoading } = useQuery<any>({
     queryKey: ["/api/users", userId],
@@ -121,6 +129,15 @@ export default function UserProfile() {
     setOffset(0);
     setAllReviews([]);
   }, [filters]);
+
+  // Handler for responding to reviews
+  const handleRespondToReview = (reviewId: string) => {
+    const review = allReviews.find(r => r.id === reviewId);
+    if (review) {
+      setSelectedReviewForResponse(review);
+      setRespondModalOpen(true);
+    }
+  };
 
   if (userLoading) {
     return (
@@ -458,6 +475,8 @@ export default function UserProfile() {
                 <ReviewCard 
                   key={review.id} 
                   review={review}
+                  currentUserId={currentUser?.user?.id}
+                  onRespond={handleRespondToReview}
                   queryKey={["/api/reviews/user", userId, buildReviewQueryParams()]}
                 />
               ))}
@@ -568,6 +587,19 @@ export default function UserProfile() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Respond to Review Modal */}
+      {selectedReviewForResponse && (
+        <RespondToReviewModal
+          isOpen={respondModalOpen}
+          onClose={() => {
+            setRespondModalOpen(false);
+            setSelectedReviewForResponse(null);
+          }}
+          review={selectedReviewForResponse}
+          queryKey={["/api/reviews/user", userId, buildReviewQueryParams()]}
+        />
+      )}
     </div>
   );
 }

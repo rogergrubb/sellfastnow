@@ -149,6 +149,10 @@ export function ReviewCard({
   };
 
   const canRespond = currentUserId && review.reviewedUserId === currentUserId && !review.sellerResponse;
+  
+  // Check if response can be edited (within 24 hours)
+  const canEditResponse = review.sellerResponse && review.sellerResponseAt && currentUserId === review.reviewedUserId
+    && (Date.now() - new Date(review.sellerResponseAt).getTime()) / (1000 * 60 * 60) < 24;
 
   return (
     <Card className="overflow-hidden" data-testid={`card-review-${review.id}`}>
@@ -361,16 +365,32 @@ export function ReviewCard({
         {review.sellerResponse && (
           <>
             <Separator />
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <p className="text-sm font-medium">Seller Response</p>
-              <p className="text-sm text-muted-foreground" data-testid={`text-response-${review.id}`}>
+            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">💬 Response</span>
+                  {review.sellerResponseAt && (
+                    <span className="text-xs text-muted-foreground">
+                      • Replied {new Date(review.sellerResponseAt).toLocaleDateString()}
+                      {review.sellerResponseEditedAt && " (edited)"}
+                    </span>
+                  )}
+                </div>
+                {canEditResponse && onRespond && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onRespond(review.id)}
+                    data-testid={`button-edit-response-${review.id}`}
+                    className="text-xs h-7"
+                  >
+                    Edit
+                  </Button>
+                )}
+              </div>
+              <p className="text-sm" data-testid={`text-response-${review.id}`}>
                 {review.sellerResponse}
               </p>
-              {review.sellerResponseAt && (
-                <p className="text-xs text-muted-foreground">
-                  {new Date(review.sellerResponseAt).toLocaleDateString()}
-                </p>
-              )}
             </div>
           </>
         )}
