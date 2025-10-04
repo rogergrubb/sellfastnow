@@ -2,7 +2,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage, db } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./clerkAuth";
 import {
   ObjectStorageService,
   ObjectNotFoundError,
@@ -29,7 +29,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ======================
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -136,7 +136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's listings
   app.get("/api/user/listings", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const listings = await storage.getUserListings(userId);
       res.json(listings);
     } catch (error) {
@@ -148,7 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create listing
   app.post("/api/listings", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const validatedData = insertListingSchema.parse({
         ...req.body,
         userId,
@@ -165,7 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/listings/:id", isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       
       const listing = await storage.getListing(id);
       if (!listing) {
@@ -204,7 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/listings/:id", isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       
       const listing = await storage.getListing(id);
       if (!listing) {
@@ -226,7 +226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's own listings
   app.get("/api/listings/mine", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const listings = await storage.getUserListings(userId);
       res.json(listings);
     } catch (error) {
@@ -238,7 +238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get dashboard stats
   app.get("/api/listings/stats", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const stats = await storage.getUserListingsStats(userId);
       res.json(stats);
     } catch (error) {
@@ -252,7 +252,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { status } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       
       if (!status) {
         return res.status(400).json({ message: "Status is required" });
@@ -282,7 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user profile
   app.put("/api/users/profile", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { firstName, lastName, profileImageUrl } = req.body;
       
       const updateData: any = {};
@@ -322,7 +322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "imageURL is required" });
       }
 
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const objectStorageService = new ObjectStorageService();
       const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
         imageURL,
@@ -412,7 +412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve protected images
   app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const objectStorageService = new ObjectStorageService();
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
       
@@ -461,7 +461,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's conversations
   app.get("/api/messages", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const messages = await storage.getUserConversations(userId);
       res.json(messages);
     } catch (error) {
@@ -485,7 +485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send message
   app.post("/api/messages", isAuthenticated, async (req: any, res) => {
     try {
-      const senderId = req.user.claims.sub;
+      const senderId = req.auth.userId;
       const validatedData = insertMessageSchema.parse({
         ...req.body,
         senderId,
@@ -517,7 +517,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's favorites
   app.get("/api/favorites", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const favorites = await storage.getUserFavorites(userId);
       res.json(favorites);
     } catch (error) {
@@ -530,11 +530,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/favorites/:listingId", async (req: any, res) => {
     try {
       // If not authenticated, return false
-      if (!req.user || !req.user.claims || !req.user.claims.sub) {
+      if (!req.auth?.userId) {
         return res.json({ isFavorited: false });
       }
       
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { listingId } = req.params;
       const isFavorited = await storage.isFavorited(userId, listingId);
       res.json({ isFavorited });
@@ -547,7 +547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add to favorites
   app.post("/api/favorites", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const validatedData = insertFavoriteSchema.parse({
         ...req.body,
         userId,
@@ -563,7 +563,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Remove from favorites
   app.delete("/api/favorites/:listingId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { listingId } = req.params;
       await storage.removeFavorite(userId, listingId);
       res.status(204).send();
@@ -576,7 +576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Toggle favorite
   app.post("/api/favorites/toggle", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { listingId } = req.body;
       
       if (!listingId) {
@@ -646,7 +646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a review
   app.post("/api/reviews/create", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { listingId, token } = req.body;
 
       // If token is provided, validate and use it to derive role and target
@@ -796,7 +796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Respond to a review
   app.post("/api/reviews/:reviewId/response", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { reviewId } = req.params;
       const { responseText } = req.body;
 
@@ -821,7 +821,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Vote on a review
   app.post("/api/reviews/:reviewId/vote", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { reviewId } = req.params;
       const { voteType } = req.body;
 
@@ -862,7 +862,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create cancellation comment (new format matching modal)
   app.post("/api/cancellations/create", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { 
         listingId, 
         cancellationReason,
@@ -900,7 +900,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create cancellation comment (legacy format - now with eligibility check)
   app.post("/api/cancellations/:listingId/comment", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { listingId } = req.params;
       const { comment, cancelledRole, cancellationTiming, cancellationReasonCategory } = req.body;
 
@@ -933,7 +933,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Respond to cancellation comment
   app.post("/api/cancellations/:commentId/response", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { commentId } = req.params;
       const { responseText, isPublic = true } = req.body;
 
@@ -1011,7 +1011,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Vote on cancellation comment
   app.post("/api/cancellations/:commentId/vote", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { commentId } = req.params;
       const { voteType } = req.body;
 
@@ -1147,8 +1147,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/transactions/:listingId/details", async (req: any, res) => {
     try {
       const { listingId } = req.params;
-      // req.user is populated by session middleware if user is logged in
-      const currentUserId = req.user?.claims?.sub || null;
+      // req.auth is populated by Clerk middleware if user is logged in
+      const currentUserId = req.auth?.userId || null;
       
       const details = await storage.getTransactionDetails(listingId, currentUserId);
       if (!details) {
@@ -1164,7 +1164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cancel transaction with comment
   app.post("/api/listings/:listingId/cancel", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { listingId } = req.params;
       const { reasonCategory, comment, isPublic, scheduledMeetupTime } = req.body;
 
@@ -1241,7 +1241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a new offer on a listing
   app.post("/api/listings/:listingId/offers", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { listingId } = req.params;
       const { offerAmount, depositAmount, message } = req.body;
 
@@ -1277,7 +1277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all offers for a listing (seller only)
   app.get("/api/listings/:listingId/offers", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { listingId } = req.params;
 
       // Verify user is the seller
@@ -1301,7 +1301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get offers made by user
   app.get("/api/offers/made", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const offers = await storage.getUserOffersMade(userId);
       res.json(offers);
     } catch (error: any) {
@@ -1313,7 +1313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get offers received by user
   app.get("/api/offers/received", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const offers = await storage.getUserOffersReceived(userId);
       res.json(offers);
     } catch (error: any) {
@@ -1325,7 +1325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Accept an offer
   app.patch("/api/offers/:offerId/accept", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { offerId } = req.params;
 
       // Get offer details
@@ -1356,7 +1356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Decline an offer
   app.patch("/api/offers/:offerId/decline", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { offerId } = req.params;
 
       // Get offer details
@@ -1383,7 +1383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Counter an offer
   app.patch("/api/offers/:offerId/counter", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { offerId } = req.params;
       const { counterOfferAmount, counterOfferMessage } = req.body;
 
@@ -1414,7 +1414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Withdraw an offer (buyer)
   app.patch("/api/offers/:offerId/withdraw", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth.userId;
       const { offerId } = req.params;
 
       // Get offer details
