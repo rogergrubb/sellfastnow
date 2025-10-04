@@ -223,6 +223,7 @@ export default function PostAdEnhanced() {
         const uploadResponse = await fetch('/api/images/upload', {
           method: 'POST',
           body: formData,
+          credentials: 'include',
         });
 
         if (!uploadResponse.ok) {
@@ -267,6 +268,7 @@ export default function PostAdEnhanced() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ base64Image: base64, photoNumber }),
+          credentials: 'include',
         });
 
         if (response.ok) {

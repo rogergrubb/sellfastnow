@@ -101,6 +101,7 @@ export default function PostAd() {
         const uploadResponse = await fetch('/api/images/upload', {
           method: 'POST',
           body: formData,
+          credentials: 'include',
         });
 
         if (!uploadResponse.ok) {
