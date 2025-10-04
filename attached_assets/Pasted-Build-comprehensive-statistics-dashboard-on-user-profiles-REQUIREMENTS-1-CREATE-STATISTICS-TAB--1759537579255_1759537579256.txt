@@ -1,0 +1,356 @@
+Build comprehensive statistics dashboard on user profiles:
+
+REQUIREMENTS:
+
+1. CREATE STATISTICS TAB ON PROFILE
+
+Add new tab to user profile pages:
+
+URL: /profile/:userId/statistics (or /profile/:userId with tab=statistics)
+
+Tab Navigation:
+[About] [Reviews] [Statistics] ← NEW [Transaction History]
+
+2. PAGE LAYOUT - STATISTICS DASHBOARD
+
+┌─────────────────────────────────────────────────────────┐
+│ John Davis - Statistics                                 │
+│ Member since: March 2024                                │
+│ ─────────────────────────────────────────────────────── │
+│                                                         │
+│ 📊 OVERALL SUMMARY                                      │
+│                                                         │
+│ ┌─────────────┬─────────────┬─────────────┬──────────┐ │
+│ │   Total     │   Success   │   Average   │ Response │ │
+│ │Transactions │     Rate    │   Rating    │   Time   │ │
+│ │             │             │             │          │ │
+│ │     17      │     75%     │   3.6/5.0   │  45 min  │ │
+│ └─────────────┴─────────────┴─────────────┴──────────┘ │
+│                                                         │
+│ ═══════════════════════════════════════════════════════ │
+│                                                         │
+│ 🛍️ AS BUYER (12 Transactions)                          │
+│                                                         │
+│ Performance Metrics:                                    │
+│ ┌─────────────────────────────────────────────────┐     │
+│ │ Total Purchases:           12                   │     │
+│ │ Completed Successfully:    9  (75%)             │     │
+│ │ Cancelled by Buyer:        3  (25%)             │     │
+│ │ Cancelled by Seller:       2  (17%)             │     │
+│ │ Buyer No-Shows:            1  (8%)              │     │
+│ │ Seller No-Shows:           0  (0%)              │     │
+│ └─────────────────────────────────────────────────┘     │
+│                                                         │
+│ Success Breakdown:                                      │
+│ [████████████████░░░░] 75% Success Rate                 │
+│                                                         │
+│ ═══════════════════════════════════════════════════════ │
+│                                                         │
+│ 🏷️ AS SELLER (5 Transactions)                          │
+│                                                         │
+│ Performance Metrics:                                    │
+│ ┌─────────────────────────────────────────────────┐     │
+│ │ Total Sales:               5                    │     │
+│ │ Completed Successfully:    5  (100%)            │     │
+│ │ Cancelled by Seller:       0  (0%)              │     │
+│ │ Cancelled by Buyer:        1  (20%)             │     │
+│ │ Seller No-Shows:           0  (0%)              │     │
+│ │ Buyer No-Shows:            0  (0%)              │     │
+│ └─────────────────────────────────────────────────┘     │
+│                                                         │
+│ Success Breakdown:                                      │
+│ [████████████████████] 100% Success Rate                │
+│                                                         │
+│ ═══════════════════════════════════════════════════════ │
+│                                                         │
+│ 📅 RECENT ACTIVITY (Last 90 Days)                       │
+│                                                         │
+│ ┌─────────────────────────────────────────────────┐     │
+│ │ Transactions:              5                    │     │
+│ │ Completed:                 2  (40%)             │     │
+│ │ Cancelled:                 3  (60%) ⚠️          │     │
+│ │ No-Shows:                  1  (20%) ⚠️          │     │
+│ │                                                 │     │
+│ │ Last Transaction:          5 days ago           │     │
+│ │ Last Cancellation:         5 days ago           │     │
+│ └─────────────────────────────────────────────────┘     │
+│                                                         │
+│ Activity Trend (Last 90 Days):                          │
+│ Month      | Total | Completed | Cancelled | No-Shows  │
+│ ───────────|───────|───────────|───────────|─────────  │
+│ October    |   2   |     1     |     1     |    0      │
+│ September  |   1   |     0     |     1     |    1      │
+│ August     |   2   |     1     |     1     |    0      │
+│ ───────────|───────|───────────|───────────|─────────  │
+│ Total      |   5   |     2     |     3     |    1      │
+│                                                         │
+│ ⚠️ PLATFORM NOTE:                                       │
+│ This user has 3 cancellations in the last 90 days,     │
+│ which is above the platform average of 0.5/90 days.    │
+│                                                         │
+│ ═══════════════════════════════════════════════════════ │
+│                                                         │
+│ ⏱️ COMMUNICATION & TIMING                               │
+│                                                         │
+│ Response Statistics:                                    │
+│ ┌─────────────────────────────────────────────────┐     │
+│ │ Average Response Time:     45 minutes           │     │
+│ │ Response Rate:             87%                  │     │
+│ │                                                 │     │
+│ │ Within 15 minutes:         23%                  │     │
+│ │ Within 1 hour:             65%                  │     │
+│ │ Within 24 hours:           87%                  │     │
+│ │ Never responded:           13%                  │     │
+│ └─────────────────────────────────────────────────┘     │
+│                                                         │
+│ Punctuality (Meetup Check-ins):                         │
+│ ┌─────────────────────────────────────────────────┐     │
+│ │ Checked in early:          2  (22%)             │     │
+│ │ Checked in on time:        5  (56%)             │     │
+│ │ Checked in late (5-15min): 1  (11%)             │     │
+│ │ No-show:                   1  (11%)             │     │
+│ │                                                 │     │
+│ │ On-time rate:              78%                  │     │
+│ └─────────────────────────────────────────────────┘     │
+│                                                         │
+│ ═══════════════════════════════════════════════════════ │
+│                                                         │
+│ 💬 REVIEWS RECEIVED                                     │
+│                                                         │
+│ Rating Distribution:                                    │
+│ ⭐⭐⭐⭐⭐ (5 stars)  ████████████░░░░░   7  (58%)        │
+│ ⭐⭐⭐⭐  (4 stars)  ░░░░░░░░░░░░░░░░░   0  (0%)         │
+│ ⭐⭐⭐   (3 stars)  ██████░░░░░░░░░░░   3  (25%)        │
+│ ⭐⭐     (2 stars)  ████░░░░░░░░░░░░░   2  (17%)        │
+│ ⭐      (1 star)   ░░░░░░░░░░░░░░░░░   0  (0%)         │
+│                                                         │
+│ Average Rating: 3.6 out of 5.0 (12 reviews)             │
+│                                                         │
+│ [View All Reviews →]                                    │
+│                                                         │
+│ ═══════════════════════════════════════════════════════ │
+│                                                         │
+│ ✅ VERIFICATION STATUS                                  │
+│                                                         │
+│ ✓ Phone Verified                                        │
+│ ✓ Email Verified                                        │
+│ ✓ Stripe Account Connected                              │
+│ ✗ ID Not Verified                                       │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+
+3. DATA SOURCE
+
+Fetch from user_statistics table (already auto-updating from Step 1)
+
+API Endpoint: GET /api/statistics/user/:userId
+
+Returns:
+{
+  userId: 123,
+  memberSince: "2024-03-15",
+  
+  // Overall
+  totalTransactions: 17,
+  overallSuccessRate: 75.0,
+  averageRating: 3.6,
+  avgResponseTimeMinutes: 45,
+  
+  // As Seller
+  totalSales: 5,
+  successfulSales: 5,
+  cancelledBySeller: 0,
+  cancelledByBuyerOnSeller: 1,
+  sellerNoShows: 0,
+  buyerNoShowsOnSeller: 0,
+  sellerSuccessRate: 100.0,
+  
+  // As Buyer
+  totalPurchases: 12,
+  successfulPurchases: 9,
+  cancelledByBuyer: 3,
+  cancelledBySellerOnBuyer: 2,
+  buyerNoShows: 1,
+  sellerNoShowsOnBuyer: 0,
+  buyerSuccessRate: 75.0,
+  
+  // Recent (90 days)
+  recentTransactions90d: 5,
+  recentCancellations90d: 3,
+  recentNoShows90d: 1,
+  
+  // Response stats
+  responseRatePercent: 87.0,
+  responsesWithin15min: 23,
+  responsesWithin1hour: 65,
+  responsesWithin24hours: 87,
+  totalMessagesReceived: 100,
+  
+  // Punctuality
+  checkedInEarly: 2,
+  checkedInOnTime: 5,
+  checkedInLate: 1,
+  totalCheckins: 9,
+  
+  // Reviews
+  totalReviewsReceived: 12,
+  fiveStarReviews: 7,
+  fourStarReviews: 0,
+  threeStarReviews: 3,
+  twoStarReviews: 2,
+  oneStarReviews: 0,
+  
+  // Verification
+  phoneVerified: true,
+  emailVerified: true,
+  idVerified: false,
+  stripeConnected: true
+}
+
+4. MONTHLY BREAKDOWN
+
+For "Recent Activity" section, also fetch:
+
+GET /api/statistics/user/:userId/monthly?months=3
+
+Returns array:
+[
+  { month: "2024-10", total: 2, completed: 1, cancelled: 1, noShows: 0 },
+  { month: "2024-09", total: 1, completed: 0, cancelled: 1, noShows: 1 },
+  { month: "2024-08", total: 2, completed: 1, cancelled: 1, noShows: 0 }
+]
+
+Display in table format as shown above.
+
+5. VISUAL INDICATORS
+
+Use color coding:
+- Green (✅) for good metrics: >80% success rate, <3 cancellations
+- Yellow (⚠️) for warning: 60-80% success, 3-5 cancellations
+- Red (🔴) for poor: <60% success, >5 cancellations
+
+Progress bars:
+- Success rates shown as progress bars
+- Green for >80%, Yellow for 60-80%, Red for <60%
+
+6. PLATFORM NOTES
+
+Add contextual warnings when metrics are concerning:
+
+If recent_cancellations_90d > 2:
+"⚠️ This user has [X] cancellations in the last 90 days, 
+which is above the platform average of 0.5/90 days."
+
+If recent_no_shows_90d > 0:
+"⚠️ This user has [X] no-shows in the last 90 days."
+
+If buyer_success_rate < 70:
+"⚠️ This buyer has a success rate of [X]%, which is below 
+the platform average of 90%."
+
+7. MOBILE RESPONSIVE
+
+On mobile, stack cards vertically:
+- Overall Summary (4 metrics in 2x2 grid)
+- As Buyer section
+- As Seller section
+- Recent Activity
+- Communication stats
+- Reviews summary
+- Verification badges
+
+8. PERMISSIONS
+
+Who can view:
+- Public: Everyone can view basic stats (transactions, ratings, success rates)
+- Private: Only user can see detailed communication stats and verification status
+- For viewing own profile: Show all details
+- For viewing others: Hide some sensitive metrics (response times, verification details)
+
+Actually, make everything PUBLIC for transparency. This is like eBay feedback.
+
+9. LINK FROM OTHER PAGES
+
+Add "View Statistics" link on:
+- User profile header
+- When receiving offers
+- In transaction history
+- In messages
+
+TESTING:
+
+Test Case 1: View own statistics
+1. Navigate to your profile
+2. Click "Statistics" tab
+3. Verify all metrics display correctly
+4. Verify numbers match actual transaction history
+5. Verify recent activity shows last 90 days
+
+Test Case 2: View another user's statistics
+1. Navigate to another user's profile
+2. Click "Statistics" tab
+3. Verify all public metrics visible
+4. Verify calculations are correct
+
+Test Case 3: User with no transactions
+1. New user with 0 transactions
+2. View statistics page
+3. Should show:
+   - Total Transactions: 0
+   - "No transaction history yet"
+   - All percentages: N/A or 0%
+
+Test Case 4: User with perfect record
+1. User with 10 completed, 0 cancelled, 0 no-shows
+2. View statistics
+3. Success rate: 100%
+4. All green indicators
+5. No warning messages
+
+Test Case 5: User with poor record
+1. User with 5 completed, 5 cancelled, 2 no-shows
+2. View statistics
+3. Success rate: 50%
+4. Yellow/red indicators
+5. Platform warning message visible
+
+Test Case 6: Monthly breakdown accuracy
+1. Complete 2 transactions in October
+2. Cancel 1 transaction in October
+3. View statistics
+4. October row shows: 3 total, 2 completed, 1 cancelled
+
+Test Case 7: Response time calculation
+1. Respond to 10 messages
+2. Average time: 30 minutes
+3. Statistics show: "Average Response: 30 minutes"
+4. Within 1 hour: 100%
+
+Test Case 8: Rating distribution
+1. User has: 5x 5-star, 2x 3-star, 1x 2-star
+2. Statistics show correct bars
+3. Average: 4.1/5.0
+4. Percentages: 62% 5-star, 25% 3-star, 13% 2-star
+
+Test Case 9: Mobile responsive
+1. View on mobile device
+2. All sections stack vertically
+3. Progress bars scale correctly
+4. Tables scroll horizontally if needed
+5. All text readable
+
+Test Case 10: Links work
+1. Click "View All Reviews" → goes to reviews tab
+2. All navigation between tabs works
+3. Back button works correctly
+
+DELIVERABLES:
+1. Statistics tab on profile pages
+2. Complete dashboard layout
+3. All metrics display correctly
+4. Monthly breakdown table
+5. Visual indicators (colors, progress bars)
+6. Platform warning notes
+7. Mobile responsive design
+8. Navigation links functional
+9. All test cases passing
