@@ -1,7 +1,12 @@
 import OpenAI from "openai";
 
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const getOpenAI = () => {
+  if (!process.env.OPENAI_API_KEY) {
+    return null;
+  }
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+};
 
 interface PhotoAnalysis {
   score: number;
@@ -42,7 +47,9 @@ export async function analyzePhotoQuality(
   base64Image: string,
   photoNumber: number
 ): Promise<PhotoAnalysis> {
-  if (!process.env.OPENAI_API_KEY) {
+  const openai = getOpenAI();
+  
+  if (!openai) {
     // Return mock data if no API key
     return getMockPhotoAnalysis(photoNumber);
   }
@@ -109,7 +116,9 @@ export async function analyzeDescription(
   title: string,
   category: string
 ): Promise<DescriptionAnalysis> {
-  if (!process.env.OPENAI_API_KEY) {
+  const openai = getOpenAI();
+  
+  if (!openai) {
     return getMockDescriptionAnalysis(description);
   }
 
@@ -162,7 +171,9 @@ export async function analyzePricing(
   condition: string,
   userPrice?: string
 ): Promise<PricingAnalysis> {
-  if (!process.env.OPENAI_API_KEY) {
+  const openai = getOpenAI();
+  
+  if (!openai) {
     return getMockPricingAnalysis(userPrice);
   }
 
