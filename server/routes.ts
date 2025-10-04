@@ -774,26 +774,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "You have already responded to this cancellation comment" });
       }
 
-      // Get listing to verify user is the other party
+      // Get listing and transaction events to verify user is a participant
       const listing = await storage.getListing(comment.listingId);
       if (!listing) {
         return res.status(404).json({ message: "Transaction not found" });
       }
 
-      // Verify user is the OTHER party in the transaction
-      const isBuyer = listing.buyerId === userId;
-      const isSeller = listing.sellerId === userId;
+      // Get transaction events to find the buyer
+      const events = await db
+        .select()
+        .from(transactionEvents)
+        .where(eq(transactionEvents.listingId, comment.listingId))
+        .limit(1);
 
-      if (!isBuyer && !isSeller) {
+      if (events.length === 0) {
+        return res.status(404).json({ message: "Transaction event not found" });
+      }
+
+      const buyerId = events[0].userId;
+      const sellerId = listing.userId;
+
+      // Verify user is a participant in the transaction
+      const isSeller = sellerId === userId;
+      const isBuyer = buyerId === userId;
+      const isCanceller = comment.cancelledByUserId === userId;
+
+      // User must be either the seller or the buyer to be a participant
+      if (!isSeller && !isBuyer) {
         return res.status(403).json({ message: "You are not a participant in this transaction" });
       }
 
       // Verify user is the OTHER party (not the one who cancelled)
-      const cancellerRole = comment.cancelledRole; // 'buyer' or 'seller'
-      if (
-        (cancellerRole === 'buyer' && isBuyer) ||
-        (cancellerRole === 'seller' && isSeller)
-      ) {
+      if (isCanceller) {
         return res.status(403).json({ 
           message: "You cannot respond to your own cancellation comment" 
         });
