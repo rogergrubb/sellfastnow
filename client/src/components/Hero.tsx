@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@clerk/clerk-react";
+import { useLocation } from "wouter";
 import heroImage from "@assets/generated_images/Marketplace_hero_collage_image_05e817b0.png";
 
 const categories = ["Electronics", "Furniture", "Clothing", "Vehicles", "Services", "More"];
@@ -13,6 +15,8 @@ interface HeroProps {
 
 export default function Hero({ onSearch, onCategorySelect }: HeroProps) {
   const [searchInput, setSearchInput] = useState("");
+  const { isSignedIn } = useAuth();
+  const [, setLocation] = useLocation();
   return (
     <div className="relative h-[70vh] min-h-[500px] flex items-center justify-center overflow-hidden">
       <div 
@@ -72,7 +76,7 @@ export default function Hero({ onSearch, onCategorySelect }: HeroProps) {
             size="lg" 
             className="bg-secondary hover:bg-secondary text-secondary-foreground h-12 px-8"
             data-testid="button-hero-post"
-            onClick={() => console.log("Post your ad clicked")}
+            onClick={() => setLocation('/post-ad')}
           >
             Post Your Ad - It's Free!
           </Button>
