@@ -10,6 +10,24 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**October 4, 2025 - Advanced Review Filtering and Sorting System**
+- Implemented comprehensive review filtering and sorting UI on user profile pages with 4 filter dimensions
+- Filter options: Stars (1-5), Role (all/seller/buyer), Period (30d/3m/6m/12m/all), Sort (recent/oldest/highest/lowest/helpful)
+- Created GET /api/reviews/user/:userId with query params: stars, role, period, sort, limit, offset
+- Created GET /api/reviews/user/:userId/count endpoint to return filtered review count
+- Updated backend getUserReviews() storage method with full filter support and correct role inversion logic
+- Updated backend getUserReviewsCount() storage method to mirror filtering logic for accurate counts
+- Active filter badges with individual remove buttons (X icons) for each non-default filter
+- "Clear All Filters" button to reset all filters to defaults at once
+- Review count display showing "Showing X reviews (filtered from Y total)" with filter context
+- URL query parameter persistence for bookmarking and sharing specific filter combinations
+- Pagination with "Load More" button loading 20 reviews at a time, state resets when filters change
+- Mobile-friendly collapsible filter menu with toggle button for small screens
+- Empty state handling: different messages for "no reviews yet" vs "no reviews match filters" with active filter details
+- Role filter logic: "as seller" shows reviews FROM buyers (inverted to provide context)
+- Fixed TypeScript errors in searchListings advancedSearch by refactoring orderBy to build clause arrays
+- E2E tested: all filter UI elements, badge creation/removal, URL updates, clear-all behavior, empty states
+
 **October 4, 2025 - Offer System with Integrated User Statistics**
 - Implemented complete offer system enabling buyers to make offers on listings with seller decision flow
 - Created offers table with full CRUD support: offer/deposit amounts, status tracking (pending/accepted/declined/countered/withdrawn), counter-offer capability
