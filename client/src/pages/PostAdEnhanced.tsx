@@ -182,6 +182,7 @@ export default function PostAdEnhanced() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        credentials: 'include',
       });
       
       if (!response.ok) {
@@ -302,6 +303,7 @@ export default function PostAdEnhanced() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description, title, category }),
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -324,6 +326,7 @@ export default function PostAdEnhanced() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, description, category, condition, userPrice: price }),
+        credentials: 'include',
       });
 
       if (response.ok) {
