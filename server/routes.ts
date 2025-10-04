@@ -577,19 +577,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/reviews/create", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { listingId } = req.body;
+      const { listingId, token } = req.body;
 
-      // Verify user is eligible to review this listing
-      const transactionDetails = await storage.getTransactionDetails(listingId, userId);
-      if (!transactionDetails || !transactionDetails.eligibleForReview) {
-        return res.status(403).json({ 
-          message: "You are not eligible to review this transaction. Only buyers who completed a transaction can leave reviews." 
-        });
+      // If token is provided, validate and use it to derive role and target
+      let reviewerRole: 'buyer' | 'seller';
+      let reviewedUserId: string;
+      
+      if (token) {
+        const reviewToken = await storage.getReviewToken(token);
+        
+        if (!reviewToken) {
+          return res.status(400).json({ message: "Invalid token" });
+        }
+        
+        if (reviewToken.used) {
+          return res.status(400).json({ message: "Token already used" });
+        }
+        
+        if (new Date() > reviewToken.expiresAt) {
+          return res.status(400).json({ message: "Token expired" });
+        }
+        
+        if (reviewToken.userId !== userId) {
+          return res.status(403).json({ message: "Token does not belong to you" });
+        }
+        
+        // Verify token is for this listing (prevent privilege escalation)
+        if (reviewToken.listingId !== listingId) {
+          return res.status(403).json({ message: "Token is not valid for this listing" });
+        }
+        
+        // Get listing to determine role
+        const listing = await storage.getListing(listingId);
+        if (!listing) {
+          return res.status(404).json({ message: "Listing not found" });
+        }
+        
+        // Derive role and target from token and listing (don't trust client input)
+        reviewerRole = listing.userId === reviewToken.userId ? 'seller' : 'buyer';
+        
+        if (reviewerRole === 'buyer') {
+          reviewedUserId = listing.userId;
+        } else {
+          // Seller reviews buyer - find buyer from transaction
+          const transactionDetails = await storage.getTransactionDetails(listing.id, reviewToken.userId);
+          const buyerEvent = transactionDetails?.transactionEvents?.find(
+            (e: any) => e.userId !== listing.userId && (e.eventType === 'completed' || e.eventType === 'confirmed')
+          );
+          reviewedUserId = buyerEvent?.userId;
+          
+          if (!reviewedUserId) {
+            return res.status(400).json({ message: "Could not determine buyer for this transaction" });
+          }
+        }
+        
+        // Mark token as used
+        await storage.markTokenAsUsed(token);
+      } else {
+        // Verify user is eligible to review this listing (non-token flow)
+        const transactionDetails = await storage.getTransactionDetails(listingId, userId);
+        if (!transactionDetails || !transactionDetails.eligibleForReview) {
+          return res.status(403).json({ 
+            message: "You are not eligible to review this transaction. Only buyers who completed a transaction can leave reviews." 
+          });
+        }
+        
+        // Derive role and target from transaction data (don't trust client input)
+        const listing = await storage.getListing(listingId);
+        if (!listing) {
+          return res.status(404).json({ message: "Listing not found" });
+        }
+        
+        reviewerRole = listing.userId === userId ? 'seller' : 'buyer';
+        
+        if (reviewerRole === 'buyer') {
+          reviewedUserId = listing.userId;
+        } else {
+          // Seller reviews buyer - find buyer from transaction
+          const buyerEvent = transactionDetails.transactionEvents?.find(
+            (e: any) => e.userId !== listing.userId && (e.eventType === 'completed' || e.eventType === 'confirmed')
+          );
+          reviewedUserId = buyerEvent?.userId;
+          
+          if (!reviewedUserId) {
+            return res.status(400).json({ message: "Could not determine buyer for this transaction" });
+          }
+        }
       }
 
       const validatedData = insertReviewSchema.parse({
         ...req.body,
         reviewerId: userId,
+        reviewerRole,
+        reviewedUserId,
       });
 
       const review = await storage.createReview(validatedData);
@@ -1328,10 +1408,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const listing = await storage.getListing(reviewToken.listingId);
       const user = await storage.getUser(reviewToken.userId);
       
+      // Determine role and who to review
+      const reviewerRole = listing.userId === reviewToken.userId ? 'seller' : 'buyer';
+      let reviewedUserId: string | null = null;
+      
+      if (reviewerRole === 'buyer') {
+        // Buyer reviews seller
+        reviewedUserId = listing.userId;
+      } else {
+        // Seller reviews buyer - need to find buyer from transaction
+        const transactionDetails = await storage.getTransactionDetails(listing.id, reviewToken.userId);
+        const buyerEvent = transactionDetails?.transactionEvents?.find(
+          (e: any) => e.userId !== listing.userId && (e.eventType === 'completed' || e.eventType === 'confirmed')
+        );
+        reviewedUserId = buyerEvent?.userId || null;
+      }
+      
       res.json({
         valid: true,
+        token,
         listingId: reviewToken.listingId,
         userId: reviewToken.userId,
+        reviewerRole,
+        reviewedUserId,
         listing,
         user,
       });

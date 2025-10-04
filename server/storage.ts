@@ -1421,6 +1421,21 @@ export class DatabaseStorage implements IStorage {
     return email;
   }
 
+  async hasUserReviewedListing(userId: string, listingId: string): Promise<boolean> {
+    const [existing] = await db
+      .select()
+      .from(reviews)
+      .where(
+        and(
+          eq(reviews.reviewerId, userId),
+          eq(reviews.listingId, listingId)
+        )
+      )
+      .limit(1);
+    
+    return !!existing;
+  }
+
   async markReviewAsLeft(listingId: string, userId: string): Promise<void> {
     await db
       .update(reviewRequestEmails)

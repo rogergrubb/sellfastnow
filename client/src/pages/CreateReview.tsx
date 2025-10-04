@@ -40,8 +40,11 @@ export default function CreateReview() {
   // Validate token and fetch transaction details
   const { data: tokenData, isLoading: validatingToken, error: tokenError } = useQuery<{
     valid: boolean;
+    token: string;
     listingId: string;
     userId: string;
+    reviewerRole: 'buyer' | 'seller';
+    reviewedUserId: string;
     listing: any;
     user: any;
   }>({
@@ -116,9 +119,10 @@ export default function CreateReview() {
     if (!tokenData) return;
 
     const reviewData = {
+      token: tokenData.token,
       listingId: tokenData.listingId,
-      reviewedUserId: tokenData.listing.sellerId,
-      reviewerRole: "buyer",
+      reviewedUserId: tokenData.reviewedUserId,
+      reviewerRole: tokenData.reviewerRole,
       overallRating,
       ...ratings.reduce((acc, cat) => ({ ...acc, [cat.key]: cat.value }), {}),
       reviewTitle: reviewTitle.trim(),
@@ -245,7 +249,7 @@ export default function CreateReview() {
               <span className="font-medium">Item:</span> {tokenData.listing.title}
             </p>
             <p className="text-sm text-muted-foreground">
-              <span className="font-medium">Seller:</span> {tokenData.listing.seller?.username || 'Unknown'}
+              <span className="font-medium">Reviewing:</span> {tokenData.reviewerRole === 'buyer' ? 'Seller' : 'Buyer'}
             </p>
           </div>
 

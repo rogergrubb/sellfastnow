@@ -6,14 +6,14 @@ function generateReviewUrl(listingId: string, token: string): string {
   const baseUrl = process.env.REPLIT_DOMAINS 
     ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
     : 'http://localhost:5000';
-  return `${baseUrl}/reviews/create?listing=${listingId}&token=${token}`;
+  return `${baseUrl}/create-review/${token}`;
 }
 
 function generateUnsubscribeUrl(userId: string): string {
   const baseUrl = process.env.REPLIT_DOMAINS 
     ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
     : 'http://localhost:5000';
-  return `${baseUrl}/unsubscribe/review-reminders?user=${userId}`;
+  return `${baseUrl}/unsubscribe?user=${userId}`;
 }
 
 export async function sendReviewRequestEmails(listingId: string) {
@@ -136,13 +136,9 @@ export async function sendReviewReminders() {
         continue;
       }
 
-      const existingReview = await storage.getUserReviews(recipientUserId, {
-        limit: 1,
-        offset: 0,
-      });
-
-      const hasReviewedListing = existingReview.some((r: any) => r.listingId === listing.id);
-      if (hasReviewedListing) {
+      // Check if user has already left a review for this listing
+      const hasReviewed = await storage.hasUserReviewedListing(recipientUserId, listing.id);
+      if (hasReviewed) {
         await storage.markReviewAsLeft(listing.id, recipientUserId);
         continue;
       }
