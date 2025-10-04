@@ -55,13 +55,19 @@ Preferred communication style: Simple, everyday language.
 
 ### Authentication & Authorization
 
-- **Replit Authentication Integration:** OpenID Connect (OIDC) via Replit, using Passport.js.
-- **Security Measures:** Session-based authentication with secure HTTP-only cookies, PostgreSQL session store, HTTPS-only in production, CSRF protection, secure WebSocket connections.
+- **Clerk Authentication Integration:** Modern authentication via Clerk with Google OAuth support.
+- **Security Measures:** Session-based authentication with secure HTTP-only cookies, JWT validation, HTTPS-only in production, CSRF protection.
+- **Environment Variables:** VITE_CLERK_PUBLISHABLE_KEY (frontend), CLERK_SECRET_KEY (backend).
 
-### Object Storage
+### Image Storage
 
-- **Google Cloud Storage Integration:** Via Replit's Object Storage sidecar service.
-- **File Management:** Image uploads for listings, custom ACL system for object-level permissions, public/private visibility, owner-based access control.
+- **Cloudinary Integration:** Cloud-based image storage and optimization via Cloudinary CDN.
+- **Configuration:** Cloud name: dypurkava, folder: sellfast-listings, auto quality/format optimization.
+- **Upload System:** Multer with CloudinaryStorage for direct uploads, 5MB file size limit.
+- **API Endpoints:** 
+  - POST /api/images/upload (single image)
+  - POST /api/images/upload-multiple (up to 10 images)
+- **Environment Variables:** CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET.
 
 ### Feature Specifications
 
@@ -86,9 +92,8 @@ Preferred communication style: Simple, everyday language.
 
 **Core Infrastructure:**
 - Neon Database (PostgreSQL)
-- Replit Authentication (OAuth/OIDC)
-- Google Cloud Storage (via Replit sidecar)
-- Replit Object Storage
+- Clerk Authentication (OAuth with Google)
+- Cloudinary (Image CDN and storage)
 
 **AI & Machine Learning (Optional):**
 - OpenAI API (gpt-5 model for intelligent listing coaching)
@@ -105,6 +110,9 @@ Preferred communication style: Simple, everyday language.
 - Zod (Runtime type validation)
 - React Hook Form
 - OpenAI SDK (for AI-powered listing coaching)
+- Cloudinary SDK (image upload and optimization)
+- Multer & multer-storage-cloudinary (file upload handling)
+- @clerk/clerk-react & @clerk/express (authentication)
 
 **Development Tools:**
 - TypeScript

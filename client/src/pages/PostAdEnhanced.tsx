@@ -438,7 +438,7 @@ export default function PostAdEnhanced() {
                   <div className="grid grid-cols-4 gap-3 mt-4">
                     {uploadedImages.map((img, index) => (
                       <div key={index} className="relative aspect-square rounded-lg overflow-hidden group">
-                        <img src={`/public-objects/${img}`} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
+                        <img src={img} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
                         <Button
                           type="button"
                           size="icon"
@@ -735,7 +735,7 @@ export default function PostAdEnhanced() {
                         {uploadedImages.map((img, index) => (
                           <div key={index} className="flex gap-3 p-3 border rounded-lg">
                             <div className="relative w-24 h-24 rounded overflow-hidden flex-shrink-0">
-                              <img src={`/public-objects/${img}`} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
+                              <img src={img} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
                               <Button
                                 type="button"
                                 size="icon"

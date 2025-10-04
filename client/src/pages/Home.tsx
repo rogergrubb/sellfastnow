@@ -177,7 +177,7 @@ export default function Home() {
                   <ListingCard 
                     key={listing.id}
                     id={listing.id}
-                    image={listing.images[0] ? `/public-objects/${listing.images[0]}` : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop'}
+                    image={listing.images[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop'}
                     title={listing.title}
                     price={parseFloat(formatPrice(listing.price))}
                     location={listing.location}

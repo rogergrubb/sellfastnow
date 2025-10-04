@@ -190,7 +190,7 @@ export default function PostAd() {
                 <div className="grid grid-cols-4 gap-3 mt-4">
                   {uploadedImages.map((img, index) => (
                     <div key={index} className="relative aspect-square rounded-lg overflow-hidden group">
-                      <img src={`/public-objects/${img}`} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
+                      <img src={img} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
                       <Button
                         type="button"
                         size="icon"
