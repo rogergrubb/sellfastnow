@@ -123,124 +123,136 @@ export function StatisticsDashboard({ userId }: StatisticsDashboardProps) {
       </Card>
 
       {/* As Buyer */}
-      {statistics.totalPurchases > 0 && (
-        <Card data-testid="card-buyer-stats">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              🛍️ As Buyer ({statistics.totalPurchases} Transactions)
-            </CardTitle>
-            <CardDescription>Your performance as a buyer</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Purchases</p>
-                <p className="text-lg font-bold" data-testid="text-total-purchases">{statistics.totalPurchases}</p>
+      <Card data-testid="card-buyer-stats">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            🛍️ As Buyer ({statistics.totalPurchases || 0} Transactions)
+          </CardTitle>
+          <CardDescription>Your performance as a buyer</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {statistics.totalPurchases > 0 ? (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Purchases</p>
+                  <p className="text-lg font-bold" data-testid="text-total-purchases">{statistics.totalPurchases}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Completed Successfully</p>
+                  <p className="text-lg font-bold text-green-600 dark:text-green-400" data-testid="text-successful-purchases">
+                    {statistics.successfulPurchases} ({((statistics.successfulPurchases / statistics.totalPurchases) * 100).toFixed(0)}%)
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Cancelled by Buyer</p>
+                  <p className="text-lg font-bold" data-testid="text-cancelled-by-buyer">
+                    {statistics.cancelledByBuyer} ({((statistics.cancelledByBuyer / statistics.totalPurchases) * 100).toFixed(0)}%)
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Cancelled by Seller</p>
+                  <p className="text-lg font-bold" data-testid="text-cancelled-by-seller-on-buyer">
+                    {statistics.cancelledBySellerOnBuyer} ({((statistics.cancelledBySellerOnBuyer / statistics.totalPurchases) * 100).toFixed(0)}%)
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Buyer No-Shows</p>
+                  <p className="text-lg font-bold text-red-600 dark:text-red-400" data-testid="text-buyer-no-shows">
+                    {statistics.buyerNoShows} ({((statistics.buyerNoShows / statistics.totalPurchases) * 100).toFixed(0)}%)
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Seller No-Shows</p>
+                  <p className="text-lg font-bold" data-testid="text-seller-no-shows-on-buyer">
+                    {statistics.sellerNoShowsOnBuyer} ({((statistics.sellerNoShowsOnBuyer / statistics.totalPurchases) * 100).toFixed(0)}%)
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Completed Successfully</p>
-                <p className="text-lg font-bold text-green-600 dark:text-green-400" data-testid="text-successful-purchases">
-                  {statistics.successfulPurchases} ({((statistics.successfulPurchases / statistics.totalPurchases) * 100).toFixed(0)}%)
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Cancelled by Buyer</p>
-                <p className="text-lg font-bold" data-testid="text-cancelled-by-buyer">
-                  {statistics.cancelledByBuyer} ({((statistics.cancelledByBuyer / statistics.totalPurchases) * 100).toFixed(0)}%)
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Cancelled by Seller</p>
-                <p className="text-lg font-bold" data-testid="text-cancelled-by-seller-on-buyer">
-                  {statistics.cancelledBySellerOnBuyer} ({((statistics.cancelledBySellerOnBuyer / statistics.totalPurchases) * 100).toFixed(0)}%)
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Buyer No-Shows</p>
-                <p className="text-lg font-bold text-red-600 dark:text-red-400" data-testid="text-buyer-no-shows">
-                  {statistics.buyerNoShows} ({((statistics.buyerNoShows / statistics.totalPurchases) * 100).toFixed(0)}%)
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Seller No-Shows</p>
-                <p className="text-lg font-bold" data-testid="text-seller-no-shows-on-buyer">
-                  {statistics.sellerNoShowsOnBuyer} ({((statistics.sellerNoShowsOnBuyer / statistics.totalPurchases) * 100).toFixed(0)}%)
-                </p>
-              </div>
-            </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">Success Rate</p>
-                <p className={`text-sm font-bold ${getSuccessColor(buyerSuccessRate)}`} data-testid="text-buyer-success-rate">
-                  {buyerSuccessRate.toFixed(0)}%
-                </p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Success Rate</p>
+                  <p className={`text-sm font-bold ${getSuccessColor(buyerSuccessRate)}`} data-testid="text-buyer-success-rate">
+                    {buyerSuccessRate.toFixed(0)}%
+                  </p>
+                </div>
+                <Progress value={buyerSuccessRate} className="h-2" data-testid="progress-buyer-success" />
               </div>
-              <Progress value={buyerSuccessRate} className="h-2" data-testid="progress-buyer-success" />
+            </>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground" data-testid="empty-buyer-stats">
+              <p>No buyer transactions yet. Start purchasing to build your buyer statistics.</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
       {/* As Seller */}
-      {statistics.totalSales > 0 && (
-        <Card data-testid="card-seller-stats">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              🏷️ As Seller ({statistics.totalSales} Transactions)
-            </CardTitle>
-            <CardDescription>Your performance as a seller</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Sales</p>
-                <p className="text-lg font-bold" data-testid="text-total-sales">{statistics.totalSales}</p>
+      <Card data-testid="card-seller-stats">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            🏷️ As Seller ({statistics.totalSales || 0} Transactions)
+          </CardTitle>
+          <CardDescription>Your performance as a seller</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {statistics.totalSales > 0 ? (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Sales</p>
+                  <p className="text-lg font-bold" data-testid="text-total-sales">{statistics.totalSales}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Completed Successfully</p>
+                  <p className="text-lg font-bold text-green-600 dark:text-green-400" data-testid="text-successful-sales">
+                    {statistics.successfulSales} ({((statistics.successfulSales / statistics.totalSales) * 100).toFixed(0)}%)
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Cancelled by Seller</p>
+                  <p className="text-lg font-bold" data-testid="text-cancelled-by-seller">
+                    {statistics.cancelledBySeller} ({((statistics.cancelledBySeller / statistics.totalSales) * 100).toFixed(0)}%)
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Cancelled by Buyer</p>
+                  <p className="text-lg font-bold" data-testid="text-cancelled-by-buyer-on-seller">
+                    {statistics.cancelledByBuyerOnSeller} ({((statistics.cancelledByBuyerOnSeller / statistics.totalSales) * 100).toFixed(0)}%)
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Seller No-Shows</p>
+                  <p className="text-lg font-bold text-red-600 dark:text-red-400" data-testid="text-seller-no-shows">
+                    {statistics.sellerNoShows} ({((statistics.sellerNoShows / statistics.totalSales) * 100).toFixed(0)}%)
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Buyer No-Shows</p>
+                  <p className="text-lg font-bold" data-testid="text-buyer-no-shows-on-seller">
+                    {statistics.buyerNoShowsOnSeller} ({((statistics.buyerNoShowsOnSeller / statistics.totalSales) * 100).toFixed(0)}%)
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Completed Successfully</p>
-                <p className="text-lg font-bold text-green-600 dark:text-green-400" data-testid="text-successful-sales">
-                  {statistics.successfulSales} ({((statistics.successfulSales / statistics.totalSales) * 100).toFixed(0)}%)
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Cancelled by Seller</p>
-                <p className="text-lg font-bold" data-testid="text-cancelled-by-seller">
-                  {statistics.cancelledBySeller} ({((statistics.cancelledBySeller / statistics.totalSales) * 100).toFixed(0)}%)
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Cancelled by Buyer</p>
-                <p className="text-lg font-bold" data-testid="text-cancelled-by-buyer-on-seller">
-                  {statistics.cancelledByBuyerOnSeller} ({((statistics.cancelledByBuyerOnSeller / statistics.totalSales) * 100).toFixed(0)}%)
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Seller No-Shows</p>
-                <p className="text-lg font-bold text-red-600 dark:text-red-400" data-testid="text-seller-no-shows">
-                  {statistics.sellerNoShows} ({((statistics.sellerNoShows / statistics.totalSales) * 100).toFixed(0)}%)
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Buyer No-Shows</p>
-                <p className="text-lg font-bold" data-testid="text-buyer-no-shows-on-seller">
-                  {statistics.buyerNoShowsOnSeller} ({((statistics.buyerNoShowsOnSeller / statistics.totalSales) * 100).toFixed(0)}%)
-                </p>
-              </div>
-            </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">Success Rate</p>
-                <p className={`text-sm font-bold ${getSuccessColor(sellerSuccessRate)}`} data-testid="text-seller-success-rate">
-                  {sellerSuccessRate.toFixed(0)}%
-                </p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Success Rate</p>
+                  <p className={`text-sm font-bold ${getSuccessColor(sellerSuccessRate)}`} data-testid="text-seller-success-rate">
+                    {sellerSuccessRate.toFixed(0)}%
+                  </p>
+                </div>
+                <Progress value={sellerSuccessRate} className="h-2" data-testid="progress-seller-success" />
               </div>
-              <Progress value={sellerSuccessRate} className="h-2" data-testid="progress-seller-success" />
+            </>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground" data-testid="empty-seller-stats">
+              <p>No seller transactions yet. Start selling to build your seller statistics.</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
       {/* Recent Activity (Last 90 Days) */}
       <Card data-testid="card-recent-activity">
@@ -537,18 +549,6 @@ export function StatisticsDashboard({ userId }: StatisticsDashboardProps) {
         </CardContent>
       </Card>
 
-      {/* Empty State for New Users */}
-      {totalTransactions === 0 && (
-        <Card data-testid="card-empty-state">
-          <CardContent className="py-12 text-center">
-            <TrendingUp className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No transaction history yet</h3>
-            <p className="text-muted-foreground">
-              Start buying or selling to build your statistics and reputation.
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
