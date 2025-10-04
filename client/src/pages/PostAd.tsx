@@ -25,7 +25,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card } from "@/components/ui/card";
-import { Upload, X, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Upload, X, Loader2, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertListingSchema } from "@shared/schema";
@@ -38,6 +39,8 @@ export default function PostAd() {
   const { isSignedIn, isLoaded } = useAuth();
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<{[key: string]: boolean}>({});
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -87,6 +90,58 @@ export default function PostAd() {
     },
   });
 
+  const analyzeImage = async (imageUrl: string) => {
+    setIsAnalyzing(true);
+    try {
+      const response = await fetch('/api/ai/analyze-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl }),
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const analysis = await response.json();
+        
+        // Auto-populate form fields with AI suggestions
+        if (analysis.title && !form.getValues('title')) {
+          form.setValue('title', analysis.title);
+          setAiSuggestions(prev => ({ ...prev, title: true }));
+        }
+        
+        if (analysis.description && !form.getValues('description')) {
+          form.setValue('description', analysis.description);
+          setAiSuggestions(prev => ({ ...prev, description: true }));
+        }
+        
+        if (analysis.category && !form.getValues('category')) {
+          form.setValue('category', analysis.category);
+          setAiSuggestions(prev => ({ ...prev, category: true }));
+        }
+        
+        if (analysis.usedPrice && !form.getValues('price')) {
+          form.setValue('price', analysis.usedPrice.toString());
+          setAiSuggestions(prev => ({ ...prev, price: true }));
+        }
+        
+        if (analysis.condition && !form.getValues('condition')) {
+          form.setValue('condition', analysis.condition);
+          setAiSuggestions(prev => ({ ...prev, condition: true }));
+        }
+
+        toast({
+          title: "AI Analysis Complete!",
+          description: `Detected: ${analysis.title}. Review and edit the suggested details.`,
+        });
+      }
+    } catch (error) {
+      console.error("Error analyzing image:", error);
+      // Fail gracefully - don't show error to user
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -116,6 +171,11 @@ export default function PostAd() {
       const allImages = [...uploadedImages, ...uploadedUrls];
       setUploadedImages(allImages);
       form.setValue('images', allImages);
+
+      // Analyze the first uploaded image to auto-populate listing details
+      if (uploadedUrls.length > 0 && uploadedImages.length === 0) {
+        analyzeImage(uploadedUrls[0]);
+      }
     } catch (error) {
       toast({
         title: "Upload Error",
@@ -177,13 +237,13 @@ export default function PostAd() {
                   disabled={isUploading}
                 />
                 <label htmlFor="images" className="cursor-pointer">
-                  {isUploading ? (
+                  {isUploading || isAnalyzing ? (
                     <Loader2 className="h-10 w-10 mx-auto mb-3 animate-spin text-muted-foreground" />
                   ) : (
                     <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
                   )}
                   <p className="text-sm text-muted-foreground">
-                    {isUploading ? "Uploading..." : "Click to upload images or drag and drop"}
+                    {isUploading ? "Uploading..." : isAnalyzing ? "AI is analyzing your item..." : "Click to upload images or drag and drop"}
                   </p>
                 </label>
               </div>
@@ -214,12 +274,26 @@ export default function PostAd() {
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title *</FormLabel>
+                  <FormLabel className="flex items-center gap-2">
+                    Title *
+                    {aiSuggestions.title && (
+                      <Badge variant="secondary" className="text-xs">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        AI Suggestion
+                      </Badge>
+                    )}
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="e.g. iPhone 13 Pro Max - 256GB"
                       data-testid="input-title"
                       {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        if (aiSuggestions.title) {
+                          setAiSuggestions(prev => ({ ...prev, title: false }));
+                        }
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -232,13 +306,27 @@ export default function PostAd() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description *</FormLabel>
+                  <FormLabel className="flex items-center gap-2">
+                    Description *
+                    {aiSuggestions.description && (
+                      <Badge variant="secondary" className="text-xs">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        AI Suggestion
+                      </Badge>
+                    )}
+                  </FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Describe your item in detail..."
                       className="min-h-32"
                       data-testid="input-description"
                       {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        if (aiSuggestions.description) {
+                          setAiSuggestions(prev => ({ ...prev, description: false }));
+                        }
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -252,14 +340,27 @@ export default function PostAd() {
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price ($) *</FormLabel>
+                    <FormLabel className="flex items-center gap-2">
+                      Price ($) *
+                      {aiSuggestions.price && (
+                        <Badge variant="secondary" className="text-xs">
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          AI Suggestion
+                        </Badge>
+                      )}
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         placeholder="0.00"
                         data-testid="input-price"
                         {...field}
-                        onChange={(e) => field.onChange(e.target.value)}
+                        onChange={(e) => {
+                          field.onChange(e.target.value);
+                          if (aiSuggestions.price) {
+                            setAiSuggestions(prev => ({ ...prev, price: false }));
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -272,20 +373,39 @@ export default function PostAd() {
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel className="flex items-center gap-2">
+                      Category *
+                      {aiSuggestions.category && (
+                        <Badge variant="secondary" className="text-xs">
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          AI Suggestion
+                        </Badge>
+                      )}
+                    </FormLabel>
+                    <Select 
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        if (aiSuggestions.category) {
+                          setAiSuggestions(prev => ({ ...prev, category: false }));
+                        }
+                      }} 
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger data-testid="select-category">
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="electronics">Electronics</SelectItem>
-                        <SelectItem value="furniture">Furniture</SelectItem>
-                        <SelectItem value="clothing">Clothing</SelectItem>
-                        <SelectItem value="vehicles">Vehicles</SelectItem>
-                        <SelectItem value="services">Services</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="Electronics">Electronics</SelectItem>
+                        <SelectItem value="Furniture">Furniture</SelectItem>
+                        <SelectItem value="Clothing">Clothing</SelectItem>
+                        <SelectItem value="Home & Garden">Home & Garden</SelectItem>
+                        <SelectItem value="Sports & Outdoors">Sports & Outdoors</SelectItem>
+                        <SelectItem value="Books & Media">Books & Media</SelectItem>
+                        <SelectItem value="Toys & Games">Toys & Games</SelectItem>
+                        <SelectItem value="Automotive">Automotive</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -300,8 +420,24 @@ export default function PostAd() {
                 name="condition"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Condition *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel className="flex items-center gap-2">
+                      Condition *
+                      {aiSuggestions.condition && (
+                        <Badge variant="secondary" className="text-xs">
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          AI Suggestion
+                        </Badge>
+                      )}
+                    </FormLabel>
+                    <Select 
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        if (aiSuggestions.condition) {
+                          setAiSuggestions(prev => ({ ...prev, condition: false }));
+                        }
+                      }} 
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger data-testid="select-condition">
                           <SelectValue placeholder="Select condition" />
