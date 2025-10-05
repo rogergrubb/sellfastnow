@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { 
   Trash2, 
@@ -25,7 +25,8 @@ import {
   AlertCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@clerk/clerk-react";
+import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
@@ -98,6 +99,7 @@ function generateSuggestedTags(title: string, category: string): string[] {
 }
 
 export function BulkItemReview({ products: initialProducts, onCancel }: BulkItemReviewProps) {
+  const { getToken } = useAuth();
   const [products, setProducts] = useState<ProductWithState[]>(
     initialProducts.map(p => ({
       ...p,
@@ -288,10 +290,24 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
       }
 
       console.log('🚀 Calling batch API with listings:', listings);
-      const response = await apiRequest('POST', '/api/listings/batch', { listings });
+      
+      // Get fresh auth token for batch publish
+      const token = await getToken();
+      console.log('🔑 Auth token obtained for batch publish:', token ? 'Token present' : 'No token');
+      
+      const response = await fetch('/api/listings/batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ listings }),
+      });
 
       if (!response.ok) {
-        throw new Error('Failed to publish listings');
+        const errorText = await response.text();
+        console.error('❌ Batch publish failed:', response.status, errorText);
+        throw new Error(`Failed to publish listings: ${response.status} ${errorText}`);
       }
 
       const result = await response.json();
@@ -381,6 +397,9 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
               <Loader2 className="h-5 w-5 animate-spin text-primary" />
               Publishing Your Items...
             </DialogTitle>
+            <DialogDescription>
+              Creating your listings, please wait...
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
@@ -803,6 +822,9 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Image Preview</DialogTitle>
+            <DialogDescription>
+              View the full-size image
+            </DialogDescription>
           </DialogHeader>
           {enlargedImage && (
             <div className="relative w-full max-h-[70vh]">
