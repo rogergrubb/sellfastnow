@@ -2,10 +2,16 @@ import OpenAI from "openai";
 
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 const getOpenAI = () => {
-  if (!process.env.OPENAI_API_KEY) {
-    return null;
+  const apiKey = process.env.OPENAI_API_KEY;
+  
+  // Log API key status for debugging
+  console.log('🔑 OpenAI API Key Status:', apiKey ? `Present (starts with: ${apiKey.substring(0, 7)}...)` : 'MISSING');
+  
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY is not configured. Please add it to Replit Secrets.');
   }
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  
+  return new OpenAI({ apiKey });
 };
 
 interface PhotoAnalysis {
@@ -75,11 +81,8 @@ export async function identifyProductFromPhoto(
   photoNumber: number
 ): Promise<ProductAnalysis> {
   const openai = getOpenAI();
-  
-  if (!openai) {
-    // Return mock data if no API key
-    return getMockProductAnalysis(photoNumber);
-  }
+
+  console.log(`🚀 Calling OpenAI API (GPT-5) to identify product from photo #${photoNumber}...`);
 
   try {
     const response = await openai.chat.completions.create({
@@ -130,10 +133,13 @@ Respond ONLY with valid JSON in this exact format:
       max_completion_tokens: 2048,
     });
 
-    return JSON.parse(response.choices[0].message.content!);
+    const result = JSON.parse(response.choices[0].message.content!);
+    console.log(`✅ OpenAI successfully identified product: "${result.title}"`);
+    
+    return result;
   } catch (error: any) {
-    console.error("Error identifying product:", error);
-    return getMockProductAnalysis(photoNumber);
+    console.error("❌ ERROR calling OpenAI API:", error.message);
+    throw new Error(`Failed to identify product: ${error.message}`);
   }
 }
 
@@ -143,10 +149,8 @@ export async function analyzeDescription(
   category: string
 ): Promise<DescriptionAnalysis> {
   const openai = getOpenAI();
-  
-  if (!openai) {
-    return getMockDescriptionAnalysis(description);
-  }
+
+  console.log(`🚀 Calling OpenAI API (GPT-5) to analyze description...`);
 
   try {
     const response = await openai.chat.completions.create({
@@ -183,10 +187,13 @@ Respond ONLY with valid JSON:
       max_completion_tokens: 2048,
     });
 
-    return JSON.parse(response.choices[0].message.content!);
+    const result = JSON.parse(response.choices[0].message.content!);
+    console.log(`✅ OpenAI description analysis complete (score: ${result.score}/10)`);
+    
+    return result;
   } catch (error: any) {
-    console.error("Error analyzing description:", error);
-    return getMockDescriptionAnalysis(description);
+    console.error("❌ ERROR calling OpenAI API:", error.message);
+    throw new Error(`Failed to analyze description: ${error.message}`);
   }
 }
 
@@ -198,10 +205,8 @@ export async function analyzePricing(
   userPrice?: string
 ): Promise<PricingAnalysis> {
   const openai = getOpenAI();
-  
-  if (!openai) {
-    return getMockPricingAnalysis(userPrice);
-  }
+
+  console.log(`🚀 Calling OpenAI API (GPT-5) to analyze pricing...`);
 
   try {
     const response = await openai.chat.completions.create({
@@ -243,124 +248,23 @@ Respond ONLY with valid JSON:
       max_completion_tokens: 2048,
     });
 
-    return JSON.parse(response.choices[0].message.content!);
+    const result = JSON.parse(response.choices[0].message.content!);
+    console.log(`✅ OpenAI pricing analysis complete (recommended: $${result.recommendedPrice})`);
+    
+    return result;
   } catch (error: any) {
-    console.error("Error analyzing pricing:", error);
-    return getMockPricingAnalysis(userPrice);
+    console.error("❌ ERROR calling OpenAI API:", error.message);
+    throw new Error(`Failed to analyze pricing: ${error.message}`);
   }
-}
-
-function getProgressiveTipPrompt(photoNumber: number): string {
-  const tips = [
-    "lighting fundamentals - explain natural light vs artificial",
-    "background basics - clean, non-distracting backgrounds",
-    "angle variety - show different perspectives",
-    "close-up details - show condition and features",
-    "size reference - include common objects for scale",
-  ];
-  return tips[Math.min(photoNumber - 1, tips.length - 1)];
-}
-
-function getMockPhotoAnalysis(photoNumber: number): PhotoAnalysis {
-  const tips = [
-    "Use natural light from a window for the best results. Avoid harsh overhead lighting that creates shadows.",
-    "Keep your background clean and simple. A plain white wall or neutral surface makes the item stand out.",
-    "Try different angles! Show the front, back, sides, and top to give buyers a complete view.",
-    "Take close-up shots of important details, brand labels, or any wear and tear for transparency.",
-    "Include a common object (like a coin or ruler) for size reference so buyers know the scale.",
-  ];
-
-  return {
-    score: 75,
-    lighting: {
-      score: 80,
-      feedback: "Good natural lighting, minimal shadows",
-    },
-    focus: { score: 85, feedback: "Sharp and clear focus" },
-    framing: { score: 70, feedback: "Item centered but could show more detail" },
-    background: {
-      score: 65,
-      feedback: "Background has some distractions",
-    },
-    overallFeedback:
-      "Decent photo with good lighting and focus. Consider using a cleaner background and trying different angles to showcase the item better.",
-    improvements: [
-      "Use a plain background to reduce distractions",
-      "Add photos from different angles",
-      "Include close-ups of important features",
-    ],
-    tip: tips[Math.min(photoNumber - 1, tips.length - 1)],
-  };
-}
-
-function getMockDescriptionAnalysis(description: string): DescriptionAnalysis {
-  const wordCount = description.trim().split(/\s+/).length;
-
-  return {
-    score: Math.min(10, Math.max(3, Math.floor(wordCount / 20))),
-    strengths:
-      wordCount > 20
-        ? ["Clear writing", "Provides basic information"]
-        : ["Concise"],
-    missingInfo: [
-      "Exact measurements or dimensions",
-      "Specific condition details",
-      "Color and material information",
-      "Brand or model if applicable",
-      "Reason for selling",
-    ],
-    wordCount,
-    suggestions: [
-      "Add specific measurements (length, width, height)",
-      "Describe the condition in detail (any scratches, wear, etc.)",
-      "Mention the color, material, and any unique features",
-      "Include purchase date or how long you've owned it",
-      "State why you're selling and if you're the original owner",
-    ],
-    aiGeneratedDescription: `This ${description.toLowerCase()} is in excellent condition and ready for a new owner. It features high-quality construction and has been well-maintained throughout its use. The item comes from a smoke-free home and shows minimal signs of wear. Perfect for someone looking for a reliable ${description.toLowerCase()} at a great price. Feel free to ask any questions or request additional photos!`,
-  };
-}
-
-function getMockPricingAnalysis(userPrice?: string): PricingAnalysis {
-  const basePrice = userPrice ? parseFloat(userPrice) : 100;
-  const recommended = Math.round(basePrice * 0.95);
-
-  return {
-    recommendedPrice: recommended,
-    reasoning: `Based on similar items in this category and condition, $${recommended} is competitive while leaving room for negotiation. This price balances attracting buyers quickly while maximizing your return.`,
-    marketData: {
-      averagePrice: Math.round(basePrice * 1.0),
-      lowestPrice: Math.round(basePrice * 0.7),
-      highestPrice: Math.round(basePrice * 1.3),
-    },
-    strategy: {
-      sellFast: {
-        price: Math.round(basePrice * 0.85),
-        reasoning:
-          "Price 10-15% below market average to attract buyers within 24-48 hours.",
-      },
-      maximizeValue: {
-        price: Math.round(basePrice * 1.1),
-        reasoning:
-          "Start higher and be prepared to negotiate. Best for unique or high-demand items.",
-      },
-    },
-    pricingTip: `Use psychological pricing: $${recommended - 1} feels significantly cheaper than $${recommended} to buyers, even though it's only $1 difference.`,
-  };
 }
 
 // AI-powered product recognition from image
 export async function analyzeProductImage(imageUrl: string): Promise<ProductAnalysis> {
   const openai = getOpenAI();
-  
-  if (!openai) {
-    console.log('⚠️ No OpenAI API key found, using mock data for product analysis');
-    // Return mock data if no API key
-    return getMockProductAnalysis();
-  }
+
+  console.log('🚀 Calling OpenAI API (GPT-5) for product image analysis...');
 
   try {
-    console.log('🚀 Calling OpenAI API with GPT-5 for product image analysis...');
     // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
     const response = await openai.chat.completions.create({
       model: "gpt-5",
@@ -411,60 +315,23 @@ Respond ONLY with valid JSON in this exact format:
       max_completion_tokens: 2048,
     });
 
-    return JSON.parse(response.choices[0].message.content!);
+    const result = JSON.parse(response.choices[0].message.content!);
+    console.log(`✅ OpenAI successfully analyzed product image: "${result.title}"`);
+    
+    return result;
   } catch (error: any) {
-    console.error("Error analyzing product image:", error);
-    return getMockProductAnalysis();
+    console.error("❌ ERROR calling OpenAI API:", error.message);
+    throw new Error(`Failed to analyze product image: ${error.message}`);
   }
-}
-
-function getMockProductAnalysis(photoNumber?: number): ProductAnalysis {
-  const items = [
-    {
-      title: "Beige Sectional Sofa with Ottoman",
-      description: "Modern L-shaped sectional sofa in beige fabric. Includes matching ottoman. Good condition with minor wear on cushions visible in the photos.",
-      category: "Furniture",
-      retailPrice: 1200,
-      usedPrice: 450,
-      condition: "good",
-    },
-    {
-      title: "Adjustable Office Chair - Ergonomic",
-      description: "Black mesh office chair with adjustable height and lumbar support. Excellent condition, barely used. Features smooth-rolling casters and comfortable padding.",
-      category: "Furniture",
-      retailPrice: 200,
-      usedPrice: 85,
-      condition: "like-new",
-    },
-    {
-      title: "Women's Black Ankle Boots Size 8",
-      description: "Stylish black leather ankle boots with side zipper. Size 8, gently worn with minimal scuffing. Perfect for fall and winter wear.",
-      category: "Clothing",
-      retailPrice: 90,
-      usedPrice: 35,
-      condition: "good",
-    },
-  ];
-  
-  const index = photoNumber ? (photoNumber - 1) % items.length : 0;
-  return {
-    ...items[index],
-    confidence: 75,
-  };
 }
 
 // AI-powered multi-image analysis to detect same product vs different products
 export async function analyzeMultipleImages(imageUrls: string[]): Promise<MultiImageAnalysis> {
   const openai = getOpenAI();
-  
-  if (!openai) {
-    console.log('⚠️ No OpenAI API key found, using mock data for multi-image analysis');
-    return getMockMultiImageAnalysis(imageUrls.length);
-  }
+
+  console.log(`🚀 Calling OpenAI API (GPT-5) for multi-image analysis (${imageUrls.length} images)...`);
 
   try {
-    console.log(`🚀 Calling OpenAI API with GPT-5 for multi-image analysis (${imageUrls.length} images)...`);
-    
     // Build the content array with text prompt and all images
     const content: any[] = [
       {
@@ -552,28 +419,9 @@ Respond ONLY with valid JSON in this exact format:
     
     return result;
   } catch (error: any) {
-    console.error("Error analyzing multiple images:", error);
-    return getMockMultiImageAnalysis(imageUrls.length);
+    console.error("❌ ERROR calling OpenAI API:", error.message);
+    throw new Error(`Failed to analyze multiple images: ${error.message}`);
   }
-}
-
-function getMockMultiImageAnalysis(imageCount: number): MultiImageAnalysis {
-  return {
-    scenario: "same_product",
-    products: [
-      {
-        imageIndices: Array.from({ length: imageCount }, (_, i) => i),
-        title: "Product Item",
-        description: "This item appears to be in good condition based on the uploaded images. It features quality construction and has been well-maintained. The item shows minimal signs of wear and is ready for a new owner. Multiple angles provide a comprehensive view of the product.",
-        category: "Other",
-        retailPrice: 100,
-        usedPrice: 65,
-        condition: "good",
-        confidence: 50,
-      },
-    ],
-    message: `Detected ${imageCount} photos of the same item`,
-  };
 }
 
 export const aiService = {
