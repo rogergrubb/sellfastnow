@@ -103,7 +103,10 @@ Preferred communication style: Simple, everyday language.
   - **Description Coaching:** Strength meter (0-10) analyzes descriptions and identifies missing information. AI-generated enhanced descriptions available with one click. Suggestions include adding measurements, materials, condition details, and purchase history.
   - **Pricing Intelligence:** Market-based pricing recommendations with "Sell Fast" and "Maximize Value" strategies. Pricing psychology tips (e.g., $99 vs $100). Mock market data when OpenAI API key unavailable.
   - **Seller Academy:** Sidebar with Quick Tips (photo essentials, description must-haves, pricing psychology) and Success Stats showing impact metrics (+67% views with 5+ photos, +45% sales with detailed descriptions, 3x faster sale with competitive pricing).
-  - **Skip to Simple Form:** One-click toggle to bypass all AI coaching and use a traditional listing form. Users can switch between coached and simple modes at any time.
+  - **Educational Countdown Messages:** During AI analysis, 6 detailed educational messages rotate every 9 seconds with topics: photo quality, descriptions, pricing psychology, first impressions, timing, and buyer trust. Visual indicator dots show current message.
+  - **Skip to Simple Form:** One-click toggle to bypass all AI coaching and use per-photo manual entry. Users can switch between coached and simple modes at any time.
+  - **Per-Photo Manual Forms:** Simple mode displays individual form cards for each uploaded photo with complete listing details (title, description, category, condition, price). Users can post or remove each photo independently. Global location field applies to all listings.
+  - **Automotive Category Support:** Fully integrated automotive category for cars, motorcycles, parts, accessories, and tools. Available in all dropdowns and AI detection prompts.
   - **Graceful Fallback:** Works without OpenAI API key by using realistic mock data for all AI analysis endpoints, ensuring feature availability even without AI credentials.
 - **Review System:** Public response capability for reviews with a 24-hour edit window and 500-character limit.
 - **Advanced Review Filtering and Sorting:** UI on user profiles with filtering by stars, role, period, and sorting options. Includes active filter badges, clear-all functionality, and URL parameter persistence.

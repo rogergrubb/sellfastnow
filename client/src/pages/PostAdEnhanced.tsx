@@ -393,16 +393,16 @@ export default function PostAdEnhanced() {
       
       // Initialize per-photo form data for simple mode
       if (mode === "simple") {
-        const newPerPhotoData = [...perPhotoData];
-        for (let i = perPhotoData.length; i < allImages.length; i++) {
-          newPerPhotoData.push({
+        const newPerPhotoData = allImages.map((_, index) => {
+          // Preserve existing data if available, otherwise create new entry
+          return perPhotoData[index] || {
             title: "",
             description: "",
             category: "",
             condition: "new",
             price: "0"
-          });
-        }
+          };
+        });
         setPerPhotoData(newPerPhotoData);
       }
 
@@ -1165,7 +1165,10 @@ export default function PostAdEnhanced() {
                           value={perPhotoData[photoIndex]?.title || ''}
                           onChange={(e) => {
                             const newData = [...perPhotoData];
-                            newData[photoIndex] = { ...newData[photoIndex], title: e.target.value };
+                            newData[photoIndex] = { 
+                              ...(newData[photoIndex] || { category: '', condition: 'new', price: '0', title: '', description: '' }), 
+                              title: e.target.value 
+                            };
                             setPerPhotoData(newData);
                           }}
                           data-testid={`input-title-${photoIndex}`}
@@ -1181,7 +1184,10 @@ export default function PostAdEnhanced() {
                           value={perPhotoData[photoIndex]?.description || ''}
                           onChange={(e) => {
                             const newData = [...perPhotoData];
-                            newData[photoIndex] = { ...newData[photoIndex], description: e.target.value };
+                            newData[photoIndex] = { 
+                              ...(newData[photoIndex] || { category: '', condition: 'new', price: '0', title: '', description: '' }), 
+                              description: e.target.value 
+                            };
                             setPerPhotoData(newData);
                           }}
                           data-testid={`input-description-${photoIndex}`}
@@ -1196,7 +1202,10 @@ export default function PostAdEnhanced() {
                             value={perPhotoData[photoIndex]?.category || ''}
                             onValueChange={(value) => {
                               const newData = [...perPhotoData];
-                              newData[photoIndex] = { ...newData[photoIndex], category: value };
+                              newData[photoIndex] = { 
+                                ...(newData[photoIndex] || { category: '', condition: 'new', price: '0', title: '', description: '' }), 
+                                category: value 
+                              };
                               setPerPhotoData(newData);
                             }}
                           >
@@ -1223,7 +1232,10 @@ export default function PostAdEnhanced() {
                             value={perPhotoData[photoIndex]?.condition || 'new'}
                             onValueChange={(value) => {
                               const newData = [...perPhotoData];
-                              newData[photoIndex] = { ...newData[photoIndex], condition: value };
+                              newData[photoIndex] = { 
+                                ...(newData[photoIndex] || { category: '', condition: 'new', price: '0', title: '', description: '' }), 
+                                condition: value 
+                              };
                               setPerPhotoData(newData);
                             }}
                           >
@@ -1250,7 +1262,10 @@ export default function PostAdEnhanced() {
                           value={perPhotoData[photoIndex]?.price || ''}
                           onChange={(e) => {
                             const newData = [...perPhotoData];
-                            newData[photoIndex] = { ...newData[photoIndex], price: e.target.value };
+                            newData[photoIndex] = { 
+                              ...(newData[photoIndex] || { category: '', condition: 'new', price: '0', title: '', description: '' }), 
+                              price: e.target.value 
+                            };
                             setPerPhotoData(newData);
                           }}
                           data-testid={`input-price-${photoIndex}`}
