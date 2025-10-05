@@ -572,6 +572,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate multi-item bundle summary
+  app.post("/api/ai/generate-bundle-summary", isAuthenticated, async (req, res) => {
+    try {
+      console.log('🎁 Bundle summary generation request received');
+      const { products } = req.body;
+      
+      if (!products || !Array.isArray(products) || products.length === 0) {
+        console.error('❌ No products array provided in request');
+        return res.status(400).json({ message: "products array is required" });
+      }
+
+      console.log(`🎁 Generating bundle summary for ${products.length} products...`);
+      const { generateMultiItemBundleSummary } = await import("./aiService");
+      const bundleSummary = await generateMultiItemBundleSummary(products);
+      
+      console.log('✅ Bundle summary generated:', {
+        title: bundleSummary.title,
+        bundlePrice: bundleSummary.suggestedBundlePrice,
+      });
+      
+      res.json(bundleSummary);
+    } catch (error: any) {
+      console.error("❌ Error generating bundle summary:", error);
+      res.status(500).json({ message: "Failed to generate bundle summary" });
+    }
+  });
+
   // Serve protected images
   app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
     try {

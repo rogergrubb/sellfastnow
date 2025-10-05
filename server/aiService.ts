@@ -424,10 +424,87 @@ Respond ONLY with valid JSON in this exact format:
   }
 }
 
+export interface BundleSummary {
+  title: string;
+  description: string;
+  totalRetailValue: number;
+  suggestedBundlePrice: number;
+  category: string;
+}
+
+export async function generateMultiItemBundleSummary(
+  products: DetectedProduct[]
+): Promise<BundleSummary> {
+  const openai = getOpenAI();
+
+  console.log(`🎁 Generating multi-item bundle summary for ${products.length} products...`);
+
+  // Create a summary of all products for the prompt
+  const productList = products
+    .map((p, idx) => 
+      `Product ${idx + 1}: ${p.title} - ${p.description.substring(0, 100)}... (Used: $${p.usedPrice}, Retail: $${p.retailPrice})`
+    )
+    .join('\n');
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert at creating compelling multi-item bundle listings for online marketplaces. You excel at summarizing multiple products into a cohesive, attractive bundle listing.`,
+        },
+        {
+          role: "user",
+          content: `I have ${products.length} different items that I want to sell as a bundle. Create a compelling bundle listing with:
+
+1. A concise, descriptive title that summarizes all items (max 80 chars, format: "X-Item Bundle: [brief summary]" or "[Item count] Items: [key items]")
+2. A well-structured description that:
+   - Starts with a brief overview of what's included
+   - Lists each item with key details
+   - Mentions the total retail value
+   - Highlights the bundle savings
+3. A category that best fits the bundle (if items are similar) or "Other" if mixed
+4. Calculate total retail value (sum of all retail prices)
+5. Suggest a competitive bundle price (typically 20-40% below total retail value to incentivize bundle purchase)
+
+Here are the items:
+${productList}
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "title": string,
+  "description": string,
+  "totalRetailValue": number,
+  "suggestedBundlePrice": number,
+  "category": string
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      max_completion_tokens: 2048,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content!);
+    
+    console.log('✅ Bundle summary generated:', {
+      title: result.title,
+      bundlePrice: result.suggestedBundlePrice,
+      retailValue: result.totalRetailValue,
+    });
+    
+    return result;
+  } catch (error: any) {
+    console.error("❌ ERROR generating bundle summary:", error.message);
+    throw new Error(`Failed to generate bundle summary: ${error.message}`);
+  }
+}
+
 export const aiService = {
   identifyProductFromPhoto,
   analyzeDescription,
   analyzePricing,
   analyzeProductImage,
   analyzeMultipleImages,
+  generateMultiItemBundleSummary,
 };
