@@ -76,7 +76,7 @@ Preferred communication style: Simple, everyday language.
   - Shows product title, description, estimated used price, and retail price for each photo.
   - Provides inline editing functionality with "Edit Details" button for each identified product.
   - Edit dialog allows modification of title, description, used price, and retail price with robust validation.
-  - Displays "🔍 Analyzing photo..." loading state during AI analysis.
+  - Displays "🔍 Searching for item and generating an automated description" loading state during AI analysis.
   - Detects multiple different products vs. same item from different angles using multi-image analysis.
   - Shows modal when multiple products detected with options to "Create Separate Listings" or "These Are All the Same Item".
   - Gracefully degrades if OpenAI API key unavailable (uses realistic mock data).
