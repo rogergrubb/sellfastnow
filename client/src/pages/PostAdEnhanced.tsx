@@ -56,7 +56,8 @@ import {
   Eye,
   Camera,
   FileText,
-  SkipForward
+  SkipForward,
+  Package
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -597,6 +598,85 @@ export default function PostAdEnhanced() {
     });
     
     setShowMultiProductModal(false);
+  };
+
+  const handleCreateBundleListing = async () => {
+    console.log('🎁 User chose to create a bundle listing for all products');
+    
+    if (!multiImageAnalysis || multiImageAnalysis.products.length === 0) {
+      toast({
+        title: "Error",
+        description: "No products detected to create a bundle.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setShowMultiProductModal(false);
+      
+      // Show loading state
+      toast({
+        title: "Generating Bundle...",
+        description: "AI is creating a multi-item listing summary...",
+      });
+
+      const token = await getToken();
+      const response = await fetch('/api/ai/generate-bundle-summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ products: multiImageAnalysis.products }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate bundle summary');
+      }
+
+      const bundleSummary = await response.json();
+      console.log('✅ Bundle summary received:', bundleSummary);
+
+      // Auto-fill the form with bundle data
+      const currentTitle = form.getValues('title');
+      if (!currentTitle) {
+        form.setValue('title', bundleSummary.title);
+        setAiSuggestions(prev => ({ ...prev, title: true }));
+      }
+
+      const currentDescription = form.getValues('description');
+      if (!currentDescription) {
+        form.setValue('description', bundleSummary.description);
+        setAiSuggestions(prev => ({ ...prev, description: true }));
+      }
+
+      const currentCategory = form.getValues('category');
+      if (bundleSummary.category && !currentCategory) {
+        form.setValue('category', bundleSummary.category);
+        setAiSuggestions(prev => ({ ...prev, category: true }));
+      }
+
+      const currentPrice = form.getValues('price');
+      if (bundleSummary.suggestedBundlePrice && (!currentPrice || currentPrice === '0')) {
+        form.setValue('price', String(bundleSummary.suggestedBundlePrice));
+        setAiSuggestions(prev => ({ ...prev, price: true }));
+      }
+
+      setDetectionMessage(`Bundle listing created: ${multiImageAnalysis.products.length} items combined (Total value: $${bundleSummary.totalRetailValue})`);
+      
+      toast({
+        title: "Bundle Created!",
+        description: `AI generated a listing for ${multiImageAnalysis.products.length} items. Review and adjust as needed.`,
+      });
+    } catch (error) {
+      console.error('❌ Error generating bundle:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate bundle listing. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSaveEditedDetails = () => {
@@ -1608,6 +1688,15 @@ export default function PostAdEnhanced() {
             >
               <Sparkles className="h-4 w-4 mr-2" />
               Create {multiImageAnalysis?.products.length || 0} Separate Listings
+            </Button>
+            <Button 
+              variant="default" 
+              onClick={handleCreateBundleListing}
+              className="w-full"
+              data-testid="button-create-bundle"
+            >
+              <Package className="h-4 w-4 mr-2" />
+              Create Bundle Listing
             </Button>
             <Button 
               variant="outline" 
