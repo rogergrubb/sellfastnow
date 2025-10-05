@@ -127,12 +127,13 @@ export default function PostAdEnhanced() {
   const [productIdentifications, setProductIdentifications] = useState<ProductIdentification[]>([]);
   const [analyzingPhotos, setAnalyzingPhotos] = useState<boolean[]>([]);
   const [editingPhotoIndex, setEditingPhotoIndex] = useState<number | null>(null);
+  const [editedDetails, setEditedDetails] = useState<{title: string; description: string; usedPrice: string; retailPrice: string}>({
+    title: "", description: "", usedPrice: "", retailPrice: ""
+  });
   const [descriptionAnalysis, setDescriptionAnalysis] = useState<DescriptionAnalysis | null>(null);
   const [pricingAnalysis, setPricingAnalysis] = useState<PricingAnalysis | null>(null);
   const [isAnalyzingDescription, setIsAnalyzingDescription] = useState(false);
   const [isAnalyzingPricing, setIsAnalyzingPricing] = useState(false);
-  const [qualityScore, setQualityScore] = useState(0);
-  const [achievements, setAchievements] = useState<string[]>([]);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<{[key: string]: boolean}>({});
   const [userEditedFields, setUserEditedFields] = useState<Set<string>>(new Set());
@@ -174,60 +175,6 @@ export default function PostAdEnhanced() {
   });
 
   const watchedValues = form.watch();
-
-  useEffect(() => {
-    if (mode === "coached") {
-      calculateQualityScore();
-    }
-  }, [watchedValues, productIdentifications, descriptionAnalysis, pricingAnalysis, mode]);
-
-  const calculateQualityScore = () => {
-    let score = 0;
-    let totalPossible = 100;
-
-    if (uploadedImages.length > 0) {
-      score += 15;
-      if (uploadedImages.length >= 3) score += 10;
-      if (productIdentifications.length > 0) {
-        score += 20; // Product identified
-      }
-    }
-
-    if (watchedValues.title && watchedValues.title.length > 10) {
-      score += 10;
-      if (watchedValues.title.length > 30) score += 5;
-    }
-
-    if (descriptionAnalysis) {
-      score += Math.round(descriptionAnalysis.score * 2);
-    }
-
-    if (watchedValues.price && parseFloat(watchedValues.price) > 0) {
-      score += 10;
-    }
-
-    if (watchedValues.category) score += 5;
-    if (watchedValues.condition) score += 5;
-    if (watchedValues.location) score += 5;
-
-    setQualityScore(Math.min(score, totalPossible));
-
-    checkAchievements(score);
-  };
-
-  const checkAchievements = (score: number) => {
-    const newAchievements: string[] = [];
-    
-    if (uploadedImages.length >= 5) newAchievements.push("Photo Complete");
-    if (productIdentifications.length > 0) newAchievements.push("AI Powered");
-    if (descriptionAnalysis && descriptionAnalysis.score >= 8) newAchievements.push("Master Wordsmith");
-    if (score >= 90) newAchievements.push("Listing Legend");
-    if (score === 100) newAchievements.push("Perfection Achieved!");
-    
-    if (JSON.stringify(newAchievements) !== JSON.stringify(achievements)) {
-      setAchievements(newAchievements);
-    }
-  };
 
   const createListingMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
@@ -651,6 +598,58 @@ export default function PostAdEnhanced() {
     setShowMultiProductModal(false);
   };
 
+  const handleSaveEditedDetails = () => {
+    if (editingPhotoIndex !== null) {
+      const originalProduct = productIdentifications[editingPhotoIndex];
+      
+      // Validate and parse prices with fallback to original values
+      const usedPrice = editedDetails.usedPrice.trim() 
+        ? parseFloat(editedDetails.usedPrice) 
+        : originalProduct.usedPrice;
+      const retailPrice = editedDetails.retailPrice.trim() 
+        ? parseFloat(editedDetails.retailPrice) 
+        : originalProduct.retailPrice;
+      
+      // Check for invalid numbers
+      if (isNaN(usedPrice) || isNaN(retailPrice)) {
+        toast({
+          title: "Invalid Price",
+          description: "Please enter valid numbers for prices.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const updated = [...productIdentifications];
+      updated[editingPhotoIndex] = {
+        ...updated[editingPhotoIndex],
+        title: editedDetails.title.trim() || originalProduct.title,
+        description: editedDetails.description.trim() || originalProduct.description,
+        usedPrice,
+        retailPrice,
+      };
+      setProductIdentifications(updated);
+      setEditingPhotoIndex(null);
+      toast({
+        title: "Details Updated",
+        description: "Product details have been saved successfully.",
+      });
+    }
+  };
+
+  const handleOpenEditDialog = (index: number) => {
+    const product = productIdentifications[index];
+    if (product) {
+      setEditedDetails({
+        title: product.title,
+        description: product.description,
+        usedPrice: product.usedPrice.toString(),
+        retailPrice: product.retailPrice.toString(),
+      });
+      setEditingPhotoIndex(index);
+    }
+  };
+
   const analyzePhoto = async (file: File, photoNumber: number) => {
     const reader = new FileReader();
     reader.onloadend = async () => {
@@ -1050,7 +1049,7 @@ export default function PostAdEnhanced() {
   // COACHED MODE - Full AI experience
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Header with Quality Score and Skip Button */}
+      {/* Header with Skip Button */}
       <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4">
           <div>
@@ -1076,42 +1075,6 @@ export default function PostAdEnhanced() {
         </Button>
       </div>
 
-      {/* Quality Score Card */}
-      <Card className="mb-6 border-2 border-primary/20">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-primary" />
-                Listing Quality Score
-              </CardTitle>
-              <CardDescription>Real-time score as you build your listing</CardDescription>
-            </div>
-            <div className="text-right">
-              <div className="text-4xl font-bold text-primary">{qualityScore}/100</div>
-              <p className="text-xs text-muted-foreground">
-                {qualityScore < 50 && "Getting started"}
-                {qualityScore >= 50 && qualityScore < 75 && "Good progress"}
-                {qualityScore >= 75 && qualityScore < 90 && "Almost there!"}
-                {qualityScore >= 90 && "Excellent!"}
-              </p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Progress value={qualityScore} className="h-3 mb-3" />
-          {achievements.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {achievements.map((achievement, i) => (
-                <Badge key={i} variant="secondary" className="gap-1">
-                  <Award className="h-3 w-3" />
-                  {achievement}
-                </Badge>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Form */}
@@ -1203,7 +1166,7 @@ export default function PostAdEnhanced() {
                                       type="button"
                                       size="sm"
                                       variant="outline"
-                                      onClick={() => setEditingPhotoIndex(index)}
+                                      onClick={() => handleOpenEditDialog(index)}
                                       data-testid={`button-edit-details-${index}`}
                                     >
                                       Edit Details
@@ -1652,6 +1615,87 @@ export default function PostAdEnhanced() {
               data-testid="button-override-same"
             >
               These Are All the Same Item
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Product Details Dialog */}
+      <Dialog open={editingPhotoIndex !== null} onOpenChange={(open) => !open && setEditingPhotoIndex(null)}>
+        <DialogContent className="sm:max-w-lg" data-testid="dialog-edit-product">
+          <DialogHeader>
+            <DialogTitle>Edit Product Details</DialogTitle>
+            <DialogDescription>
+              Update the AI-detected product information for Photo #{(editingPhotoIndex || 0) + 1}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">Title</Label>
+              <Input
+                id="edit-title"
+                value={editedDetails.title}
+                onChange={(e) => setEditedDetails({...editedDetails, title: e.target.value})}
+                placeholder="Product title"
+                data-testid="input-edit-title"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                value={editedDetails.description}
+                onChange={(e) => setEditedDetails({...editedDetails, description: e.target.value})}
+                placeholder="Product description"
+                rows={4}
+                data-testid="input-edit-description"
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-used-price">Used Price ($)</Label>
+                <Input
+                  id="edit-used-price"
+                  type="number"
+                  value={editedDetails.usedPrice}
+                  onChange={(e) => setEditedDetails({...editedDetails, usedPrice: e.target.value})}
+                  placeholder="0.00"
+                  step="0.01"
+                  data-testid="input-edit-used-price"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-retail-price">Retail Price ($)</Label>
+                <Input
+                  id="edit-retail-price"
+                  type="number"
+                  value={editedDetails.retailPrice}
+                  onChange={(e) => setEditedDetails({...editedDetails, retailPrice: e.target.value})}
+                  placeholder="0.00"
+                  step="0.01"
+                  data-testid="input-edit-retail-price"
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setEditingPhotoIndex(null)}
+              data-testid="button-cancel-edit"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveEditedDetails}
+              data-testid="button-save-edit"
+            >
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
