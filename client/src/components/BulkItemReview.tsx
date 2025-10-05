@@ -282,10 +282,13 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
         await new Promise(resolve => setTimeout(resolve, 300));
       }
 
-      const result = await apiRequest('/api/listings/batch', {
-        method: 'POST',
-        body: JSON.stringify({ listings }),
-      });
+      const response = await apiRequest('POST', '/api/listings/batch', { listings });
+
+      if (!response.ok) {
+        throw new Error('Failed to publish listings');
+      }
+
+      const result = await response.json();
 
       console.log('✅ Batch publish successful:', result);
       
