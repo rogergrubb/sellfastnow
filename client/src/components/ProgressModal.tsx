@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, CheckCircle2, Clock } from "lucide-react";
+import { Loader2, CheckCircle2, Clock, Image, Search } from "lucide-react";
 
 interface AnalyzedItem {
   index: number;
@@ -36,16 +36,18 @@ export function ProgressModal({ open, currentIndex, totalImages, analyzedItems }
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                📸 Processing image {currentIndex} of {totalImages}
+              <span className="text-muted-foreground flex items-center gap-1.5">
+                <Image className="h-4 w-4" />
+                Processing image {currentIndex} of {totalImages}
               </span>
               <span className="font-medium">{Math.round(progress)}%</span>
             </div>
             <Progress value={progress} data-testid="progress-bar" />
           </div>
 
-          <div className="text-sm text-muted-foreground">
-            🔍 Identifying product details...
+          <div className="text-sm text-muted-foreground flex items-center gap-1.5">
+            <Search className="h-4 w-4" />
+            Identifying product details...
           </div>
 
           <div className="max-h-60 overflow-y-auto space-y-2 border rounded-lg p-3">

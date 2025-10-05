@@ -142,10 +142,23 @@ export default function PostAdEnhanced() {
   
   // Bulk upload states
   const [showBulkReview, setShowBulkReview] = useState(false);
-  const [bulkProducts, setBulkProducts] = useState<any[]>([]);
+  const [bulkProducts, setBulkProducts] = useState<{
+    title: string;
+    description: string;
+    category: string;
+    retailPrice?: number;
+    usedPrice?: number;
+    condition: string;
+    imageUrls: string[];
+    imageIndices: number[];
+  }[]>([]);
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
-  const [analyzedItems, setAnalyzedItems] = useState<any[]>([]);
+  const [analyzedItems, setAnalyzedItems] = useState<{
+    index: number;
+    title: string;
+    status: 'completed' | 'analyzing' | 'waiting';
+  }[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

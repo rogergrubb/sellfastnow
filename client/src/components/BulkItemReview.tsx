@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Sparkles, Loader2 } from "lucide-react";
+import { Trash2, Sparkles, Loader2, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
@@ -90,28 +90,21 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
         images: product.imageUrls,
       }));
 
-      const response = await fetch('/api/listings/batch', {
+      const result = await apiRequest('/api/listings/batch', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listings }),
-        credentials: 'include',
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log('✅ Batch publish successful:', result);
-        
-        await queryClient.invalidateQueries({ queryKey: ['/api/listings'] });
-        
-        toast({
-          title: "Success!",
-          description: `✓ Successfully published ${products.length} item${products.length > 1 ? 's' : ''}!`,
-        });
-        
-        setLocation('/');
-      } else {
-        throw new Error('Failed to publish listings');
-      }
+      console.log('✅ Batch publish successful:', result);
+      
+      await queryClient.invalidateQueries({ queryKey: ['/api/listings'] });
+      
+      toast({
+        title: "Success!",
+        description: `Successfully published ${products.length} item${products.length > 1 ? 's' : ''}!`,
+      });
+      
+      setLocation('/');
     } catch (error) {
       console.error('❌ Batch publish error:', error);
       toast({
@@ -129,7 +122,10 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>📦 Review Your {products.length} Item{products.length > 1 ? 's' : ''}</span>
+            <span className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Review Your {products.length} Item{products.length > 1 ? 's' : ''}
+            </span>
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-2">
             Edit details below, then publish all at once
