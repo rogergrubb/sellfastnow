@@ -373,10 +373,11 @@ export default function PostAdEnhanced() {
       setUploadedImages(allImages);
       form.setValue('images', allImages);
 
-      // Analyze images to detect same product vs different products
-      if (uploadedUrls.length > 0 && uploadedImages.length === 0) {
-        console.log(`🎯 Triggering multi-image AI analysis for ${uploadedUrls.length} image(s)...`);
-        analyzeMultipleImagesForAutopopulate(uploadedUrls);
+      // Analyze ALL images to detect same product vs different products
+      // Trigger on every upload to catch cases where user adds different products incrementally
+      if (allImages.length > 0) {
+        console.log(`🎯 Triggering multi-image AI analysis for ${allImages.length} total image(s)...`);
+        analyzeMultipleImagesForAutopopulate(allImages);
       }
     } catch (error) {
       console.error('❌ Image upload error:', error);
