@@ -71,22 +71,21 @@ Preferred communication style: Simple, everyday language.
 
 ### Feature Specifications
 
-- **AI-Powered Image Recognition & Auto-Population:** Automatic listing creation from product photos using OpenAI GPT-5 Vision API. After uploading the first image, the system:
-  - Analyzes the product photo to identify the item.
-  - Auto-populates title, description, category, price, and condition fields.
-  - Shows "AI Suggestion" badges with sparkles icon on auto-filled fields.
-  - Tracks user edits to prevent overwriting manually entered data.
-  - Displays "AI is analyzing your item..." spinner during analysis.
-  - Shows toast notification "AI Analysis Complete!" with detected product name.
-  - Gracefully degrades if OpenAI API key unavailable (uses mock data).
-  - Works in both simple and enhanced coaching modes.
-  - POST /api/ai/analyze-image endpoint uses GPT-5 with vision capabilities.
-- **Intelligent Listing Creation (AI-Powered Coaching):** Revolutionary listing creation experience that educates users to be better sellers through AI-powered coaching across 5 phases:
-  - **Phase 1 - Smart Photo Upload:** Real-time quality analysis of uploaded photos with scores for lighting, focus, framing, and background. Progressive tips teach photography best practices (natural light, clean backgrounds, multiple angles, close-ups, size reference).
-  - **Phase 2 - Description Coaching:** Strength meter (0-10) analyzes descriptions and identifies missing information. AI-generated enhanced descriptions available with one click. Suggestions include adding measurements, materials, condition details, and purchase history.
-  - **Phase 3 - Pricing Intelligence:** Market-based pricing recommendations with "Sell Fast" and "Maximize Value" strategies. Pricing psychology tips (e.g., $99 vs $100). Mock market data when OpenAI API key unavailable.
-  - **Phase 4 - Real-time Quality Score:** Live 0-100 score that updates as users fill the form. Gamification with achievements: "Photographer Pro" (5+ photos), "Perfect Shot" (90+ photo score), "Master Wordsmith" (8+ description score), "Listing Legend" (90+ overall score), "Perfection Achieved!" (100 score).
-  - **Phase 5 - Seller Academy:** Sidebar with Quick Tips (photo essentials, description must-haves, pricing psychology) and Success Stats showing impact metrics (+67% views with 5+ photos, +45% sales with detailed descriptions, 3x faster sale with competitive pricing).
+- **AI-Powered Product Identification:** Intelligent product recognition from photos using OpenAI GPT-5 Vision API. When users upload images, the system:
+  - Automatically identifies products from photos and displays detailed information cards next to each thumbnail.
+  - Shows product title, description, estimated used price, and retail price for each photo.
+  - Provides inline editing functionality with "Edit Details" button for each identified product.
+  - Edit dialog allows modification of title, description, used price, and retail price with robust validation.
+  - Displays "🔍 Analyzing photo..." loading state during AI analysis.
+  - Detects multiple different products vs. same item from different angles using multi-image analysis.
+  - Shows modal when multiple products detected with options to "Create Separate Listings" or "These Are All the Same Item".
+  - Gracefully degrades if OpenAI API key unavailable (uses realistic mock data).
+  - POST /api/ai/analyze-photo endpoint uses GPT-5 with vision capabilities for product identification.
+  - POST /api/ai/analyze-multiple-images endpoint for multi-product detection with parallel processing.
+- **Intelligent Listing Creation (AI-Powered Coaching):** Streamlined listing creation experience with AI assistance:
+  - **Description Coaching:** Strength meter (0-10) analyzes descriptions and identifies missing information. AI-generated enhanced descriptions available with one click. Suggestions include adding measurements, materials, condition details, and purchase history.
+  - **Pricing Intelligence:** Market-based pricing recommendations with "Sell Fast" and "Maximize Value" strategies. Pricing psychology tips (e.g., $99 vs $100). Mock market data when OpenAI API key unavailable.
+  - **Seller Academy:** Sidebar with Quick Tips (photo essentials, description must-haves, pricing psychology) and Success Stats showing impact metrics (+67% views with 5+ photos, +45% sales with detailed descriptions, 3x faster sale with competitive pricing).
   - **Skip to Simple Form:** One-click toggle to bypass all AI coaching and use a traditional listing form. Users can switch between coached and simple modes at any time.
   - **Graceful Fallback:** Works without OpenAI API key by using realistic mock data for all AI analysis endpoints, ensuring feature availability even without AI credentials.
 - **Review System:** Public response capability for reviews with a 24-hour edit window and 500-character limit.
