@@ -47,10 +47,12 @@ export function ProgressModal({ open, currentIndex, totalImages, analyzedItems, 
             AI is generating your descriptions...
           </DialogTitle>
           <DialogDescription>
-            {countdown !== undefined && countdown > 0 && formatTime ? (
+            {countdown !== undefined && formatTime ? (
               <div className="flex items-center gap-2 mt-2">
                 <Clock className="h-4 w-4" />
-                <span className="text-lg font-semibold">{formatTime(countdown)} remaining</span>
+                <span className="text-lg font-semibold">
+                  {countdown > 0 ? `${formatTime(countdown)} remaining` : "Almost done..."}
+                </span>
               </div>
             ) : (
               "Using AI to identify products from your images"
@@ -70,7 +72,7 @@ export function ProgressModal({ open, currentIndex, totalImages, analyzedItems, 
             <Progress value={progress} data-testid="progress-bar" />
           </div>
 
-          {countdown !== undefined && countdown > 0 && (
+          {countdown !== undefined && (
             <div className="text-sm text-center text-muted-foreground italic py-2 border-t border-b">
               💡 Pro tip: {randomTip}
             </div>
