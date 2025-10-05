@@ -162,6 +162,13 @@ export default function PostAdEnhanced() {
     title: string;
     status: 'completed' | 'analyzing' | 'waiting';
   }[]>([]);
+  
+  // Opt-in AI analysis states
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [estimatedTime, setEstimatedTime] = useState(0);
+  const [countdown, setCountdown] = useState(0);
+  const [aiAnalysisStartTime, setAiAnalysisStartTime] = useState<number | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -177,6 +184,39 @@ export default function PostAdEnhanced() {
   });
 
   const watchedValues = form.watch();
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (showProgressModal && countdown > 0) {
+      const timer = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [showProgressModal, countdown]);
+
+  // Calculate estimated time based on number of photos
+  const calculateEstimatedTime = (photoCount: number): number => {
+    if (photoCount === 1) return 22;
+    if (photoCount === 2) return 30;
+    if (photoCount === 3) return 35;
+    if (photoCount <= 9) return 22 + (photoCount * 4);
+    return 22 + (photoCount * 6); // 10+ photos
+  };
+
+  // Format countdown display
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `0:${secs.toString().padStart(2, '0')}`;
+  };
 
   const createListingMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
@@ -335,21 +375,16 @@ export default function PostAdEnhanced() {
         console.log('✅ Image uploaded successfully:', imageUrl);
         uploadedUrls.push(imageUrl);
 
-        if (mode === "coached") {
-          analyzePhoto(file, uploadedImages.length + uploadedUrls.length);
-        }
+        // OPT-IN: Remove automatic photo analysis even in coached mode
       }
 
       const allImages = [...uploadedImages, ...uploadedUrls];
       setUploadedImages(allImages);
       form.setValue('images', allImages);
 
-      // Analyze ALL images to detect same product vs different products
-      // Trigger on every upload to catch cases where user adds different products incrementally
-      if (allImages.length > 0) {
-        console.log(`🎯 Triggering multi-image AI analysis for ${allImages.length} total image(s)...`);
-        analyzeMultipleImagesForAutopopulate(allImages);
-      }
+      // OPT-IN: Don't automatically analyze images anymore
+      // User must click "Auto-Generate Descriptions" button to start AI analysis
+      console.log(`📤 Uploaded ${allImages.length} image(s). Waiting for user to opt-in to AI analysis.`);
     } catch (error) {
       console.error('❌ Image upload error:', error);
       toast({
@@ -371,6 +406,15 @@ export default function PostAdEnhanced() {
       await analyzeBulkImages(imageUrls);
       return;
     }
+    
+    // Show progress modal with countdown for 1-3 images
+    setShowProgressModal(true);
+    setBulkProgress({ current: 0, total: imageUrls.length });
+    setAnalyzedItems(imageUrls.map((_, i) => ({
+      index: i + 1,
+      title: '',
+      status: 'waiting' as const
+    })));
     
     // Use standard multi-image analysis for 1-3 images
     setIsAnalyzingImage(true);
@@ -396,6 +440,17 @@ export default function PostAdEnhanced() {
         
         setMultiImageAnalysis(analysis);
         setDetectionMessage(analysis.message || null);
+
+        // Update analyzed items to show completion
+        setAnalyzedItems(imageUrls.map((_, i) => ({
+          index: i + 1,
+          title: i < analysis.products.length ? analysis.products[i].title : 'Unknown',
+          status: 'completed' as const
+        })));
+        setBulkProgress({ current: imageUrls.length, total: imageUrls.length });
+
+        // Wait a moment to show 100% completion
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         if (analysis.scenario === "same_product") {
           // Same product detected - auto-populate form with the product data
@@ -439,13 +494,13 @@ export default function PostAdEnhanced() {
 
           console.log('✨ Form fields updated successfully for same product');
           
-          toast({
-            title: "✓ Same Item Detected!",
-            description: analysis.message || `Detected ${imageUrls.length} photos of the same item. Review and edit the suggested details.`,
-          });
+          // Hide progress modal and show success modal
+          setShowProgressModal(false);
+          setShowSuccessModal(true);
         } else {
-          // Multiple different products detected - show modal
+          // Multiple different products detected - hide progress and show multi-product modal
           console.log(`🔀 Multiple products detected (${analysis.products.length} items), showing modal...`);
+          setShowProgressModal(false);
           setShowMultiProductModal(true);
         }
       } else {
@@ -458,6 +513,32 @@ export default function PostAdEnhanced() {
     } finally {
       setIsAnalyzingImage(false);
     }
+  };
+
+  // Handler for "Auto-Generate Descriptions" button click
+  const handleAutoGenerateClick = () => {
+    if (uploadedImages.length === 0) {
+      toast({
+        title: "No Images",
+        description: "Please upload at least one image before using AI analysis.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const estimated = calculateEstimatedTime(uploadedImages.length);
+    setEstimatedTime(estimated);
+    setShowWarningModal(true);
+  };
+
+  // Handler for when user confirms they want to use AI
+  const handleConfirmAIAnalysis = () => {
+    setShowWarningModal(false);
+    setCountdown(estimatedTime);
+    setAiAnalysisStartTime(Date.now());
+    
+    // Start the AI analysis
+    analyzeMultipleImagesForAutopopulate(uploadedImages);
   };
 
   const analyzeBulkImages = async (imageUrls: string[]) => {
@@ -896,6 +977,8 @@ export default function PostAdEnhanced() {
           currentIndex={bulkProgress.current}
           totalImages={bulkProgress.total}
           analyzedItems={analyzedItems}
+          countdown={countdown}
+          formatTime={formatTime}
           onClose={() => {
             setShowProgressModal(false);
             if (bulkProducts.length > 0) {
@@ -1212,6 +1295,40 @@ export default function PostAdEnhanced() {
                         </p>
                       </label>
                     </div>
+
+                    {/* Auto-Generate Descriptions Button */}
+                    {uploadedImages.length > 0 && !isAnalyzingImage && (
+                      <div className="mt-4 space-y-3">
+                        {/* Educational Info Box */}
+                        <Alert className="border-primary/20 bg-primary/5">
+                          <Sparkles className="h-4 w-4" />
+                          <AlertDescription className="text-sm">
+                            💡 Pro Tip: Using AI to generate descriptions creates higher quality product listings which lead to more successful sales. 
+                            {uploadedImages.length >= 10 && " While it takes 1-2 minutes for 10 items, the improved descriptions are worth the wait!"}
+                          </AlertDescription>
+                        </Alert>
+
+                        {/* Prominent CTA Button */}
+                        <div className="border-2 border-primary/30 rounded-lg p-4 bg-gradient-to-br from-primary/5 to-primary/10">
+                          <div className="text-center space-y-3">
+                            <p className="font-medium">Photos uploaded ({uploadedImages.length} image{uploadedImages.length > 1 ? 's' : ''})</p>
+                            <Button
+                              type="button"
+                              size="lg"
+                              onClick={handleAutoGenerateClick}
+                              className="w-full gap-2"
+                              data-testid="button-auto-generate"
+                            >
+                              <Brain className="h-5 w-5" />
+                              Auto-Generate Descriptions with AI
+                            </Button>
+                            <p className="text-sm text-muted-foreground">
+                              Or enter details manually below ↓
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {uploadedImages.length > 0 && (
                       <div className="space-y-3 mt-4">
@@ -1817,6 +1934,8 @@ export default function PostAdEnhanced() {
         currentIndex={bulkProgress.current}
         totalImages={bulkProgress.total}
         analyzedItems={analyzedItems}
+        countdown={countdown}
+        formatTime={formatTime}
         onClose={() => {
           setShowProgressModal(false);
           if (bulkProducts.length > 0) {
@@ -1824,6 +1943,77 @@ export default function PostAdEnhanced() {
           }
         }}
       />
+      
+      {/* Warning Modal - Before AI starts */}
+      <Dialog open={showWarningModal} onOpenChange={setShowWarningModal}>
+        <DialogContent className="sm:max-w-md" data-testid="dialog-warning-ai">
+          <DialogHeader>
+            <DialogTitle>Use AI to Generate Descriptions?</DialogTitle>
+            <DialogDescription>
+              This will take approximately {estimatedTime} seconds for your {uploadedImages.length} photo{uploadedImages.length > 1 ? 's' : ''}.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-3 py-4">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <span className="text-sm">Creates higher quality descriptions</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <span className="text-sm">Leads to more successful sales</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <span className="text-sm">Automatically fills title, description, category, and pricing</span>
+            </div>
+            <div className="text-sm text-muted-foreground mt-4 pt-4 border-t">
+              You can always edit the AI-generated content after.
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowWarningModal(false)}
+              data-testid="button-cancel-ai"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmAIAnalysis}
+              data-testid="button-confirm-ai"
+            >
+              Generate Descriptions
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Modal - After AI completes */}
+      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <DialogContent className="sm:max-w-md" data-testid="dialog-success-ai">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              Descriptions Generated Successfully!
+            </DialogTitle>
+            <DialogDescription>
+              Review and edit the AI-generated content below, then publish when ready.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button 
+              onClick={() => setShowSuccessModal(false)}
+              data-testid="button-success-ok"
+              className="w-full"
+            >
+              OK, Let me Review
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

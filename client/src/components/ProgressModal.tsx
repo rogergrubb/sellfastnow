@@ -15,11 +15,23 @@ interface ProgressModalProps {
   totalImages: number;
   analyzedItems: AnalyzedItem[];
   onClose?: () => void;
+  countdown?: number;
+  formatTime?: (seconds: number) => string;
 }
 
-export function ProgressModal({ open, currentIndex, totalImages, analyzedItems, onClose }: ProgressModalProps) {
+export function ProgressModal({ open, currentIndex, totalImages, analyzedItems, onClose, countdown, formatTime }: ProgressModalProps) {
   const progress = totalImages > 0 ? (currentIndex / totalImages) * 100 : 0;
   const isComplete = progress === 100 && analyzedItems.every(item => item.status === 'completed');
+
+  // Random tips to show during processing
+  const tips = [
+    "AI-generated descriptions help items sell 40% faster",
+    "Quality descriptions increase buyer confidence",
+    "AI detects details you might miss",
+    "Professional listings get more views",
+    "Accurate pricing attracts serious buyers"
+  ];
+  const randomTip = tips[Math.floor(Math.random() * tips.length)];
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -32,10 +44,17 @@ export function ProgressModal({ open, currentIndex, totalImages, analyzedItems, 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            Analyzing Your Items...
+            AI is generating your descriptions...
           </DialogTitle>
           <DialogDescription>
-            Using AI to identify products from your images
+            {countdown !== undefined && countdown > 0 && formatTime ? (
+              <div className="flex items-center gap-2 mt-2">
+                <Clock className="h-4 w-4" />
+                <span className="text-lg font-semibold">{formatTime(countdown)} remaining</span>
+              </div>
+            ) : (
+              "Using AI to identify products from your images"
+            )}
           </DialogDescription>
         </DialogHeader>
         
@@ -51,10 +70,11 @@ export function ProgressModal({ open, currentIndex, totalImages, analyzedItems, 
             <Progress value={progress} data-testid="progress-bar" />
           </div>
 
-          <div className="text-sm text-muted-foreground flex items-center gap-1.5">
-            <Search className="h-4 w-4" />
-            Identifying product details...
-          </div>
+          {countdown !== undefined && countdown > 0 && (
+            <div className="text-sm text-center text-muted-foreground italic py-2 border-t border-b">
+              💡 Pro tip: {randomTip}
+            </div>
+          )}
 
           <div className="max-h-60 overflow-y-auto space-y-2 border rounded-lg p-3">
             {analyzedItems.map((item) => (
