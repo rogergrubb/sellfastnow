@@ -169,6 +169,15 @@ export default function PostAdEnhanced() {
   const [estimatedTime, setEstimatedTime] = useState(0);
   const [countdown, setCountdown] = useState(0);
   const [aiAnalysisStartTime, setAiAnalysisStartTime] = useState<number | null>(null);
+  
+  // Per-photo form data for simple mode
+  const [perPhotoData, setPerPhotoData] = useState<Array<{
+    title: string;
+    description: string;
+    category: string;
+    condition: string;
+    price: string;
+  }>>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -381,6 +390,21 @@ export default function PostAdEnhanced() {
       const allImages = [...uploadedImages, ...uploadedUrls];
       setUploadedImages(allImages);
       form.setValue('images', allImages);
+      
+      // Initialize per-photo form data for simple mode
+      if (mode === "simple") {
+        const newPerPhotoData = [...perPhotoData];
+        for (let i = perPhotoData.length; i < allImages.length; i++) {
+          newPerPhotoData.push({
+            title: "",
+            description: "",
+            category: "",
+            condition: "new",
+            price: "0"
+          });
+        }
+        setPerPhotoData(newPerPhotoData);
+      }
 
       // OPT-IN: Don't automatically analyze images anymore
       // User must click "Auto-Generate Descriptions" button to start AI analysis
@@ -990,14 +1014,77 @@ export default function PostAdEnhanced() {
     );
   }
 
+  // Per-photo form submit handler for simple mode
+  const handlePerPhotoSubmit = async (photoIndex: number) => {
+    const data = perPhotoData[photoIndex];
+    const location = form.getValues('location') || '';
+    
+    if (!data.title || !data.description || !data.category || !data.price || !location) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const token = await getToken();
+      const response = await fetch('/api/listings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: data.title,
+          description: data.description,
+          price: data.price,
+          category: data.category,
+          condition: data.condition,
+          location: location,
+          images: [uploadedImages[photoIndex]],
+        }),
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create listing');
+      }
+
+      toast({
+        title: "Success!",
+        description: `Listing created for photo #${photoIndex + 1}`,
+      });
+      
+      // Remove this photo and its data
+      const newImages = uploadedImages.filter((_, i) => i !== photoIndex);
+      const newPerPhotoData = perPhotoData.filter((_, i) => i !== photoIndex);
+      setUploadedImages(newImages);
+      setPerPhotoData(newPerPhotoData);
+      
+      // If no more photos, redirect to home
+      if (newImages.length === 0) {
+        setLocation('/');
+      }
+    } catch (error) {
+      console.error('Error creating listing:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create listing. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (mode === "simple") {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold">Post Your Ad</h2>
-              <p className="text-sm text-muted-foreground mt-1">Simple mode - no coaching</p>
+              <p className="text-sm text-muted-foreground mt-1">Manual entry - enter details for each photo</p>
             </div>
             <Button
               variant="outline"
@@ -1009,215 +1096,196 @@ export default function PostAdEnhanced() {
             </Button>
           </div>
           
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div>
-                <Label htmlFor="images" className="mb-3 block">Photos</Label>
-                <div className="border-2 border-dashed rounded-lg p-8 text-center hover-elevate cursor-pointer">
-                  <input
-                    type="file"
-                    id="images"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    data-testid="input-images"
-                    disabled={isUploading}
-                  />
-                  <label htmlFor="images" className="cursor-pointer">
-                    {isUploading ? (
-                      <Loader2 className="h-10 w-10 mx-auto mb-3 animate-spin text-muted-foreground" />
-                    ) : (
-                      <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-                    )}
-                    <p className="text-sm text-muted-foreground">
-                      {isUploading ? "Uploading..." : "Click to upload images or drag and drop"}
-                    </p>
-                  </label>
-                </div>
-                
-                {uploadedImages.length > 0 && (
-                  <div className="grid grid-cols-4 gap-3 mt-4">
-                    {uploadedImages.map((img, index) => (
-                      <div key={index} className="relative aspect-square rounded-lg overflow-hidden group">
-                        <img src={img} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="destructive"
-                          className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100"
-                          onClick={() => removeImage(index)}
-                          data-testid={`button-remove-image-${index}`}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+          {/* Upload Section */}
+            <div className="mb-6">
+              <Label htmlFor="images" className="mb-3 block">Upload Photos</Label>
+              <div className="border-2 border-dashed rounded-lg p-8 text-center hover-elevate cursor-pointer">
+                <input
+                  type="file"
+                  id="images"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  data-testid="input-images"
+                  disabled={isUploading}
+                />
+                <label htmlFor="images" className="cursor-pointer">
+                  {isUploading ? (
+                    <Loader2 className="h-10 w-10 mx-auto mb-3 animate-spin text-muted-foreground" />
+                  ) : (
+                    <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    {isUploading ? "Uploading..." : "Click to upload images or drag and drop"}
+                  </p>
+                </label>
               </div>
+            </div>
 
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g. iPhone 13 Pro Max - 256GB"
-                        data-testid="input-title"
-                        {...field}
+            {/* Global Location Field */}
+            {uploadedImages.length > 0 && (
+              <div className="mb-6">
+                <Label htmlFor="location">Location (for all listings) *</Label>
+                <Input
+                  id="location"
+                  placeholder="e.g. San Francisco, CA"
+                  value={form.watch('location')}
+                  onChange={(e) => form.setValue('location', e.target.value)}
+                  data-testid="input-location-global"
+                />
+              </div>
+            )}
+
+            {/* Per-Photo Forms */}
+            {uploadedImages.map((imageUrl, photoIndex) => (
+              <Card key={photoIndex} className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    Photo #{photoIndex + 1}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex gap-6">
+                    <div className="w-32 h-32 flex-shrink-0">
+                      <img 
+                        src={imageUrl} 
+                        alt={`Photo ${photoIndex + 1}`} 
+                        className="w-full h-full object-cover rounded-lg"
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    </div>
+                    
+                    <div className="flex-1 space-y-4">
+                      {/* Title */}
+                      <div>
+                        <Label>Title *</Label>
+                        <Input
+                          placeholder="e.g. iPhone 13 Pro Max - 256GB"
+                          value={perPhotoData[photoIndex]?.title || ''}
+                          onChange={(e) => {
+                            const newData = [...perPhotoData];
+                            newData[photoIndex] = { ...newData[photoIndex], title: e.target.value };
+                            setPerPhotoData(newData);
+                          }}
+                          data-testid={`input-title-${photoIndex}`}
+                        />
+                      </div>
 
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description *</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Describe your item in detail..."
-                        className="min-h-32"
-                        data-testid="input-description"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      {/* Description */}
+                      <div>
+                        <Label>Description *</Label>
+                        <Textarea
+                          placeholder="Describe your item in detail..."
+                          className="min-h-24"
+                          value={perPhotoData[photoIndex]?.description || ''}
+                          onChange={(e) => {
+                            const newData = [...perPhotoData];
+                            newData[photoIndex] = { ...newData[photoIndex], description: e.target.value };
+                            setPerPhotoData(newData);
+                          }}
+                          data-testid={`input-description-${photoIndex}`}
+                        />
+                      </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price ($) *</FormLabel>
-                      <FormControl>
+                      {/* Category and Condition */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Category *</Label>
+                          <Select 
+                            value={perPhotoData[photoIndex]?.category || ''}
+                            onValueChange={(value) => {
+                              const newData = [...perPhotoData];
+                              newData[photoIndex] = { ...newData[photoIndex], category: value };
+                              setPerPhotoData(newData);
+                            }}
+                          >
+                            <SelectTrigger data-testid={`select-category-${photoIndex}`}>
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Electronics">Electronics</SelectItem>
+                              <SelectItem value="Furniture">Furniture</SelectItem>
+                              <SelectItem value="Clothing">Clothing</SelectItem>
+                              <SelectItem value="Automotive">Automotive</SelectItem>
+                              <SelectItem value="Books & Media">Books & Media</SelectItem>
+                              <SelectItem value="Sports">Sports</SelectItem>
+                              <SelectItem value="Home & Garden">Home & Garden</SelectItem>
+                              <SelectItem value="Toys">Toys</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Condition *</Label>
+                          <Select 
+                            value={perPhotoData[photoIndex]?.condition || 'new'}
+                            onValueChange={(value) => {
+                              const newData = [...perPhotoData];
+                              newData[photoIndex] = { ...newData[photoIndex], condition: value };
+                              setPerPhotoData(newData);
+                            }}
+                          >
+                            <SelectTrigger data-testid={`select-condition-${photoIndex}`}>
+                              <SelectValue placeholder="Select condition" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="new">New</SelectItem>
+                              <SelectItem value="like-new">Like New</SelectItem>
+                              <SelectItem value="good">Good</SelectItem>
+                              <SelectItem value="fair">Fair</SelectItem>
+                              <SelectItem value="poor">Poor</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {/* Price */}
+                      <div>
+                        <Label>Your Price ($) *</Label>
                         <Input
                           type="number"
                           placeholder="0.00"
-                          data-testid="input-price"
-                          {...field}
-                          onChange={(e) => field.onChange(e.target.value)}
+                          value={perPhotoData[photoIndex]?.price || ''}
+                          onChange={(e) => {
+                            const newData = [...perPhotoData];
+                            newData[photoIndex] = { ...newData[photoIndex], price: e.target.value };
+                            setPerPhotoData(newData);
+                          }}
+                          data-testid={`input-price-${photoIndex}`}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      </div>
 
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-category">
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Electronics">Electronics</SelectItem>
-                          <SelectItem value="Furniture">Furniture</SelectItem>
-                          <SelectItem value="Clothing">Clothing</SelectItem>
-                          <SelectItem value="Automotive">Automotive</SelectItem>
-                          <SelectItem value="Books & Media">Books & Media</SelectItem>
-                          <SelectItem value="Sports">Sports</SelectItem>
-                          <SelectItem value="Home & Garden">Home & Garden</SelectItem>
-                          <SelectItem value="Toys">Toys</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                      {/* Actions */}
+                      <div className="flex gap-2 pt-2">
+                        <Button
+                          onClick={() => handlePerPhotoSubmit(photoIndex)}
+                          className="flex-1"
+                          data-testid={`button-post-${photoIndex}`}
+                        >
+                          Post Listing #{photoIndex + 1}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => removeImage(photoIndex)}
+                          data-testid={`button-remove-${photoIndex}`}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="condition"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Condition *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-condition">
-                            <SelectValue placeholder="Select condition" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="new">New</SelectItem>
-                          <SelectItem value="like-new">Like New</SelectItem>
-                          <SelectItem value="good">Good</SelectItem>
-                          <SelectItem value="fair">Fair</SelectItem>
-                          <SelectItem value="poor">Poor</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Location *</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g. San Francisco, CA"
-                          data-testid="input-location"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="flex gap-4 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setLocation('/')}
-                  data-testid="button-cancel"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  className="flex-1"
-                  data-testid="button-submit-ad"
-                  disabled={createListingMutation.isPending}
-                >
-                  {createListingMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Posting...
-                    </>
-                  ) : (
-                    'Post Ad'
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
+            {uploadedImages.length === 0 && (
+              <p className="text-center text-muted-foreground mt-8">
+                Upload photos to start creating listings
+              </p>
+            )}
         </Card>
       </div>
     );
