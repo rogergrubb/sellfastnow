@@ -1668,6 +1668,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const listing = await storage.getListing(reviewToken.listingId);
       const user = await storage.getUser(reviewToken.userId);
       
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+      
       // Determine role and who to review
       const reviewerRole = listing.userId === reviewToken.userId ? 'seller' : 'buyer';
       let reviewedUserId: string | null = null;
