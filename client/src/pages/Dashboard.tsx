@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
 import { useState, useEffect } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -119,6 +120,7 @@ function SettingsForm({ user }: { user: User }) {
 export default function Dashboard() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   
   const [activeTab, setActiveTab] = useState("my-listings");
   const [listingFilter, setListingFilter] = useState("active");
@@ -137,10 +139,30 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Fetch current user
+  // Fetch current user with Bearer token auth
   const { data: user, isLoading: userLoading, isSuccess, isError } = useQuery<{ user: User }>({
     queryKey: ["/api/auth/user"],
+    queryFn: async () => {
+      const token = await getToken();
+      console.log('🔑 Dashboard fetching user with token:', token ? 'present' : 'missing');
+      
+      const response = await fetch('/api/auth/user', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        console.error('❌ Dashboard user fetch failed:', response.status);
+        throw new Error(`Failed to fetch user: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Dashboard user fetch successful');
+      return data;
+    },
     retry: false,
+    enabled: isLoaded && isSignedIn,
   });
 
   // Fetch dashboard stats
@@ -191,9 +213,23 @@ export default function Dashboard() {
     },
   });
 
-  // Redirect if auth fails or user not found
+  // Redirect if not signed in with Clerk
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      console.log('❌ Dashboard: User not signed in, redirecting to home');
+      navigate("/");
+      toast({
+        title: "Authentication required",
+        description: "Please log in to access your dashboard",
+        variant: "destructive",
+      });
+    }
+  }, [isLoaded, isSignedIn, navigate, toast]);
+
+  // Redirect if API call fails or user not found
   useEffect(() => {
     if (isError || (isSuccess && !user?.user)) {
+      console.log('❌ Dashboard: User fetch failed or user not found, redirecting to home');
       navigate("/");
       toast({
         title: "Authentication required",
@@ -204,7 +240,7 @@ export default function Dashboard() {
   }, [isError, isSuccess, user, navigate, toast]);
 
   // Show loading state while checking auth
-  if (userLoading) {
+  if (!isLoaded || userLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-lg text-muted-foreground">Loading...</div>
@@ -213,7 +249,7 @@ export default function Dashboard() {
   }
 
   // If not logged in or error, don't render (useEffect will redirect)
-  if (!isSuccess || !user?.user) {
+  if (!isSignedIn || !isSuccess || !user?.user) {
     return null;
   }
 

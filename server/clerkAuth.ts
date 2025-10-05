@@ -42,17 +42,54 @@ async function syncUserFromClerk(userId: string) {
 }
 
 export const isAuthenticated: RequestHandler = async (req: any, res, next) => {
-  const auth = getAuth(req);
+  let auth = getAuth(req);
+  let authMethod = 'session';
+  
+  // If session auth fails, try Bearer token
+  if (!auth?.userId && req.headers.authorization) {
+    const authHeader = req.headers.authorization;
+    if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      authMethod = 'bearer';
+      
+      try {
+        // Verify token with Clerk
+        const response = await fetch('https://api.clerk.com/v1/tokens/verify', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          auth = { userId: data.sub } as any;
+          console.log('🔑 Bearer token verification successful');
+        } else {
+          console.error('❌ Bearer token verification failed:', response.status);
+        }
+      } catch (error) {
+        console.error('❌ Error verifying Bearer token:', error);
+      }
+    }
+  }
   
   console.log('🔐 Authentication check:', {
     hasAuth: !!auth,
     userId: auth?.userId || 'none',
     path: req.path,
     method: req.method,
+    authMethod: auth?.userId ? authMethod : 'none',
   });
   
   if (!auth?.userId) {
     console.error('❌ Authentication failed - no userId found');
+    console.error('❌ Request headers:', {
+      authorization: req.headers.authorization ? 'present' : 'missing',
+      cookie: req.headers.cookie ? 'present' : 'missing',
+    });
     return res.status(401).json({ message: "Unauthorized" });
   }
 
