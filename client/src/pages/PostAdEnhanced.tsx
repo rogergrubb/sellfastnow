@@ -66,15 +66,14 @@ import { BulkItemReview } from "@/components/BulkItemReview";
 
 const formSchema = insertListingSchema.omit({ userId: true });
 
-interface PhotoAnalysis {
-  score: number;
-  lighting: { score: number; feedback: string };
-  focus: { score: number; feedback: string };
-  framing: { score: number; feedback: string };
-  background: { score: number; feedback: string };
-  overallFeedback: string;
-  improvements: string[];
-  tip: string;
+interface ProductIdentification {
+  title: string;
+  description: string;
+  category: string;
+  retailPrice: number;
+  usedPrice: number;
+  condition: string;
+  confidence: number;
 }
 
 interface DescriptionAnalysis {
@@ -125,8 +124,9 @@ export default function PostAdEnhanced() {
   const [mode, setMode] = useState<"coached" | "simple">("coached");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [photoAnalyses, setPhotoAnalyses] = useState<PhotoAnalysis[]>([]);
+  const [productIdentifications, setProductIdentifications] = useState<ProductIdentification[]>([]);
   const [analyzingPhotos, setAnalyzingPhotos] = useState<boolean[]>([]);
+  const [editingPhotoIndex, setEditingPhotoIndex] = useState<number | null>(null);
   const [descriptionAnalysis, setDescriptionAnalysis] = useState<DescriptionAnalysis | null>(null);
   const [pricingAnalysis, setPricingAnalysis] = useState<PricingAnalysis | null>(null);
   const [isAnalyzingDescription, setIsAnalyzingDescription] = useState(false);
@@ -179,7 +179,7 @@ export default function PostAdEnhanced() {
     if (mode === "coached") {
       calculateQualityScore();
     }
-  }, [watchedValues, photoAnalyses, descriptionAnalysis, pricingAnalysis, mode]);
+  }, [watchedValues, productIdentifications, descriptionAnalysis, pricingAnalysis, mode]);
 
   const calculateQualityScore = () => {
     let score = 0;
@@ -188,9 +188,8 @@ export default function PostAdEnhanced() {
     if (uploadedImages.length > 0) {
       score += 15;
       if (uploadedImages.length >= 3) score += 10;
-      if (photoAnalyses.length > 0) {
-        const avgPhotoScore = photoAnalyses.reduce((sum, p) => sum + p.score, 0) / photoAnalyses.length;
-        score += Math.round((avgPhotoScore / 100) * 20);
+      if (productIdentifications.length > 0) {
+        score += 20; // Product identified
       }
     }
 
@@ -219,8 +218,8 @@ export default function PostAdEnhanced() {
   const checkAchievements = (score: number) => {
     const newAchievements: string[] = [];
     
-    if (uploadedImages.length >= 5) newAchievements.push("Photographer Pro");
-    if (photoAnalyses.some(p => p.score >= 90)) newAchievements.push("Perfect Shot");
+    if (uploadedImages.length >= 5) newAchievements.push("Photo Complete");
+    if (productIdentifications.length > 0) newAchievements.push("AI Powered");
     if (descriptionAnalysis && descriptionAnalysis.score >= 8) newAchievements.push("Master Wordsmith");
     if (score >= 90) newAchievements.push("Listing Legend");
     if (score === 100) newAchievements.push("Perfection Achieved!");
@@ -676,10 +675,10 @@ export default function PostAdEnhanced() {
         });
 
         if (response.ok) {
-          const analysis = await response.json();
-          setPhotoAnalyses(prev => {
+          const productDetails = await response.json();
+          setProductIdentifications(prev => {
             const newArr = [...prev];
-            newArr[photoNumber - 1] = analysis;
+            newArr[photoNumber - 1] = productDetails;
             return newArr;
           });
         }
@@ -748,8 +747,8 @@ export default function PostAdEnhanced() {
     setUploadedImages(newImages);
     form.setValue('images', newImages);
     
-    const newAnalyses = photoAnalyses.filter((_, i) => i !== index);
-    setPhotoAnalyses(newAnalyses);
+    const newIdentifications = productIdentifications.filter((_, i) => i !== index);
+    setProductIdentifications(newIdentifications);
   };
 
   const useAIDescription = () => {
@@ -1182,23 +1181,34 @@ export default function PostAdEnhanced() {
                               {analyzingPhotos[index] ? (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                   <Loader2 className="h-4 w-4 animate-spin" />
-                                  Analyzing photo quality...
+                                  🔍 Analyzing photo...
                                 </div>
-                              ) : photoAnalyses[index] ? (
+                              ) : productIdentifications[index] ? (
                                 <div className="space-y-2">
                                   <div className="flex items-center justify-between">
-                                    <p className="font-medium text-sm">Photo #{index + 1}</p>
-                                    <Badge variant={photoAnalyses[index].score >= 75 ? "default" : "secondary"}>
-                                      Score: {photoAnalyses[index].score}/100
-                                    </Badge>
+                                    <p className="font-semibold text-sm">Photo #{index + 1}</p>
                                   </div>
-                                  <p className="text-xs text-muted-foreground">{photoAnalyses[index].overallFeedback}</p>
-                                  {photoAnalyses[index].tip && (
-                                    <div className="flex items-start gap-2 p-2 bg-primary/5 rounded text-xs">
-                                      <Lightbulb className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
-                                      <p><strong>Tip:</strong> {photoAnalyses[index].tip}</p>
-                                    </div>
-                                  )}
+                                  <p className="font-bold text-base">{productIdentifications[index].title}</p>
+                                  <p className="text-xs text-muted-foreground line-clamp-2">{productIdentifications[index].description}</p>
+                                  <div className="flex items-center gap-4 text-sm">
+                                    <span className="font-semibold text-primary">
+                                      ${productIdentifications[index].usedPrice}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      (Retail: ${productIdentifications[index].retailPrice})
+                                    </span>
+                                  </div>
+                                  <div className="flex gap-2 mt-2">
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => setEditingPhotoIndex(index)}
+                                      data-testid={`button-edit-details-${index}`}
+                                    >
+                                      Edit Details
+                                    </Button>
+                                  </div>
                                 </div>
                               ) : (
                                 <p className="text-sm text-muted-foreground">Photo #{index + 1}</p>
