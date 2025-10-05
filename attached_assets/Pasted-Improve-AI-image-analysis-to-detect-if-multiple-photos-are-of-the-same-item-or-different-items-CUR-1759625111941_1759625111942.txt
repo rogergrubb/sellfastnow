@@ -1,0 +1,74 @@
+Improve AI image analysis to detect if multiple photos are of the same item or different items:
+
+CURRENT ISSUE:
+- AI only analyzes first image
+- No logic to detect if 3 photos = 1 item (multiple angles) vs 3 items (separate products)
+
+NEW SMART DETECTION LOGIC:
+
+1. When user uploads multiple images, analyze ALL of them:
+   - Send all image URLs to OpenAI in one request
+   - Ask: "Are these photos showing the same product from different angles, or different products?"
+
+2. OpenAI Vision prompt:
+Analyze these images and determine:
+A) SAME PRODUCT: All images show the same item from different angles/views
+B) DIFFERENT PRODUCTS: Images show distinct, separate items
+If SAME PRODUCT:
+
+Provide ONE title, description, category, and price
+Note: "Multiple angles of the same item detected"
+
+If DIFFERENT PRODUCTS:
+
+List each distinct product detected
+For each product, specify which image number(s) show it
+Provide separate title/description/category/price for each
+
+Return JSON format:
+{
+"scenario": "same_product" | "multiple_products",
+"products": [
+{
+"imageIndices": [0, 1, 2],
+"title": "...",
+"description": "...",
+"category": "...",
+"retailPrice": ...,
+"usedPrice": ...,
+"condition": "..."
+}
+]
+}
+
+3. UI Flow based on detection:
+
+   **SCENARIO A: Same Product (3 photos of 1 phone)**
+   - Auto-populate ONE listing form
+   - Show message: "✓ Detected 3 photos of the same item"
+   - Use all images for the single listing
+   - Proceed normally
+
+   **SCENARIO B: Different Products (phone, laptop, book)**
+   - Show modal: "We detected 3 different items in your photos"
+   - Options:
+     □ "Create 3 separate listings" (auto-create each)
+     □ "Let me choose which images go together" (manual grouping UI)
+     □ "These are all the same item" (override AI, create 1 listing)
+   
+4. Multi-listing creation flow:
+   - If user selects "Create separate listings"
+   - Auto-create draft listings for each detected product
+   - Show success: "Created 3 draft listings - review each before publishing"
+   - Navigate to first draft for review
+
+5. Error handling:
+   - If AI can't determine, ask user: "Are these photos of the same item or different items?"
+   - Always allow manual override
+
+6. Also fix the 413 errors:
+   - The "Request Entity Too Large" on /api/ai/analyze-photo
+   - Increase request size limit or compress images before sending to AI
+   - Server should handle larger image payloads
+
+Implement this smart detection and confirm when ready to test.
