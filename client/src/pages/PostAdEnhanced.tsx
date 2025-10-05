@@ -664,9 +664,13 @@ export default function PostAdEnhanced() {
       });
 
       try {
+        const token = await getToken();
         const response = await fetch('/api/ai/analyze-photo', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({ base64Image: base64, photoNumber }),
           credentials: 'include',
         });
