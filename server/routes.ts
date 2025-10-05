@@ -400,7 +400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Coaching Routes
   // ======================
 
-  // Analyze photo quality
+  // Identify product from photo
   app.post("/api/ai/analyze-photo", isAuthenticated, async (req, res) => {
     try {
       const { base64Image, photoNumber } = req.body;
@@ -410,15 +410,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { aiService } = await import("./aiService");
-      const analysis = await aiService.analyzePhotoQuality(
+      const productDetails = await aiService.identifyProductFromPhoto(
         base64Image,
         photoNumber || 1
       );
       
-      res.json(analysis);
+      res.json(productDetails);
     } catch (error: any) {
-      console.error("Error analyzing photo:", error);
-      res.status(500).json({ message: "Failed to analyze photo" });
+      console.error("Error identifying product:", error);
+      res.status(500).json({ message: "Failed to identify product" });
     }
   });
 

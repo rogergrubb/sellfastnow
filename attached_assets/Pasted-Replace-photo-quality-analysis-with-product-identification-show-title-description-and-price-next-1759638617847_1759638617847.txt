@@ -1,0 +1,134 @@
+Replace photo quality analysis with product identification - show title, description, and price next to each photo:
+
+REMOVE CURRENT FEATURE:
+- Photo quality scores (75/100, 42/100, etc.)
+- Photography tips and suggestions
+- All photo quality analysis code
+
+REPLACE WITH PRODUCT DETAILS:
+
+For each uploaded photo, show next to the thumbnail:
+
+┌────────────────────────────────────────────────────────┐
+│  ┌──────┐                                               │
+│  │      │  Photo #1                                     │
+│  │ IMG  │                                               │
+│  │      │  Title: Beige Sectional Sofa with Ottoman    │
+│  └──────┘                                               │
+│           Description: Modern L-shaped sectional sofa   │
+│           in beige fabric. Includes matching ottoman.   │
+│           Good condition, minor wear on cushions.       │
+│                                                         │
+│           Suggested Price: $450 (Retail: $1,200)       │
+│                                                         │
+│           [Edit Details] [Remove Photo]                 │
+└────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────┐
+│  ┌──────┐                                               │
+│  │      │  Photo #2                                     │
+│  │ IMG  │                                               │
+│  │      │  Title: Adjustable Office Chair - Ergonomic   │
+│  └──────┘                                               │
+│           Description: Black mesh office chair with     │
+│           adjustable height and lumbar support.         │
+│           Excellent condition, barely used.             │
+│                                                         │
+│           Suggested Price: $85 (Retail: $200)          │
+│                                                         │
+│           [Edit Details] [Remove Photo]                 │
+└────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────┐
+│  ┌──────┐                                               │
+│  │      │  Photo #3                                     │
+│  │ IMG  │                                               │
+│  │      │  Title: Women's Black Ankle Boots Size 8      │
+│  └──────┘                                               │
+│           Description: Stylish black leather ankle      │
+│           boots with side zipper. Size 8, gently worn.  │
+│                                                         │
+│           Suggested Price: $35 (Retail: $90)           │
+│                                                         │
+│           [Edit Details] [Remove Photo]                 │
+└────────────────────────────────────────────────────────┘
+
+IMPLEMENTATION:
+
+1. Update AI prompt for product identification:
+Analyze this product photo and provide:
+
+Product Title (concise, descriptive, include key details like size/color)
+Product Description (2-3 sentences: what it is, condition, notable features)
+Suggested Used Price (realistic marketplace price)
+Estimated Retail Price (original/new price)
+Category (Electronics, Furniture, Clothing, etc.)
+
+Return as JSON:
+{
+"title": "...",
+"description": "...",
+"usedPrice": 450,
+"retailPrice": 1200,
+"category": "Furniture"
+}
+
+2. Display format next to each photo:
+   - Photo thumbnail on left (100x100px)
+   - Product details on right
+   - Title in bold, larger font
+   - Description in normal text (2-3 lines)
+   - Price clearly displayed: "$450 (Retail: $1,200)"
+   - Category shown subtly
+   - "Edit Details" button to open inline editor
+   - "Remove Photo" button to delete
+
+3. Make details editable inline:
+   - Click "Edit Details" to make fields editable
+   - Title becomes text input
+   - Description becomes textarea
+   - Prices become number inputs
+   - Category becomes dropdown
+   - "Save" and "Cancel" buttons appear
+   - Changes save immediately
+
+4. Loading state:
+   Show while AI analyzes:
+┌────────────────────────────────────┐
+│  ┌──────┐                          │
+│  │      │  Photo #1                │
+│  │ IMG  │                          │
+│  │      │  🔍 Analyzing photo...   │
+│  └──────┘                          │
+└────────────────────────────────────┘
+
+5. Group detection message:
+   Keep the bottom message:
+   "⚠️ Detected 3 different items in your photos"
+   
+   But add action buttons:
+   [Create 3 Separate Listings] [Combine Into One Listing]
+
+6. Styling improvements:
+   - Clean, minimal design
+   - Clear visual separation between photos
+   - Hover effects on cards
+   - Smooth transitions when editing
+   - Mobile-responsive layout
+
+COMPLETELY REMOVE:
+- All photo quality scoring code
+- Photography tips
+- Lighting/focus/composition analysis
+- Quality badges and color indicators
+
+KEEP THE AI POWER FOR:
+- Product identification
+- Title generation
+- Description writing
+- Price suggestions
+- Category detection
+
+This repurposes the AI analysis to provide immediate, actionable product details instead of photo critiques.
+
+Confirm when the new product identification UI is live.

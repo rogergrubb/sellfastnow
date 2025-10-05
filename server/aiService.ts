@@ -70,15 +70,15 @@ export interface MultiImageAnalysis {
   message?: string;
 }
 
-export async function analyzePhotoQuality(
+export async function identifyProductFromPhoto(
   base64Image: string,
   photoNumber: number
-): Promise<PhotoAnalysis> {
+): Promise<ProductAnalysis> {
   const openai = getOpenAI();
   
   if (!openai) {
     // Return mock data if no API key
-    return getMockPhotoAnalysis(photoNumber);
+    return getMockProductAnalysis(photoNumber);
   }
 
   try {
@@ -87,35 +87,34 @@ export async function analyzePhotoQuality(
       messages: [
         {
           role: "system",
-          content: `You are an expert photography coach helping people take better product photos for online marketplaces. Analyze the image and provide detailed, constructive feedback in JSON format.`,
+          content: `You are an expert product analyzer for online marketplaces. Identify products from photos and provide detailed listing information.`,
         },
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: `This is photo #${photoNumber} for a product listing. Analyze the quality and provide a score (0-100) for:
-- lighting (natural light, shadows, brightness)
-- focus (sharpness, clarity)
-- framing (composition, angle, item positioning)
-- background (cleanliness, distractions)
+              text: `Analyze this product photo and provide:
 
-Also provide:
-- overall score (0-100)
-- overall feedback (2-3 sentences)
-- improvements array (specific actionable tips)
-- one progressive tip based on photo number: ${getProgressiveTipPrompt(photoNumber)}
+1. Product Title (concise, descriptive, include key details like size/color if visible)
+2. Product Description (2-3 sentences: what it is, condition assessment from photo, notable features)
+3. Suggested Used Price (realistic marketplace price based on condition)
+4. Estimated Retail Price (original/new price estimate)
+5. Category (Electronics, Furniture, Clothing, Books, Toys, Sports, Home & Garden, Other, etc.)
+6. Condition (new, like_new, good, fair, poor - based on visual assessment)
+7. Confidence (0-100, how certain you are about the identification)
+
+Be specific and realistic. If you can't determine something from the photo, make a reasonable estimate.
 
 Respond ONLY with valid JSON in this exact format:
 {
-  "score": number,
-  "lighting": {"score": number, "feedback": string},
-  "focus": {"score": number, "feedback": string},
-  "framing": {"score": number, "feedback": string},
-  "background": {"score": number, "feedback": string},
-  "overallFeedback": string,
-  "improvements": [string],
-  "tip": string
+  "title": string,
+  "description": string,
+  "usedPrice": number,
+  "retailPrice": number,
+  "category": string,
+  "condition": string,
+  "confidence": number
 }`,
             },
             {
@@ -133,8 +132,8 @@ Respond ONLY with valid JSON in this exact format:
 
     return JSON.parse(response.choices[0].message.content!);
   } catch (error: any) {
-    console.error("Error analyzing photo:", error);
-    return getMockPhotoAnalysis(photoNumber);
+    console.error("Error identifying product:", error);
+    return getMockProductAnalysis(photoNumber);
   }
 }
 
@@ -419,15 +418,38 @@ Respond ONLY with valid JSON in this exact format:
   }
 }
 
-function getMockProductAnalysis(): ProductAnalysis {
+function getMockProductAnalysis(photoNumber?: number): ProductAnalysis {
+  const items = [
+    {
+      title: "Beige Sectional Sofa with Ottoman",
+      description: "Modern L-shaped sectional sofa in beige fabric. Includes matching ottoman. Good condition with minor wear on cushions visible in the photos.",
+      category: "Furniture",
+      retailPrice: 1200,
+      usedPrice: 450,
+      condition: "good",
+    },
+    {
+      title: "Adjustable Office Chair - Ergonomic",
+      description: "Black mesh office chair with adjustable height and lumbar support. Excellent condition, barely used. Features smooth-rolling casters and comfortable padding.",
+      category: "Furniture",
+      retailPrice: 200,
+      usedPrice: 85,
+      condition: "like-new",
+    },
+    {
+      title: "Women's Black Ankle Boots Size 8",
+      description: "Stylish black leather ankle boots with side zipper. Size 8, gently worn with minimal scuffing. Perfect for fall and winter wear.",
+      category: "Clothing",
+      retailPrice: 90,
+      usedPrice: 35,
+      condition: "good",
+    },
+  ];
+  
+  const index = photoNumber ? (photoNumber - 1) % items.length : 0;
   return {
-    title: "Product Item",
-    description: "This item appears to be in good condition based on the uploaded image. It features quality construction and has been well-maintained. The item shows minimal signs of wear and is ready for a new owner. Please review the photos carefully and feel free to ask any questions about specific details or condition.",
-    category: "Other",
-    retailPrice: 100,
-    usedPrice: 65,
-    condition: "good",
-    confidence: 50,
+    ...items[index],
+    confidence: 75,
   };
 }
 
@@ -555,7 +577,7 @@ function getMockMultiImageAnalysis(imageCount: number): MultiImageAnalysis {
 }
 
 export const aiService = {
-  analyzePhotoQuality,
+  identifyProductFromPhoto,
   analyzeDescription,
   analyzePricing,
   analyzeProductImage,
