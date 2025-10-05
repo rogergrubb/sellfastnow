@@ -1,0 +1,114 @@
+Implement bulk item upload with progress indicators and scrollable multi-item form:
+
+FEATURE: When user uploads 20 photos, AI analyzes each, then shows 20 separate editable forms in a scrollable list.
+
+IMPLEMENTATION:
+
+1. PROGRESS INDICATOR DURING AI ANALYSIS:
+
+   Show real-time progress modal:
+┌─────────────────────────────────────┐
+│  🤖 Analyzing Your Items...         │
+│                                     │
+│  📸 Processing image 3 of 20        │
+│  🔍 Identifying product details...  │
+│                                     │
+│  [████████░░░░░░░░░░] 40%          │
+│                                     │
+│  ✓ Item 1: iPhone 12 Pro           │
+│  ✓ Item 2: MacBook Air              │
+│  ⏳ Item 3: Analyzing...             │
+│  ⏸ Item 4: Waiting...               │
+└─────────────────────────────────────┘
+
+   Requirements:
+   - Show which image is currently being analyzed
+   - Display progress bar (X of Y complete)
+   - List each identified item as it completes
+   - Update in real-time as AI processes each image
+   - Don't let user dismiss until complete
+
+2. AI ANALYSIS LOGIC:
+
+   - Analyze ALL uploaded images (not just first one)
+   - For each image, call OpenAI Vision API individually
+   - Track progress and update UI after each completion
+   - Detect if multiple images show same item (prompt AI to check)
+   - Return array of products with associated image indices
+
+3. BULK ITEM FORM UI (After AI completes):
+
+   Show scrollable vertical list of item forms:
+┌─────────────────────────────────────────────────┐
+│  📦 Review Your 20 Items                        │
+│  Edit details below, then publish all at once   │
+└─────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│  Item 1 of 20                          [Delete] │
+│  ┌──────────┐                                   │
+│  │  IMAGE   │  Title: [iPhone 12 Pro Max]  ✨   │
+│  │ PREVIEW  │  Description: [AI-generated...]   │
+│  └──────────┘  Category: [Electronics] ▼         │
+│                 Price: [$450] Used: [$380]      │
+│                 Condition: [Good] ▼              │
+└─────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│  Item 2 of 20                          [Delete] │
+│  ┌──────────┐                                   │
+│  │  IMAGE   │  Title: [MacBook Air 2020]   ✨   │
+│  │ PREVIEW  │  Description: [AI-generated...]   │
+│  └──────────┘  Category: [Electronics] ▼         │
+│                 Price: [$650] Used: [$550]      │
+│                 Condition: [Like New] ▼          │
+└─────────────────────────────────────────────────┘
+... (continue for all 20 items)
+┌─────────────────────────────────────────────────┐
+│  [Cancel All]     [Publish All 20 Items] →      │
+└─────────────────────────────────────────────────┘
+
+4. EACH ITEM CARD INCLUDES:
+
+   - Image thumbnail on left (clickable to enlarge)
+   - Item number indicator (Item X of Y)
+   - Delete button to remove individual items
+   - All editable fields:
+     * Title (with sparkle ✨ if AI-generated)
+     * Description (textarea, AI-generated)
+     * Category (dropdown, AI-selected)
+     * Retail Price & Used Price
+     * Condition dropdown
+   - Clear visual separation between items
+
+5. USER INTERACTIONS:
+
+   - Scroll to review all items
+   - Edit any field on any item
+   - Delete individual items from list
+   - "Publish All" button creates all listings at once
+   - Show final confirmation: "Creating 20 listings..."
+   - Success message: "✓ Successfully published 20 items!"
+
+6. TECHNICAL REQUIREMENTS:
+
+   - Fix 413 "Request Entity Too Large" errors
+   - Increase server payload limit for multiple images
+   - Optimize image data sent to AI (resize/compress if needed)
+   - Batch create listings efficiently (don't overload server)
+   - Handle partial failures gracefully
+
+7. COMPONENT STRUCTURE:
+
+   Create new component: BulkItemReview.tsx
+   - Receives array of analyzed products
+   - Renders scrollable list of item forms
+   - Manages state for all items
+   - Handles batch submission
+
+8. EDGE CASES:
+
+   - If AI detects same item in multiple photos, group them
+   - Ask user: "Photos 3, 4, 5 appear to be the same item. Combine them?"
+   - Allow regrouping images manually
+   - Handle AI analysis failures per-item (show manual form)
+
+Implement this complete bulk upload flow and confirm when ready to test.

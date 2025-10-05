@@ -162,6 +162,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Batch create listings
+  app.post("/api/listings/batch", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const { listings } = req.body;
+
+      if (!Array.isArray(listings) || listings.length === 0) {
+        return res.status(400).json({ message: "Listings array is required" });
+      }
+
+      console.log(`📦 Batch creating ${listings.length} listings for user ${userId}`);
+
+      const createdListings = [];
+      const errors = [];
+
+      for (let i = 0; i < listings.length; i++) {
+        try {
+          const validatedData = insertListingSchema.parse({
+            ...listings[i],
+            userId,
+          });
+          const listing = await storage.createListing(validatedData);
+          createdListings.push(listing);
+          console.log(`✓ Created listing ${i + 1}/${listings.length}: ${listing.title}`);
+        } catch (error: any) {
+          console.error(`✗ Failed to create listing ${i + 1}:`, error.message);
+          errors.push({ index: i, error: error.message });
+        }
+      }
+
+      if (errors.length > 0 && createdListings.length === 0) {
+        return res.status(400).json({ 
+          message: "Failed to create any listings", 
+          errors 
+        });
+      }
+
+      res.status(201).json({ 
+        created: createdListings.length,
+        listings: createdListings,
+        errors: errors.length > 0 ? errors : undefined
+      });
+    } catch (error: any) {
+      console.error("Error in batch listing creation:", error);
+      res.status(500).json({ message: error.message || "Failed to create listings" });
+    }
+  });
+
   // Update listing
   app.put("/api/listings/:id", isAuthenticated, async (req: any, res) => {
     try {
@@ -471,6 +519,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("❌ Error analyzing multiple images:", error);
       res.status(500).json({ message: "Failed to analyze multiple images" });
+    }
+  });
+
+  // Bulk analysis - process each image individually for progress tracking
+  app.post("/api/ai/analyze-bulk-images", isAuthenticated, async (req, res) => {
+    try {
+      console.log('🤖 Bulk image analysis request received');
+      const { imageUrls } = req.body;
+      
+      if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
+        console.error('❌ No imageUrls array provided in request');
+        return res.status(400).json({ message: "imageUrls array is required" });
+      }
+
+      console.log(`📦 Processing ${imageUrls.length} images individually...`);
+      const { analyzeProductImage } = await import("./aiService");
+      
+      const products = [];
+      
+      for (let i = 0; i < imageUrls.length; i++) {
+        console.log(`🔍 Analyzing image ${i + 1}/${imageUrls.length}...`);
+        try {
+          const analysis = await analyzeProductImage(imageUrls[i]);
+          products.push({
+            ...analysis,
+            imageUrls: [imageUrls[i]],
+            imageIndices: [i],
+          });
+          console.log(`✓ Image ${i + 1} analyzed: ${analysis.title}`);
+        } catch (error: any) {
+          console.error(`✗ Failed to analyze image ${i + 1}:`, error.message);
+          // Continue with other images even if one fails
+          products.push({
+            title: `Item ${i + 1} (Analysis Failed)`,
+            description: "Please add details manually",
+            category: "Other",
+            condition: "good",
+            imageUrls: [imageUrls[i]],
+            imageIndices: [i],
+          });
+        }
+      }
+      
+      console.log(`✅ Bulk analysis complete: ${products.length} products detected`);
+      res.json({ products });
+    } catch (error: any) {
+      console.error("❌ Error in bulk image analysis:", error);
+      res.status(500).json({ message: "Failed to analyze images" });
     }
   });
 

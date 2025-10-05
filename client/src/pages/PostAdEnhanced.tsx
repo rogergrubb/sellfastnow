@@ -61,6 +61,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertListingSchema } from "@shared/schema";
+import { ProgressModal } from "@/components/ProgressModal";
+import { BulkItemReview } from "@/components/BulkItemReview";
 
 const formSchema = insertListingSchema.omit({ userId: true });
 
@@ -137,6 +139,13 @@ export default function PostAdEnhanced() {
   const [multiImageAnalysis, setMultiImageAnalysis] = useState<MultiImageAnalysis | null>(null);
   const [showMultiProductModal, setShowMultiProductModal] = useState(false);
   const [detectionMessage, setDetectionMessage] = useState<string | null>(null);
+  
+  // Bulk upload states
+  const [showBulkReview, setShowBulkReview] = useState(false);
+  const [bulkProducts, setBulkProducts] = useState<any[]>([]);
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
+  const [analyzedItems, setAnalyzedItems] = useState<any[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -393,6 +402,15 @@ export default function PostAdEnhanced() {
 
   const analyzeMultipleImagesForAutopopulate = async (imageUrls: string[]) => {
     console.log(`🔍 analyzeMultipleImagesForAutopopulate() called with ${imageUrls.length} image(s)`);
+    
+    // Use bulk processing for 4+ images
+    if (imageUrls.length >= 4) {
+      console.log('📦 Triggering bulk processing mode for', imageUrls.length, 'images');
+      await analyzeBulkImages(imageUrls);
+      return;
+    }
+    
+    // Use standard multi-image analysis for 1-3 images
     setIsAnalyzingImage(true);
     try {
       const token = await getToken();
@@ -477,6 +495,91 @@ export default function PostAdEnhanced() {
       // Fail gracefully - don't show error to user
     } finally {
       setIsAnalyzingImage(false);
+    }
+  };
+
+  const analyzeBulkImages = async (imageUrls: string[]) => {
+    console.log('📦 Starting bulk analysis for', imageUrls.length, 'images');
+    
+    // Initialize progress state
+    setBulkProgress({ current: 0, total: imageUrls.length });
+    setAnalyzedItems(imageUrls.map((_, i) => ({
+      index: i + 1,
+      title: '',
+      status: 'waiting' as const
+    })));
+    setShowProgressModal(true);
+
+    try {
+      const token = await getToken();
+      console.log('🔑 Auth token obtained for bulk analysis');
+      
+      // Simulate progressive updates (since we can't get real-time progress from the backend)
+      // In a real implementation, you'd use WebSockets or polling
+      const updateInterval = setInterval(() => {
+        setBulkProgress(prev => {
+          if (prev.current < prev.total) {
+            const newCurrent = Math.min(prev.current + 1, prev.total);
+            setAnalyzedItems(items => items.map((item, i) => {
+              if (i < newCurrent - 1) return { ...item, status: 'completed' as const };
+              if (i === newCurrent - 1) return { ...item, status: 'analyzing' as const };
+              return item;
+            }));
+            return { ...prev, current: newCurrent };
+          }
+          return prev;
+        });
+      }, 2000); // Update every 2 seconds as simulation
+
+      console.log('📤 Calling /api/ai/analyze-bulk-images endpoint...');
+      const response = await fetch('/api/ai/analyze-bulk-images', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ imageUrls }),
+      });
+
+      clearInterval(updateInterval);
+
+      if (response.ok) {
+        const { products } = await response.json();
+        console.log('✅ Bulk analysis complete:', products.length, 'products detected');
+        
+        // Update analyzed items with actual titles
+        setAnalyzedItems(products.map((p: any, i: number) => ({
+          index: i + 1,
+          title: p.title,
+          status: 'completed' as const
+        })));
+        setBulkProgress({ current: products.length, total: products.length });
+        
+        // Wait a moment to show completion, then hide modal and show bulk review
+        setTimeout(() => {
+          setShowProgressModal(false);
+          setBulkProducts(products);
+          setShowBulkReview(true);
+        }, 1000);
+      } else {
+        clearInterval(updateInterval);
+        const errorData = await response.text();
+        console.error('❌ Bulk analysis error:', response.status, errorData);
+        setShowProgressModal(false);
+        toast({
+          title: "Analysis Error",
+          description: "Failed to analyze all images. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error in bulk analysis:", error);
+      setShowProgressModal(false);
+      toast({
+        title: "Analysis Error",
+        description: "Failed to analyze images. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -674,6 +777,28 @@ export default function PostAdEnhanced() {
 
   if (!isSignedIn) {
     return null;
+  }
+
+  // Show bulk review UI if bulk processing completed
+  if (showBulkReview && bulkProducts.length > 0) {
+    return (
+      <>
+        <BulkItemReview 
+          products={bulkProducts}
+          onCancel={() => {
+            setShowBulkReview(false);
+            setBulkProducts([]);
+            setUploadedImages([]);
+          }}
+        />
+        <ProgressModal
+          open={showProgressModal}
+          currentIndex={bulkProgress.current}
+          totalImages={bulkProgress.total}
+          analyzedItems={analyzedItems}
+        />
+      </>
+    );
   }
 
   if (mode === "simple") {
@@ -1504,6 +1629,14 @@ export default function PostAdEnhanced() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Progress Modal for Bulk Analysis */}
+      <ProgressModal
+        open={showProgressModal}
+        currentIndex={bulkProgress.current}
+        totalImages={bulkProgress.total}
+        analyzedItems={analyzedItems}
+      />
     </div>
   );
 }
