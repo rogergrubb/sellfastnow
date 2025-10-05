@@ -1128,12 +1128,15 @@ export default function PostAdEnhanced() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="electronics">Electronics</SelectItem>
-                          <SelectItem value="furniture">Furniture</SelectItem>
-                          <SelectItem value="clothing">Clothing</SelectItem>
-                          <SelectItem value="vehicles">Vehicles</SelectItem>
-                          <SelectItem value="services">Services</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="Electronics">Electronics</SelectItem>
+                          <SelectItem value="Furniture">Furniture</SelectItem>
+                          <SelectItem value="Clothing">Clothing</SelectItem>
+                          <SelectItem value="Automotive">Automotive</SelectItem>
+                          <SelectItem value="Books & Media">Books & Media</SelectItem>
+                          <SelectItem value="Sports">Sports</SelectItem>
+                          <SelectItem value="Home & Garden">Home & Garden</SelectItem>
+                          <SelectItem value="Toys">Toys</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -1524,12 +1527,15 @@ export default function PostAdEnhanced() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="electronics">Electronics</SelectItem>
-                              <SelectItem value="furniture">Furniture</SelectItem>
-                              <SelectItem value="clothing">Clothing</SelectItem>
-                              <SelectItem value="vehicles">Vehicles</SelectItem>
-                              <SelectItem value="services">Services</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
+                              <SelectItem value="Electronics">Electronics</SelectItem>
+                              <SelectItem value="Furniture">Furniture</SelectItem>
+                              <SelectItem value="Clothing">Clothing</SelectItem>
+                              <SelectItem value="Automotive">Automotive</SelectItem>
+                              <SelectItem value="Books & Media">Books & Media</SelectItem>
+                              <SelectItem value="Sports">Sports</SelectItem>
+                              <SelectItem value="Home & Garden">Home & Garden</SelectItem>
+                              <SelectItem value="Toys">Toys</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
