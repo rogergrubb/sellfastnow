@@ -93,7 +93,7 @@ interface PricingAnalysis {
 export default function PostAdEnhanced() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
   const [mode, setMode] = useState<"coached" | "simple">("coached");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -213,39 +213,53 @@ export default function PostAdEnhanced() {
   });
 
   const analyzeImageForAutopopulate = async (imageUrl: string) => {
+    console.log('🔍 analyzeImageForAutopopulate() called with imageUrl:', imageUrl);
     setIsAnalyzingImage(true);
     try {
+      const token = await getToken();
+      console.log('🔑 Auth token obtained:', token ? 'Token present' : 'No token');
+      
+      console.log('📤 Calling /api/ai/analyze-image endpoint...');
       const response = await fetch('/api/ai/analyze-image', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({ imageUrl }),
-        credentials: 'include',
       });
 
+      console.log('📥 OpenAI API response status:', response.status);
+      
       if (response.ok) {
         const analysis = await response.json();
+        console.log('✅ OpenAI API response data:', analysis);
         
         // Auto-populate form fields with AI suggestions (only if user hasn't edited them)
         const currentTitle = form.getValues('title');
         if (analysis.title && !currentTitle && !userEditedFields.has('title')) {
+          console.log('📝 Updating form field: title =', analysis.title);
           form.setValue('title', analysis.title);
           setAiSuggestions(prev => ({ ...prev, title: true }));
         }
         
         const currentDescription = form.getValues('description');
         if (analysis.description && !currentDescription && !userEditedFields.has('description')) {
+          console.log('📝 Updating form field: description =', analysis.description.substring(0, 50) + '...');
           form.setValue('description', analysis.description);
           setAiSuggestions(prev => ({ ...prev, description: true }));
         }
         
         const currentCategory = form.getValues('category');
         if (analysis.category && !currentCategory && !userEditedFields.has('category')) {
+          console.log('📝 Updating form field: category =', analysis.category);
           form.setValue('category', analysis.category);
           setAiSuggestions(prev => ({ ...prev, category: true }));
         }
         
         const currentPrice = form.getValues('price');
         if (analysis.usedPrice && (!currentPrice || currentPrice === '0') && !userEditedFields.has('price')) {
+          console.log('📝 Updating form field: price =', analysis.usedPrice);
           // Explicitly coerce to string to ensure type consistency
           form.setValue('price', String(analysis.usedPrice));
           setAiSuggestions(prev => ({ ...prev, price: true }));
@@ -253,10 +267,13 @@ export default function PostAdEnhanced() {
         
         const currentCondition = form.getValues('condition');
         if (analysis.condition && !userEditedFields.has('condition')) {
+          console.log('📝 Updating form field: condition =', analysis.condition);
           form.setValue('condition', analysis.condition);
           setAiSuggestions(prev => ({ ...prev, condition: true }));
         }
 
+        console.log('✨ Form fields updated successfully');
+        
         // Show toast only if we got useful analysis data
         if (analysis.title) {
           toast({
@@ -269,9 +286,12 @@ export default function PostAdEnhanced() {
             description: "Review and edit the suggested details.",
           });
         }
+      } else {
+        const errorData = await response.text();
+        console.error('❌ OpenAI API error:', response.status, errorData);
       }
     } catch (error) {
-      console.error("Error analyzing image:", error);
+      console.error("❌ Error analyzing image:", error);
       // Fail gracefully - don't show error to user
     } finally {
       setIsAnalyzingImage(false);
@@ -282,25 +302,37 @@ export default function PostAdEnhanced() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
+    console.log('📤 Starting image upload for', files.length, 'files');
     setIsUploading(true);
     try {
+      const token = await getToken();
+      console.log('🔑 Auth token obtained for upload:', token ? 'Token present' : 'No token');
+      
       const uploadedUrls: string[] = [];
 
       for (const file of files) {
+        console.log('📁 Uploading file:', file.name, 'Size:', file.size, 'bytes');
         const formData = new FormData();
         formData.append('image', file);
 
         const uploadResponse = await fetch('/api/images/upload', {
           method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
           body: formData,
-          credentials: 'include',
         });
 
+        console.log('📥 Upload response status:', uploadResponse.status);
+        
         if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text();
+          console.error('❌ Upload failed:', uploadResponse.status, errorText);
           throw new Error('Failed to upload image');
         }
 
         const { imageUrl } = await uploadResponse.json();
+        console.log('✅ Image uploaded successfully:', imageUrl);
         uploadedUrls.push(imageUrl);
 
         if (mode === "coached") {
@@ -314,9 +346,11 @@ export default function PostAdEnhanced() {
 
       // Analyze the first uploaded image to auto-populate listing details
       if (uploadedUrls.length > 0 && uploadedImages.length === 0) {
+        console.log('🎯 Triggering AI analysis for first image...');
         analyzeImageForAutopopulate(uploadedUrls[0]);
       }
     } catch (error) {
+      console.error('❌ Image upload error:', error);
       toast({
         title: "Upload Error",
         description: "Failed to upload images. Please try again.",

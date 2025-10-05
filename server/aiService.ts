@@ -338,11 +338,13 @@ export async function analyzeProductImage(imageUrl: string): Promise<ProductAnal
   const openai = getOpenAI();
   
   if (!openai) {
+    console.log('⚠️ No OpenAI API key found, using mock data for product analysis');
     // Return mock data if no API key
     return getMockProductAnalysis();
   }
 
   try {
+    console.log('🚀 Calling OpenAI API with GPT-5 for product image analysis...');
     // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
     const response = await openai.chat.completions.create({
       model: "gpt-5",

@@ -306,7 +306,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Upload image to Cloudinary
   app.post("/api/images/upload", isAuthenticated, upload.single("image"), async (req: any, res) => {
     try {
+      console.log('📤 Image upload request received from user:', req.auth?.userId);
+      
       if (!req.file) {
+        console.error('❌ No image file provided in request');
         return res.status(400).json({ message: "No image file provided" });
       }
 
@@ -314,12 +317,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // The file object contains the Cloudinary URL
       const imageUrl = (req.file as any).path; // Cloudinary URL
       
+      console.log('✅ Image uploaded successfully to Cloudinary:', imageUrl);
+      
       res.json({ 
         imageUrl,
         publicId: (req.file as any).filename,
       });
     } catch (error) {
-      console.error("Error uploading image:", error);
+      console.error("❌ Error uploading image:", error);
       res.status(500).json({ message: "Failed to upload image" });
     }
   });
@@ -416,18 +421,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI-powered product recognition from image
   app.post("/api/ai/analyze-image", isAuthenticated, async (req, res) => {
     try {
+      console.log('🤖 AI image analysis request received');
       const { imageUrl } = req.body;
       
       if (!imageUrl) {
+        console.error('❌ No imageUrl provided in request');
         return res.status(400).json({ message: "imageUrl is required" });
       }
 
+      console.log('🔍 Analyzing image with OpenAI:', imageUrl);
       const { analyzeProductImage } = await import("./aiService");
       const analysis = await analyzeProductImage(imageUrl);
       
+      console.log('✅ OpenAI analysis complete:', {
+        title: analysis.title,
+        category: analysis.category,
+        confidence: analysis.confidence,
+      });
+      
       res.json(analysis);
     } catch (error: any) {
-      console.error("Error analyzing product image:", error);
+      console.error("❌ Error analyzing product image:", error);
       res.status(500).json({ message: "Failed to analyze product image" });
     }
   });

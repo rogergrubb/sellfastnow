@@ -44,10 +44,19 @@ async function syncUserFromClerk(userId: string) {
 export const isAuthenticated: RequestHandler = async (req: any, res, next) => {
   const auth = getAuth(req);
   
+  console.log('🔐 Authentication check:', {
+    hasAuth: !!auth,
+    userId: auth?.userId || 'none',
+    path: req.path,
+    method: req.method,
+  });
+  
   if (!auth?.userId) {
+    console.error('❌ Authentication failed - no userId found');
     return res.status(401).json({ message: "Unauthorized" });
   }
 
+  console.log('✅ Authentication successful for user:', auth.userId);
   req.auth = auth;
   await syncUserFromClerk(auth.userId);
   next();
