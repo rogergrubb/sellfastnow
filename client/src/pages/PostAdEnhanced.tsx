@@ -698,11 +698,32 @@ export default function PostAdEnhanced() {
   const handleCreateSeparateListings = () => {
     console.log('🔀 User chose to create separate listings for each product');
     
-    toast({
-      title: "Feature Coming Soon",
-      description: "Auto-creating multiple listings will be available soon. For now, please upload images for one product at a time.",
-    });
-    
+    if (!multiImageAnalysis || multiImageAnalysis.products.length === 0) {
+      toast({
+        title: "Error",
+        description: "No products detected to create separate listings.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Convert multiImageAnalysis products to bulk products format
+    const bulkProductsData = multiImageAnalysis.products.map(product => ({
+      title: product.title,
+      description: product.description,
+      category: product.category,
+      retailPrice: product.retailPrice,
+      usedPrice: product.usedPrice,
+      condition: product.condition,
+      imageUrls: product.imageIndices.map(idx => uploadedImages[idx]),
+      imageIndices: product.imageIndices
+    }));
+
+    console.log('📦 Prepared bulk products for separate listings:', bulkProductsData);
+
+    // Show bulk review interface
+    setBulkProducts(bulkProductsData);
+    setShowBulkReview(true);
     setShowMultiProductModal(false);
   };
 
@@ -1886,11 +1907,25 @@ export default function PostAdEnhanced() {
             </p>
             
             {multiImageAnalysis?.products.map((product, index) => (
-              <div key={index} className="p-3 border rounded-lg">
+              <div key={index} className="p-3 border rounded-lg space-y-2">
                 <p className="font-medium text-sm">Product {index + 1}: {product.title}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Images: {product.imageIndices.map(i => `#${i + 1}`).join(', ')}
+                <p className="text-xs text-muted-foreground">
+                  Images: {product.imageIndices.map(i => `#${i + 1}`).join(', ')} 
+                  ({product.imageIndices.length} {product.imageIndices.length > 1 ? 'angles of same item' : 'photo'})
                 </p>
+                
+                {/* Show thumbnails for this product */}
+                <div className="flex gap-2 flex-wrap">
+                  {product.imageIndices.map((imgIdx, thumbIdx) => (
+                    <div key={thumbIdx} className="w-16 h-16 rounded border overflow-hidden">
+                      <img 
+                        src={uploadedImages[imgIdx]} 
+                        alt={`${product.title} - Image ${imgIdx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

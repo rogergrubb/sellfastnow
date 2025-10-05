@@ -342,44 +342,79 @@ export async function analyzeMultipleImages(imageUrls: string[]): Promise<MultiI
     const content: any[] = [
       {
         type: "text",
-        text: `Analyze these ${imageUrls.length} images and determine:
+        text: `Analyze these ${imageUrls.length} images and intelligently group them by product.
 
-A) SAME PRODUCT: All images show the same item from different angles/views
-B) DIFFERENT PRODUCTS: Images show distinct, separate items
+CRITICAL INSTRUCTIONS FOR PHOTO GROUPING:
 
-If SAME PRODUCT:
-- Provide ONE title, description, category, retail price, used price, condition
-- Note that multiple angles of the same item were detected
+1. SAME ITEM FROM DIFFERENT ANGLES:
+   - Look for the SAME physical object photographed from different angles, distances, or lighting
+   - Match distinctive features: colors, shapes, textures, patterns, labels, wear marks
+   - Group these photos together as ONE product with multiple imageIndices
+   - Example: 3 photos of the same grey couch (front view, side view, close-up) = 1 product with imageIndices [0, 1, 2]
 
-If DIFFERENT PRODUCTS:
-- List each distinct product detected
-- For each product, specify which image index/indices (0-based) show it
-- Provide separate title, description, category, retail price, used price, and condition for each product
+2. DIFFERENT ITEMS:
+   - If images show completely different objects, create separate products
+   - Each product lists only the imageIndices that show that specific item
+   - Example: Photo 1 & 3 show a couch, Photo 2 & 4 show a lamp = 2 products
 
-Guidelines:
-- Be thorough in your analysis
-- Category MUST BE ONE OF: Electronics, Furniture, Clothing, Home & Garden, Sports & Outdoors, Books & Media, Toys & Games, Automotive, Other
-  * Use "Automotive" for: cars, motorcycles, trucks, car parts, automotive accessories, auto tools, vehicle equipment, car audio, tires, wheels, etc.
-- Condition should be one of: new, like-new, good, fair, poor
-- Provide realistic market-based pricing
-- Confidence score should reflect how certain you are about the analysis
+3. VISUAL SIMILARITY ANALYSIS:
+   - 80%+ visual similarity = same item from different angles (group together)
+   - Different items that happen to look similar = separate products
+   - Trust distinctive features over general appearance
 
-Respond ONLY with valid JSON in this exact format:
+OUTPUT FORMAT:
+
+For SAME PRODUCT (all images show one item):
 {
-  "scenario": "same_product" | "multiple_products",
+  "scenario": "same_product",
+  "products": [{
+    "imageIndices": [0, 1, 2, 3],
+    "title": "Grey Sectional Sofa",
+    "description": "Comfortable L-shaped sectional sofa...",
+    "category": "Furniture",
+    "retailPrice": 1200,
+    "usedPrice": 450,
+    "condition": "good",
+    "confidence": 95
+  }]
+}
+
+For MULTIPLE PRODUCTS (images show different items):
+{
+  "scenario": "multiple_products",
   "products": [
     {
-      "imageIndices": [0, 1, 2],
-      "title": "Product Title",
-      "description": "Detailed description...",
-      "category": "Electronics",
-      "retailPrice": 500,
-      "usedPrice": 350,
+      "imageIndices": [0, 2, 4],
+      "title": "Grey Sectional Sofa",
+      "description": "Comfortable L-shaped sectional...",
+      "category": "Furniture",
+      "retailPrice": 1200,
+      "usedPrice": 450,
       "condition": "good",
+      "confidence": 90
+    },
+    {
+      "imageIndices": [1, 3],
+      "title": "Modern Table Lamp",
+      "description": "Brushed nickel table lamp...",
+      "category": "Home & Garden",
+      "retailPrice": 80,
+      "usedPrice": 35,
+      "condition": "like-new",
       "confidence": 85
     }
   ]
-}`,
+}
+
+VALIDATION RULES:
+- Category MUST BE ONE OF: Electronics, Furniture, Clothing, Home & Garden, Sports & Outdoors, Books & Media, Toys & Games, Automotive, Other
+  * Use "Automotive" for: cars, motorcycles, trucks, car parts, automotive accessories, auto tools, vehicle equipment, car audio, tires, wheels, etc.
+- Condition: new, like-new, good, fair, poor
+- All imageIndices combined must cover all ${imageUrls.length} images (0-${imageUrls.length - 1})
+- No duplicate imageIndices across products
+- Confidence score 0-100 based on certainty
+
+Respond ONLY with valid JSON matching the format above.`,
       },
     ];
 

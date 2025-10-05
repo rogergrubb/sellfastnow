@@ -60,12 +60,13 @@ interface BulkItemReviewProps {
 
 const CATEGORIES = [
   "Electronics",
+  "Furniture",
   "Clothing",
   "Home & Garden",
   "Sports & Outdoors",
   "Books & Media",
   "Toys & Games",
-  "Vehicles",
+  "Automotive",
   "Other"
 ];
 
