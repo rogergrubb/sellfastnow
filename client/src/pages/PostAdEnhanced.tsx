@@ -28,6 +28,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Upload, 
   X, 
@@ -90,6 +99,23 @@ interface PricingAnalysis {
   pricingTip: string;
 }
 
+interface DetectedProduct {
+  imageIndices: number[];
+  title: string;
+  description: string;
+  category: string;
+  retailPrice: number;
+  usedPrice: number;
+  condition: string;
+  confidence: number;
+}
+
+interface MultiImageAnalysis {
+  scenario: "same_product" | "multiple_products";
+  products: DetectedProduct[];
+  message?: string;
+}
+
 export default function PostAdEnhanced() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -108,6 +134,9 @@ export default function PostAdEnhanced() {
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<{[key: string]: boolean}>({});
   const [userEditedFields, setUserEditedFields] = useState<Set<string>>(new Set());
+  const [multiImageAnalysis, setMultiImageAnalysis] = useState<MultiImageAnalysis | null>(null);
+  const [showMultiProductModal, setShowMultiProductModal] = useState(false);
+  const [detectionMessage, setDetectionMessage] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -344,10 +373,10 @@ export default function PostAdEnhanced() {
       setUploadedImages(allImages);
       form.setValue('images', allImages);
 
-      // Analyze the first uploaded image to auto-populate listing details
+      // Analyze images to detect same product vs different products
       if (uploadedUrls.length > 0 && uploadedImages.length === 0) {
-        console.log('🎯 Triggering AI analysis for first image...');
-        analyzeImageForAutopopulate(uploadedUrls[0]);
+        console.log(`🎯 Triggering multi-image AI analysis for ${uploadedUrls.length} image(s)...`);
+        analyzeMultipleImagesForAutopopulate(uploadedUrls);
       }
     } catch (error) {
       console.error('❌ Image upload error:', error);
@@ -359,6 +388,151 @@ export default function PostAdEnhanced() {
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const analyzeMultipleImagesForAutopopulate = async (imageUrls: string[]) => {
+    console.log(`🔍 analyzeMultipleImagesForAutopopulate() called with ${imageUrls.length} image(s)`);
+    setIsAnalyzingImage(true);
+    try {
+      const token = await getToken();
+      console.log('🔑 Auth token obtained:', token ? 'Token present' : 'No token');
+      
+      console.log('📤 Calling /api/ai/analyze-multiple-images endpoint...');
+      const response = await fetch('/api/ai/analyze-multiple-images', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ imageUrls }),
+      });
+
+      console.log('📥 Multi-image OpenAI API response status:', response.status);
+      
+      if (response.ok) {
+        const analysis: MultiImageAnalysis = await response.json();
+        console.log('✅ Multi-image OpenAI API response data:', analysis);
+        
+        setMultiImageAnalysis(analysis);
+        setDetectionMessage(analysis.message || null);
+
+        if (analysis.scenario === "same_product") {
+          // Same product detected - auto-populate form with the product data
+          const product = analysis.products[0];
+          console.log('📦 Same product detected, auto-populating form fields...');
+          
+          const currentTitle = form.getValues('title');
+          if (product.title && !currentTitle && !userEditedFields.has('title')) {
+            console.log('📝 Updating form field: title =', product.title);
+            form.setValue('title', product.title);
+            setAiSuggestions(prev => ({ ...prev, title: true }));
+          }
+          
+          const currentDescription = form.getValues('description');
+          if (product.description && !currentDescription && !userEditedFields.has('description')) {
+            console.log('📝 Updating form field: description =', product.description.substring(0, 50) + '...');
+            form.setValue('description', product.description);
+            setAiSuggestions(prev => ({ ...prev, description: true }));
+          }
+          
+          const currentCategory = form.getValues('category');
+          if (product.category && !currentCategory && !userEditedFields.has('category')) {
+            console.log('📝 Updating form field: category =', product.category);
+            form.setValue('category', product.category);
+            setAiSuggestions(prev => ({ ...prev, category: true }));
+          }
+          
+          const currentPrice = form.getValues('price');
+          if (product.usedPrice && (!currentPrice || currentPrice === '0') && !userEditedFields.has('price')) {
+            console.log('📝 Updating form field: price =', product.usedPrice);
+            form.setValue('price', String(product.usedPrice));
+            setAiSuggestions(prev => ({ ...prev, price: true }));
+          }
+          
+          const currentCondition = form.getValues('condition');
+          if (product.condition && !userEditedFields.has('condition')) {
+            console.log('📝 Updating form field: condition =', product.condition);
+            form.setValue('condition', product.condition);
+            setAiSuggestions(prev => ({ ...prev, condition: true }));
+          }
+
+          console.log('✨ Form fields updated successfully for same product');
+          
+          toast({
+            title: "✓ Same Item Detected!",
+            description: analysis.message || `Detected ${imageUrls.length} photos of the same item. Review and edit the suggested details.`,
+          });
+        } else {
+          // Multiple different products detected - show modal
+          console.log(`🔀 Multiple products detected (${analysis.products.length} items), showing modal...`);
+          setShowMultiProductModal(true);
+        }
+      } else {
+        const errorData = await response.text();
+        console.error('❌ Multi-image OpenAI API error:', response.status, errorData);
+      }
+    } catch (error) {
+      console.error("❌ Error analyzing multiple images:", error);
+      // Fail gracefully - don't show error to user
+    } finally {
+      setIsAnalyzingImage(false);
+    }
+  };
+
+  const handleOverrideAsSameProduct = () => {
+    console.log('👤 User overriding AI detection - treating all images as same product');
+    if (multiImageAnalysis && multiImageAnalysis.products.length > 0) {
+      // Use the first detected product's data
+      const product = multiImageAnalysis.products[0];
+      
+      const currentTitle = form.getValues('title');
+      if (product.title && !currentTitle) {
+        form.setValue('title', product.title);
+        setAiSuggestions(prev => ({ ...prev, title: true }));
+      }
+      
+      const currentDescription = form.getValues('description');
+      if (product.description && !currentDescription) {
+        form.setValue('description', product.description);
+        setAiSuggestions(prev => ({ ...prev, description: true }));
+      }
+      
+      const currentCategory = form.getValues('category');
+      if (product.category && !currentCategory) {
+        form.setValue('category', product.category);
+        setAiSuggestions(prev => ({ ...prev, category: true }));
+      }
+      
+      const currentPrice = form.getValues('price');
+      if (product.usedPrice && (!currentPrice || currentPrice === '0')) {
+        form.setValue('price', String(product.usedPrice));
+        setAiSuggestions(prev => ({ ...prev, price: true }));
+      }
+      
+      const currentCondition = form.getValues('condition');
+      if (product.condition) {
+        form.setValue('condition', product.condition);
+        setAiSuggestions(prev => ({ ...prev, condition: true }));
+      }
+
+      setDetectionMessage(`All ${uploadedImages.length} photos treated as the same item (overridden)`);
+      toast({
+        title: "Understood!",
+        description: "All photos will be used for this single listing.",
+      });
+    }
+    setShowMultiProductModal(false);
+  };
+
+  const handleCreateSeparateListings = () => {
+    console.log('🔀 User chose to create separate listings for each product');
+    
+    toast({
+      title: "Feature Coming Soon",
+      description: "Auto-creating multiple listings will be available soon. For now, please upload images for one product at a time.",
+    });
+    
+    setShowMultiProductModal(false);
   };
 
   const analyzePhoto = async (file: File, photoNumber: number) => {
@@ -855,6 +1029,7 @@ export default function PostAdEnhanced() {
                                 variant="destructive"
                                 className="absolute top-1 right-1 h-6 w-6"
                                 onClick={() => removeImage(index)}
+                                data-testid={`button-remove-image-${index}`}
                               >
                                 <X className="h-3 w-3" />
                               </Button>
@@ -889,6 +1064,14 @@ export default function PostAdEnhanced() {
                           </div>
                         ))}
                       </div>
+                    )}
+
+                    {/* AI Detection Message */}
+                    {detectionMessage && (
+                      <Alert className="mt-4" data-testid="alert-detection-message">
+                        <CheckCircle2 className="h-4 w-4" />
+                        <AlertDescription>{detectionMessage}</AlertDescription>
+                      </Alert>
                     )}
                   </div>
 
@@ -1270,6 +1453,56 @@ export default function PostAdEnhanced() {
           </Card>
         </div>
       </div>
+
+      {/* Multi-Product Detection Modal */}
+      <Dialog open={showMultiProductModal} onOpenChange={setShowMultiProductModal}>
+        <DialogContent className="sm:max-w-md" data-testid="dialog-multi-product">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-primary" />
+              Multiple Items Detected
+            </DialogTitle>
+            <DialogDescription>
+              {multiImageAnalysis?.message || 'We detected multiple different items in your photos.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Our AI detected {multiImageAnalysis?.products.length || 0} different product{(multiImageAnalysis?.products.length || 0) > 1 ? 's' : ''} in your uploaded images. How would you like to proceed?
+            </p>
+            
+            {multiImageAnalysis?.products.map((product, index) => (
+              <div key={index} className="p-3 border rounded-lg">
+                <p className="font-medium text-sm">Product {index + 1}: {product.title}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Images: {product.imageIndices.map(i => `#${i + 1}`).join(', ')}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-col gap-2">
+            <Button 
+              variant="default" 
+              onClick={handleCreateSeparateListings}
+              className="w-full"
+              data-testid="button-create-separate"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Create {multiImageAnalysis?.products.length || 0} Separate Listings
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleOverrideAsSameProduct}
+              className="w-full"
+              data-testid="button-override-same"
+            >
+              These Are All the Same Item
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
