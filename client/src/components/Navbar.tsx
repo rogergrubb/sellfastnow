@@ -1,4 +1,4 @@
-import { Search, Plus, User, Menu, Moon, Sun } from "lucide-react";
+import { Search, Plus, User, Menu, Moon, Sun, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
@@ -65,6 +65,15 @@ export default function Navbar() {
               <div className="w-20 h-9" />
             ) : isSignedIn ? (
               <>
+                <Button 
+                  variant="ghost" 
+                  className="hidden md:flex"
+                  data-testid="button-my-listings"
+                  onClick={() => window.location.href = '/dashboard'}
+                >
+                  <ListChecks className="h-4 w-4 mr-2" />
+                  My Listings
+                </Button>
                 <Button 
                   variant="default" 
                   className="hidden sm:flex bg-secondary hover:bg-secondary"

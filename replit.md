@@ -71,6 +71,14 @@ Preferred communication style: Simple, everyday language.
 
 ### Feature Specifications
 
+- **My Listings Dashboard:** Comprehensive listing management system accessible via /dashboard with:
+  - **Quick Stats:** Total Active listings, Total Views, Messages, Items Sold displayed in card format
+  - **Filter Tabs:** Active, Draft, Sold, Expired listings
+  - **Search & Sort:** Search within listings by title, sort by newest/oldest/price
+  - **Listing Actions:** Edit, Mark as Sold, Delete with confirmation
+  - **Navigation:** Direct "My Listings" link in main navbar for signed-in users
+  - **API Endpoint:** GET /api/listings/mine returns user's listings with stats
+  - **Responsive Design:** Mobile-optimized sidebar navigation
 - **AI-Powered Product Identification:** Intelligent product recognition from photos using OpenAI GPT-5 Vision API. When users upload images, the system:
   - Automatically identifies products from photos and displays detailed information cards next to each thumbnail.
   - Shows product title, description, estimated used price, and retail price for each photo.
