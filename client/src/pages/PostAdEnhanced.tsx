@@ -896,6 +896,12 @@ export default function PostAdEnhanced() {
           currentIndex={bulkProgress.current}
           totalImages={bulkProgress.total}
           analyzedItems={analyzedItems}
+          onClose={() => {
+            setShowProgressModal(false);
+            if (bulkProducts.length > 0) {
+              setShowBulkReview(true);
+            }
+          }}
         />
       </>
     );
@@ -1811,6 +1817,12 @@ export default function PostAdEnhanced() {
         currentIndex={bulkProgress.current}
         totalImages={bulkProgress.total}
         analyzedItems={analyzedItems}
+        onClose={() => {
+          setShowProgressModal(false);
+          if (bulkProducts.length > 0) {
+            setShowBulkReview(true);
+          }
+        }}
       />
     </div>
   );

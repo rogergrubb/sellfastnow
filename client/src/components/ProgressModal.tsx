@@ -1,5 +1,6 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, Clock, Image, Search } from "lucide-react";
 
 interface AnalyzedItem {
@@ -13,24 +14,29 @@ interface ProgressModalProps {
   currentIndex: number;
   totalImages: number;
   analyzedItems: AnalyzedItem[];
+  onClose?: () => void;
 }
 
-export function ProgressModal({ open, currentIndex, totalImages, analyzedItems }: ProgressModalProps) {
+export function ProgressModal({ open, currentIndex, totalImages, analyzedItems, onClose }: ProgressModalProps) {
   const progress = totalImages > 0 ? (currentIndex / totalImages) * 100 : 0;
+  const isComplete = progress === 100 && analyzedItems.every(item => item.status === 'completed');
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent 
         className="sm:max-w-md" 
         data-testid="dialog-progress"
-        onInteractOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => !isComplete && e.preventDefault()}
+        onEscapeKeyDown={(e) => !isComplete && e.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
             Analyzing Your Items...
           </DialogTitle>
+          <DialogDescription>
+            Using AI to identify products from your images
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
@@ -79,6 +85,18 @@ export function ProgressModal({ open, currentIndex, totalImages, analyzedItems }
             ))}
           </div>
         </div>
+
+        {isComplete && onClose && (
+          <DialogFooter>
+            <Button 
+              onClick={onClose} 
+              data-testid="button-close-progress"
+              className="w-full"
+            >
+              Continue
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
