@@ -533,34 +533,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "imageUrls array is required" });
       }
 
-      console.log(`📦 Processing ${imageUrls.length} images individually...`);
+      console.log(`📦 Processing ${imageUrls.length} images in parallel...`);
       const { analyzeProductImage } = await import("./aiService");
       
-      const products = [];
+      // Process all images in parallel for much faster analysis
+      const analysisPromises = imageUrls.map((imageUrl, i) => {
+        console.log(`🔍 Starting analysis for image ${i + 1}/${imageUrls.length}...`);
+        return analyzeProductImage(imageUrl)
+          .then(analysis => {
+            console.log(`✓ Image ${i + 1} analyzed: ${analysis.title}`);
+            return {
+              ...analysis,
+              imageUrls: [imageUrl],
+              imageIndices: [i],
+            };
+          })
+          .catch(error => {
+            console.error(`✗ Failed to analyze image ${i + 1}:`, error.message);
+            // Return fallback data if analysis fails
+            return {
+              title: `Item ${i + 1} (Analysis Failed)`,
+              description: "Please add details manually",
+              category: "Other",
+              condition: "good",
+              imageUrls: [imageUrl],
+              imageIndices: [i],
+            };
+          });
+      });
       
-      for (let i = 0; i < imageUrls.length; i++) {
-        console.log(`🔍 Analyzing image ${i + 1}/${imageUrls.length}...`);
-        try {
-          const analysis = await analyzeProductImage(imageUrls[i]);
-          products.push({
-            ...analysis,
-            imageUrls: [imageUrls[i]],
-            imageIndices: [i],
-          });
-          console.log(`✓ Image ${i + 1} analyzed: ${analysis.title}`);
-        } catch (error: any) {
-          console.error(`✗ Failed to analyze image ${i + 1}:`, error.message);
-          // Continue with other images even if one fails
-          products.push({
-            title: `Item ${i + 1} (Analysis Failed)`,
-            description: "Please add details manually",
-            category: "Other",
-            condition: "good",
-            imageUrls: [imageUrls[i]],
-            imageIndices: [i],
-          });
-        }
-      }
+      const products = await Promise.all(analysisPromises);
       
       console.log(`✅ Bulk analysis complete: ${products.length} products detected`);
       res.json({ products });
