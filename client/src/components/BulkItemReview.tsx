@@ -266,6 +266,12 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
         images: product.imageUrls,
       }));
 
+      console.log('📋 Prepared listings for batch publish:', {
+        count: listings.length,
+        sample: listings[0],
+        allListings: listings
+      });
+
       // Simulate publishing progress for visual feedback
       for (let i = 0; i < products.length; i++) {
         setPublishingProgress(prev => prev ? {
@@ -281,6 +287,7 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
         await new Promise(resolve => setTimeout(resolve, 300));
       }
 
+      console.log('🚀 Calling batch API with listings:', listings);
       const response = await apiRequest('POST', '/api/listings/batch', { listings });
 
       if (!response.ok) {
@@ -337,11 +344,18 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
         }
       }, 500);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Batch publish error:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name,
+        cause: error?.cause
+      });
+      
       toast({
         title: "Error",
-        description: "Failed to publish items. Please try again.",
+        description: error?.message || "Failed to publish items. Please try again.",
         variant: "destructive",
       });
       setIsPublishing(false);
