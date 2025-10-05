@@ -53,6 +53,23 @@ export interface ProductAnalysis {
   confidence: number;
 }
 
+export interface DetectedProduct {
+  imageIndices: number[];
+  title: string;
+  description: string;
+  category: string;
+  retailPrice: number;
+  usedPrice: number;
+  condition: string;
+  confidence: number;
+}
+
+export interface MultiImageAnalysis {
+  scenario: "same_product" | "multiple_products";
+  products: DetectedProduct[];
+  message?: string;
+}
+
 export async function analyzePhotoQuality(
   base64Image: string,
   photoNumber: number
@@ -414,9 +431,133 @@ function getMockProductAnalysis(): ProductAnalysis {
   };
 }
 
+// AI-powered multi-image analysis to detect same product vs different products
+export async function analyzeMultipleImages(imageUrls: string[]): Promise<MultiImageAnalysis> {
+  const openai = getOpenAI();
+  
+  if (!openai) {
+    console.log('⚠️ No OpenAI API key found, using mock data for multi-image analysis');
+    return getMockMultiImageAnalysis(imageUrls.length);
+  }
+
+  try {
+    console.log(`🚀 Calling OpenAI API with GPT-5 for multi-image analysis (${imageUrls.length} images)...`);
+    
+    // Build the content array with text prompt and all images
+    const content: any[] = [
+      {
+        type: "text",
+        text: `Analyze these ${imageUrls.length} images and determine:
+
+A) SAME PRODUCT: All images show the same item from different angles/views
+B) DIFFERENT PRODUCTS: Images show distinct, separate items
+
+If SAME PRODUCT:
+- Provide ONE title, description, category, retail price, used price, condition
+- Note that multiple angles of the same item were detected
+
+If DIFFERENT PRODUCTS:
+- List each distinct product detected
+- For each product, specify which image index/indices (0-based) show it
+- Provide separate title, description, category, retail price, used price, and condition for each product
+
+Guidelines:
+- Be thorough in your analysis
+- Category should be one of: Electronics, Furniture, Clothing, Home & Garden, Sports & Outdoors, Books & Media, Toys & Games, Automotive, Other
+- Condition should be one of: new, like-new, good, fair, poor
+- Provide realistic market-based pricing
+- Confidence score should reflect how certain you are about the analysis
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "scenario": "same_product" | "multiple_products",
+  "products": [
+    {
+      "imageIndices": [0, 1, 2],
+      "title": "Product Title",
+      "description": "Detailed description...",
+      "category": "Electronics",
+      "retailPrice": 500,
+      "usedPrice": 350,
+      "condition": "good",
+      "confidence": 85
+    }
+  ]
+}`,
+      },
+    ];
+
+    // Add all images to the content array
+    imageUrls.forEach((url, index) => {
+      content.push({
+        type: "image_url",
+        image_url: {
+          url: url,
+          detail: "high"
+        },
+      });
+    });
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert product analyst for online marketplaces. You excel at determining whether multiple photos show the same product from different angles or different products entirely.`,
+        },
+        {
+          role: "user",
+          content: content,
+        },
+      ],
+      response_format: { type: "json_object" },
+      max_completion_tokens: 4096,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content!);
+    
+    // Add a helpful message
+    if (result.scenario === "same_product") {
+      result.message = `Detected ${imageUrls.length} photos of the same item`;
+    } else {
+      result.message = `Detected ${result.products.length} different items in your photos`;
+    }
+    
+    console.log('✅ Multi-image analysis complete:', {
+      scenario: result.scenario,
+      productCount: result.products.length,
+    });
+    
+    return result;
+  } catch (error: any) {
+    console.error("Error analyzing multiple images:", error);
+    return getMockMultiImageAnalysis(imageUrls.length);
+  }
+}
+
+function getMockMultiImageAnalysis(imageCount: number): MultiImageAnalysis {
+  return {
+    scenario: "same_product",
+    products: [
+      {
+        imageIndices: Array.from({ length: imageCount }, (_, i) => i),
+        title: "Product Item",
+        description: "This item appears to be in good condition based on the uploaded images. It features quality construction and has been well-maintained. The item shows minimal signs of wear and is ready for a new owner. Multiple angles provide a comprehensive view of the product.",
+        category: "Other",
+        retailPrice: 100,
+        usedPrice: 65,
+        condition: "good",
+        confidence: 50,
+      },
+    ],
+    message: `Detected ${imageCount} photos of the same item`,
+  };
+}
+
 export const aiService = {
   analyzePhotoQuality,
   analyzeDescription,
   analyzePricing,
   analyzeProductImage,
+  analyzeMultipleImages,
 };

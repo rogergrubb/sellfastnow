@@ -446,6 +446,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI-powered multi-image analysis to detect same vs different products
+  app.post("/api/ai/analyze-multiple-images", isAuthenticated, async (req, res) => {
+    try {
+      console.log('🤖 Multi-image analysis request received');
+      const { imageUrls } = req.body;
+      
+      if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
+        console.error('❌ No imageUrls array provided in request');
+        return res.status(400).json({ message: "imageUrls array is required" });
+      }
+
+      console.log(`🔍 Analyzing ${imageUrls.length} images with OpenAI...`);
+      const { analyzeMultipleImages } = await import("./aiService");
+      const analysis = await analyzeMultipleImages(imageUrls);
+      
+      console.log('✅ Multi-image analysis complete:', {
+        scenario: analysis.scenario,
+        productCount: analysis.products.length,
+        message: analysis.message,
+      });
+      
+      res.json(analysis);
+    } catch (error: any) {
+      console.error("❌ Error analyzing multiple images:", error);
+      res.status(500).json({ message: "Failed to analyze multiple images" });
+    }
+  });
+
   // Serve protected images
   app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
     try {
