@@ -194,11 +194,12 @@ export default function PostAdEnhanced() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/listings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/listings/mine'] });
       toast({
         title: "Success!",
         description: "Your listing has been posted successfully.",
       });
-      setLocation('/');
+      setLocation('/dashboard');
     },
     onError: (error: any) => {
       toast({

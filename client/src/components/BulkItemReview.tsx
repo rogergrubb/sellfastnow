@@ -113,7 +113,6 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
     total: number;
     status: Array<{ title: string; status: 'completed' | 'publishing' | 'waiting' }>;
   } | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const [newTag, setNewTag] = useState<{ [key: number]: string }>({});
   
@@ -290,9 +289,17 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
 
       const result = await response.json();
 
-      console.log('✅ Batch publish successful:', result);
+      console.log('✅ Batch publish successful:', {
+        created: result.created,
+        listings: result.listings?.map((l: any) => ({ id: l.id, title: l.title })),
+        errors: result.errors
+      });
+      
+      // Determine actual count of created listings with fallback (use ?? to respect 0)
+      const actualCreatedCount = result.created ?? result.listings?.length ?? products.length;
       
       await queryClient.invalidateQueries({ queryKey: ['/api/listings'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/listings/mine'] });
       
       // Update all to completed
       setPublishingProgress(prev => prev ? {
@@ -301,11 +308,33 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
         status: prev.status.map(s => ({ ...s, status: 'completed' as const }))
       } : null);
 
-      // Show success screen
+      // Show success toast and redirect immediately
       setTimeout(() => {
         setIsPublishing(false);
         setPublishingProgress(null);
-        setShowSuccess(true);
+        
+        if (actualCreatedCount > 0) {
+          const hasErrors = result.errors && result.errors.length > 0;
+          const partialSuccess = hasErrors && actualCreatedCount < products.length;
+          
+          toast({
+            title: partialSuccess ? "Partial Success" : "Success!",
+            description: partialSuccess 
+              ? `Created ${actualCreatedCount} of ${products.length} listings. Some items failed to publish.`
+              : `Successfully created ${actualCreatedCount} listing${actualCreatedCount !== 1 ? 's' : ''}!`,
+            variant: partialSuccess ? "default" : "default",
+          });
+          
+          // Redirect to dashboard immediately
+          setLocation('/dashboard');
+        } else {
+          // All creates failed
+          toast({
+            title: "Error",
+            description: "Failed to create any listings. Please try again.",
+            variant: "destructive",
+          });
+        }
       }, 500);
       
     } catch (error) {
@@ -318,16 +347,6 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
       setIsPublishing(false);
       setPublishingProgress(null);
     }
-  };
-
-  const handleViewListings = () => {
-    setShowSuccess(false);
-    setLocation('/');
-  };
-
-  const handlePostMore = () => {
-    setShowSuccess(false);
-    setLocation('/post-ad');
   };
 
   // Publishing Progress Modal
@@ -387,48 +406,6 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
           </div>
         </DialogContent>
       </Dialog>
-    );
-  }
-
-  // Success Screen
-  if (showSuccess) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-6 text-center space-y-6">
-            <div className="flex justify-center">
-              <div className="rounded-full bg-green-100 dark:bg-green-900/20 p-3">
-                <PartyPopper className="h-12 w-12 text-green-600" />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold">Success!</h2>
-              <p className="text-muted-foreground">
-                All {totalCount} item{totalCount > 1 ? 's' : ''} published successfully!
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <Button 
-                onClick={handleViewListings}
-                className="w-full"
-                data-testid="button-view-listings"
-              >
-                View My Listings
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={handlePostMore}
-                className="w-full"
-                data-testid="button-post-more"
-              >
-                Post More Items
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     );
   }
 
