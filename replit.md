@@ -78,10 +78,19 @@ Preferred communication style: Simple, everyday language.
   - Edit dialog allows modification of title, description, used price, and retail price with robust validation.
   - Displays "🔍 Searching for item and generating an automated description" loading state during AI analysis.
   - Detects multiple different products vs. same item from different angles using multi-image analysis.
-  - Shows modal when multiple products detected with options to "Create Separate Listings" or "These Are All the Same Item".
-  - Gracefully degrades if OpenAI API key unavailable (uses realistic mock data).
+  - Shows modal when multiple products detected with three options:
+    - "Create Separate Listings" - Individual listings for each product (coming soon)
+    - "Create Bundle Listing" - AI-generated multi-item bundle with combined title, description, and smart pricing
+    - "These Are All the Same Item" - Treat all photos as the same product
+  - **Multi-Item Bundle Generation:** When "Create Bundle Listing" is selected:
+    - AI automatically generates a cohesive bundle title (e.g., "3-Item Bundle: Kitchen Faucet, Elliptical Trainer, Sun Hat")
+    - Creates structured description listing all items with key details and total retail value
+    - Calculates intelligent bundle pricing (20-40% below total retail value for bundle savings)
+    - Auto-fills listing form with bundle data (title, description, category, price)
+    - Shows informative message with item count and total retail value
   - POST /api/ai/analyze-photo endpoint uses GPT-5 with vision capabilities for product identification.
   - POST /api/ai/analyze-multiple-images endpoint for multi-product detection with parallel processing.
+  - POST /api/ai/generate-bundle-summary endpoint creates multi-item bundle listings with GPT-5.
 - **Intelligent Listing Creation (AI-Powered Coaching):** Streamlined listing creation experience with AI assistance:
   - **Description Coaching:** Strength meter (0-10) analyzes descriptions and identifies missing information. AI-generated enhanced descriptions available with one click. Suggestions include adding measurements, materials, condition details, and purchase history.
   - **Pricing Intelligence:** Market-based pricing recommendations with "Sell Fast" and "Maximize Value" strategies. Pricing psychology tips (e.g., $99 vs $100). Mock market data when OpenAI API key unavailable.

@@ -141,6 +141,7 @@ export default function PostAdEnhanced() {
   const [multiImageAnalysis, setMultiImageAnalysis] = useState<MultiImageAnalysis | null>(null);
   const [showMultiProductModal, setShowMultiProductModal] = useState(false);
   const [detectionMessage, setDetectionMessage] = useState<string | null>(null);
+  const [isGeneratingBundle, setIsGeneratingBundle] = useState(false);
   
   // Bulk upload states
   const [showBulkReview, setShowBulkReview] = useState(false);
@@ -613,6 +614,7 @@ export default function PostAdEnhanced() {
     }
 
     try {
+      setIsGeneratingBundle(true);
       setShowMultiProductModal(false);
       
       // Show loading state
@@ -676,6 +678,8 @@ export default function PostAdEnhanced() {
         description: "Failed to generate bundle listing. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsGeneratingBundle(false);
     }
   };
 
@@ -1692,11 +1696,21 @@ export default function PostAdEnhanced() {
             <Button 
               variant="default" 
               onClick={handleCreateBundleListing}
+              disabled={isGeneratingBundle}
               className="w-full"
               data-testid="button-create-bundle"
             >
-              <Package className="h-4 w-4 mr-2" />
-              Create Bundle Listing
+              {isGeneratingBundle ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Package className="h-4 w-4 mr-2" />
+                  Create Bundle Listing
+                </>
+              )}
             </Button>
             <Button 
               variant="outline" 
