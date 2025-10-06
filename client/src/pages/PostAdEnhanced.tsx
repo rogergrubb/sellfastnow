@@ -64,6 +64,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertListingSchema } from "@shared/schema";
 import { ProgressModal } from "@/components/ProgressModal";
 import { BulkItemReview } from "@/components/BulkItemReview";
+import { QRUploadWidget } from "@/components/QRUploadWidget";
 
 const formSchema = insertListingSchema.omit({ userId: true });
 
@@ -1623,30 +1624,44 @@ export default function PostAdEnhanced() {
                       )}
                     </div>
                     
-                    <div className="border-2 border-dashed rounded-lg p-6 text-center hover-elevate cursor-pointer">
-                      <input
-                        type="file"
-                        id="coached-images"
-                        multiple
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                        data-testid="input-images-coached"
-                        disabled={isUploading}
+                    {/* Upload Options Grid */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {/* Traditional Upload */}
+                      <div className="border-2 border-dashed rounded-lg p-6 text-center hover-elevate cursor-pointer">
+                        <input
+                          type="file"
+                          id="coached-images"
+                          multiple
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                          data-testid="input-images-coached"
+                          disabled={isUploading}
+                        />
+                        <label htmlFor="coached-images" className="cursor-pointer">
+                          {isUploading ? (
+                            <Loader2 className="h-8 w-8 mx-auto mb-2 animate-spin text-muted-foreground" />
+                          ) : (
+                            <Camera className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                          )}
+                          <p className="text-sm font-medium">
+                            {isUploading ? "Uploading & Analyzing..." : "Upload Photos from Computer"}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Click to browse or drag and drop images
+                          </p>
+                        </label>
+                      </div>
+
+                      {/* QR Code Upload */}
+                      <QRUploadWidget
+                        onImagesReceived={(imageUrls) => {
+                          console.log('📲 Received images from QR upload:', imageUrls);
+                          const allImages = [...uploadedImages, ...imageUrls];
+                          setUploadedImages(allImages);
+                          form.setValue('images', allImages);
+                        }}
                       />
-                      <label htmlFor="coached-images" className="cursor-pointer">
-                        {isUploading ? (
-                          <Loader2 className="h-8 w-8 mx-auto mb-2 animate-spin text-muted-foreground" />
-                        ) : (
-                          <Camera className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                        )}
-                        <p className="text-sm font-medium">
-                          {isUploading ? "Uploading & Analyzing..." : "Upload Photos for AI Analysis"}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Get instant feedback on lighting, focus, and composition
-                        </p>
-                      </label>
                     </div>
 
                     {/* Auto-Generate Descriptions Button */}
