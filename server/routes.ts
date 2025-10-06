@@ -727,56 +727,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`✅ Detection complete: Found ${groupingAnalysis.products.length} products`);
       
-      // STEP 2: Check AI usage limits - First 5 items get AI descriptions
-      const usageInfo = await storage.getAIUsageInfo(userId);
-      const FREE_AI_LIMIT = 5;
+      // STEP 2: Generate AI descriptions for first 5 items only (demo strategy)
       const totalProducts = groupingAnalysis.products.length;
-      
-      console.log(`📊 AI Usage: ${usageInfo.usesThisMonth}/${FREE_AI_LIMIT} used this month`);
-      console.log(`📦 Total products detected: ${totalProducts}`);
-      
-      // Calculate how many items can get AI descriptions (first 5 free)
-      const remainingFreeSlots = Math.max(0, FREE_AI_LIMIT - usageInfo.usesThisMonth);
-      const itemsWithAI = Math.min(remainingFreeSlots, totalProducts);
+      const FREE_AI_DEMO_LIMIT = 5;
+      const itemsWithAI = Math.min(FREE_AI_DEMO_LIMIT, totalProducts);
       const itemsWithoutAI = Math.max(0, totalProducts - itemsWithAI);
       
-      console.log(`✨ First ${itemsWithAI} items will get AI descriptions (free)`);
-      console.log(`📝 Remaining ${itemsWithoutAI} items will need manual entry`);
+      console.log(`📦 Total products detected: ${totalProducts}`);
+      console.log(`✨ Generating AI for first ${itemsWithAI} items (demo strategy)`);
+      console.log(`📝 Remaining ${itemsWithoutAI} items will be empty (manual entry required)`);
       
-      // STEP 3: Build product array with AI for first 5, empty for rest
-      const allProducts = groupingAnalysis.products.map((product, index) => {
+      // STEP 3: For first 5 items, call AI to generate full descriptions
+      const { analyzeProductImage } = await import("./aiService");
+      const allProducts = [];
+      
+      for (let i = 0; i < groupingAnalysis.products.length; i++) {
+        const product = groupingAnalysis.products[i];
         const imageUrlsForProduct = product.imageIndices.map(idx => imageUrls[idx]);
         
-        if (index < itemsWithAI) {
-          // First 5 (or less): Include full AI data
-          return {
-            ...product,
-            imageUrls: imageUrlsForProduct,
-            isAIGenerated: true,
-          };
+        if (i < itemsWithAI) {
+          // First 5: Generate full AI descriptions
+          console.log(`🤖 Generating AI description for item ${i + 1}/${itemsWithAI}...`);
+          try {
+            const primaryImageUrl = imageUrlsForProduct[0];
+            const aiAnalysis = await analyzeProductImage(primaryImageUrl, manualCategory);
+            
+            console.log(`✅ AI generated: "${aiAnalysis.title}"`);
+            
+            allProducts.push({
+              imageIndices: product.imageIndices,
+              imageUrls: imageUrlsForProduct,
+              title: aiAnalysis.title,
+              description: aiAnalysis.description,
+              category: aiAnalysis.category,
+              tags: aiAnalysis.tags || [],
+              retailPrice: aiAnalysis.retailPrice,
+              usedPrice: aiAnalysis.usedPrice,
+              condition: aiAnalysis.condition,
+              confidence: aiAnalysis.confidence,
+              isAIGenerated: true,
+            });
+          } catch (error) {
+            console.error(`❌ AI generation failed for item ${i + 1}:`, error);
+            // On error, return empty item
+            allProducts.push({
+              imageIndices: product.imageIndices,
+              imageUrls: imageUrlsForProduct,
+              title: '',
+              description: '',
+              category: '',
+              tags: [],
+              retailPrice: 0,
+              usedPrice: 0,
+              condition: '',
+              confidence: 0,
+              isAIGenerated: false,
+            });
+          }
         } else {
           // Items 6+: Empty fields for manual entry
-          return {
+          allProducts.push({
             imageIndices: product.imageIndices,
             imageUrls: imageUrlsForProduct,
             title: '',
             description: '',
             category: '',
+            tags: [],
             retailPrice: 0,
             usedPrice: 0,
             condition: '',
             confidence: 0,
             isAIGenerated: false,
-          };
+          });
         }
-      });
+      }
       
       // Increment AI usage counter for items that got AI descriptions
       if (itemsWithAI > 0) {
         await storage.incrementAIUsage(userId, itemsWithAI);
-        console.log(`✅ AI usage incremented: +${itemsWithAI} (now ${usageInfo.usesThisMonth + itemsWithAI}/${FREE_AI_LIMIT})`);
+        console.log(`✅ AI usage tracked: +${itemsWithAI} descriptions generated`);
       }
       
+      const usageInfo = await storage.getAIUsageInfo(userId);
       console.log(`✅ Bulk analysis complete: ${itemsWithAI} with AI, ${itemsWithoutAI} manual`);
       
       // Return all products with AI/manual flags
@@ -790,8 +822,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         aiInfo: {
           itemsWithAI,
           itemsWithoutAI,
-          freeUsed: usageInfo.usesThisMonth + itemsWithAI,
-          freeLimit: FREE_AI_LIMIT,
+          totalUsedThisMonth: usageInfo.usesThisMonth,
+          monthlyLimit: 5,
           nextResetDate: usageInfo.resetDate,
         }
       });
