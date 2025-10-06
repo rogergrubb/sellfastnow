@@ -53,6 +53,7 @@ export interface ProductAnalysis {
   title: string;
   description: string;
   category: string;
+  tags: string[];
   retailPrice: number;
   usedPrice: number;
   condition: string;
@@ -312,16 +313,18 @@ export async function analyzeProductImage(imageUrl: string, manualCategory?: str
    - Apparent condition based on the image
    - Any notable details (brand, model, materials, etc.)
 ${categoryInstruction}
-4. Estimated retail price if bought new (realistic market value)
-5. Estimated current used price based on apparent condition
-6. Condition assessment: new, like-new, good, fair, or poor
-7. Confidence score (0-100) in your analysis
+4. Search/filter tags (3-6 relevant keywords, e.g., "vintage, cast iron, antique, press")
+5. Estimated retail price if bought new (realistic market value)
+6. Estimated current used price based on apparent condition
+7. Condition assessment: new, like-new, good, fair, or poor
+8. Confidence score (0-100) in your analysis
 
 Respond ONLY with valid JSON in this exact format:
 {
   "title": string,
   "description": string,
   "category": string,
+  "tags": string[],
   "retailPrice": number,
   "usedPrice": number,
   "condition": string,

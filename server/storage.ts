@@ -1731,6 +1731,69 @@ export class DatabaseStorage implements IStorage {
     
     return updatedUser;
   }
+
+  async checkAndDeductAICredit(userId: string): Promise<{ success: boolean; remainingCredits: number; usedPurchased: boolean }> {
+    const user = await this.checkAndResetAIUsage(userId);
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    const FREE_TIER_LIMIT = 5;
+    const usesThisMonth = user.aiUsesThisMonth || 0;
+    const creditsPurchased = user.aiCreditsPurchased || 0;
+    const remainingFree = Math.max(0, FREE_TIER_LIMIT - usesThisMonth);
+    
+    // Check if user has any credits available (free or purchased)
+    if (remainingFree > 0) {
+      // Use free credit and get updated user
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          aiUsesThisMonth: usesThisMonth + 1,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      // Recalculate remaining credits from updated user
+      const newRemainingFree = Math.max(0, FREE_TIER_LIMIT - (updatedUser.aiUsesThisMonth || 0));
+      const newCreditsPurchased = updatedUser.aiCreditsPurchased || 0;
+      
+      return {
+        success: true,
+        remainingCredits: newRemainingFree + newCreditsPurchased,
+        usedPurchased: false,
+      };
+    } else if (creditsPurchased > 0) {
+      // Use purchased credit and get updated user
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          aiCreditsPurchased: creditsPurchased - 1,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      // Calculate remaining credits from updated user
+      const newRemainingFree = Math.max(0, FREE_TIER_LIMIT - (updatedUser.aiUsesThisMonth || 0));
+      const newCreditsPurchased = updatedUser.aiCreditsPurchased || 0;
+      
+      return {
+        success: true,
+        remainingCredits: newRemainingFree + newCreditsPurchased,
+        usedPurchased: true,
+      };
+    } else {
+      // No credits available
+      return {
+        success: false,
+        remainingCredits: 0,
+        usedPurchased: false,
+      };
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();

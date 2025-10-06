@@ -627,6 +627,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sequential AI item analysis with credit check and deduction
+  app.post("/api/ai/analyze-item", isAuthenticated, async (req: any, res) => {
+    try {
+      console.log('🤖 Sequential AI item analysis request received');
+      const { imageUrl, manualCategory, itemIndex } = req.body;
+      const userId = req.auth.userId;
+      
+      if (!imageUrl) {
+        console.error('❌ No imageUrl provided in request');
+        return res.status(400).json({ message: "imageUrl is required" });
+      }
+
+      console.log(`🔍 Item ${itemIndex || 'N/A'}: Checking credits for user ${userId}...`);
+      
+      // Check and deduct credit atomically
+      const creditResult = await storage.checkAndDeductAICredit(userId);
+      
+      if (!creditResult.success) {
+        console.log('❌ Insufficient credits - user has 0 credits remaining');
+        return res.status(402).json({ 
+          message: "Insufficient AI credits",
+          remainingCredits: 0,
+        });
+      }
+
+      console.log(`✅ Credit deducted (${creditResult.usedPurchased ? 'purchased' : 'free'}). Remaining: ${creditResult.remainingCredits}`);
+      console.log(`🔍 Item ${itemIndex || 'N/A'}: Analyzing image with OpenAI...`);
+      
+      if (manualCategory) {
+        console.log(`📁 Using manual category override: "${manualCategory}"`);
+      }
+      
+      const { analyzeProductImage } = await import("./aiService");
+      const analysis = await analyzeProductImage(imageUrl, manualCategory);
+      
+      console.log(`✅ Item ${itemIndex || 'N/A'}: OpenAI analysis complete - "${analysis.title}"`);
+      
+      res.json({
+        ...analysis,
+        remainingCredits: creditResult.remainingCredits,
+        usedPurchased: creditResult.usedPurchased,
+      });
+    } catch (error: any) {
+      console.error("❌ Error in sequential item analysis:", error);
+      res.status(500).json({ message: "Failed to analyze item" });
+    }
+  });
+
   // AI-powered multi-image analysis to detect same vs different products
   app.post("/api/ai/analyze-multiple-images", isAuthenticated, async (req, res) => {
     try {

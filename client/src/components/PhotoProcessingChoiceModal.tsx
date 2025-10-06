@@ -45,19 +45,15 @@ export function PhotoProcessingChoiceModal({
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-md" data-testid="dialog-photo-processing-choice">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Camera className="h-5 w-5" />
-            How should we process these {photoCount} photos?
+          <DialogTitle className="text-xl">
+            📸 You've uploaded {photoCount} photos
           </DialogTitle>
-          <DialogDescription>
-            Choose how your photos should be analyzed to save AI credits
-          </DialogDescription>
         </DialogHeader>
 
         <RadioGroup
           value={selectedChoice}
           onValueChange={setSelectedChoice}
-          className="space-y-4"
+          className="space-y-3"
         >
           <div className="flex items-start space-x-3 rounded-lg border p-4 hover-elevate">
             <RadioGroupItem value="one-item" id="one-item" data-testid="radio-one-item" />
@@ -66,11 +62,10 @@ export function PhotoProcessingChoiceModal({
                 One Item - Multiple Angles
               </Label>
               <p className="text-sm text-muted-foreground">
-                These photos show the SAME product from different angles
-                (e.g., {photoCount} photos of a sofa)
+                All photos show the SAME product
               </p>
               <p className="text-sm font-medium text-primary">
-                → Creates 1 listing with {photoCount} photos
+                → Creates 1 listing • Uses 1 AI credit
               </p>
             </div>
           </div>
@@ -79,26 +74,17 @@ export function PhotoProcessingChoiceModal({
             <RadioGroupItem value="multiple-items" id="multiple-items" data-testid="radio-multiple-items" />
             <div className="flex-1 space-y-1">
               <Label htmlFor="multiple-items" className="cursor-pointer font-medium">
-                Multiple Items - Different Products
+                Multiple Different Items
               </Label>
               <p className="text-sm text-muted-foreground">
                 Each photo is a DIFFERENT product
-                (e.g., {photoCount} separate items to sell)
               </p>
               <p className="text-sm font-medium text-primary">
-                → Creates {photoCount} separate listings
+                → Creates {photoCount} listings • Uses {photoCount} AI credits
               </p>
             </div>
           </div>
         </RadioGroup>
-
-        {selectedChoice && (
-          <div className="rounded-lg bg-muted p-3 text-sm">
-            <p className="font-medium">
-              This will use {creditCost} AI credit{creditCost > 1 ? "s" : ""}
-            </p>
-          </div>
-        )}
 
         <Button
           onClick={handleContinue}
@@ -106,7 +92,7 @@ export function PhotoProcessingChoiceModal({
           className="w-full"
           data-testid="button-continue-processing"
         >
-          Continue with AI Generation
+          Start AI Processing
         </Button>
       </DialogContent>
     </Dialog>
