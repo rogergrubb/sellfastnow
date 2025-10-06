@@ -140,7 +140,7 @@ export default function Dashboard() {
   }, []);
 
   // Fetch current user with Bearer token auth
-  const { data: user, isLoading: userLoading, isSuccess, isError } = useQuery<{ user: User }>({
+  const { data: user, isLoading: userLoading, isSuccess, isError } = useQuery<User>({
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
       const token = await getToken();
@@ -158,7 +158,7 @@ export default function Dashboard() {
       }
       
       const data = await response.json();
-      console.log('✅ Dashboard user fetch successful');
+      console.log('✅ Dashboard user fetch successful:', data?.id);
       return data;
     },
     retry: false,
@@ -168,19 +168,19 @@ export default function Dashboard() {
   // Fetch dashboard stats
   const { data: stats } = useQuery<DashboardStats>({
     queryKey: ["/api/listings/stats"],
-    enabled: !!user?.user,
+    enabled: !!user,
   });
 
   // Fetch user's listings
   const { data: userListings = [], isLoading: listingsLoading } = useQuery<Listing[]>({
     queryKey: ["/api/listings/mine"],
-    enabled: !!user?.user,
+    enabled: !!user,
   });
 
   // Fetch favorites
   const { data: favorites = [], isLoading: favoritesLoading } = useQuery<Listing[]>({
     queryKey: ["/api/favorites"],
-    enabled: !!user?.user && activeTab === "favorites",
+    enabled: !!user && activeTab === "favorites",
   });
 
   // Delete listing mutation
@@ -228,7 +228,7 @@ export default function Dashboard() {
 
   // Redirect if API call fails or user not found
   useEffect(() => {
-    if (isError || (isSuccess && !user?.user)) {
+    if (isError || (isSuccess && !user)) {
       console.log('❌ Dashboard: User fetch failed or user not found, redirecting to home');
       navigate("/");
       toast({
@@ -249,11 +249,11 @@ export default function Dashboard() {
   }
 
   // If not logged in or error, don't render (useEffect will redirect)
-  if (!isSignedIn || !isSuccess || !user?.user) {
+  if (!isSignedIn || !isSuccess || !user) {
     return null;
   }
 
-  const currentUser = user.user;
+  const currentUser = user;
 
   // Get user display name
   const userName =
