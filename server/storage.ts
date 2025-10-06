@@ -169,6 +169,17 @@ export interface IStorage {
   addImagesToSession(sessionId: string, imageUrls: string[]): Promise<UploadSession>;
   deleteUploadSession(id: string): Promise<void>;
   cleanupExpiredSessions(): Promise<void>;
+
+  // AI usage tracking operations
+  checkAndResetAIUsage(userId: string): Promise<User>;
+  incrementAIUsage(userId: string, count: number): Promise<User>;
+  getAIUsageInfo(userId: string): Promise<{
+    usesThisMonth: number;
+    resetDate: Date;
+    creditsPurchased: number;
+    subscriptionTier: string;
+    remainingFree: number;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1613,6 +1624,79 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(uploadSessions)
       .where(sql`${uploadSessions.expiresAt} < NOW()`);
+  }
+
+  // AI usage tracking implementations
+  async checkAndResetAIUsage(userId: string): Promise<User> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const now = new Date();
+    const resetDate = user.aiResetDate ? new Date(user.aiResetDate) : new Date();
+    
+    const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfResetMonth = new Date(resetDate.getFullYear(), resetDate.getMonth(), 1);
+    
+    if (startOfCurrentMonth > startOfResetMonth) {
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          aiUsesThisMonth: 0,
+          aiResetDate: now,
+          updatedAt: now,
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      return updatedUser;
+    }
+    
+    return user;
+  }
+
+  async incrementAIUsage(userId: string, count: number): Promise<User> {
+    const user = await this.checkAndResetAIUsage(userId);
+    
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        aiUsesThisMonth: (user.aiUsesThisMonth || 0) + count,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return updatedUser;
+  }
+
+  async getAIUsageInfo(userId: string): Promise<{
+    usesThisMonth: number;
+    resetDate: Date;
+    creditsPurchased: number;
+    subscriptionTier: string;
+    remainingFree: number;
+  }> {
+    const user = await this.checkAndResetAIUsage(userId);
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    const FREE_TIER_LIMIT = 5;
+    const usesThisMonth = user.aiUsesThisMonth || 0;
+    const creditsPurchased = user.aiCreditsPurchased || 0;
+    const subscriptionTier = user.subscriptionTier || 'free';
+    
+    const remainingFree = Math.max(0, FREE_TIER_LIMIT - usesThisMonth);
+    
+    return {
+      usesThisMonth,
+      resetDate: user.aiResetDate || new Date(),
+      creditsPurchased,
+      subscriptionTier,
+      remainingFree,
+    };
   }
 }
 
