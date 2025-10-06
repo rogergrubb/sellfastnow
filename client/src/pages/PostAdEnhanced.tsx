@@ -210,6 +210,7 @@ export default function PostAdEnhanced() {
     queryKey: ['/api/listings', editListingId],
     queryFn: async () => {
       if (!editListingId) return null;
+      console.log('🔍 FETCHING LISTING ID:', editListingId);
       const token = await getToken();
       const response = await fetch(`/api/listings/${editListingId}`, {
         headers: {
@@ -217,9 +218,13 @@ export default function PostAdEnhanced() {
         },
       });
       if (!response.ok) {
+        console.error('❌ FETCH FAILED:', response.status, response.statusText);
         throw new Error('Failed to fetch listing');
       }
-      return response.json();
+      const data = await response.json();
+      console.log('✅ RAW API RESPONSE:', data);
+      // API returns {listing: {...}, seller: {...}} so extract just the listing
+      return data.listing || data;
     },
     enabled: isEditMode && !!editListingId,
   });
@@ -227,7 +232,17 @@ export default function PostAdEnhanced() {
   // Pre-populate form when editing
   useEffect(() => {
     if (existingListing && isEditMode) {
-      console.log('🔄 Pre-populating form with existing listing:', existingListing);
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('🔄 PRE-POPULATING FORM - EDIT MODE');
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('📦 Existing Listing Data:', existingListing);
+      console.log('  ├─ Title:', existingListing.title);
+      console.log('  ├─ Description:', existingListing.description?.substring(0, 50) + '...');
+      console.log('  ├─ Price:', existingListing.price);
+      console.log('  ├─ Category:', existingListing.category);
+      console.log('  ├─ Condition:', existingListing.condition);
+      console.log('  ├─ Location:', existingListing.location);
+      console.log('  └─ Images:', existingListing.images?.length || 0, 'photos');
       
       const formData = {
         title: existingListing.title || "",
@@ -239,11 +254,13 @@ export default function PostAdEnhanced() {
         images: existingListing.images || [],
       };
       
-      console.log('📝 Form data to populate:', formData);
+      console.log('📝 Form Data Being Applied:', formData);
       form.reset(formData);
       setUploadedImages(existingListing.images || []);
       
-      console.log('✅ Form reset complete');
+      console.log('✅ Form.reset() called successfully');
+      console.log('✅ Images state updated');
+      console.log('═══════════════════════════════════════════════════════');
     }
   }, [existingListing, isEditMode]);
 

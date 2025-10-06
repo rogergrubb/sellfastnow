@@ -1,0 +1,122 @@
+EDIT FORM STILL COMPLETELY BROKEN - Your fix did not work.
+
+User clicks EDIT → Blank form appears with NO data, NO photos, NOTHING pre-filled.
+
+This is the SAME bug reported multiple times. Stop saying it's fixed when it's not.
+
+AGGRESSIVE DEBUGGING REQUIRED:
+
+1. ADD CONSOLE LOGGING TO EDIT PAGE:
+
+When edit page loads, log EVERYTHING:
+```javascript
+// In the edit form component
+console.log('=== EDIT PAGE LOADED ===');
+console.log('URL params:', window.location.search);
+console.log('Listing ID from URL:', listingId);
+
+// Before API call
+console.log('Fetching listing data for ID:', listingId);
+
+// After API call
+fetch(`/api/listings/${listingId}`)
+  .then(res => {
+    console.log('API Response Status:', res.status);
+    return res.json();
+  })
+  .then(data => {
+    console.log('API Response Data:', data);
+    console.log('Title:', data.title);
+    console.log('Price:', data.price);
+    console.log('Photos:', data.images);
+    
+    // After setting state
+    console.log('Setting form fields...');
+    setTitle(data.title);
+    setPrice(data.price);
+    // ... etc
+    console.log('Form fields set!');
+  })
+  .catch(err => {
+    console.error('FETCH FAILED:', err);
+  });
+
+CHECK NETWORK TAB:
+
+Open browser DevTools → Network tab
+Click EDIT on a listing
+Look for: GET /api/listings/{id}
+
+Is the request happening? YES/NO
+What status code? (200, 404, 500?)
+What does the response body contain?
+
+
+CHECK BROWSER CONSOLE:
+
+Open browser DevTools → Console tab
+Click EDIT on a listing
+
+Are there any errors?
+Do you see the debug logs from step 1?
+What values are being logged?
+
+
+VERIFY THE API ENDPOINT EXISTS:
+
+Test the endpoint directly in browser:
+
+Navigate to: https://[your-replit-url]/api/listings/[any-listing-id]
+Does it return the listing data?
+If 404 or error, the endpoint is broken
+
+
+CHECK IF LISTING ID IS VALID:
+
+When user clicks EDIT, what URL do they see?
+
+Should be: /post-ad?edit=clx123abc
+If the ID is missing or wrong, that's the problem
+
+
+POSSIBLE CAUSES:
+
+Cause A: listingId not being extracted from URL
+
+Check URL parsing logic
+Verify query parameter is named correctly
+
+Cause B: API endpoint not implemented
+
+Verify GET /api/listings/:id exists
+Check it returns data in correct format
+
+Cause C: Data returned but not applied to form
+
+Check if useEffect is running
+Verify state setters are called
+Check if form component unmounts/remounts
+
+Cause D: Wrong listing ID being used
+
+Verify EDIT button passes correct ID
+Check URL has correct ID
+
+DO THIS NOW:
+
+Add all console.log statements from step 1
+Click EDIT on a listing
+Open browser console
+Screenshot what you see in console
+Screenshot Network tab showing the API request
+Report back with screenshots
+
+Stop claiming things are fixed without actually testing them. The form is STILL BLANK.
+I need to see:
+
+Console logs showing data fetch
+Network tab showing successful API call
+Proof that data exists but isn't displaying
+Or proof that data fetch is failing
+
+No more "should work" or "implemented" responses. Show me the actual debugging output.
