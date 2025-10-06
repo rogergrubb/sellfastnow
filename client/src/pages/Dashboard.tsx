@@ -173,7 +173,7 @@ export default function Dashboard() {
 
   // Fetch user's listings
   const { data: userListings = [], isLoading: listingsLoading } = useQuery<Listing[]>({
-    queryKey: ["/api/listings/mine"],
+    queryKey: ["/api/user/listings"],
     enabled: !!user,
   });
 
@@ -189,7 +189,7 @@ export default function Dashboard() {
       return apiRequest(`/api/listings/${id}`, "DELETE");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/listings/mine"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/listings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/listings/stats"] });
       toast({
         title: "Success",
@@ -204,7 +204,7 @@ export default function Dashboard() {
       return apiRequest(`/api/listings/${id}/status`, "PUT", { status: "sold" });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/listings/mine"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/listings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/listings/stats"] });
       toast({
         title: "Success",
