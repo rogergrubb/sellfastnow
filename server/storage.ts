@@ -12,6 +12,7 @@ import {
   transactionEvents,
   reviewRequestEmails,
   reviewTokens,
+  uploadSessions,
   type User,
   type UpsertUser,
   type Listing,
@@ -38,6 +39,8 @@ import {
   type InsertReviewRequestEmail,
   type ReviewToken,
   type InsertReviewToken,
+  type UploadSession,
+  type InsertUploadSession,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
@@ -159,6 +162,13 @@ export interface IStorage {
   createReviewToken(data: InsertReviewToken): Promise<ReviewToken>;
   getReviewToken(token: string): Promise<ReviewToken | undefined>;
   markTokenAsUsed(tokenId: string): Promise<void>;
+
+  // Upload session operations (QR code phone-to-desktop uploads)
+  createUploadSession(session: InsertUploadSession): Promise<UploadSession>;
+  getUploadSession(id: string): Promise<UploadSession | undefined>;
+  addImagesToSession(sessionId: string, imageUrls: string[]): Promise<UploadSession>;
+  deleteUploadSession(id: string): Promise<void>;
+  cleanupExpiredSessions(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1560,6 +1570,49 @@ export class DatabaseStorage implements IStorage {
       .update(reviewTokens)
       .set({ used: true })
       .where(eq(reviewTokens.id, tokenId));
+  }
+
+  // Upload session operations (QR code phone-to-desktop uploads)
+  async createUploadSession(session: InsertUploadSession): Promise<UploadSession> {
+    const [newSession] = await db
+      .insert(uploadSessions)
+      .values(session)
+      .returning();
+    return newSession;
+  }
+
+  async getUploadSession(id: string): Promise<UploadSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(uploadSessions)
+      .where(eq(uploadSessions.id, id));
+    return session;
+  }
+
+  async addImagesToSession(sessionId: string, imageUrls: string[]): Promise<UploadSession> {
+    const session = await this.getUploadSession(sessionId);
+    if (!session) {
+      throw new Error("Session not found");
+    }
+
+    const updatedImages = [...session.images, ...imageUrls];
+    const [updated] = await db
+      .update(uploadSessions)
+      .set({ images: updatedImages })
+      .where(eq(uploadSessions.id, sessionId))
+      .returning();
+    
+    return updated;
+  }
+
+  async deleteUploadSession(id: string): Promise<void> {
+    await db.delete(uploadSessions).where(eq(uploadSessions.id, id));
+  }
+
+  async cleanupExpiredSessions(): Promise<void> {
+    await db
+      .delete(uploadSessions)
+      .where(sql`${uploadSessions.expiresAt} < NOW()`);
   }
 }
 

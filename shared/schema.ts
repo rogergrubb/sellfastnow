@@ -124,6 +124,24 @@ export const insertFavoriteSchema = createInsertSchema(favorites).omit({
 export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;
 export type Favorite = typeof favorites.$inferSelect;
 
+// Upload Sessions table (for QR code phone-to-desktop uploads)
+export const uploadSessions = pgTable("upload_sessions", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  images: text("images").array().notNull().default(sql`'{}'::text[]`),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertUploadSessionSchema = createInsertSchema(uploadSessions).omit({
+  createdAt: true,
+});
+
+export type InsertUploadSession = z.infer<typeof insertUploadSessionSchema>;
+export type UploadSession = typeof uploadSessions.$inferSelect;
+
 // Offers table
 export const offers = pgTable("offers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

@@ -397,6 +397,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ======================
+  // Upload Session Routes (QR Code phone-to-desktop uploads)
+  // ======================
+
+  // Create a new upload session
+  app.post("/api/upload-session/create", isAuthenticated, async (req: any, res) => {
+    try {
+      const { nanoid } = await import('nanoid');
+      const userId = req.auth.userId;
+      const sessionId = nanoid(12); // Generate unique 12-char ID
+      
+      // Sessions expire in 30 minutes
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+      
+      const session = await storage.createUploadSession({
+        id: sessionId,
+        userId,
+        images: [],
+        expiresAt,
+      });
+      
+      console.log(`✅ Upload session created: ${sessionId} for user ${userId}`);
+      res.json(session);
+    } catch (error: any) {
+      console.error("Error creating upload session:", error);
+      res.status(500).json({ message: "Failed to create upload session" });
+    }
+  });
+
+  // Upload images to a session (called from mobile)
+  app.post("/api/upload-session/:id/upload", upload.array("images", 24), async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      console.log(`📤 Mobile upload to session ${id}`);
+      
+      const session = await storage.getUploadSession(id);
+      if (!session) {
+        return res.status(404).json({ message: "Session not found or expired" });
+      }
+      
+      // Check if session is expired
+      if (new Date() > session.expiresAt) {
+        await storage.deleteUploadSession(id);
+        return res.status(410).json({ message: "Session expired" });
+      }
+      
+      if (!req.files || (req.files as any[]).length === 0) {
+        return res.status(400).json({ message: "No images provided" });
+      }
+      
+      // Extract Cloudinary URLs
+      const imageUrls = (req.files as any[]).map((file) => file.path);
+      
+      // Add images to session
+      const updated = await storage.addImagesToSession(id, imageUrls);
+      
+      console.log(`✅ Added ${imageUrls.length} images to session ${id}`);
+      res.json({ 
+        success: true, 
+        imageCount: updated.images.length,
+        newImages: imageUrls,
+      });
+    } catch (error: any) {
+      console.error("Error uploading to session:", error);
+      res.status(500).json({ message: "Failed to upload images" });
+    }
+  });
+
+  // Get images from a session (polling endpoint for desktop)
+  app.get("/api/upload-session/:id/images", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.auth.userId;
+      
+      const session = await storage.getUploadSession(id);
+      if (!session) {
+        return res.status(404).json({ message: "Session not found" });
+      }
+      
+      // Verify the session belongs to this user
+      if (session.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      
+      // Check if expired
+      if (new Date() > session.expiresAt) {
+        await storage.deleteUploadSession(id);
+        return res.status(410).json({ message: "Session expired" });
+      }
+      
+      res.json({ images: session.images });
+    } catch (error: any) {
+      console.error("Error fetching session images:", error);
+      res.status(500).json({ message: "Failed to fetch images" });
+    }
+  });
+
+  // Delete/cleanup a session
+  app.delete("/api/upload-session/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.auth.userId;
+      
+      const session = await storage.getUploadSession(id);
+      if (session && session.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      
+      await storage.deleteUploadSession(id);
+      res.status(204).send();
+    } catch (error: any) {
+      console.error("Error deleting session:", error);
+      res.status(500).json({ message: "Failed to delete session" });
+    }
+  });
+
+  // ======================
   // AI Coaching Routes
   // ======================
 
