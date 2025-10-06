@@ -174,6 +174,20 @@ export default function Dashboard() {
   // Fetch user's listings
   const { data: userListings = [], isLoading: listingsLoading } = useQuery<Listing[]>({
     queryKey: ["/api/user/listings"],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch('/api/user/listings', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch listings: ${response.status}`);
+      }
+      
+      return response.json();
+    },
     enabled: !!user,
   });
 
