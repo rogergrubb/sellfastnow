@@ -976,14 +976,133 @@ export default function PostAdEnhanced() {
   const handleUpgradeRemainingItems = async () => {
     console.log('💳 User clicked upgrade for remaining items');
     
-    // Show payment modal for remaining items
     const itemsWithoutAI = bulkProducts.filter((p: any) => !p.isAIGenerated);
+    const itemCount = itemsWithoutAI.length;
+    
+    if (itemCount === 0) {
+      toast({
+        title: "No Items to Process",
+        description: "All items already have AI descriptions.",
+      });
+      return;
+    }
+
+    try {
+      const token = await getToken();
+      
+      // Check if user has enough credits
+      const creditsResponse = await fetch('/api/user/credits', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (creditsResponse.ok) {
+        const credits = await creditsResponse.json();
+        
+        if (credits.creditsRemaining >= itemCount) {
+          // User has enough credits - auto-deduct and process
+          console.log(`✅ User has ${credits.creditsRemaining} credits, auto-deducting ${itemCount}`);
+          
+          const useCreditsResponse = await fetch('/api/credits/use', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              amount: itemCount,
+              description: `AI generation for ${itemCount} item${itemCount > 1 ? 's' : ''}`,
+            }),
+          });
+          
+          if (useCreditsResponse.ok) {
+            toast({
+              title: "Credits Used",
+              description: `${itemCount} credit${itemCount > 1 ? 's' : ''} deducted. Processing items...`,
+            });
+            
+            // Invalidate credits cache to update navbar
+            queryClient.invalidateQueries({ queryKey: ['/api/user/credits'] });
+            
+            // Process the remaining items with AI
+            await processRemainingItemsWithAI(itemsWithoutAI);
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking credits:', error);
+    }
+    
+    // If we get here, either no credits or not enough credits - show payment modal
+    console.log('💳 No credits or insufficient credits - showing payment modal');
     setRemainingItemsInfo({
-      count: itemsWithoutAI.length,
+      count: itemCount,
       imageUrls: itemsWithoutAI.flatMap((p: any) => p.imageUrls),
       products: itemsWithoutAI
     });
     setShowPaymentModal(true);
+  };
+
+  // Process remaining items with AI after credit deduction
+  const processRemainingItemsWithAI = async (itemsToProcess: any[]) => {
+    console.log(`🤖 Processing ${itemsToProcess.length} items with AI`);
+    
+    setShowProgressModal(true);
+    setBulkProgress({ current: 0, total: itemsToProcess.length });
+    
+    const newlyProcessed: any[] = [];
+    
+    for (let i = 0; i < itemsToProcess.length; i++) {
+      const item = itemsToProcess[i];
+      setBulkProgress({ current: i + 1, total: itemsToProcess.length });
+      
+      try {
+        const token = await getToken();
+        const response = await fetch('/api/ai/identify-product', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            imageUrl: item.imageUrls[0],
+          }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          newlyProcessed.push({
+            ...item,
+            title: data.title,
+            description: data.description,
+            category: data.category,
+            retailPrice: data.retailPrice,
+            usedPrice: data.usedPrice,
+            condition: data.condition,
+            isAIGenerated: true,
+          });
+        } else {
+          newlyProcessed.push(item);
+        }
+      } catch (error) {
+        console.error('Error processing item:', error);
+        newlyProcessed.push(item);
+      }
+    }
+    
+    // Update bulk products with newly processed items
+    setBulkProducts((prev: any[]) => {
+      const processedMap = new Map(newlyProcessed.map(p => [p.imageUrls[0], p]));
+      return prev.map(p => processedMap.get(p.imageUrls[0]) || p);
+    });
+    
+    setShowProgressModal(false);
+    toast({
+      title: "Processing Complete",
+      description: `${newlyProcessed.length} item${newlyProcessed.length > 1 ? 's' : ''} processed with AI.`,
+    });
   };
 
   const handleCreateBundleListing = async () => {
