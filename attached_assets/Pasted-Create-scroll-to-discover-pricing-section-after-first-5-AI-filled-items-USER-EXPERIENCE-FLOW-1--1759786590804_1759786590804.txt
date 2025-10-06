@@ -1,0 +1,189 @@
+Create "scroll to discover" pricing section after first 5 AI-filled items:
+
+USER EXPERIENCE FLOW:
+1. User uploads photos → AI processes → Creates item forms
+2. Items 1-5: Fully populated with AI (title, description, category, price, tags)
+3. Items 6-15: Empty forms (photos only, no text)
+4. User scrolls down reviewing the 5 completed items
+5. Reaches items 6+ and sees they're empty
+6. At bottom, sees pricing section with upgrade button
+
+IMPLEMENTATION:
+
+1. ITEM REVIEW PAGE LAYOUT:
+[Item 1 - FILLED] ✨ AI Generated
+[Item 2 - FILLED] ✨ AI Generated
+[Item 3 - FILLED] ✨ AI Generated
+[Item 4 - FILLED] ✨ AI Generated
+[Item 5 - FILLED] ✨ AI Generated
+[Item 6 - EMPTY] Manual entry required
+[Item 7 - EMPTY] Manual entry required
+[Item 8 - EMPTY] Manual entry required
+... (remaining empty items)
+┌─────────────────────────────────────────────────┐
+│         AI DESCRIPTION UPGRADE                  │
+│                                                 │
+│  Your First 5 Items Were Free!                  │
+│                                                 │
+│  You have 10 items remaining without            │
+│  AI-generated descriptions.                     │
+│                                                 │
+│  Complete Pricing:                              │
+│  10 remaining items × $0.20 = $2.00             │
+│                                                 │
+│  ┌───────────────────────────────────────────┐ │
+│  │  Generate AI Descriptions for All         │ │
+│  │  Remaining Items - $2.00                  │ │
+│  │                                           │ │
+│  │  What You Get:                            │ │
+│  │  ✓ Professional product titles            │ │
+│  │  ✓ Detailed descriptions (2-3 sentences)  │ │
+│  │  ✓ Accurate category assignment           │ │
+│  │  ✓ Smart price suggestions (retail/used)  │ │
+│  │  ✓ Condition assessment                   │ │
+│  │  ✓ SEO-optimized keywords & tags          │ │
+│  │  ✓ Save 30+ minutes of manual work        │ │
+│  │  ✓ Higher quality listings = more sales   │ │
+│  │                                           │ │
+│  │  [Complete All Items with AI - $2.00]    │ │
+│  └───────────────────────────────────────────┘ │
+│                                                 │
+│  Or continue filling manually (free)            │
+│                                                 │
+└─────────────────────────────────────────────────┘
+
+2. COMPONENT CODE:
+```javascript
+const AIUpgradeSection = ({ remainingItems, onUpgrade }) => {
+  const PRICE_PER_ITEM = 0.20;
+  const totalCost = (remainingItems * PRICE_PER_ITEM).toFixed(2);
+  
+  return (
+    <div className="ai-upgrade-section">
+      <h2>AI Description Upgrade</h2>
+      
+      <div className="free-tier-message">
+        <h3>Your First 5 Items Were Free!</h3>
+      </div>
+      
+      <div className="remaining-items">
+        <p>You have {remainingItems} items remaining without AI-generated descriptions.</p>
+      </div>
+      
+      <div className="pricing">
+        <h3>Complete Pricing:</h3>
+        <p className="calculation">
+          {remainingItems} remaining items × ${PRICE_PER_ITEM} = ${totalCost}
+        </p>
+      </div>
+      
+      <div className="upgrade-card">
+        <h3>Generate AI Descriptions for All Remaining Items - ${totalCost}</h3>
+        
+        <div className="benefits">
+          <h4>What You Get:</h4>
+          <ul>
+            <li>✓ Professional product titles</li>
+            <li>✓ Detailed descriptions (2-3 sentences)</li>
+            <li>✓ Accurate category assignment</li>
+            <li>✓ Smart price suggestions (retail/used)</li>
+            <li>✓ Condition assessment</li>
+            <li>✓ SEO-optimized keywords & tags</li>
+            <li>✓ Save 30+ minutes of manual work</li>
+            <li>✓ Higher quality listings = more sales</li>
+          </ul>
+        </div>
+        
+        <button 
+          className="upgrade-button"
+          onClick={onUpgrade}
+        >
+          Complete All Items with AI - ${totalCost}
+        </button>
+      </div>
+      
+      <p className="manual-option">
+        Or continue filling manually (free)
+      </p>
+    </div>
+  );
+};
+
+PLACEMENT IN REVIEW FORM:
+
+Insert this section between the last empty item and the final submit button:
+javascript<div className="items-review">
+  {items.map((item, index) => (
+    <ItemCard key={index} item={item} index={index} />
+  ))}
+  
+  {/* Show upgrade section if there are unpopulated items */}
+  {items.some(item => !item.hasAI) && (
+    <AIUpgradeSection 
+      remainingItems={items.filter(item => !item.hasAI).length}
+      onUpgrade={handleAIUpgrade}
+    />
+  )}
+  
+  <div className="form-actions">
+    <button onClick={handleSubmitAll}>Publish All Listings</button>
+  </div>
+</div>
+
+UPGRADE BUTTON ACTION:
+
+javascriptconst handleAIUpgrade = async () => {
+  const unpopulatedItems = items.filter(item => !item.hasAI);
+  const cost = unpopulatedItems.length * 0.20;
+  
+  // Show payment modal
+  const paymentConfirmed = await showStripePayment(cost);
+  
+  if (paymentConfirmed) {
+    // Show progress modal
+    setShowProgress(true);
+    
+    // Generate AI for remaining items
+    for (let i = 0; i < unpopulatedItems.length; i++) {
+      updateProgress(`Generating item ${i + 1} of ${unpopulatedItems.length}...`);
+      const aiData = await generateAIDescription(unpopulatedItems[i].imageUrl);
+      updateItemWithAI(unpopulatedItems[i].id, aiData);
+    }
+    
+    setShowProgress(false);
+    showSuccessToast('All items completed with AI!');
+  }
+};
+
+STYLING REQUIREMENTS:
+
+
+Upgrade section has distinct background color (light blue/green)
+Large, prominent button (min 300px wide, 60px tall)
+Benefits list with checkmarks
+Clear visual separation from items above/below
+Sticky positioning optional (follows user as they scroll)
+
+
+BUTTON TEXT VARIATIONS:
+
+Based on number of items:
+
+1-5 items: "Complete Your Listing with AI"
+6-10 items: "Complete All Items with AI"
+11-20 items: "Complete All {X} Items with AI"
+20+ items: "Complete All {X} Items with AI - Save 1+ Hour"
+
+
+VISUAL CONTRAST:
+
+Make it obvious:
+
+First 5 items: Green badge "✨ AI Generated"
+Remaining items: Yellow badge "⚠ Needs Details"
+Upgrade section: Blue/highlighted background
+Benefits use checkmarks and bold text
+
+This creates a clear "aha moment" when users scroll and see the difference between AI-filled and empty items, then immediately see the solution.
+Implement this upgrade section at the bottom of the item review page.
+Confirm when complete and test with 15-item upload.

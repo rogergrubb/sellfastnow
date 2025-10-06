@@ -68,7 +68,6 @@ import { QRUploadWidget } from "@/components/QRUploadWidget";
 import { PaymentModal } from "@/components/PaymentModal";
 import { MultiItemGroupingModal } from "@/components/MultiItemGroupingModal";
 import { PhotoProcessingChoiceModal } from "@/components/PhotoProcessingChoiceModal";
-import PricingModal from "@/components/PricingModal";
 
 const formSchema = insertListingSchema.omit({ userId: true });
 
@@ -228,9 +227,6 @@ export default function PostAdEnhanced() {
   // Photo processing choice modal states
   const [showPhotoProcessingModal, setShowPhotoProcessingModal] = useState(false);
   const [isMultipleAngles, setIsMultipleAngles] = useState<boolean | null>(null);
-  
-  // Pricing modal states
-  const [showPricingModal, setShowPricingModal] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -971,33 +967,14 @@ export default function PostAdEnhanced() {
     console.log('👤 User chose to create separate listings');
     setShowGroupingModal(false);
     
-    // Check if there are items without AI (items 6+)
-    const itemsWithAI = bulkProducts.filter((p: any) => p.isAIGenerated);
-    const itemsWithoutAI = bulkProducts.filter((p: any) => !p.isAIGenerated);
-    
-    console.log(`📊 Items with AI: ${itemsWithAI.length}, Items without AI: ${itemsWithoutAI.length}`);
-    
-    if (itemsWithoutAI.length > 0) {
-      // Show pricing modal for items without AI
-      console.log('💰 Showing pricing modal for', itemsWithoutAI.length, 'items without AI');
-      setShowPricingModal(true);
-    } else {
-      // All items have AI, go directly to review
-      console.log('✅ All items have AI, showing review');
-      setShowBulkReview(true);
-    }
-  };
-  
-  // Pricing modal handlers
-  const handleContinueManually = () => {
-    console.log('✍️ User chose to continue manually');
-    setShowPricingModal(false);
+    // Always go to bulk review - pricing section is now at bottom of review page
+    console.log('📋 Showing bulk review page');
     setShowBulkReview(true);
   };
   
-  const handleGenerateAllWithPayment = async () => {
-    console.log('💳 User chose to generate all with payment');
-    setShowPricingModal(false);
+  // Upgrade handler for bottom pricing section
+  const handleUpgradeRemainingItems = async () => {
+    console.log('💳 User clicked upgrade for remaining items');
     
     // Show payment modal for remaining items
     const itemsWithoutAI = bulkProducts.filter((p: any) => !p.isAIGenerated);
@@ -1330,6 +1307,7 @@ export default function PostAdEnhanced() {
             setBulkProducts([]);
             setUploadedImages([]);
           }}
+          onUpgradeRemaining={handleUpgradeRemainingItems}
         />
         <ProgressModal
           open={showProgressModal}
@@ -2603,17 +2581,7 @@ export default function PostAdEnhanced() {
         />
       )}
 
-      {/* Pricing Modal - Shows after first 5 AI items to offer payment for remaining */}
-      <PricingModal
-        isOpen={showPricingModal}
-        onClose={() => setShowPricingModal(false)}
-        completedItems={bulkProducts.filter((p: any) => p.isAIGenerated)}
-        remainingCount={bulkProducts.filter((p: any) => !p.isAIGenerated).length}
-        onContinueManual={handleContinueManually}
-        onGenerateAll={handleGenerateAllWithPayment}
-      />
-
-      {/* Payment Modal - When free tier runs out mid-batch */}
+      {/* Payment Modal - When user clicks upgrade button */}
       {remainingItemsInfo && (
         <PaymentModal
           open={showPaymentModal}

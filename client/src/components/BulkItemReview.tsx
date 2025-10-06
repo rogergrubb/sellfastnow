@@ -57,6 +57,7 @@ interface ProductWithState extends DetectedProduct {
 interface BulkItemReviewProps {
   products: DetectedProduct[];
   onCancel: () => void;
+  onUpgradeRemaining?: () => void;
 }
 
 const CATEGORIES = [
@@ -100,7 +101,7 @@ function generateSuggestedTags(title: string, category: string): string[] {
   return tags.slice(0, 5);
 }
 
-export function BulkItemReview({ products: initialProducts, onCancel }: BulkItemReviewProps) {
+export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeRemaining }: BulkItemReviewProps) {
   const { getToken } = useAuth();
   const [products, setProducts] = useState<ProductWithState[]>(
     initialProducts.map(p => ({
@@ -783,6 +784,92 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
           </Card>
         ))}
       </div>
+
+      {/* AI Upgrade Section - Shows if there are items without AI */}
+      {(() => {
+        const itemsWithAI = products.filter(p => p.isAIGenerated);
+        const itemsWithoutAI = products.filter(p => !p.isAIGenerated);
+        const PRICE_PER_ITEM = 0.20;
+        const totalCost = (itemsWithoutAI.length * PRICE_PER_ITEM).toFixed(2);
+        
+        if (itemsWithoutAI.length === 0) return null;
+        
+        return (
+          <div className="max-w-5xl mx-auto px-4 py-8">
+            <Card className="bg-gradient-to-br from-blue-50 via-blue-100/50 to-indigo-50 dark:from-blue-950/30 dark:via-blue-900/20 dark:to-indigo-950/30 border-2 border-blue-200 dark:border-blue-800">
+              <CardContent className="p-8">
+                <div className="space-y-6">
+                  {/* Header */}
+                  <div className="text-center space-y-2">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 mb-4">
+                      <Sparkles className="h-8 w-8 text-white" />
+                    </div>
+                    <h2 className="text-3xl font-bold text-foreground" data-testid="text-upgrade-title">
+                      AI Description Upgrade
+                    </h2>
+                    <p className="text-lg text-green-600 dark:text-green-400 font-semibold">
+                      ✓ Your First {itemsWithAI.length} Items Were Free!
+                    </p>
+                  </div>
+
+                  {/* Remaining Items Count */}
+                  <div className="bg-white/60 dark:bg-gray-900/40 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                    <p className="text-center text-lg">
+                      You have <span className="font-bold text-2xl text-blue-600 dark:text-blue-400">{itemsWithoutAI.length}</span> items remaining without AI-generated descriptions.
+                    </p>
+                  </div>
+
+                  {/* Pricing */}
+                  <div className="bg-white/80 dark:bg-gray-900/60 rounded-lg p-6 border-2 border-blue-300 dark:border-blue-700">
+                    <h3 className="font-semibold text-xl mb-3 text-center">Complete Pricing:</h3>
+                    <p className="text-center text-lg mb-4">
+                      {itemsWithoutAI.length} remaining items × ${PRICE_PER_ITEM.toFixed(2)} = <span className="font-bold text-2xl text-blue-600 dark:text-blue-400">${totalCost}</span>
+                    </p>
+                    
+                    {/* Benefits List */}
+                    <div className="mt-6 space-y-3">
+                      <h4 className="font-semibold text-lg text-center mb-4">What You Get:</h4>
+                      <div className="grid md:grid-cols-2 gap-3">
+                        {[
+                          'Professional product titles',
+                          'Detailed descriptions (2-3 sentences)',
+                          'Accurate category assignment',
+                          'Smart price suggestions (retail & used)',
+                          'Condition assessment',
+                          'SEO-optimized keywords & tags',
+                          'Save 30+ minutes of manual work',
+                          'Higher quality listings = more sales'
+                        ].map((benefit, idx) => (
+                          <div key={idx} className="flex items-start gap-2">
+                            <Check className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                            <span className="text-sm">{benefit}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* CTA Button */}
+                    <Button
+                      onClick={onUpgradeRemaining}
+                      size="lg"
+                      className="w-full mt-6 h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                      data-testid="button-upgrade-all"
+                    >
+                      <Sparkles className="h-5 w-5 mr-2" />
+                      Complete All {itemsWithoutAI.length} Items with AI - ${totalCost}
+                    </Button>
+                  </div>
+
+                  {/* Manual Option */}
+                  <p className="text-center text-sm text-muted-foreground">
+                    Or continue filling manually (free)
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      })()}
 
       {/* Sticky Footer */}
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg z-20">
