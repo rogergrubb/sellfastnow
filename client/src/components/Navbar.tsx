@@ -16,12 +16,23 @@ import type { UserCredits } from "@shared/schema";
 
 export default function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
   const { user } = useUser();
 
-  // Fetch user credits
+  // Fetch user credits with authentication
   const { data: credits } = useQuery<UserCredits>({
     queryKey: ['/api/user/credits'],
+    queryFn: async () => {
+      if (!isSignedIn) return null;
+      const token = await getToken();
+      const res = await fetch('/api/user/credits', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error('Failed to fetch credits');
+      return res.json();
+    },
     enabled: isSignedIn,
   });
 
