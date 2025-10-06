@@ -13,6 +13,8 @@ import {
   reviewRequestEmails,
   reviewTokens,
   uploadSessions,
+  userCredits,
+  creditTransactions,
   type User,
   type UpsertUser,
   type Listing,
@@ -41,6 +43,10 @@ import {
   type InsertReviewToken,
   type UploadSession,
   type InsertUploadSession,
+  type UserCredits,
+  type InsertUserCredits,
+  type CreditTransaction,
+  type InsertCreditTransaction,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
@@ -182,6 +188,13 @@ export interface IStorage {
   }>;
   addAICredits(userId: string, credits: number): Promise<User>;
   updateSubscriptionTier(userId: string, tier: string): Promise<User>;
+
+  // Credit system operations
+  getUserCredits(userId: string): Promise<UserCredits | undefined>;
+  createOrUpdateUserCredits(userId: string, email: string): Promise<UserCredits>;
+  purchaseCredits(userId: string, amount: number, cost: number, stripePaymentId?: string): Promise<UserCredits>;
+  useCredits(userId: string, amount: number, description?: string): Promise<UserCredits>;
+  getCreditTransactions(userId: string, limit?: number): Promise<CreditTransaction[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1793,6 +1806,115 @@ export class DatabaseStorage implements IStorage {
         usedPurchased: false,
       };
     }
+  }
+
+  // Credit system methods
+  async getUserCredits(userId: string): Promise<UserCredits | undefined> {
+    const [credits] = await db
+      .select()
+      .from(userCredits)
+      .where(eq(userCredits.userId, userId))
+      .limit(1);
+    return credits;
+  }
+
+  async createOrUpdateUserCredits(userId: string, email: string): Promise<UserCredits> {
+    const existing = await this.getUserCredits(userId);
+    
+    if (existing) {
+      return existing;
+    }
+
+    const [newCredits] = await db
+      .insert(userCredits)
+      .values({
+        userId,
+        email,
+        creditsRemaining: 0,
+        creditsPurchased: 0,
+        creditsUsed: 0,
+      })
+      .returning();
+    
+    return newCredits;
+  }
+
+  async purchaseCredits(userId: string, amount: number, cost: number, stripePaymentId?: string): Promise<UserCredits> {
+    // Ensure user credits record exists
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    await this.createOrUpdateUserCredits(userId, user.email!);
+
+    // Update credits
+    const [updated] = await db
+      .update(userCredits)
+      .set({
+        creditsRemaining: sql`${userCredits.creditsRemaining} + ${amount}`,
+        creditsPurchased: sql`${userCredits.creditsPurchased} + ${amount}`,
+        lastPurchaseDate: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(userCredits.userId, userId))
+      .returning();
+
+    // Log transaction
+    await db.insert(creditTransactions).values({
+      userId,
+      transactionType: 'purchase',
+      amount,
+      cost: cost.toString(),
+      description: `Purchased ${amount} AI credits`,
+      stripePaymentId,
+    });
+
+    return updated;
+  }
+
+  async useCredits(userId: string, amount: number, description?: string): Promise<UserCredits> {
+    const credits = await this.getUserCredits(userId);
+    
+    if (!credits) {
+      throw new Error("User credits not found");
+    }
+
+    if (credits.creditsRemaining < amount) {
+      throw new Error("Insufficient credits");
+    }
+
+    // Deduct credits
+    const [updated] = await db
+      .update(userCredits)
+      .set({
+        creditsRemaining: sql`${userCredits.creditsRemaining} - ${amount}`,
+        creditsUsed: sql`${userCredits.creditsUsed} + ${amount}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(userCredits.userId, userId))
+      .returning();
+
+    // Log transaction
+    await db.insert(creditTransactions).values({
+      userId,
+      transactionType: 'use',
+      amount,
+      description: description || `Used ${amount} AI credits`,
+    });
+
+    return updated;
+  }
+
+  async getCreditTransactions(userId: string, limit: number = 50): Promise<CreditTransaction[]> {
+    const transactions = await db
+      .select()
+      .from(creditTransactions)
+      .where(eq(creditTransactions.userId, userId))
+      .orderBy(desc(creditTransactions.createdAt))
+      .limit(limit);
+    
+    return transactions;
   }
 }
 
