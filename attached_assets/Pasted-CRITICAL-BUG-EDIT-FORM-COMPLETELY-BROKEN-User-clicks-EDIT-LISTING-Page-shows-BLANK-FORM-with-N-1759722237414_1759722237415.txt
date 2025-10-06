@@ -1,0 +1,170 @@
+CRITICAL BUG - EDIT FORM COMPLETELY BROKEN:
+
+User clicks EDIT LISTING → Page shows BLANK FORM with NO data pre-filled.
+
+This is destroying user data. Fix immediately.
+
+BUGS TO FIX:
+
+1. EDIT FORM NOT LOADING EXISTING DATA:
+   - When user clicks EDIT, form appears empty
+   - Title, description, price, category, photos - ALL BLANK
+   - Form should be PRE-FILLED with existing listing data
+   
+   Fix:
+   - Fetch listing data by ID when edit page loads
+   - Populate all form fields with existing values
+   - Show existing photos in the form
+   - User should see current data, not blank fields
+
+2. SAVING WIPES OUT ALL DATA EXCEPT CHANGED FIELD:
+   - User changes only price: $100 → $150
+   - Clicks SAVE
+   - Result: Title gone, description gone, photos gone, only price remains
+   - This is data loss
+   
+   Fix:
+   - PATCH request should only update changed fields
+   - Keep all existing data that wasn't modified
+   - Don't set fields to null/empty if they weren't edited
+   
+   Correct update logic:
+```javascript
+   // WRONG (current):
+   UPDATE listings SET 
+     title = $1,        // NULL if not in form
+     description = $2,  // NULL if not in form
+     price = $3,        // Only this has value
+     imageUrl = $4      // NULL - photo lost!
+   WHERE id = $5
+   
+   // CORRECT:
+   UPDATE listings SET 
+     price = $1  // Only update what changed
+   WHERE id = $2
+   // Keep everything else unchanged
+
+PHOTOS DELETED WHEN MODIFYING PRICE:
+
+Photos should NEVER be deleted unless user explicitly removes them
+Editing price should not touch photos at all
+Photo URLs must persist in database
+
+Fix:
+
+Don't include imageUrl in UPDATE query unless user changed photos
+If photos unchanged, don't update that field
+Only update photos if user uploaded new ones or deleted existing
+
+
+
+COMPREHENSIVE TESTING REQUIRED:
+Test EVERY function in the dashboard by actually clicking through the UI:
+TEST 1: VIEW LISTINGS
+
+ Navigate to My Listings
+ Verify all 30 user listings appear
+ Each listing shows: photo, title, price, edit button, delete button
+
+TEST 2: EDIT LISTING (NO CHANGES)
+
+ Click EDIT on any listing
+ Verify form pre-fills with: title, description, category, price, condition, photos
+ Click CANCEL
+ Verify listing unchanged
+
+TEST 3: EDIT PRICE ONLY
+
+ Click EDIT on a listing
+ Change price from $100 to $150
+ Click SAVE
+ Verify: Price updated to $150
+ Verify: Title still there
+ Verify: Description still there
+ Verify: Photos still there
+ Verify: Category still correct
+
+TEST 4: EDIT DESCRIPTION ONLY
+
+ Click EDIT on a listing
+ Change description text
+ Click SAVE
+ Verify: Description updated
+ Verify: Price unchanged
+ Verify: Photos unchanged
+ Verify: Title unchanged
+
+TEST 5: EDIT PHOTOS ONLY
+
+ Click EDIT on a listing
+ Remove one photo
+ Add one new photo
+ Click SAVE
+ Verify: Photos updated correctly
+ Verify: All text fields unchanged
+ Verify: Price unchanged
+
+TEST 6: DELETE LISTING
+
+ Click DELETE on a listing
+ Confirm deletion in modal
+ Verify: Listing removed from My Listings
+ Verify: Listing removed from database
+ Verify: Other listings unaffected
+
+TEST 7: EDIT MULTIPLE FIELDS
+
+ Click EDIT on a listing
+ Change title, price, and description
+ Click SAVE
+ Verify: All three fields updated
+ Verify: Photos still there
+ Verify: Category unchanged
+
+RECORD A VIDEO of you performing all 7 tests showing they work correctly.
+CODE FIX EXAMPLE:
+Edit form should load like this:
+javascript// EditListing.tsx
+useEffect(() => {
+  // Fetch existing listing data
+  fetch(`/api/listings/${listingId}`)
+    .then(res => res.json())
+    .then(listing => {
+      // Pre-fill form with existing data
+      setTitle(listing.title);
+      setDescription(listing.description);
+      setPrice(listing.price);
+      setCategory(listing.category);
+      setCondition(listing.condition);
+      setImages(listing.images);
+      console.log('✓ Form pre-filled with:', listing);
+    })
+    .catch(err => {
+      console.error('Failed to load listing:', err);
+      alert('Error loading listing data');
+    });
+}, [listingId]);
+Save should work like this:
+javascript// Only update fields that changed
+const handleSave = async () => {
+  const updates = {};
+  
+  if (title !== originalTitle) updates.title = title;
+  if (price !== originalPrice) updates.price = price;
+  if (description !== originalDescription) updates.description = description;
+  // Only include changed fields in update
+  
+  await fetch(`/api/listings/${listingId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(updates)
+  });
+};
+DO NOT MARK THIS TASK COMPLETE UNTIL:
+
+Edit form pre-fills all existing data
+Saving only updates changed fields
+Photos never disappear when editing other fields
+All 7 tests pass
+Video proof of working dashboard
+
+This is your top priority. Nothing else matters until CRUD operations work.

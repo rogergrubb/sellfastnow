@@ -227,18 +227,25 @@ export default function PostAdEnhanced() {
   // Pre-populate form when editing
   useEffect(() => {
     if (existingListing && isEditMode) {
-      form.reset({
+      console.log('🔄 Pre-populating form with existing listing:', existingListing);
+      
+      const formData = {
         title: existingListing.title || "",
         description: existingListing.description || "",
-        price: existingListing.price || "0",
+        price: String(existingListing.price || "0"),
         category: existingListing.category || "",
         condition: existingListing.condition || "new",
         location: existingListing.location || "",
         images: existingListing.images || [],
-      });
+      };
+      
+      console.log('📝 Form data to populate:', formData);
+      form.reset(formData);
       setUploadedImages(existingListing.images || []);
+      
+      console.log('✅ Form reset complete');
     }
-  }, [existingListing, isEditMode, form]);
+  }, [existingListing, isEditMode]);
 
   // Countdown timer effect
   useEffect(() => {
@@ -1064,6 +1071,16 @@ export default function PostAdEnhanced() {
 
   if (!isSignedIn) {
     return null;
+  }
+
+  // Show loading state while fetching listing in edit mode
+  if (isEditMode && isLoadingListing) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Loading listing details...</p>
+      </div>
+    );
   }
 
   // Show bulk review UI if bulk processing completed
@@ -2011,7 +2028,7 @@ export default function PostAdEnhanced() {
                       ) : (
                         <>
                           <CheckCircle2 className="mr-2 h-4 w-4" />
-                          Post Listing
+                          {isEditMode ? 'Update Listing' : 'Post Listing'}
                         </>
                       )}
                     </Button>
