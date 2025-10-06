@@ -7,8 +7,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Sparkles, SkipForward } from "lucide-react";
+import { CheckCircle2, Sparkles, SkipForward, CreditCard, Package } from "lucide-react";
 import { useLocation } from "wouter";
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface PaymentModalProps {
   open: boolean;
@@ -18,6 +21,13 @@ interface PaymentModalProps {
   onSkip: () => void;
 }
 
+const CREDIT_BUNDLES = [
+  { credits: 25, price: 2.99, pricePerCredit: 0.12, popular: true, savings: "40% off" },
+  { credits: 50, price: 4.99, pricePerCredit: 0.10, popular: false, savings: "50% off" },
+  { credits: 100, price: 8.99, pricePerCredit: 0.09, popular: false, savings: "55% off" },
+  { credits: 1000, price: 59.99, pricePerCredit: 0.06, popular: false, savings: "70% off" },
+];
+
 export function PaymentModal({
   open,
   onOpenChange,
@@ -26,9 +36,16 @@ export function PaymentModal({
   onSkip,
 }: PaymentModalProps) {
   const [, setLocation] = useLocation();
+  const [selectedTab, setSelectedTab] = useState<'pay-per-use' | 'bundles'>('pay-per-use');
+  const payPerUsePrice = (remainingCount * 0.20).toFixed(2);
 
-  const handlePurchase = () => {
-    setLocation('/purchase-ai-credits');
+  const handlePayPerUse = () => {
+    // Navigate to payment with pay-per-use option
+    setLocation(`/payment/pay-per-use?items=${remainingCount}&amount=${payPerUsePrice}`);
+  };
+
+  const handleBundlePurchase = (credits: number, price: number) => {
+    setLocation(`/payment/credits?credits=${credits}&amount=${price}`);
   };
 
   const handleSkipClick = () => {
@@ -38,7 +55,7 @@ export function PaymentModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md" data-testid="dialog-payment-modal">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="dialog-payment-modal">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle2 className="h-6 w-6 text-green-500" />
@@ -46,7 +63,7 @@ export function PaymentModal({
               First {processedCount} Items Processed!
             </DialogTitle>
           </div>
-          <DialogDescription className="text-left space-y-3 pt-2">
+          <DialogDescription className="text-left space-y-2 pt-2">
             <p>
               We've generated AI descriptions for your first {processedCount} items. Review them below.
             </p>
@@ -56,30 +73,130 @@ export function PaymentModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 py-4">
-          <div className="text-sm font-medium mb-2">OPTIONS:</div>
+        <div className="space-y-4 py-4">
+          <div className="text-sm font-medium">CHOOSE YOUR PRICING:</div>
           
-          <Button
-            className="w-full gap-2 h-auto py-3"
-            onClick={handlePurchase}
-            data-testid="button-purchase-ai-credits"
-          >
-            <Sparkles className="h-4 w-4" />
-            <div className="text-left flex-1">
-              <div>Generate AI for {remainingCount} more item{remainingCount > 1 ? 's' : ''} - $2.99</div>
-              <div className="text-xs opacity-90">Includes 25 AI credits (20 credits saved!)</div>
-            </div>
-          </Button>
+          {/* Pricing Tabs */}
+          <div className="flex gap-2 border-b">
+            <button
+              onClick={() => setSelectedTab('pay-per-use')}
+              className={`flex-1 pb-2 px-4 text-sm font-medium border-b-2 transition-colors ${
+                selectedTab === 'pay-per-use' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+              data-testid="tab-pay-per-use"
+            >
+              <CreditCard className="h-4 w-4 inline mr-2" />
+              Pay Per Use
+            </button>
+            <button
+              onClick={() => setSelectedTab('bundles')}
+              className={`flex-1 pb-2 px-4 text-sm font-medium border-b-2 transition-colors ${
+                selectedTab === 'bundles' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+              data-testid="tab-bundles"
+            >
+              <Package className="h-4 w-4 inline mr-2" />
+              Credit Bundles
+            </button>
+          </div>
 
-          <Button
-            variant="outline"
-            className="w-full gap-2"
-            onClick={handleSkipClick}
-            data-testid="button-skip-ai"
-          >
-            <SkipForward className="h-4 w-4" />
-            Skip AI - I'll enter details manually
-          </Button>
+          {/* Pay Per Use Tab */}
+          {selectedTab === 'pay-per-use' && (
+            <div className="space-y-4">
+              <Card className="p-4 border-2 border-primary/20">
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-semibold text-lg">Pay As You Go</h3>
+                      <p className="text-sm text-muted-foreground">Only pay for what you need right now</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold">${payPerUsePrice}</div>
+                      <div className="text-xs text-muted-foreground">$0.20 per item</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <span>Generate AI for {remainingCount} item{remainingCount > 1 ? 's' : ''}</span>
+                  </div>
+                  <Button 
+                    className="w-full gap-2" 
+                    onClick={handlePayPerUse}
+                    data-testid="button-pay-per-use"
+                  >
+                    Continue with ${payPerUsePrice}
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* Credit Bundles Tab */}
+          {selectedTab === 'bundles' && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Buy credits in bulk and save up to 70%. Credits never expire!
+              </p>
+              <div className="grid gap-3">
+                {CREDIT_BUNDLES.map((bundle) => (
+                  <Card 
+                    key={bundle.credits} 
+                    className={`p-4 cursor-pointer transition-all hover-elevate ${
+                      bundle.popular ? 'border-2 border-primary' : ''
+                    }`}
+                    onClick={() => handleBundlePurchase(bundle.credits, bundle.price)}
+                    data-testid={`card-bundle-${bundle.credits}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold">{bundle.credits} Credits</h4>
+                          {bundle.popular && (
+                            <Badge variant="default" className="text-xs" data-testid="badge-popular">
+                              POPULAR
+                            </Badge>
+                          )}
+                          <Badge variant="secondary" className="text-xs" data-testid={`badge-savings-${bundle.credits}`}>
+                            {bundle.savings}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          ${bundle.pricePerCredit.toFixed(2)} per credit
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold">${bundle.price.toFixed(2)}</div>
+                        <Button 
+                          size="sm" 
+                          className="mt-2"
+                          data-testid={`button-buy-bundle-${bundle.credits}`}
+                        >
+                          Buy Now
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Skip Option */}
+          <div className="pt-4 border-t">
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handleSkipClick}
+              data-testid="button-skip-ai"
+            >
+              <SkipForward className="h-4 w-4" />
+              Skip AI - I'll enter details manually
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
