@@ -1,4 +1,4 @@
-import { Search, Plus, User, Menu, Moon, Sun, ListChecks } from "lucide-react";
+import { Search, Plus, User, Menu, Moon, Sun, ListChecks, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
@@ -10,11 +10,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
+import type { UserCredits } from "@shared/schema";
 
 export default function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { isSignedIn, isLoaded } = useAuth();
   const { user } = useUser();
+
+  // Fetch user credits
+  const { data: credits } = useQuery<UserCredits>({
+    queryKey: ['/api/user/credits'],
+    enabled: isSignedIn,
+  });
 
   useEffect(() => {
     const root = document.documentElement;
@@ -65,6 +74,18 @@ export default function Navbar() {
               <div className="w-20 h-9" />
             ) : isSignedIn ? (
               <>
+                {/* AI Credits Display */}
+                {credits && (
+                  <Badge 
+                    variant="secondary" 
+                    className="hidden md:flex items-center gap-1 px-3 cursor-pointer hover-elevate"
+                    onClick={() => window.location.href = '/credits'}
+                    data-testid="badge-credits"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    <span data-testid="text-credits-balance">{credits.creditsRemaining}</span>
+                  </Badge>
+                )}
                 <Button 
                   variant="ghost" 
                   className="hidden md:flex"
