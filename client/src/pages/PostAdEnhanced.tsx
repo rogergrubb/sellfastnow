@@ -65,6 +65,7 @@ import { insertListingSchema } from "@shared/schema";
 import { ProgressModal } from "@/components/ProgressModal";
 import { BulkItemReview } from "@/components/BulkItemReview";
 import { QRUploadWidget } from "@/components/QRUploadWidget";
+import { PaymentModal } from "@/components/PaymentModal";
 
 const formSchema = insertListingSchema.omit({ userId: true });
 
@@ -170,6 +171,13 @@ export default function PostAdEnhanced() {
     imageUrls: string[];
     imageIndices: number[];
   }[]>([]);
+  
+  // Payment modal states
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [remainingItemsInfo, setRemainingItemsInfo] = useState<{
+    count: number;
+    imageUrls: string[];
+  } | null>(null);
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
   const [analyzedItems, setAnalyzedItems] = useState<{
@@ -711,8 +719,9 @@ export default function PostAdEnhanced() {
       clearInterval(updateInterval);
 
       if (response.ok) {
-        const { products } = await response.json();
+        const { products, remainingItems } = await response.json();
         console.log('✅ Bulk analysis complete:', products.length, 'products detected');
+        console.log('📦 Remaining items:', remainingItems);
         
         // Update analyzed items with actual titles
         setAnalyzedItems(products.map((p: any, i: number) => ({
@@ -722,11 +731,25 @@ export default function PostAdEnhanced() {
         })));
         setBulkProgress({ current: products.length, total: products.length });
         
-        // Wait a moment to show completion, then hide modal and show bulk review
+        // Store products for later use
+        setBulkProducts(products);
+        
+        // Wait a moment to show completion
         setTimeout(() => {
           setShowProgressModal(false);
-          setBulkProducts(products);
-          setShowBulkReview(true);
+          
+          // Check if there are remaining items that need payment
+          if (remainingItems && remainingItems.count > 0 && remainingItems.requiresPayment) {
+            console.log('💰 Showing payment modal for', remainingItems.count, 'remaining items');
+            setRemainingItemsInfo({
+              count: remainingItems.count,
+              imageUrls: remainingItems.imageUrls
+            });
+            setShowPaymentModal(true);
+          } else {
+            // No remaining items, show bulk review directly
+            setShowBulkReview(true);
+          }
         }, 1000);
       } else if (response.status === 403) {
         // Free tier limit reached
@@ -2402,6 +2425,21 @@ export default function PostAdEnhanced() {
           }
         }}
       />
+
+      {/* Payment Modal - When free tier runs out mid-batch */}
+      {remainingItemsInfo && (
+        <PaymentModal
+          open={showPaymentModal}
+          onOpenChange={setShowPaymentModal}
+          processedCount={bulkProducts.length}
+          remainingCount={remainingItemsInfo.count}
+          onSkip={() => {
+            // User skips payment, show bulk review with already processed items
+            setShowPaymentModal(false);
+            setShowBulkReview(true);
+          }}
+        />
+      )}
       
       {/* Warning Modal - Before AI starts */}
       <Dialog open={showWarningModal} onOpenChange={setShowWarningModal}>
