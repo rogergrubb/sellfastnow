@@ -14,6 +14,7 @@ import CreateReview from "./pages/CreateReview";
 import Unsubscribe from "./pages/Unsubscribe";
 import SignInPage from "./pages/SignIn";
 import SignUpPage from "./pages/SignUp";
+import MobileUpload from "./pages/MobileUpload";
 import Navbar from "@/components/Navbar";
 
 function Router() {
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/users/:userId/history" component={TransactionHistory} />
       <Route path="/create-review/:token" component={CreateReview} />
       <Route path="/unsubscribe" component={Unsubscribe} />
+      <Route path="/mobile-upload/:sessionId" component={MobileUpload} />
       <Route component={NotFound} />
     </Switch>
   );
