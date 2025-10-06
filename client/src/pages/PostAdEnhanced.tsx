@@ -119,6 +119,14 @@ interface MultiImageAnalysis {
   message?: string;
 }
 
+interface AIUsageInfo {
+  usesThisMonth: number;
+  resetDate: Date;
+  creditsPurchased: number;
+  subscriptionTier: string;
+  remainingFree: number;
+}
+
 export default function PostAdEnhanced() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -172,6 +180,12 @@ export default function PostAdEnhanced() {
   
   // Opt-in AI analysis states
   const [showWarningModal, setShowWarningModal] = useState(false);
+
+  // Fetch AI usage info
+  const { data: aiUsage } = useQuery<AIUsageInfo>({
+    queryKey: ['/api/ai/usage'],
+    enabled: isSignedIn && isLoaded,
+  });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [estimatedTime, setEstimatedTime] = useState(0);
   const [countdown, setCountdown] = useState(0);
@@ -714,6 +728,16 @@ export default function PostAdEnhanced() {
           setBulkProducts(products);
           setShowBulkReview(true);
         }, 1000);
+      } else if (response.status === 403) {
+        // Free tier limit reached
+        const errorData = await response.json();
+        setShowProgressModal(false);
+        toast({
+          title: "Free Tier Limit Reached",
+          description: errorData.message || "You've used all 5 free AI descriptions this month. Upgrade options coming soon!",
+          variant: "destructive",
+        });
+        console.log('❌ Free tier limit reached:', errorData);
       } else {
         clearInterval(updateInterval);
         const errorData = await response.text();
@@ -1667,6 +1691,28 @@ export default function PostAdEnhanced() {
                     {/* Auto-Generate Descriptions Button */}
                     {uploadedImages.length > 0 && !isAnalyzingImage && (
                       <div className="mt-4 space-y-3">
+                        {/* AI Usage Counter */}
+                        {aiUsage && (
+                          <Alert className="border-primary/20">
+                            <Sparkles className="h-4 w-4" />
+                            <AlertDescription className="text-sm">
+                              <div className="flex items-center justify-between">
+                                <span>
+                                  <strong>AI Descriptions:</strong> {aiUsage.usesThisMonth} of 5 used this month
+                                </span>
+                                <span className="text-muted-foreground text-xs">
+                                  Resets: {new Date(aiUsage.resetDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                </span>
+                              </div>
+                              {aiUsage.remainingFree > 0 && (
+                                <div className="mt-1">
+                                  <span className="text-primary font-medium">{aiUsage.remainingFree} free credits remaining</span>
+                                </div>
+                              )}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+
                         {/* Educational Info Box */}
                         <Alert className="border-primary/20 bg-primary/5">
                           <Sparkles className="h-4 w-4" />
@@ -1686,6 +1732,7 @@ export default function PostAdEnhanced() {
                               onClick={handleAutoGenerateClick}
                               className="w-full gap-2"
                               data-testid="button-auto-generate"
+                              disabled={aiUsage && aiUsage.remainingFree === 0}
                             >
                               <Brain className="h-5 w-5" />
                               Auto-Generate Descriptions with AI
