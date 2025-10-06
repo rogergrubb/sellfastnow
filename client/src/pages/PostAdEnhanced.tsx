@@ -1323,6 +1323,21 @@ export default function PostAdEnhanced() {
             }
           }}
         />
+        
+        {/* Payment Modal - When user clicks upgrade button */}
+        {remainingItemsInfo && (
+          <PaymentModal
+            open={showPaymentModal}
+            onOpenChange={setShowPaymentModal}
+            processedCount={bulkProducts.length}
+            remainingCount={remainingItemsInfo.count}
+            onSkip={() => {
+              // User skips payment, show bulk review with already processed items
+              setShowPaymentModal(false);
+              setShowBulkReview(true);
+            }}
+          />
+        )}
       </>
     );
   }
@@ -2578,21 +2593,6 @@ export default function PostAdEnhanced() {
           onCreateSeparate={handleCreateSeparateListings}
           onCreateBundle={handleCreateBundleListing}
           onManualRegroup={handleManualRegroup}
-        />
-      )}
-
-      {/* Payment Modal - When user clicks upgrade button */}
-      {remainingItemsInfo && (
-        <PaymentModal
-          open={showPaymentModal}
-          onOpenChange={setShowPaymentModal}
-          processedCount={bulkProducts.length}
-          remainingCount={remainingItemsInfo.count}
-          onSkip={() => {
-            // User skips payment, show bulk review with already processed items
-            setShowPaymentModal(false);
-            setShowBulkReview(true);
-          }}
         />
       )}
       
