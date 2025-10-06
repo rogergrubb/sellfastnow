@@ -200,7 +200,7 @@ export default function Dashboard() {
   // Delete listing mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest(`/api/listings/${id}`, "DELETE");
+      return apiRequest("DELETE", `/api/listings/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/listings"] });
@@ -215,7 +215,7 @@ export default function Dashboard() {
   // Mark as sold mutation
   const markAsSoldMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest(`/api/listings/${id}/status`, "PUT", { status: "sold" });
+      return apiRequest("PUT", `/api/listings/${id}/status`, { status: "sold" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/listings"] });
