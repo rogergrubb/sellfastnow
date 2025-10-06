@@ -658,7 +658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Bulk analysis - process each image individually for progress tracking
+  // Bulk analysis - detect groupings first, then process items
   app.post("/api/ai/analyze-bulk-images", isAuthenticated, async (req: any, res) => {
     try {
       console.log('🤖 Bulk image analysis request received');
@@ -702,43 +702,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Process items up to free tier limit
-      const imagesToProcess = imageUrls.slice(0, canProcessWithFree);
-      const remainingImages = imageUrls.slice(canProcessWithFree);
+      // STEP 1: Detect product groupings from all images
+      console.log(`🔍 Step 1: Detecting product groupings from all ${imageUrls.length} images...`);
+      const { analyzeMultipleImages } = await import("./aiService");
+      const groupingAnalysis = await analyzeMultipleImages(imageUrls, manualCategory);
       
-      console.log(`📦 Processing ${imagesToProcess.length} images with free tier...`);
-      if (manualCategory) {
-        console.log(`📁 Using manual category override: "${manualCategory}"`);
-      }
-      const { analyzeProductImage } = await import("./aiService");
-      
-      // Process free tier images in parallel
-      const analysisPromises = imagesToProcess.map((imageUrl, i) => {
-        console.log(`🔍 Starting analysis for image ${i + 1}/${imagesToProcess.length}...`);
-        return analyzeProductImage(imageUrl, manualCategory)
-          .then(analysis => {
-            console.log(`✓ Image ${i + 1} analyzed: ${analysis.title}`);
-            return {
-              ...analysis,
-              imageUrls: [imageUrl],
-              imageIndices: [i],
-            };
-          })
-          .catch(error => {
-            console.error(`✗ Failed to analyze image ${i + 1}:`, error.message);
-            // Return fallback data if analysis fails
-            return {
-              title: `Item ${i + 1} (Analysis Failed)`,
-              description: "Please add details manually",
-              category: manualCategory || "Other",
-              condition: "good",
-              imageUrls: [imageUrl],
-              imageIndices: [i],
-            };
-          });
+      console.log(`✅ Grouping detection complete:`, {
+        scenario: groupingAnalysis.scenario,
+        productCount: groupingAnalysis.products.length,
       });
       
-      const products = await Promise.all(analysisPromises);
+      // STEP 2: Process products based on free tier limit
+      const allGroupedProducts = groupingAnalysis.products;
+      const productsToProcess = allGroupedProducts.slice(0, canProcessWithFree);
+      const remainingProducts = allGroupedProducts.slice(canProcessWithFree);
+      
+      console.log(`📦 Step 2: Processing ${productsToProcess.length} products with free tier...`);
+      
+      // Map image URLs to each product based on imageIndices
+      const processedProducts = productsToProcess.map(product => ({
+        ...product,
+        imageUrls: product.imageIndices.map(idx => imageUrls[idx]),
+      }));
       
       // Increment AI usage counter only for processed items
       if (canProcessWithFree > 0) {
@@ -746,15 +731,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`✅ AI usage incremented: +${canProcessWithFree} (now ${usageInfo.usesThisMonth + canProcessWithFree}/${FREE_TIER_LIMIT})`);
       }
       
-      console.log(`✅ Bulk analysis complete: ${products.length} products processed`);
+      console.log(`✅ Bulk analysis complete: ${processedProducts.length} products processed`);
       
-      // Return results with info about remaining items
+      // Return results with grouping info and remaining items
       res.json({ 
-        products,
+        products: processedProducts,
+        groupingInfo: {
+          scenario: groupingAnalysis.scenario,
+          message: groupingAnalysis.message,
+          totalGroups: allGroupedProducts.length,
+        },
         remainingItems: {
-          count: remainingItems,
-          imageUrls: remainingImages,
-          requiresPayment: remainingItems > 0 && usageInfo.creditsPurchased === 0
+          count: remainingProducts.length,
+          products: remainingProducts.map(product => ({
+            ...product,
+            imageUrls: product.imageIndices.map(idx => imageUrls[idx]),
+          })),
+          requiresPayment: remainingProducts.length > 0 && usageInfo.creditsPurchased === 0
         }
       });
     } catch (error: any) {
