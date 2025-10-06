@@ -670,38 +670,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "imageUrls array is required" });
       }
 
-      const itemCount = imageUrls.length;
+      const totalItems = imageUrls.length;
       
       // Check AI usage limits
       const usageInfo = await storage.getAIUsageInfo(userId);
       const FREE_TIER_LIMIT = 5;
       
       console.log(`📊 AI Usage: ${usageInfo.usesThisMonth}/${FREE_TIER_LIMIT} used this month`);
+      console.log(`📦 Total items to process: ${totalItems}`);
       
-      // Check if user has exceeded free tier
-      if (usageInfo.usesThisMonth + itemCount > FREE_TIER_LIMIT && usageInfo.subscriptionTier === 'free' && usageInfo.creditsPurchased === 0) {
-        console.log(`❌ Free tier limit exceeded: ${usageInfo.usesThisMonth} + ${itemCount} > ${FREE_TIER_LIMIT}`);
+      // Calculate how many items can be processed with free tier
+      const remainingFree = Math.max(0, FREE_TIER_LIMIT - usageInfo.usesThisMonth);
+      const canProcessWithFree = Math.min(remainingFree, totalItems);
+      const remainingItems = totalItems - canProcessWithFree;
+      
+      console.log(`✅ Can process ${canProcessWithFree} items with free tier`);
+      console.log(`💰 ${remainingItems} items remaining (require payment or purchased credits)`);
+      
+      // If user has 0 remaining free and no purchased credits, return error
+      if (canProcessWithFree === 0 && usageInfo.creditsPurchased === 0) {
+        console.log(`❌ No free tier remaining and no purchased credits`);
         return res.status(403).json({
           error: "FREE_TIER_LIMIT_REACHED",
-          message: `You've used ${usageInfo.usesThisMonth} of your ${FREE_TIER_LIMIT} free AI descriptions this month.`,
+          message: `You've used all ${FREE_TIER_LIMIT} of your free AI descriptions this month.`,
           usageInfo: {
             used: usageInfo.usesThisMonth,
             limit: FREE_TIER_LIMIT,
             resetDate: usageInfo.resetDate,
-            remaining: usageInfo.remainingFree,
+            remaining: 0,
           }
         });
       }
 
-      console.log(`📦 Processing ${imageUrls.length} images in parallel...`);
+      // Process items up to free tier limit
+      const imagesToProcess = imageUrls.slice(0, canProcessWithFree);
+      const remainingImages = imageUrls.slice(canProcessWithFree);
+      
+      console.log(`📦 Processing ${imagesToProcess.length} images with free tier...`);
       if (manualCategory) {
         console.log(`📁 Using manual category override: "${manualCategory}"`);
       }
       const { analyzeProductImage } = await import("./aiService");
       
-      // Process all images in parallel for much faster analysis
-      const analysisPromises = imageUrls.map((imageUrl, i) => {
-        console.log(`🔍 Starting analysis for image ${i + 1}/${imageUrls.length}...`);
+      // Process free tier images in parallel
+      const analysisPromises = imagesToProcess.map((imageUrl, i) => {
+        console.log(`🔍 Starting analysis for image ${i + 1}/${imagesToProcess.length}...`);
         return analyzeProductImage(imageUrl, manualCategory)
           .then(analysis => {
             console.log(`✓ Image ${i + 1} analyzed: ${analysis.title}`);
@@ -727,12 +740,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const products = await Promise.all(analysisPromises);
       
-      // Increment AI usage counter
-      await storage.incrementAIUsage(userId, itemCount);
-      console.log(`✅ AI usage incremented: +${itemCount} (now ${usageInfo.usesThisMonth + itemCount}/${FREE_TIER_LIMIT})`);
+      // Increment AI usage counter only for processed items
+      if (canProcessWithFree > 0) {
+        await storage.incrementAIUsage(userId, canProcessWithFree);
+        console.log(`✅ AI usage incremented: +${canProcessWithFree} (now ${usageInfo.usesThisMonth + canProcessWithFree}/${FREE_TIER_LIMIT})`);
+      }
       
-      console.log(`✅ Bulk analysis complete: ${products.length} products detected`);
-      res.json({ products });
+      console.log(`✅ Bulk analysis complete: ${products.length} products processed`);
+      
+      // Return results with info about remaining items
+      res.json({ 
+        products,
+        remainingItems: {
+          count: remainingItems,
+          imageUrls: remainingImages,
+          requiresPayment: remainingItems > 0 && usageInfo.creditsPurchased === 0
+        }
+      });
     } catch (error: any) {
       console.error("❌ Error in bulk image analysis:", error);
       res.status(500).json({ message: "Failed to analyze images" });
