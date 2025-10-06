@@ -36,6 +36,13 @@ export const users = pgTable("users", {
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   reviewEmailsEnabled: boolean("review_emails_enabled").notNull().default(true),
+  
+  // AI usage tracking
+  aiUsesThisMonth: integer("ai_uses_this_month").notNull().default(0),
+  aiResetDate: timestamp("ai_reset_date").notNull().defaultNow(),
+  aiCreditsPurchased: integer("ai_credits_purchased").notNull().default(0),
+  subscriptionTier: varchar("subscription_tier", { length: 20 }).notNull().default("free"),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

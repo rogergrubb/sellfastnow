@@ -1,0 +1,89 @@
+Implement AI usage tracking with Stripe payment options (optional for now):
+
+PHASE 1: FREE TIER + USAGE TRACKING (implement now)
+
+1. Add database columns to users table:
+```sql
+ALTER TABLE users ADD COLUMN ai_uses_this_month INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN ai_reset_date DATE DEFAULT CURRENT_DATE;
+ALTER TABLE users ADD COLUMN ai_credits_purchased INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN subscription_tier VARCHAR DEFAULT 'free';
+
+Track AI usage:
+
+javascript// Before processing AI
+const user = await getUser(userId);
+
+// Reset monthly counter if new month
+if (user.ai_reset_date < startOfMonth(new Date())) {
+  await db.query('UPDATE users SET ai_uses_this_month = 0, ai_reset_date = CURRENT_DATE WHERE id = $1', [userId]);
+  user.ai_uses_this_month = 0;
+}
+
+// Check if within free tier (5 per month)
+if (user.ai_uses_this_month + itemCount <= 5) {
+  // Process AI
+  await processAIDescriptions(items);
+  // Increment counter
+  await db.query('UPDATE users SET ai_uses_this_month = ai_uses_this_month + $1 WHERE id = $2', [itemCount, userId]);
+} else {
+  // Show message: "You've used your 5 free AI descriptions this month. More coming soon!"
+  throw new Error('Free tier limit reached');
+}
+
+Show usage counter in UI:
+
+"AI Descriptions: 3 of 5 used this month"
+"Resets: Jan 1, 2026"
+PHASE 2: STRIPE PRODUCTS (create but don't enforce yet)
+
+Create Stripe products using available tools:
+
+Product 1: AI Batch - 25 Items
+
+Price: $2.99
+Type: One-time payment
+Get payment link
+
+Product 2: Pro Seller Subscription
+
+Price: $7.99/month
+Type: Recurring subscription
+Includes: Unlimited AI, featured listing badge
+Get payment link
+
+
+Store payment links in environment variables:
+
+
+STRIPE_AI_BATCH_LINK
+STRIPE_SUBSCRIPTION_LINK
+
+
+When user hits free tier limit, show:
+
+You've used all 5 free AI descriptions this month.
+
+Upgrade options coming soon!
+- $2.99 for 25 AI descriptions
+- $7.99/month for unlimited
+
+For now, you can manually enter titles and descriptions.
+
+[Continue Manually]
+PHASE 3: WEBHOOK HANDLERS (implement later when needed)
+Prepare endpoint for Stripe webhooks:
+javascriptapp.post('/api/stripe/webhook', async (req, res) => {
+  // Handle payment success
+  // Add credits or activate subscription
+  // Will implement when payments go live
+  res.json({ received: true });
+});
+CURRENT STATE:
+
+Free tier: 5 AI descriptions per month per user
+Usage tracked and resets monthly
+Stripe products created but optional
+Users can always enter data manually (unlimited free)
+
+Implement Phase 1 and Phase 2 now. Confirm when free tier tracking is working.
