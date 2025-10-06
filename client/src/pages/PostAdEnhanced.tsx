@@ -67,6 +67,7 @@ import { BulkItemReview } from "@/components/BulkItemReview";
 import { QRUploadWidget } from "@/components/QRUploadWidget";
 import { PaymentModal } from "@/components/PaymentModal";
 import { MultiItemGroupingModal } from "@/components/MultiItemGroupingModal";
+import { PhotoProcessingChoiceModal } from "@/components/PhotoProcessingChoiceModal";
 
 const formSchema = insertListingSchema.omit({ userId: true });
 
@@ -222,6 +223,10 @@ export default function PostAdEnhanced() {
   const [uploadStep, setUploadStep] = useState<"category-selection" | "upload-ready">("upload-ready");
   const [manualCategory, setManualCategory] = useState<string>("");
   const [uploadType, setUploadType] = useState<"different-items" | "one-item" | "lot-collection" | "">(""); 
+
+  // Photo processing choice modal states
+  const [showPhotoProcessingModal, setShowPhotoProcessingModal] = useState(false);
+  const [isMultipleAngles, setIsMultipleAngles] = useState<boolean | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -518,9 +523,13 @@ export default function PostAdEnhanced() {
         setPerPhotoData(newPerPhotoData);
       }
 
-      // OPT-IN: Don't automatically analyze images anymore
-      // User must click "Auto-Generate Descriptions" button to start AI analysis
-      console.log(`📤 Uploaded ${allImages.length} image(s). Waiting for user to opt-in to AI analysis.`);
+      // Show photo processing choice modal if multiple images uploaded
+      if (allImages.length > 1) {
+        console.log(`📸 ${allImages.length} images uploaded - showing processing choice modal`);
+        setShowPhotoProcessingModal(true);
+      } else {
+        console.log(`📤 Uploaded ${allImages.length} image(s). Waiting for user to opt-in to AI analysis.`);
+      }
     } catch (error) {
       console.error('❌ Image upload error:', error);
       toast({
@@ -655,6 +664,25 @@ export default function PostAdEnhanced() {
   };
 
   // Handler for "Auto-Generate Descriptions" button click
+  // Handler for photo processing choice modal
+  const handlePhotoProcessingChoice = (multipleAngles: boolean) => {
+    console.log(`📸 User choice: ${multipleAngles ? 'One item - multiple angles' : 'Multiple items - different products'}`);
+    setIsMultipleAngles(multipleAngles);
+    setShowPhotoProcessingModal(false);
+    
+    // Show warning modal to confirm AI usage and explain credits
+    const estimated = calculateEstimatedTime(uploadedImages.length);
+    setEstimatedTime(estimated);
+    setShowWarningModal(true);
+    
+    toast({
+      title: multipleAngles ? "One Item Selected" : "Multiple Items Selected",
+      description: multipleAngles 
+        ? `Will use 1 AI credit to analyze all ${uploadedImages.length} photos as one item`
+        : `Will use ${uploadedImages.length} AI credits to analyze each photo separately`,
+    });
+  };
+
   const handleAutoGenerateClick = () => {
     if (uploadedImages.length === 0) {
       toast({
@@ -662,6 +690,12 @@ export default function PostAdEnhanced() {
         description: "Please upload at least one image before using AI analysis.",
         variant: "destructive",
       });
+      return;
+    }
+
+    // If multiple images and user hasn't made a choice yet, show the modal first
+    if (uploadedImages.length > 1 && isMultipleAngles === null) {
+      setShowPhotoProcessingModal(true);
       return;
     }
 
@@ -677,7 +711,128 @@ export default function PostAdEnhanced() {
     setAiAnalysisStartTime(Date.now());
     
     // Start the AI analysis
-    analyzeMultipleImagesForAutopopulate(uploadedImages);
+    // If user chose "one item - multiple angles", analyze as single product
+    // If user chose "multiple items", analyze each separately
+    if (isMultipleAngles === true) {
+      // One item from multiple angles - analyze all together
+      analyzeMultipleImagesAsOneProduct(uploadedImages);
+    } else if (isMultipleAngles === false) {
+      // Multiple different items - analyze separately
+      analyzeBulkImages(uploadedImages);
+    } else {
+      // Fallback to original logic if no choice made (single image)
+      analyzeMultipleImagesForAutopopulate(uploadedImages);
+    }
+  };
+
+  // Analyze multiple images as ONE product (all photos are different angles of same item)
+  const analyzeMultipleImagesAsOneProduct = async (imageUrls: string[]) => {
+    console.log(`📸 Analyzing ${imageUrls.length} images as ONE product (multiple angles)`);
+    
+    // Show progress modal
+    setShowProgressModal(true);
+    setBulkProgress({ current: 0, total: imageUrls.length });
+    setAnalyzedItems(imageUrls.map((_, i) => ({
+      index: i + 1,
+      title: '',
+      status: 'waiting' as const
+    })));
+    
+    setIsAnalyzingImage(true);
+    try {
+      const token = await getToken();
+      console.log('🔑 Auth token obtained for one-product analysis');
+      
+      console.log('📤 Calling /api/ai/analyze-multiple-images endpoint for single product...');
+      const response = await fetch('/api/ai/analyze-multiple-images', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          imageUrls,
+          manualCategory: manualCategory || undefined
+        }),
+      });
+
+      if (response.ok) {
+        const analysis: MultiImageAnalysis = await response.json();
+        console.log('✅ Single product analysis complete:', analysis);
+        
+        setMultiImageAnalysis(analysis);
+        setDetectionMessage(`All ${imageUrls.length} photos analyzed as one product`);
+
+        // Update progress to show completion
+        setAnalyzedItems(imageUrls.map((_, i) => ({
+          index: i + 1,
+          title: analysis.products[0]?.title || 'Product',
+          status: 'completed' as const
+        })));
+        setBulkProgress({ current: imageUrls.length, total: imageUrls.length });
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Auto-populate form with the detected product (using first product from analysis)
+        const product = analysis.products[0];
+        if (product) {
+          console.log('📦 Auto-populating form with single product data...');
+          
+          const currentTitle = form.getValues('title');
+          if (product.title && !userEditedFields.has('title') && !currentTitle) {
+            form.setValue('title', product.title);
+            setAiSuggestions(prev => ({ ...prev, title: true }));
+          }
+          
+          const currentDescription = form.getValues('description');
+          if (product.description && !userEditedFields.has('description') && !currentDescription) {
+            form.setValue('description', product.description);
+            setAiSuggestions(prev => ({ ...prev, description: true }));
+          }
+          
+          const currentCategory = form.getValues('category');
+          if (product.category && !userEditedFields.has('category') && !currentCategory) {
+            form.setValue('category', product.category);
+            setAiSuggestions(prev => ({ ...prev, category: true }));
+          }
+          
+          const currentPrice = form.getValues('price');
+          if (product.usedPrice && !userEditedFields.has('price') && (!currentPrice || currentPrice === '0')) {
+            form.setValue('price', String(product.usedPrice));
+            setAiSuggestions(prev => ({ ...prev, price: true }));
+          }
+          
+          const currentCondition = form.getValues('condition');
+          if (product.condition && !userEditedFields.has('condition')) {
+            form.setValue('condition', product.condition);
+            setAiSuggestions(prev => ({ ...prev, condition: true }));
+          }
+
+          setShowProgressModal(false);
+          setShowSuccessModal(true);
+        }
+      } else if (response.status === 403) {
+        const errorData = await response.json();
+        setShowProgressModal(false);
+        toast({
+          title: "Free Tier Limit Reached",
+          description: errorData.message || "You've used all your free AI analyses this month.",
+          variant: "destructive",
+        });
+      } else {
+        throw new Error('Failed to analyze images');
+      }
+    } catch (error) {
+      console.error("❌ Error in single product analysis:", error);
+      setShowProgressModal(false);
+      toast({
+        title: "Analysis Error",
+        description: "Failed to analyze images. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzingImage(false);
+    }
   };
 
   const analyzeBulkImages = async (imageUrls: string[]) => {
@@ -2395,6 +2550,13 @@ export default function PostAdEnhanced() {
             setShowBulkReview(true);
           }
         }}
+      />
+
+      {/* Photo Processing Choice Modal - Shows immediately after upload to ask how to process photos */}
+      <PhotoProcessingChoiceModal
+        open={showPhotoProcessingModal}
+        photoCount={uploadedImages.length}
+        onChoice={handlePhotoProcessingChoice}
       />
 
       {/* Grouping Modal - Shows after AI analysis to let user choose how to create listings */}

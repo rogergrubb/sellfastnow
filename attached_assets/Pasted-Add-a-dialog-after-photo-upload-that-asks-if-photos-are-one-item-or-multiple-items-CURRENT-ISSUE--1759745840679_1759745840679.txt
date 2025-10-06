@@ -1,0 +1,53 @@
+Add a dialog after photo upload that asks if photos are one item or multiple items:
+
+CURRENT ISSUE:
+When users upload 11 photos, the app treats them as 11 separate items by default. We need to ask first!
+
+SOLUTION - Add Modal After Upload:
+
+After photos are uploaded, show this dialog BEFORE the "Auto-Generate" button:
+
+┌─────────────────────────────────────────────────────┐
+│  📸 How should we process these 11 photos?          │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  ○ One Item - Multiple Angles                      │
+│    These photos show the SAME product from         │
+│    different angles (e.g., 11 photos of a sofa)    │
+│    → Creates 1 listing with 11 photos              │
+│                                                     │
+│  ○ Multiple Items - Different Products             │
+│    Each photo is a DIFFERENT product               │
+│    (e.g., 11 separate items to sell)               │
+│    → Creates 11 separate listings                  │
+│                                                     │
+│             [Continue with AI Generation]           │
+└─────────────────────────────────────────────────────┘
+
+IMPLEMENTATION:
+
+1. Show this modal immediately after photos finish uploading
+2. User must select one option to proceed
+3. Store the choice in state: `isMultipleAngles` (boolean)
+4. When "Auto-Generate" is clicked:
+   - If "One Item - Multiple Angles": 
+     * Use ALL photos for GPT-4 Vision analysis
+     * Create ONE listing with all photos
+     * Use 1 AI credit
+   - If "Multiple Items":
+     * Analyze each photo separately
+     * Create separate listings
+     * Use 11 AI credits
+
+5. Show the credit cost in the modal:
+   "This will use X AI credits"
+   - One item = 1 credit
+   - Multiple items = 11 credits
+
+LOCATION: 
+Place this modal in the post-ad page after the upload completes but before the "Auto-Generate Descriptions with AI" button becomes active.
+This is essential because:
+
+Saves credits - If it's one sofa from 11 angles, only use 1 credit!
+Better UX - Users need control over how photos are grouped
+Prevents mistakes - No accidentally creating 11 listings for 1 sofa
