@@ -1,0 +1,146 @@
+Implement "First 5 Free" AI description strategy:
+
+BUSINESS LOGIC:
+- User uploads any number of photos (e.g., 20 items)
+- AI auto-generates descriptions for FIRST 5 items only
+- Items 6-20 show EMPTY forms (no AI, user must manually fill)
+- This demonstrates AI value and encourages upgrade/purchase
+
+IMPLEMENTATION:
+
+1. PROCESSING FLOW:
+User uploads 20 photos
+↓
+Detect 20 different items
+↓
+Process items 1-5 with AI (auto-fill everything)
+↓
+Process items 6-20 without AI (show empty forms)
+↓
+Display all 20 item forms for review
+
+2. VISUAL CONTRAST IN FORM:
+
+   Items 1-5 (AI-generated):
+┌─────────────────────────────────────────────┐
+│ Item 1 of 20                    ✨ AI      │
+│ ┌─────┐                                     │
+│ │ IMG │ Title: [Black Office Chair...]     │
+│ └─────┘ Description: [Ergonomic mesh...]   │
+│         Category: [Furniture ▼]            │
+│         Price: [$85]                        │
+│         Condition: [Good ▼]                │
+└─────────────────────────────────────────────┘
+
+   Items 6-20 (Empty - manual entry required):
+┌─────────────────────────────────────────────┐
+│ Item 6 of 20                    ⚠️ Manual  │
+│ ┌─────┐                                     │
+│ │ IMG │ Title: [                        ]  │
+│ └─────┘ Description: [                  ]  │
+│         Category: [Select... ▼]            │
+│         Price: [$                       ]  │
+│         Condition: [Select... ▼]           │
+│                                            │
+│         💡 Upgrade for AI descriptions     │
+└─────────────────────────────────────────────┘
+
+3. CODE LOGIC:
+```javascript
+   const processUploadedImages = async (images) => {
+     const FREE_AI_LIMIT = 5;
+     const items = [];
+     
+     for (let i = 0; i < images.length; i++) {
+       if (i < FREE_AI_LIMIT) {
+         // First 5: Use AI
+         const aiData = await generateAIDescription(images[i]);
+         items.push({
+           imageUrl: images[i],
+           title: aiData.title,
+           description: aiData.description,
+           category: aiData.category,
+           price: aiData.usedPrice,
+           condition: aiData.condition,
+           isAIGenerated: true
+         });
+       } else {
+         // Items 6+: Empty form
+         items.push({
+           imageUrl: images[i],
+           title: '',
+           description: '',
+           category: '',
+           price: '',
+           condition: '',
+           isAIGenerated: false
+         });
+       }
+     }
+     
+     return items;
+   };
+
+MESSAGING TO USER:
+Show banner at top of review page:
+
+   ┌─────────────────────────────────────────────┐
+   │ ✨ First 5 items auto-filled with AI        │
+   │ 💼 15 items need manual details             │
+   │                                             │
+   │ Want AI for all 20 items?                   │
+   │ [Purchase 15 more AI descriptions - $2.99]  │
+   └─────────────────────────────────────────────┘
+
+HIGHLIGHT THE CONTRAST:
+Add visual indicators:
+
+AI items: Green checkmark, "✨ AI Generated" badge
+Manual items: Yellow warning, "⚠️ Manual Entry Required" badge
+Empty manual items scroll into view with subtle animation
+User sees work required vs AI convenience
+
+
+UPGRADE PROMPT:
+On each manual item (6+), show small card:
+
+   💡 This item needs manual details
+   [Generate with AI - $0.15]
+
+PRICING DISPLAY:
+
+"5 free AI descriptions used"
+"15 more available for $2.99 (bulk)"
+"Or $0.15 per item individually"
+
+
+USER FLOW:
+
+Upload 20 photos
+AI analyzes all 20 (detects items, grouping)
+First 5 auto-filled completely
+Items 6-20 show photo only, blank fields
+User sees the difference immediately
+User can: fill manually OR buy AI credits
+
+
+BUSINESS BENEFITS:
+
+Users see AI quality firsthand (first 5 items)
+Experience manual work (items 6-20 blank forms)
+Clear incentive to upgrade
+Free tier still valuable (5 items)
+Not blocking users from listing
+
+
+TECHNICAL NOTES:
+
+Still call AI to detect/group all images
+Only generate full descriptions for first 5
+Save on API costs (15 fewer OpenAI calls)
+Show upgrade options contextually
+
+
+
+Remove the hard credit limit error. Replace with this "first 5 free" model.
+Confirm when implemented and ready to test with 20-item upload.

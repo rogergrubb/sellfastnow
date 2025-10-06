@@ -39,6 +39,7 @@ interface DetectedProduct {
   condition: string;
   imageUrls: string[];
   imageIndices: number[];
+  isAIGenerated?: boolean;
 }
 
 interface ProductWithState extends DetectedProduct {
@@ -505,6 +506,17 @@ export function BulkItemReview({ products: initialProducts, onCancel }: BulkItem
                   <span className="text-lg font-semibold">
                     Item {index + 1} of {totalCount}
                   </span>
+                  {product.isAIGenerated ? (
+                    <Badge variant="default" className="bg-green-600 hover:bg-green-700" data-testid={`badge-ai-${index}`}>
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      AI Generated
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200" data-testid={`badge-manual-${index}`}>
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      Manual Entry
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-2">

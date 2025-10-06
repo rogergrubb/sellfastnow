@@ -718,84 +718,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "imageUrls array is required" });
       }
 
-      const totalItems = imageUrls.length;
+      const totalImages = imageUrls.length;
       
-      // Check AI usage limits
-      const usageInfo = await storage.getAIUsageInfo(userId);
-      const FREE_TIER_LIMIT = 5;
-      
-      console.log(`📊 AI Usage: ${usageInfo.usesThisMonth}/${FREE_TIER_LIMIT} used this month`);
-      console.log(`📦 Total items to process: ${totalItems}`);
-      
-      // Calculate how many items can be processed with free tier
-      const remainingFree = Math.max(0, FREE_TIER_LIMIT - usageInfo.usesThisMonth);
-      const canProcessWithFree = Math.min(remainingFree, totalItems);
-      const remainingItems = totalItems - canProcessWithFree;
-      
-      console.log(`✅ Can process ${canProcessWithFree} items with free tier`);
-      console.log(`💰 ${remainingItems} items remaining (require payment or purchased credits)`);
-      
-      // If user has 0 remaining free and no purchased credits, return error
-      if (canProcessWithFree === 0 && usageInfo.creditsPurchased === 0) {
-        console.log(`❌ No free tier remaining and no purchased credits`);
-        return res.status(403).json({
-          error: "FREE_TIER_LIMIT_REACHED",
-          message: `You've used all ${FREE_TIER_LIMIT} of your free AI descriptions this month.`,
-          usageInfo: {
-            used: usageInfo.usesThisMonth,
-            limit: FREE_TIER_LIMIT,
-            resetDate: usageInfo.resetDate,
-            remaining: 0,
-          }
-        });
-      }
-
-      // STEP 1: Detect product groupings from all images
-      console.log(`🔍 Step 1: Detecting product groupings from all ${imageUrls.length} images...`);
+      // STEP 1: Detect product groupings from ALL images (always free)
+      console.log(`🔍 Step 1: Detecting products from all ${totalImages} images...`);
       const { analyzeMultipleImages } = await import("./aiService");
       const groupingAnalysis = await analyzeMultipleImages(imageUrls, manualCategory);
       
-      console.log(`✅ Grouping detection complete:`, {
-        scenario: groupingAnalysis.scenario,
-        productCount: groupingAnalysis.products.length,
+      console.log(`✅ Detection complete: Found ${groupingAnalysis.products.length} products`);
+      
+      // STEP 2: Check AI usage limits - First 5 items get AI descriptions
+      const usageInfo = await storage.getAIUsageInfo(userId);
+      const FREE_AI_LIMIT = 5;
+      const totalProducts = groupingAnalysis.products.length;
+      
+      console.log(`📊 AI Usage: ${usageInfo.usesThisMonth}/${FREE_AI_LIMIT} used this month`);
+      console.log(`📦 Total products detected: ${totalProducts}`);
+      
+      // Calculate how many items can get AI descriptions (first 5 free)
+      const remainingFreeSlots = Math.max(0, FREE_AI_LIMIT - usageInfo.usesThisMonth);
+      const itemsWithAI = Math.min(remainingFreeSlots, totalProducts);
+      const itemsWithoutAI = Math.max(0, totalProducts - itemsWithAI);
+      
+      console.log(`✨ First ${itemsWithAI} items will get AI descriptions (free)`);
+      console.log(`📝 Remaining ${itemsWithoutAI} items will need manual entry`);
+      
+      // STEP 3: Build product array with AI for first 5, empty for rest
+      const allProducts = groupingAnalysis.products.map((product, index) => {
+        const imageUrlsForProduct = product.imageIndices.map(idx => imageUrls[idx]);
+        
+        if (index < itemsWithAI) {
+          // First 5 (or less): Include full AI data
+          return {
+            ...product,
+            imageUrls: imageUrlsForProduct,
+            isAIGenerated: true,
+          };
+        } else {
+          // Items 6+: Empty fields for manual entry
+          return {
+            imageIndices: product.imageIndices,
+            imageUrls: imageUrlsForProduct,
+            title: '',
+            description: '',
+            category: '',
+            retailPrice: 0,
+            usedPrice: 0,
+            condition: '',
+            confidence: 0,
+            isAIGenerated: false,
+          };
+        }
       });
       
-      // STEP 2: Process products based on free tier limit
-      const allGroupedProducts = groupingAnalysis.products;
-      const productsToProcess = allGroupedProducts.slice(0, canProcessWithFree);
-      const remainingProducts = allGroupedProducts.slice(canProcessWithFree);
-      
-      console.log(`📦 Step 2: Processing ${productsToProcess.length} products with free tier...`);
-      
-      // Map image URLs to each product based on imageIndices
-      const processedProducts = productsToProcess.map(product => ({
-        ...product,
-        imageUrls: product.imageIndices.map(idx => imageUrls[idx]),
-      }));
-      
-      // Increment AI usage counter only for processed items
-      if (canProcessWithFree > 0) {
-        await storage.incrementAIUsage(userId, canProcessWithFree);
-        console.log(`✅ AI usage incremented: +${canProcessWithFree} (now ${usageInfo.usesThisMonth + canProcessWithFree}/${FREE_TIER_LIMIT})`);
+      // Increment AI usage counter for items that got AI descriptions
+      if (itemsWithAI > 0) {
+        await storage.incrementAIUsage(userId, itemsWithAI);
+        console.log(`✅ AI usage incremented: +${itemsWithAI} (now ${usageInfo.usesThisMonth + itemsWithAI}/${FREE_AI_LIMIT})`);
       }
       
-      console.log(`✅ Bulk analysis complete: ${processedProducts.length} products processed`);
+      console.log(`✅ Bulk analysis complete: ${itemsWithAI} with AI, ${itemsWithoutAI} manual`);
       
-      // Return results with grouping info and remaining items
+      // Return all products with AI/manual flags
       res.json({ 
-        products: processedProducts,
+        products: allProducts,
         groupingInfo: {
           scenario: groupingAnalysis.scenario,
           message: groupingAnalysis.message,
-          totalGroups: allGroupedProducts.length,
+          totalGroups: totalProducts,
         },
-        remainingItems: {
-          count: remainingProducts.length,
-          products: remainingProducts.map(product => ({
-            ...product,
-            imageUrls: product.imageIndices.map(idx => imageUrls[idx]),
-          })),
-          requiresPayment: remainingProducts.length > 0 && usageInfo.creditsPurchased === 0
+        aiInfo: {
+          itemsWithAI,
+          itemsWithoutAI,
+          freeUsed: usageInfo.usesThisMonth + itemsWithAI,
+          freeLimit: FREE_AI_LIMIT,
+          nextResetDate: usageInfo.resetDate,
         }
       });
     } catch (error: any) {
