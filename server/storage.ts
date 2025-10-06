@@ -180,6 +180,8 @@ export interface IStorage {
     subscriptionTier: string;
     remainingFree: number;
   }>;
+  addAICredits(userId: string, credits: number): Promise<User>;
+  updateSubscriptionTier(userId: string, tier: string): Promise<User>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1697,6 +1699,37 @@ export class DatabaseStorage implements IStorage {
       subscriptionTier,
       remainingFree,
     };
+  }
+
+  async addAICredits(userId: string, credits: number): Promise<User> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        aiCreditsPurchased: (user.aiCreditsPurchased || 0) + credits,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return updatedUser;
+  }
+
+  async updateSubscriptionTier(userId: string, tier: string): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        subscriptionTier: tier,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return updatedUser;
   }
 }
 

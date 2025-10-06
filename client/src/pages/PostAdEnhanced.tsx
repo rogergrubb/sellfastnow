@@ -734,7 +734,20 @@ export default function PostAdEnhanced() {
         setShowProgressModal(false);
         toast({
           title: "Free Tier Limit Reached",
-          description: errorData.message || "You've used all 5 free AI descriptions this month. Upgrade options coming soon!",
+          description: (
+            <div className="space-y-2">
+              <p>{errorData.message || "You've used all 5 free AI descriptions this month."}</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setLocation('/purchase-ai-credits')}
+                className="mt-2"
+                data-testid="button-purchase-credits"
+              >
+                Purchase More Credits - $2.99 for 25
+              </Button>
+            </div>
+          ) as any,
           variant: "destructive",
         });
         console.log('❌ Free tier limit reached:', errorData);
@@ -1693,7 +1706,7 @@ export default function PostAdEnhanced() {
                       <div className="mt-4 space-y-3">
                         {/* AI Usage Counter */}
                         {aiUsage && (
-                          <Alert className="border-primary/20">
+                          <Alert className={aiUsage.remainingFree === 0 ? "border-destructive/50 bg-destructive/5" : "border-primary/20"}>
                             <Sparkles className="h-4 w-4" />
                             <AlertDescription className="text-sm">
                               <div className="flex items-center justify-between">
@@ -1707,6 +1720,20 @@ export default function PostAdEnhanced() {
                               {aiUsage.remainingFree > 0 && (
                                 <div className="mt-1">
                                   <span className="text-primary font-medium">{aiUsage.remainingFree} free credits remaining</span>
+                                </div>
+                              )}
+                              {aiUsage.remainingFree === 0 && (
+                                <div className="mt-3 flex items-center gap-2">
+                                  <Button 
+                                    variant="default" 
+                                    size="sm"
+                                    onClick={() => setLocation('/purchase-ai-credits')}
+                                    data-testid="button-upgrade-credits"
+                                  >
+                                    <Sparkles className="mr-2 h-3 w-3" />
+                                    Purchase 25 AI Credits - $2.99
+                                  </Button>
+                                  <span className="text-xs text-muted-foreground">Credits never expire</span>
                                 </div>
                               )}
                             </AlertDescription>

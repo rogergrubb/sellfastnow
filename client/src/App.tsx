@@ -15,6 +15,8 @@ import Unsubscribe from "./pages/Unsubscribe";
 import SignInPage from "./pages/SignIn";
 import SignUpPage from "./pages/SignUp";
 import MobileUpload from "./pages/MobileUpload";
+import PurchaseAICredits from "./pages/PurchaseAICredits";
+import PurchaseSuccess from "./pages/PurchaseSuccess";
 import Navbar from "@/components/Navbar";
 
 function Router() {
@@ -31,6 +33,8 @@ function Router() {
       <Route path="/create-review/:token" component={CreateReview} />
       <Route path="/unsubscribe" component={Unsubscribe} />
       <Route path="/mobile-upload/:sessionId" component={MobileUpload} />
+      <Route path="/purchase-ai-credits" component={PurchaseAICredits} />
+      <Route path="/purchase-success" component={PurchaseSuccess} />
       <Route component={NotFound} />
     </Switch>
   );
