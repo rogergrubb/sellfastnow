@@ -490,3 +490,50 @@ export const insertReviewTokenSchema = createInsertSchema(reviewTokens).omit({
 
 export type InsertReviewToken = z.infer<typeof insertReviewTokenSchema>;
 export type ReviewToken = typeof reviewTokens.$inferSelect;
+
+// User Credits table - tracks credit balance and purchase history
+export const userCredits = pgTable("user_credits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  email: varchar("email").notNull(),
+  creditsRemaining: integer("credits_remaining").notNull().default(0),
+  creditsPurchased: integer("credits_purchased").notNull().default(0),
+  creditsUsed: integer("credits_used").notNull().default(0),
+  lastPurchaseDate: timestamp("last_purchase_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertUserCreditsSchema = createInsertSchema(userCredits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertUserCredits = z.infer<typeof insertUserCreditsSchema>;
+export type UserCredits = typeof userCredits.$inferSelect;
+
+// Credit Transactions table - logs all credit purchases and usage
+export const creditTransactions = pgTable("credit_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  transactionType: varchar("transaction_type", { length: 50 }).notNull(), // 'purchase', 'use', 'refund'
+  amount: integer("amount").notNull(), // Credits purchased or used
+  cost: decimal("cost", { precision: 10, scale: 2 }), // Dollar amount for purchases
+  description: text("description"),
+  stripePaymentId: varchar("stripe_payment_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertCreditTransactionSchema = createInsertSchema(creditTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertCreditTransaction = z.infer<typeof insertCreditTransactionSchema>;
+export type CreditTransaction = typeof creditTransactions.$inferSelect;

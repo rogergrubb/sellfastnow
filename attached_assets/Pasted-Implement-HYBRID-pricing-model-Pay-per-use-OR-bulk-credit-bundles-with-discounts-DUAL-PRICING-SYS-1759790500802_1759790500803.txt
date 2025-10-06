@@ -1,0 +1,196 @@
+Implement HYBRID pricing model: Pay-per-use OR bulk credit bundles with discounts.
+
+DUAL PRICING SYSTEM:
+
+Give users two options in the payment modal:
+
+┌─────────────────────────────────────────────────────┐
+│  Purchase AI Descriptions                            │
+├─────────────────────────────────────────────────────┤
+│  You need 10 AI descriptions                         │
+│                                                      │
+│  OPTION 1: Pay for exactly what you need             │
+│  ○ 10 descriptions - $2.00 ($0.20 each)             │
+│                                                      │
+│  OPTION 2: Buy credits and save                      │
+│  ○ 25 credits - $4.00 ($0.16 each) - Save 20%       │
+│  ○ 50 credits - $7.00 ($0.14 each) - Save 30%       │
+│  ○ 100 credits - $12.00 ($0.12 each) - Save 40%     │
+│  ○ 1000 credits - $100.00 ($0.10 each) - Save 50%   │
+│                                                      │
+│  [Continue to Payment]                               │
+└─────────────────────────────────────────────────────┘
+
+PRICING STRUCTURE:
+
+Pay-per-use: $0.20 per item
+- 1-99 items: $0.20 each
+- No credits stored
+- One-time transaction
+
+Credit bundles (stored in account):
+- 25 credits: $4.00 ($0.16 each) - 20% discount
+- 50 credits: $7.00 ($0.14 each) - 30% discount
+- 100 credits: $12.00 ($0.12 each) - 40% discount
+- 1000 credits: $100.00 ($0.10 each) - 50% discount
+
+DATABASE SCHEMA FOR CREDITS:
+```sql
+CREATE TABLE user_credits (
+  id SERIAL PRIMARY KEY,
+  userId VARCHAR(255) NOT NULL, -- Clerk user ID
+  email VARCHAR(255) NOT NULL,
+  credits_remaining INTEGER DEFAULT 0,
+  credits_purchased INTEGER DEFAULT 0,
+  credits_used INTEGER DEFAULT 0,
+  last_purchase_date TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE credit_transactions (
+  id SERIAL PRIMARY KEY,
+  userId VARCHAR(255) NOT NULL,
+  transaction_type VARCHAR(50), -- 'purchase', 'use', 'refund'
+  amount INTEGER, -- Credits purchased or used
+  cost DECIMAL(10,2), -- Dollar amount for purchases
+  description TEXT,
+  stripe_payment_id VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+CREDIT TRACKING ENDPOINTS:
+javascript// GET /api/user/credits - Check balance
+app.get('/api/user/credits', async (req, res) => {
+  const userId = req.auth.userId;
+  const credits = await db.query(
+    'SELECT credits_remaining FROM user_credits WHERE userId = $1',
+    [userId]
+  );
+  res.json({ credits: credits?.credits_remaining || 0 });
+});
+
+// POST /api/credits/purchase - Buy credits
+app.post('/api/credits/purchase', async (req, res) => {
+  const { userId, email, bundle } = req.body;
+  
+  const bundles = {
+    25: 4.00,
+    50: 7.00,
+    100: 12.00,
+    1000: 100.00
+  };
+  
+  const amount = bundles[bundle];
+  
+  // Create Stripe payment
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: Math.round(amount * 100),
+    currency: 'usd',
+    metadata: { userId, credits: bundle }
+  });
+  
+  res.json({ clientSecret: paymentIntent.client_secret });
+});
+
+// POST /api/credits/use - Deduct credits
+app.post('/api/credits/use', async (req, res) => {
+  const { userId, count, description } = req.body;
+  
+  // Check balance
+  const user = await db.query(
+    'SELECT credits_remaining FROM user_credits WHERE userId = $1',
+    [userId]
+  );
+  
+  if (user.credits_remaining < count) {
+    return res.status(400).json({ error: 'Insufficient credits' });
+  }
+  
+  // Deduct credits
+  await db.query(
+    'UPDATE user_credits SET credits_remaining = credits_remaining - $1, credits_used = credits_used + $1 WHERE userId = $2',
+    [count, userId]
+  );
+  
+  // Log transaction
+  await db.query(
+    'INSERT INTO credit_transactions (userId, transaction_type, amount, description) VALUES ($1, $2, $3, $4)',
+    [userId, 'use', count, description]
+  );
+  
+  res.json({ success: true });
+});
+PAYMENT FLOW LOGIC:
+javascriptconst handlePayment = async (option, itemCount) => {
+  const userId = req.auth.userId;
+  
+  if (option === 'pay-per-use') {
+    // One-time payment
+    const amount = itemCount * 0.20;
+    await processStripePayment(amount);
+    await generateAIDescriptions(itemCount);
+  } 
+  else if (option === 'credits') {
+    const { bundle } = option;
+    
+    // Purchase credits
+    await purchaseCredits(userId, bundle);
+    
+    // Use credits immediately
+    await useCredits(userId, itemCount);
+    await generateAIDescriptions(itemCount);
+  }
+};
+DISPLAY CREDIT BALANCE IN UI:
+Show in header when logged in:
+[Profile ▼]  AI Credits: 45 remaining
+Or in upload flow:
+You have 45 AI credits
+Need 10 credits for these items
+Remaining after: 35 credits
+AUTO-USE CREDITS IF AVAILABLE:
+javascript// Check if user has credits first
+const credits = await getUserCredits(userId);
+
+if (credits >= itemsNeeded) {
+  // Use existing credits (free to user)
+  await useCredits(userId, itemsNeeded);
+  await generateAI(items);
+} else {
+  // Show payment modal with both options
+  showPaymentModal(itemsNeeded, credits);
+}
+PRICING RECOMMENDATION:
+Your margins with this structure:
+
+Pay-per-use at $0.20: ~$0.17 profit per item (85% margin)
+25 credits at $0.16: ~$0.13 profit per item (81% margin)
+1000 credits at $0.10: ~$0.07 profit per item (70% margin)
+
+This is solid. High-volume users get discounts, you still profit, and casual users have flexibility.
+CREDIT PURCHASE PAGE:
+Create /credits page showing:
+
+Current balance
+Purchase history
+Usage history
+Available bundles
+
+IMPLEMENT:
+
+Credit balance tracking in database
+Purchase endpoint with Stripe
+Use/deduct endpoint
+Display balance in UI
+Payment modal with both options
+Auto-use credits if available
+
+Test the complete flow:
+
+User buys 50 credits
+Uploads 10 items
+System auto-uses 10 credits
+Balance shows 40 remaining
+Next upload uses remaining credits
+
+Confirm when credit system is fully implemented.
