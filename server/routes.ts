@@ -2111,6 +2111,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ======================
+  // Credit System Routes
+  // ======================
+
+  // Get user credits
+  app.get("/api/user/credits", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Get or create user credits record
+      let credits = await storage.getUserCredits(userId);
+      if (!credits) {
+        credits = await storage.createOrUpdateUserCredits(userId, user.email!);
+      }
+
+      res.json(credits);
+    } catch (error: any) {
+      console.error("Error fetching credits:", error);
+      res.status(500).json({ message: "Failed to fetch credits" });
+    }
+  });
+
+  // Get credit transactions history
+  app.get("/api/user/credit-transactions", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      
+      const transactions = await storage.getCreditTransactions(userId, limit);
+      res.json(transactions);
+    } catch (error: any) {
+      console.error("Error fetching credit transactions:", error);
+      res.status(500).json({ message: "Failed to fetch transactions" });
+    }
+  });
+
+  // Purchase credits
+  app.post("/api/credits/purchase", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const { amount, cost, stripePaymentId } = req.body;
+
+      if (!amount || !cost) {
+        return res.status(400).json({ message: "Amount and cost are required" });
+      }
+
+      const updatedCredits = await storage.purchaseCredits(
+        userId,
+        amount,
+        cost,
+        stripePaymentId
+      );
+
+      res.json(updatedCredits);
+    } catch (error: any) {
+      console.error("Error purchasing credits:", error);
+      res.status(500).json({ message: error.message || "Failed to purchase credits" });
+    }
+  });
+
+  // Use credits
+  app.post("/api/credits/use", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const { amount, description } = req.body;
+
+      if (!amount) {
+        return res.status(400).json({ message: "Amount is required" });
+      }
+
+      const updatedCredits = await storage.useCredits(userId, amount, description);
+      res.json(updatedCredits);
+    } catch (error: any) {
+      console.error("Error using credits:", error);
+      
+      if (error.message === "Insufficient credits") {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+      
+      res.status(500).json({ message: error.message || "Failed to use credits" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
