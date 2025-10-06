@@ -39,6 +39,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get AI usage info for current user
+  app.get('/api/ai/usage', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const usageInfo = await storage.getAIUsageInfo(userId);
+      res.json(usageInfo);
+    } catch (error) {
+      console.error("Error fetching AI usage info:", error);
+      res.status(500).json({ message: "Failed to fetch AI usage info" });
+    }
+  });
+
   // ======================
   // User Routes
   // ======================
@@ -647,14 +659,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bulk analysis - process each image individually for progress tracking
-  app.post("/api/ai/analyze-bulk-images", isAuthenticated, async (req, res) => {
+  app.post("/api/ai/analyze-bulk-images", isAuthenticated, async (req: any, res) => {
     try {
       console.log('🤖 Bulk image analysis request received');
       const { imageUrls, manualCategory } = req.body;
+      const userId = req.auth.userId;
       
       if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
         console.error('❌ No imageUrls array provided in request');
         return res.status(400).json({ message: "imageUrls array is required" });
+      }
+
+      const itemCount = imageUrls.length;
+      
+      // Check AI usage limits
+      const usageInfo = await storage.getAIUsageInfo(userId);
+      const FREE_TIER_LIMIT = 5;
+      
+      console.log(`📊 AI Usage: ${usageInfo.usesThisMonth}/${FREE_TIER_LIMIT} used this month`);
+      
+      // Check if user has exceeded free tier
+      if (usageInfo.usesThisMonth + itemCount > FREE_TIER_LIMIT && usageInfo.subscriptionTier === 'free' && usageInfo.creditsPurchased === 0) {
+        console.log(`❌ Free tier limit exceeded: ${usageInfo.usesThisMonth} + ${itemCount} > ${FREE_TIER_LIMIT}`);
+        return res.status(403).json({
+          error: "FREE_TIER_LIMIT_REACHED",
+          message: `You've used ${usageInfo.usesThisMonth} of your ${FREE_TIER_LIMIT} free AI descriptions this month.`,
+          usageInfo: {
+            used: usageInfo.usesThisMonth,
+            limit: FREE_TIER_LIMIT,
+            resetDate: usageInfo.resetDate,
+            remaining: usageInfo.remainingFree,
+          }
+        });
       }
 
       console.log(`📦 Processing ${imageUrls.length} images in parallel...`);
@@ -690,6 +726,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const products = await Promise.all(analysisPromises);
+      
+      // Increment AI usage counter
+      await storage.incrementAIUsage(userId, itemCount);
+      console.log(`✅ AI usage incremented: +${itemCount} (now ${usageInfo.usesThisMonth + itemCount}/${FREE_TIER_LIMIT})`);
       
       console.log(`✅ Bulk analysis complete: ${products.length} products detected`);
       res.json({ products });
