@@ -200,7 +200,19 @@ export default function Dashboard() {
   // Delete listing mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest("DELETE", `/api/listings/${id}`);
+      const token = await getToken();
+      const response = await fetch(`/api/listings/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to delete listing: ${response.status}`);
+      }
+      
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/listings"] });
@@ -215,7 +227,21 @@ export default function Dashboard() {
   // Mark as sold mutation
   const markAsSoldMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest("PUT", `/api/listings/${id}/status`, { status: "sold" });
+      const token = await getToken();
+      const response = await fetch(`/api/listings/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'sold' }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to mark as sold: ${response.status}`);
+      }
+      
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/listings"] });

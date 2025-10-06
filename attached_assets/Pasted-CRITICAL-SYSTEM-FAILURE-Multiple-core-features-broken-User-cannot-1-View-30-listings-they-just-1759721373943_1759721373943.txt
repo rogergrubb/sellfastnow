@@ -1,0 +1,95 @@
+CRITICAL SYSTEM FAILURE - Multiple core features broken:
+
+User cannot:
+1. View 30 listings they just created
+2. Edit any listings
+3. Delete any listings
+
+This marketplace is completely non-functional. Stop all other work and fix these three critical bugs NOW.
+
+ISSUE 1: EDIT LISTING FAILURE
+
+Debug edit functionality:
+- What error is being thrown? Log the exact error message
+- Is the edit endpoint working? Test: PUT /api/listings/:id
+- Is authentication failing on edit requests?
+- Are form values not saving to database?
+- Add error logging to edit form submission
+
+Fix requirements:
+- User clicks EDIT button → Form opens with current values
+- User changes values → Clicks SAVE
+- Database updates successfully
+- User sees success message
+- Changes reflect immediately in My Listings
+
+ISSUE 2: DELETE LISTING FAILURE
+
+Debug delete functionality:
+- What error is being thrown? Log the exact error message
+- Is the delete endpoint working? Test: DELETE /api/listings/:id
+- Is soft delete or hard delete failing?
+- Are foreign key constraints preventing deletion?
+- Add error logging to delete operation
+
+Fix requirements:
+- User clicks DELETE → Confirmation modal appears
+- User confirms → Database removes/marks as deleted
+- Listing disappears from My Listings immediately
+- Success message shown
+
+ISSUE 3: MY LISTINGS NOT DISPLAYING (ONGOING)
+
+This is still not fixed despite multiple reports.
+
+Add debug endpoint immediately:
+```javascript
+// GET /api/debug/my-listings
+app.get('/api/debug/my-listings', async (req, res) => {
+  const userId = req.auth.userId;
+  
+  console.log('=== DEBUG MY LISTINGS ===');
+  console.log('User ID from Clerk:', userId);
+  
+  // Check database directly
+  const allListings = await db.query('SELECT id, title, userId FROM listings');
+  console.log('Total listings in database:', allListings.length);
+  
+  const userListings = await db.query(
+    'SELECT * FROM listings WHERE userId = $1',
+    [userId]
+  );
+  console.log('Listings for this user:', userListings.length);
+  
+  res.json({
+    userId: userId,
+    totalInDatabase: allListings.length,
+    userListings: userListings.length,
+    listings: userListings
+  });
+});
+Call this endpoint and report:
+
+User's Clerk ID
+Total listings in database
+How many belong to this user
+Why they're not displaying
+
+IMMEDIATE REQUIREMENTS:
+
+Fix edit functionality within 30 minutes
+Fix delete functionality within 30 minutes
+Fix My Listings display within 30 minutes
+Add comprehensive error logging to all three features
+Test all three features and confirm working
+
+NO MORE EXCUSES. NO MORE "IMPLEMENTING".
+The user has created 30+ listings and cannot manage them at all. This is a complete system failure.
+Report back with:
+
+Exact errors causing edit failures
+Exact errors causing delete failures
+Exact reason My Listings is empty
+Confirmation all three are fixed and tested
+
+Priority: URGENT - Drop everything else.

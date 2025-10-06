@@ -122,6 +122,12 @@ export default function PostAdEnhanced() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { isSignedIn, isLoaded, getToken } = useAuth();
+  
+  // Check if we're in edit mode
+  const urlParams = new URLSearchParams(window.location.search);
+  const editListingId = urlParams.get('edit');
+  const isEditMode = !!editListingId;
+  
   const [mode, setMode] = useState<"coached" | "simple">("coached");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -199,6 +205,41 @@ export default function PostAdEnhanced() {
 
   const watchedValues = form.watch();
 
+  // Fetch existing listing if in edit mode
+  const { data: existingListing, isLoading: isLoadingListing } = useQuery({
+    queryKey: ['/api/listings', editListingId],
+    queryFn: async () => {
+      if (!editListingId) return null;
+      const token = await getToken();
+      const response = await fetch(`/api/listings/${editListingId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch listing');
+      }
+      return response.json();
+    },
+    enabled: isEditMode && !!editListingId,
+  });
+
+  // Pre-populate form when editing
+  useEffect(() => {
+    if (existingListing && isEditMode) {
+      form.reset({
+        title: existingListing.title || "",
+        description: existingListing.description || "",
+        price: existingListing.price || "0",
+        category: existingListing.category || "",
+        condition: existingListing.condition || "new",
+        location: existingListing.location || "",
+        images: existingListing.images || [],
+      });
+      setUploadedImages(existingListing.images || []);
+    }
+  }, [existingListing, isEditMode, form]);
+
   // Countdown timer effect
   useEffect(() => {
     if (showProgressModal && countdown > 0) {
@@ -234,33 +275,39 @@ export default function PostAdEnhanced() {
 
   const createListingMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
-      const response = await fetch('/api/listings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const token = await getToken();
+      const url = isEditMode ? `/api/listings/${editListingId}` : '/api/listings';
+      const method = isEditMode ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify(data),
-        credentials: 'include',
       });
       
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to create listing');
+        throw new Error(error.message || `Failed to ${isEditMode ? 'update' : 'create'} listing`);
       }
       
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/listings'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/listings/mine'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/listings'] });
       toast({
         title: "Success!",
-        description: "Your listing has been posted successfully.",
+        description: isEditMode ? "Your listing has been updated successfully." : "Your listing has been posted successfully.",
       });
       setLocation('/dashboard');
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to post listing. Please try again.",
+        description: error.message || `Failed to ${isEditMode ? 'update' : 'post'} listing. Please try again.`,
         variant: "destructive",
       });
     },
@@ -1118,8 +1165,8 @@ export default function PostAdEnhanced() {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold">Post Your Ad</h2>
-              <p className="text-sm text-muted-foreground mt-1">Manual entry - enter details for each photo</p>
+              <h2 className="text-2xl font-bold">{isEditMode ? 'Edit Your Listing' : 'Post Your Ad'}</h2>
+              <p className="text-sm text-muted-foreground mt-1">{isEditMode ? 'Update listing details' : 'Manual entry - enter details for each photo'}</p>
             </div>
             <Button
               variant="outline"
@@ -1350,7 +1397,7 @@ export default function PostAdEnhanced() {
             <div>
               <h1 className="text-3xl font-bold flex items-center gap-2">
                 <Sparkles className="h-8 w-8 text-primary" />
-                What Are You Selling?
+                {isEditMode ? 'Edit Your Listing' : 'What Are You Selling?'}
               </h1>
               <p className="text-muted-foreground mt-2">
                 First, let's understand what you're uploading to provide the best experience
@@ -1499,7 +1546,7 @@ export default function PostAdEnhanced() {
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <Sparkles className="h-8 w-8 text-primary" />
-              Smart Listing Coach
+              {isEditMode ? 'Edit Your Listing' : 'Smart Listing Coach'}
             </h1>
             <p className="text-muted-foreground mt-1">
               AI-powered guidance to create the perfect listing
@@ -1527,7 +1574,7 @@ export default function PostAdEnhanced() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Create Your Listing</CardTitle>
+              <CardTitle>{isEditMode ? 'Update Your Listing' : 'Create Your Listing'}</CardTitle>
             </CardHeader>
             <CardContent>
               <Form {...form}>
