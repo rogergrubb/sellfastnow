@@ -3,6 +3,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { useEffect, useState } from 'react';
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkles, CheckCircle2, Loader2 } from "lucide-react";
@@ -76,20 +77,37 @@ export default function PurchaseAICredits() {
   const [clientSecret, setClientSecret] = useState("");
   const [paymentIntentId, setPaymentIntentId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const { getToken } = useAuth();
 
   useEffect(() => {
-    apiRequest("POST", "/api/purchase-ai-credits")
-      .then((res) => res.json())
-      .then((data) => {
+    const initializePayment = async () => {
+      try {
+        const token = await getToken();
+        
+        const res = await fetch("/api/purchase-ai-credits", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to create payment intent: ${res.status}`);
+        }
+
+        const data = await res.json();
         setClientSecret(data.clientSecret);
         setPaymentIntentId(data.paymentIntentId);
         setIsLoading(false);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error creating payment intent:", error);
         setIsLoading(false);
-      });
-  }, []);
+      }
+    };
+
+    initializePayment();
+  }, [getToken]);
 
   if (isLoading) {
     return (
