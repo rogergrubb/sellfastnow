@@ -1417,12 +1417,14 @@ export default function PostAdEnhanced() {
               </div>
             </div>
 
-            {/* Step 2: Category Selection - Only show if different-items is selected */}
-            {uploadType === "different-items" && (
+            {/* Step 2: Category Selection - Always show for all upload types */}
+            {uploadType && (
               <div className="space-y-4">
-                <Label className="text-lg font-semibold">Step 2: Select the category for your items</Label>
+                <Label className="text-lg font-semibold">Step 2: Select category {uploadType === "different-items" ? "(required)" : "(optional)"}</Label>
                 <p className="text-sm text-muted-foreground">
-                  All uploaded items will be assigned to this category. You can adjust individual items later.
+                  {uploadType === "different-items" 
+                    ? "All uploaded items will be assigned to this category. You can adjust individual items later."
+                    : "Manually select a category, or let AI auto-detect it from your photos."}
                 </p>
                 <Select value={manualCategory} onValueChange={setManualCategory}>
                   <SelectTrigger className="w-full" data-testid="select-manual-category">
