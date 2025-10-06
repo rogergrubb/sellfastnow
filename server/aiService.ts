@@ -78,13 +78,23 @@ export interface MultiImageAnalysis {
 
 export async function identifyProductFromPhoto(
   base64Image: string,
-  photoNumber: number
+  photoNumber: number,
+  manualCategory?: string
 ): Promise<ProductAnalysis> {
   const openai = getOpenAI();
 
   console.log(`🚀 Calling OpenAI API (GPT-5) to identify product from photo #${photoNumber}...`);
+  if (manualCategory) {
+    console.log(`📁 Manual category override: "${manualCategory}" - AI will skip category detection`);
+  }
 
   try {
+    const categoryInstruction = manualCategory 
+      ? `5. Category - USE THIS EXACT CATEGORY: "${manualCategory}" (DO NOT detect or suggest a different category)`
+      : `5. Category - MUST BE ONE OF: Electronics, Furniture, Clothing, Automotive, Books & Media, Sports, Home & Garden, Toys, Other
+   * Use "Automotive" for: cars, motorcycles, trucks, car parts, automotive accessories, auto tools, vehicle equipment, car audio, tires, wheels, etc.
+   * Be specific with automotive items - recognize car parts, tools, accessories`;
+
     const response = await openai.chat.completions.create({
       model: "gpt-5",
       messages: [
@@ -103,9 +113,7 @@ export async function identifyProductFromPhoto(
 2. Product Description (2-3 sentences: what it is, condition assessment from photo, notable features)
 3. Suggested Used Price (realistic marketplace price based on condition)
 4. Estimated Retail Price (original/new price estimate)
-5. Category - MUST BE ONE OF: Electronics, Furniture, Clothing, Automotive, Books & Media, Sports, Home & Garden, Toys, Other
-   * Use "Automotive" for: cars, motorcycles, trucks, car parts, automotive accessories, auto tools, vehicle equipment, car audio, tires, wheels, etc.
-   * Be specific with automotive items - recognize car parts, tools, accessories
+${categoryInstruction}
 6. Condition (new, like_new, good, fair, poor - based on visual assessment)
 7. Confidence (0-100, how certain you are about the identification)
 
@@ -136,8 +144,14 @@ Respond ONLY with valid JSON in this exact format:
     });
 
     const result = JSON.parse(response.choices[0].message.content!);
+    
+    // Override category with manual category if provided (ensure AI follows instructions)
+    if (manualCategory) {
+      result.category = manualCategory;
+    }
+    
     console.log(`✅ OpenAI successfully identified product: "${result.title}"`);
-    console.log(`📁 AI selected category: "${result.category}" | Condition: ${result.condition} | Confidence: ${result.confidence}%`);
+    console.log(`📁 Category: "${result.category}" ${manualCategory ? '(manual override)' : '(AI detected)'} | Condition: ${result.condition} | Confidence: ${result.confidence}%`);
     
     return result;
   } catch (error: any) {
@@ -262,12 +276,21 @@ Respond ONLY with valid JSON:
 }
 
 // AI-powered product recognition from image
-export async function analyzeProductImage(imageUrl: string): Promise<ProductAnalysis> {
+export async function analyzeProductImage(imageUrl: string, manualCategory?: string): Promise<ProductAnalysis> {
   const openai = getOpenAI();
 
   console.log('🚀 Calling OpenAI API (GPT-5) for product image analysis...');
+  if (manualCategory) {
+    console.log(`📁 Manual category override: "${manualCategory}" - AI will skip category detection`);
+  }
 
   try {
+    const categoryInstruction = manualCategory 
+      ? `3. Category - USE THIS EXACT CATEGORY: "${manualCategory}" (DO NOT detect or suggest a different category)`
+      : `3. Category - MUST BE ONE OF: Electronics, Furniture, Clothing, Home & Garden, Sports & Outdoors, Books & Media, Toys & Games, Automotive, Other
+   * Use "Automotive" for: cars, motorcycles, trucks, car parts, automotive accessories, auto tools, vehicle equipment, car audio, tires, wheels, vehicle maintenance items, etc.
+   * Carefully identify automotive-related items`;
+
     // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
     const response = await openai.chat.completions.create({
       model: "gpt-5",
@@ -288,9 +311,7 @@ export async function analyzeProductImage(imageUrl: string): Promise<ProductAnal
    - Visible features and characteristics
    - Apparent condition based on the image
    - Any notable details (brand, model, materials, etc.)
-3. Category - MUST BE ONE OF: Electronics, Furniture, Clothing, Home & Garden, Sports & Outdoors, Books & Media, Toys & Games, Automotive, Other
-   * Use "Automotive" for: cars, motorcycles, trucks, car parts, automotive accessories, auto tools, vehicle equipment, car audio, tires, wheels, vehicle maintenance items, etc.
-   * Carefully identify automotive-related items
+${categoryInstruction}
 4. Estimated retail price if bought new (realistic market value)
 5. Estimated current used price based on apparent condition
 6. Condition assessment: new, like-new, good, fair, or poor
@@ -321,8 +342,14 @@ Respond ONLY with valid JSON in this exact format:
     });
 
     const result = JSON.parse(response.choices[0].message.content!);
+    
+    // Override category with manual category if provided (ensure AI follows instructions)
+    if (manualCategory) {
+      result.category = manualCategory;
+    }
+    
     console.log(`✅ OpenAI successfully analyzed product image: "${result.title}"`);
-    console.log(`📁 AI selected category: "${result.category}" | Condition: ${result.condition} | Confidence: ${result.confidence}%`);
+    console.log(`📁 Category: "${result.category}" ${manualCategory ? '(manual override)' : '(AI detected)'} | Condition: ${result.condition} | Confidence: ${result.confidence}%`);
     
     return result;
   } catch (error: any) {
@@ -332,10 +359,13 @@ Respond ONLY with valid JSON in this exact format:
 }
 
 // AI-powered multi-image analysis to detect same product vs different products
-export async function analyzeMultipleImages(imageUrls: string[]): Promise<MultiImageAnalysis> {
+export async function analyzeMultipleImages(imageUrls: string[], manualCategory?: string): Promise<MultiImageAnalysis> {
   const openai = getOpenAI();
 
   console.log(`🚀 Calling OpenAI API (GPT-5) for multi-image analysis (${imageUrls.length} images)...`);
+  if (manualCategory) {
+    console.log(`📁 Manual category override: "${manualCategory}" - will apply to all detected products`);
+  }
 
   try {
     // Build the content array with text prompt and all images
@@ -446,6 +476,15 @@ Respond ONLY with valid JSON matching the format above.`,
     });
 
     const result = JSON.parse(response.choices[0].message.content!);
+    
+    // Override categories with manual category if provided
+    if (manualCategory && result.products) {
+      result.products = result.products.map((product: DetectedProduct) => ({
+        ...product,
+        category: manualCategory
+      }));
+      console.log(`📁 All product categories overridden with manual category: "${manualCategory}"`);
+    }
     
     // Add a helpful message
     if (result.scenario === "same_product") {

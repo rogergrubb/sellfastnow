@@ -403,7 +403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Identify product from photo
   app.post("/api/ai/analyze-photo", isAuthenticated, async (req, res) => {
     try {
-      const { base64Image, photoNumber } = req.body;
+      const { base64Image, photoNumber, manualCategory } = req.body;
       
       if (!base64Image) {
         return res.status(400).json({ message: "base64Image is required" });
@@ -412,7 +412,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { aiService } = await import("./aiService");
       const productDetails = await aiService.identifyProductFromPhoto(
         base64Image,
-        photoNumber || 1
+        photoNumber || 1,
+        manualCategory
       );
       
       res.json(productDetails);
@@ -470,7 +471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ai/analyze-image", isAuthenticated, async (req, res) => {
     try {
       console.log('🤖 AI image analysis request received');
-      const { imageUrl } = req.body;
+      const { imageUrl, manualCategory } = req.body;
       
       if (!imageUrl) {
         console.error('❌ No imageUrl provided in request');
@@ -478,8 +479,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('🔍 Analyzing image with OpenAI:', imageUrl);
+      if (manualCategory) {
+        console.log(`📁 Using manual category override: "${manualCategory}"`);
+      }
       const { analyzeProductImage } = await import("./aiService");
-      const analysis = await analyzeProductImage(imageUrl);
+      const analysis = await analyzeProductImage(imageUrl, manualCategory);
       
       console.log('✅ OpenAI analysis complete:', {
         title: analysis.title,
@@ -498,7 +502,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ai/analyze-multiple-images", isAuthenticated, async (req, res) => {
     try {
       console.log('🤖 Multi-image analysis request received');
-      const { imageUrls } = req.body;
+      const { imageUrls, manualCategory } = req.body;
       
       if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
         console.error('❌ No imageUrls array provided in request');
@@ -506,8 +510,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`🔍 Analyzing ${imageUrls.length} images with OpenAI...`);
+      if (manualCategory) {
+        console.log(`📁 Using manual category override: "${manualCategory}"`);
+      }
       const { analyzeMultipleImages } = await import("./aiService");
-      const analysis = await analyzeMultipleImages(imageUrls);
+      const analysis = await analyzeMultipleImages(imageUrls, manualCategory);
       
       console.log('✅ Multi-image analysis complete:', {
         scenario: analysis.scenario,
@@ -526,7 +533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ai/analyze-bulk-images", isAuthenticated, async (req, res) => {
     try {
       console.log('🤖 Bulk image analysis request received');
-      const { imageUrls } = req.body;
+      const { imageUrls, manualCategory } = req.body;
       
       if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
         console.error('❌ No imageUrls array provided in request');
@@ -534,12 +541,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`📦 Processing ${imageUrls.length} images in parallel...`);
+      if (manualCategory) {
+        console.log(`📁 Using manual category override: "${manualCategory}"`);
+      }
       const { analyzeProductImage } = await import("./aiService");
       
       // Process all images in parallel for much faster analysis
       const analysisPromises = imageUrls.map((imageUrl, i) => {
         console.log(`🔍 Starting analysis for image ${i + 1}/${imageUrls.length}...`);
-        return analyzeProductImage(imageUrl)
+        return analyzeProductImage(imageUrl, manualCategory)
           .then(analysis => {
             console.log(`✓ Image ${i + 1} analyzed: ${analysis.title}`);
             return {
@@ -554,7 +564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return {
               title: `Item ${i + 1} (Analysis Failed)`,
               description: "Please add details manually",
-              category: "Other",
+              category: manualCategory || "Other",
               condition: "good",
               imageUrls: [imageUrl],
               imageIndices: [i],

@@ -178,6 +178,11 @@ export default function PostAdEnhanced() {
     condition: string;
     price: string;
   }>>([]);
+  
+  // Category-first upload flow states
+  const [uploadStep, setUploadStep] = useState<"category-selection" | "upload-ready">("category-selection");
+  const [manualCategory, setManualCategory] = useState<string>("");
+  const [uploadType, setUploadType] = useState<"different-items" | "one-item" | "lot-collection" | "">(""); 
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -275,7 +280,10 @@ export default function PostAdEnhanced() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ imageUrl }),
+        body: JSON.stringify({ 
+          imageUrl,
+          manualCategory: manualCategory || undefined
+        }),
       });
 
       console.log('📥 OpenAI API response status:', response.status);
@@ -453,7 +461,10 @@ export default function PostAdEnhanced() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ imageUrls }),
+        body: JSON.stringify({ 
+          imageUrls,
+          manualCategory: manualCategory || undefined
+        }),
       });
 
       console.log('📥 Multi-image OpenAI API response status:', response.status);
@@ -605,7 +616,10 @@ export default function PostAdEnhanced() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ imageUrls }),
+        body: JSON.stringify({ 
+          imageUrls,
+          manualCategory: manualCategory || undefined
+        }),
       });
 
       clearInterval(updateInterval);
@@ -1327,10 +1341,156 @@ export default function PostAdEnhanced() {
     );
   }
 
-  // COACHED MODE - Full AI experience
+  // COACHED MODE - Show category selection first, then upload UI
+  if (mode === "coached" && uploadStep === "category-selection") {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <Card className="p-8">
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold flex items-center gap-2">
+                <Sparkles className="h-8 w-8 text-primary" />
+                What Are You Selling?
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                First, let's understand what you're uploading to provide the best experience
+              </p>
+            </div>
+
+            {/* Step 1: Upload Type Selection */}
+            <div className="space-y-4">
+              <Label className="text-lg font-semibold">Step 1: What type of listing are you creating?</Label>
+              <div className="grid gap-3">
+                <Card 
+                  className={`p-4 cursor-pointer hover-elevate ${uploadType === "different-items" ? "border-primary border-2" : ""}`}
+                  onClick={() => setUploadType("different-items")}
+                  data-testid="option-different-items"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${uploadType === "different-items" ? "border-primary" : "border-muted-foreground"}`}>
+                      {uploadType === "different-items" && <div className="h-3 w-3 rounded-full bg-primary" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold">Multiple photos of different items</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Create separate listings for each item (e.g., selling 50 different car parts)
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card 
+                  className={`p-4 cursor-pointer hover-elevate ${uploadType === "one-item" ? "border-primary border-2" : ""}`}
+                  onClick={() => setUploadType("one-item")}
+                  data-testid="option-one-item"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${uploadType === "one-item" ? "border-primary" : "border-muted-foreground"}`}>
+                      {uploadType === "one-item" && <div className="h-3 w-3 rounded-full bg-primary" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold">Multiple photos of ONE item</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Different angles of the same product (e.g., front, back, and side views)
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card 
+                  className={`p-4 cursor-pointer hover-elevate ${uploadType === "lot-collection" ? "border-primary border-2" : ""}`}
+                  onClick={() => setUploadType("lot-collection")}
+                  data-testid="option-lot-collection"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${uploadType === "lot-collection" ? "border-primary" : "border-muted-foreground"}`}>
+                      {uploadType === "lot-collection" && <div className="h-3 w-3 rounded-full bg-primary" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold">A collection/lot to sell together</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        One listing with all photos (e.g., a bundle of tools or a set of dishes)
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            </div>
+
+            {/* Step 2: Category Selection - Only show if different-items is selected */}
+            {uploadType === "different-items" && (
+              <div className="space-y-4">
+                <Label className="text-lg font-semibold">Step 2: Select the category for your items</Label>
+                <p className="text-sm text-muted-foreground">
+                  All uploaded items will be assigned to this category. You can adjust individual items later.
+                </p>
+                <Select value={manualCategory} onValueChange={setManualCategory}>
+                  <SelectTrigger className="w-full" data-testid="select-manual-category">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="electronics">Electronics</SelectItem>
+                    <SelectItem value="furniture">Furniture</SelectItem>
+                    <SelectItem value="clothing">Clothing & Accessories</SelectItem>
+                    <SelectItem value="automotive">Automotive (Cars, Parts, Tools)</SelectItem>
+                    <SelectItem value="books">Books & Media</SelectItem>
+                    <SelectItem value="sports">Sports & Outdoors</SelectItem>
+                    <SelectItem value="home">Home & Garden</SelectItem>
+                    <SelectItem value="toys">Toys & Games</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-4 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => setLocation('/')}
+                data-testid="button-cancel-category"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                className="flex-1"
+                onClick={() => {
+                  if (uploadType === "different-items" && !manualCategory) {
+                    toast({
+                      title: "Category Required",
+                      description: "Please select a category for your items.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  if (!uploadType) {
+                    toast({
+                      title: "Selection Required",
+                      description: "Please select the type of listing you're creating.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  setUploadStep("upload-ready");
+                }}
+                data-testid="button-continue-to-upload"
+              >
+                Continue to Upload Photos →
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // COACHED MODE - Full AI experience (after category selection)
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Header with Skip Button */}
+      {/* Header with Skip Button and Back to Category Selection */}
       <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4">
           <div>
@@ -1340,20 +1500,37 @@ export default function PostAdEnhanced() {
             </h1>
             <p className="text-muted-foreground mt-1">
               AI-powered guidance to create the perfect listing
+              {manualCategory && <span className="ml-2">• Category: <strong>{manualCategory}</strong></span>}
             </p>
           </div>
         </div>
         
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={() => setMode("simple")}
-          data-testid="button-skip-coaching"
-          className="gap-2"
-        >
-          <SkipForward className="h-4 w-4" />
-          Skip to Simple Form
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => {
+              setUploadStep("category-selection");
+              setUploadedImages([]);
+              setProductIdentifications([]);
+              form.reset();
+            }}
+            data-testid="button-back-to-category"
+            className="gap-2"
+          >
+            ← Change Category
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setMode("simple")}
+            data-testid="button-skip-coaching"
+            className="gap-2"
+          >
+            <SkipForward className="h-4 w-4" />
+            Skip to Simple Form
+          </Button>
+        </div>
       </div>
 
 
