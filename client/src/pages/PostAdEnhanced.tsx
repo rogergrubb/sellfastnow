@@ -66,6 +66,7 @@ import { ProgressModal } from "@/components/ProgressModal";
 import { BulkItemReview } from "@/components/BulkItemReview";
 import { QRUploadWidget } from "@/components/QRUploadWidget";
 import { PaymentModal } from "@/components/PaymentModal";
+import { MultiItemGroupingModal } from "@/components/MultiItemGroupingModal";
 
 const formSchema = insertListingSchema.omit({ userId: true });
 
@@ -172,11 +173,20 @@ export default function PostAdEnhanced() {
     imageIndices: number[];
   }[]>([]);
   
+  // Grouping modal states
+  const [showGroupingModal, setShowGroupingModal] = useState(false);
+  const [groupingInfo, setGroupingInfo] = useState<{
+    scenario: "same_product" | "multiple_products";
+    message?: string;
+    totalGroups: number;
+  } | null>(null);
+  
   // Payment modal states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [remainingItemsInfo, setRemainingItemsInfo] = useState<{
     count: number;
     imageUrls: string[];
+    products?: any[];
   } | null>(null);
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
@@ -719,8 +729,9 @@ export default function PostAdEnhanced() {
       clearInterval(updateInterval);
 
       if (response.ok) {
-        const { products, remainingItems } = await response.json();
+        const { products, groupingInfo, remainingItems } = await response.json();
         console.log('✅ Bulk analysis complete:', products.length, 'products detected');
+        console.log('📦 Grouping info:', groupingInfo);
         console.log('📦 Remaining items:', remainingItems);
         
         // Update analyzed items with actual titles
@@ -731,25 +742,25 @@ export default function PostAdEnhanced() {
         })));
         setBulkProgress({ current: products.length, total: products.length });
         
-        // Store products for later use
+        // Store products and grouping info for later use
         setBulkProducts(products);
+        setGroupingInfo(groupingInfo);
+        
+        // Store remaining items info
+        if (remainingItems && remainingItems.count > 0) {
+          setRemainingItemsInfo({
+            count: remainingItems.count,
+            imageUrls: remainingItems.imageUrls || [],
+            products: remainingItems.products || []
+          });
+        }
         
         // Wait a moment to show completion
         setTimeout(() => {
           setShowProgressModal(false);
           
-          // Check if there are remaining items that need payment
-          if (remainingItems && remainingItems.count > 0 && remainingItems.requiresPayment) {
-            console.log('💰 Showing payment modal for', remainingItems.count, 'remaining items');
-            setRemainingItemsInfo({
-              count: remainingItems.count,
-              imageUrls: remainingItems.imageUrls
-            });
-            setShowPaymentModal(true);
-          } else {
-            // No remaining items, show bulk review directly
-            setShowBulkReview(true);
-          }
+          // Show grouping modal first to let user decide how to create listings
+          setShowGroupingModal(true);
         }, 1000);
       } else if (response.status === 403) {
         // Free tier limit reached
@@ -796,6 +807,80 @@ export default function PostAdEnhanced() {
     }
   };
 
+  // Grouping modal handlers
+  const handleCreateSeparateListings = () => {
+    console.log('👤 User chose to create separate listings');
+    setShowGroupingModal(false);
+    
+    // Check if there are remaining items that need payment
+    if (remainingItemsInfo && remainingItemsInfo.count > 0 && remainingItemsInfo.imageUrls && remainingItemsInfo.imageUrls.length > 0) {
+      console.log('💰 Showing payment modal for', remainingItemsInfo.count, 'remaining items');
+      setShowPaymentModal(true);
+    } else {
+      // No remaining items, show bulk review directly
+      setShowBulkReview(true);
+    }
+  };
+
+  const handleCreateBundleListing = async () => {
+    console.log('👤 User chose to create bundle listing');
+    setShowGroupingModal(false);
+    setIsGeneratingBundle(true);
+
+    try {
+      const token = await getToken();
+      
+      // Generate bundle summary using AI
+      const response = await fetch('/api/ai/generate-bundle-summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ products: bulkProducts }),
+      });
+
+      if (response.ok) {
+        const bundleSummary = await response.json();
+        console.log('✅ Bundle summary generated:', bundleSummary);
+        
+        // Replace bulkProducts with a single bundle product
+        const bundleProduct = {
+          title: bundleSummary.title,
+          description: bundleSummary.description,
+          category: bulkProducts[0]?.category || 'Other',
+          usedPrice: bundleSummary.suggestedBundlePrice,
+          condition: 'good',
+          imageUrls: bulkProducts.flatMap(p => p.imageUrls),
+          imageIndices: bulkProducts.flatMap(p => p.imageIndices),
+        };
+        
+        setBulkProducts([bundleProduct]);
+        setShowBulkReview(true);
+      } else {
+        throw new Error('Failed to generate bundle summary');
+      }
+    } catch (error) {
+      console.error('❌ Error generating bundle:', error);
+      toast({
+        title: "Bundle Creation Error",
+        description: "Failed to create bundle. Creating separate listings instead.",
+        variant: "destructive",
+      });
+      setShowBulkReview(true);
+    } finally {
+      setIsGeneratingBundle(false);
+    }
+  };
+
+  const handleManualRegroup = () => {
+    console.log('👤 User chose to regroup manually');
+    setShowGroupingModal(false);
+    // For now, just show bulk review and let them edit
+    // Future: Could add drag-and-drop regrouping interface
+    setShowBulkReview(true);
+  };
+
   const handleOverrideAsSameProduct = () => {
     console.log('👤 User overriding AI detection - treating all images as same product');
     if (multiImageAnalysis && multiImageAnalysis.products.length > 0) {
@@ -839,120 +924,6 @@ export default function PostAdEnhanced() {
       });
     }
     setShowMultiProductModal(false);
-  };
-
-  const handleCreateSeparateListings = () => {
-    console.log('🔀 User chose to create separate listings for each product');
-    
-    if (!multiImageAnalysis || multiImageAnalysis.products.length === 0) {
-      toast({
-        title: "Error",
-        description: "No products detected to create separate listings.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Convert multiImageAnalysis products to bulk products format
-    const bulkProductsData = multiImageAnalysis.products.map(product => ({
-      title: product.title,
-      description: product.description,
-      category: product.category,
-      retailPrice: product.retailPrice,
-      usedPrice: product.usedPrice,
-      condition: product.condition,
-      imageUrls: product.imageIndices.map(idx => uploadedImages[idx]),
-      imageIndices: product.imageIndices
-    }));
-
-    console.log('📦 Prepared bulk products for separate listings:', bulkProductsData);
-
-    // Show bulk review interface
-    setBulkProducts(bulkProductsData);
-    setShowBulkReview(true);
-    setShowMultiProductModal(false);
-  };
-
-  const handleCreateBundleListing = async () => {
-    console.log('🎁 User chose to create a bundle listing for all products');
-    
-    if (!multiImageAnalysis || multiImageAnalysis.products.length === 0) {
-      toast({
-        title: "Error",
-        description: "No products detected to create a bundle.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsGeneratingBundle(true);
-      setShowMultiProductModal(false);
-      
-      // Show loading state
-      toast({
-        title: "Generating Bundle...",
-        description: "AI is creating a multi-item listing summary...",
-      });
-
-      const token = await getToken();
-      const response = await fetch('/api/ai/generate-bundle-summary', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ products: multiImageAnalysis.products }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate bundle summary');
-      }
-
-      const bundleSummary = await response.json();
-      console.log('✅ Bundle summary received:', bundleSummary);
-
-      // Auto-fill the form with bundle data
-      const currentTitle = form.getValues('title');
-      if (!currentTitle) {
-        form.setValue('title', bundleSummary.title);
-        setAiSuggestions(prev => ({ ...prev, title: true }));
-      }
-
-      const currentDescription = form.getValues('description');
-      if (!currentDescription) {
-        form.setValue('description', bundleSummary.description);
-        setAiSuggestions(prev => ({ ...prev, description: true }));
-      }
-
-      const currentCategory = form.getValues('category');
-      if (bundleSummary.category && !currentCategory) {
-        form.setValue('category', bundleSummary.category);
-        setAiSuggestions(prev => ({ ...prev, category: true }));
-      }
-
-      const currentPrice = form.getValues('price');
-      if (bundleSummary.suggestedBundlePrice && (!currentPrice || currentPrice === '0')) {
-        form.setValue('price', String(bundleSummary.suggestedBundlePrice));
-        setAiSuggestions(prev => ({ ...prev, price: true }));
-      }
-
-      setDetectionMessage(`Bundle listing created: ${multiImageAnalysis.products.length} items combined (Total value: $${bundleSummary.totalRetailValue})`);
-      
-      toast({
-        title: "Bundle Created!",
-        description: `AI generated a listing for ${multiImageAnalysis.products.length} items. Review and adjust as needed.`,
-      });
-    } catch (error) {
-      console.error('❌ Error generating bundle:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate bundle listing. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingBundle(false);
-    }
   };
 
   const handleSaveEditedDetails = () => {
@@ -2425,6 +2396,18 @@ export default function PostAdEnhanced() {
           }
         }}
       />
+
+      {/* Grouping Modal - Shows after AI analysis to let user choose how to create listings */}
+      {groupingInfo && bulkProducts.length > 0 && (
+        <MultiItemGroupingModal
+          open={showGroupingModal}
+          products={bulkProducts}
+          groupingInfo={groupingInfo}
+          onCreateSeparate={handleCreateSeparateListings}
+          onCreateBundle={handleCreateBundleListing}
+          onManualRegroup={handleManualRegroup}
+        />
+      )}
 
       {/* Payment Modal - When free tier runs out mid-batch */}
       {remainingItemsInfo && (
