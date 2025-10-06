@@ -1459,6 +1459,7 @@ export default function PostAdEnhanced() {
               <Button
                 type="button"
                 className="flex-1"
+                disabled={!uploadType || (uploadType === "different-items" && !manualCategory)}
                 onClick={() => {
                   if (uploadType === "different-items" && !manualCategory) {
                     toast({
