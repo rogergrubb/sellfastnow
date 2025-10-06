@@ -180,7 +180,7 @@ export default function PostAdEnhanced() {
   }>>([]);
   
   // Category-first upload flow states
-  const [uploadStep, setUploadStep] = useState<"category-selection" | "upload-ready">("category-selection");
+  const [uploadStep, setUploadStep] = useState<"category-selection" | "upload-ready">("upload-ready");
   const [manualCategory, setManualCategory] = useState<string>("");
   const [uploadType, setUploadType] = useState<"different-items" | "one-item" | "lot-collection" | "">(""); 
 
@@ -1503,26 +1503,11 @@ export default function PostAdEnhanced() {
             </h1>
             <p className="text-muted-foreground mt-1">
               AI-powered guidance to create the perfect listing
-              {manualCategory && <span className="ml-2">• Category: <strong>{manualCategory}</strong></span>}
             </p>
           </div>
         </div>
         
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => {
-              setUploadStep("category-selection");
-              setUploadedImages([]);
-              setProductIdentifications([]);
-              form.reset();
-            }}
-            data-testid="button-back-to-category"
-            className="gap-2"
-          >
-            ← Change Category
-          </Button>
           <Button
             variant="outline"
             size="lg"

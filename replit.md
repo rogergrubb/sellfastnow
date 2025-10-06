@@ -100,13 +100,12 @@ Preferred communication style: Simple, everyday language.
   - POST /api/ai/analyze-multiple-images endpoint for multi-product detection with parallel processing.
   - POST /api/ai/generate-bundle-summary endpoint creates multi-item bundle listings with GPT-5.
 - **Intelligent Listing Creation (AI-Powered Coaching):** Streamlined listing creation experience with AI assistance:
-  - **Manual Category Selection:** Category-first upload flow to fix auto-categorization issues:
-    - Step 1: Select upload type (different items, one item with multiple angles, or lot/collection)
-    - Step 2: Select category manually (required for different items, optional for others)
-    - When manual category selected, AI respects it and skips auto-detection
-    - Manual category propagates through all AI analysis paths (single-image, multi-image, bulk)
-    - Backend AI services (analyzeProductImage, identifyProductFromPhoto, analyzeMultipleImages) all accept and use manualCategory override
-    - Works across all upload types, providing reliable category assignment
+  - **Flexible Upload Flow:** Users can immediately upload photos without category pre-selection:
+    - Upload photos first, no blocking category requirements upfront
+    - AI analysis detects product details automatically from uploaded images
+    - Category assignment happens per-item in individual forms (simple mode) or auto-filled by AI (coached mode)
+    - Backend AI services (analyzeProductImage, identifyProductFromPhoto, analyzeMultipleImages) support optional manualCategory override
+    - Per-photo manual forms include required category dropdown for each individual item
   - **Description Coaching:** Strength meter (0-10) analyzes descriptions and identifies missing information. AI-generated enhanced descriptions available with one click. Suggestions include adding measurements, materials, condition details, and purchase history.
   - **Pricing Intelligence:** Market-based pricing recommendations with "Sell Fast" and "Maximize Value" strategies. Pricing psychology tips (e.g., $99 vs $100). Mock market data when OpenAI API key unavailable.
   - **Seller Academy:** Sidebar with Quick Tips (photo essentials, description must-haves, pricing psychology) and Success Stats showing impact metrics (+67% views with 5+ photos, +45% sales with detailed descriptions, 3x faster sale with competitive pricing).
