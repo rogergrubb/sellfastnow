@@ -1,16 +1,18 @@
 import { useState, useRef } from "react";
 import { useParams, useLocation } from "wouter";
+import { useAuth, SignInButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Camera, Image, Loader2, CheckCircle2, X, AlertCircle } from "lucide-react";
+import { Camera, Image, Loader2, CheckCircle2, X, AlertCircle, LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function MobileUpload() {
   const { sessionId } = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
   
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -69,6 +71,17 @@ export default function MobileUpload() {
     setUploadedCount(0);
 
     try {
+      const token = await getToken();
+      if (!token) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to upload images.",
+          variant: "destructive",
+        });
+        setUploading(false);
+        return;
+      }
+
       const formData = new FormData();
       selectedFiles.forEach(file => {
         formData.append('images', file);
@@ -76,6 +89,9 @@ export default function MobileUpload() {
 
       const response = await fetch(`/api/upload-session/${sessionId}/upload`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
         body: formData,
       });
 
@@ -117,6 +133,46 @@ export default function MobileUpload() {
       setUploading(false);
     }
   };
+
+  // Wait for Clerk to finish loading before checking authentication
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show sign-in prompt if user is not authenticated
+  if (!isSignedIn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <div className="flex items-center gap-2 mb-2">
+              <LogIn className="h-6 w-6 text-primary" />
+              <CardTitle>Sign In Required</CardTitle>
+            </div>
+            <CardDescription>
+              You need to sign in to upload photos to your desktop session.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SignInButton mode="modal">
+              <Button className="w-full" data-testid="button-sign-in">
+                <LogIn className="h-4 w-4 mr-2" />
+                Sign In to Continue
+              </Button>
+            </SignInButton>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (sessionExpired) {
     return (

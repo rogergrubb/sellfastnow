@@ -122,6 +122,20 @@ Preferred communication style: Simple, everyday language.
 - **Transaction Cancellation System:** Secure cancellation feature for buyers and sellers with reason selection, optional comments, and server-side role validation and eligibility checks.
 - **Transaction History Page:** Comprehensive page displaying filterable transaction lists, status badges, listing details, other party info, reviews, and cancellation comments.
 - **Automatic Statistics Updates:** Database triggers for automatic user statistics updates on transaction events, including completion, cancellation, no-show tracking, and review aggregation, recalculating success rates dynamically.
+- **QR Code Phone-to-Desktop Upload:** Seamless cross-device photo upload system for listing creation:
+  - **Desktop QR Display:** QRUploadWidget component generates unique session QR codes on /post-ad page
+  - **Mobile Upload Page:** Dedicated /mobile-upload/:sessionId route allows phone users to upload photos from camera or gallery
+  - **Real-time Transfer:** Desktop polls every 2 seconds for new images uploaded from phone
+  - **Session Management:** 30-minute session expiry with automatic cleanup on component unmount
+  - **Database Schema:** uploadSessions table stores temporary image URLs for cross-device transfer
+  - **API Endpoints:** 
+    - POST /api/upload-session/create - Creates new session with unique ID
+    - POST /api/upload-session/:id/upload - Accepts image uploads from mobile
+    - GET /api/upload-session/:id/images - Returns current session images (polling)
+    - DELETE /api/upload-session/:id - Cleans up session (authenticated)
+  - **Security:** All endpoints require Bearer token authentication via Clerk
+  - **User Flow:** Desktop displays QR → Phone scans → Upload photos → Desktop receives instantly
+  - **Component:** QRUploadWidget.tsx provides reusable widget for any page needing cross-device uploads
 
 ## External Dependencies
 

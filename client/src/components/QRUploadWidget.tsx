@@ -116,12 +116,22 @@ export function QRUploadWidget({ onImagesReceived }: QRUploadWidgetProps) {
     return () => {
       if (sessionId) {
         // Cleanup session when component unmounts
-        fetch(`/api/upload-session/${sessionId}`, {
-          method: "DELETE",
-        }).catch(console.error);
+        (async () => {
+          try {
+            const token = await getToken();
+            await fetch(`/api/upload-session/${sessionId}`, {
+              method: "DELETE",
+              headers: {
+                "Authorization": `Bearer ${token}`,
+              },
+            });
+          } catch (error) {
+            console.error("Session cleanup error:", error);
+          }
+        })();
       }
     };
-  }, [sessionId]);
+  }, [sessionId, getToken]);
 
   const handleRefresh = () => {
     window.location.reload();
