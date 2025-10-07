@@ -1089,43 +1089,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
 
-    // Purchase AI Credits (one-time payment for 25 credits at $2.99)
-    app.post("/api/purchase-ai-credits", isAuthenticated, async (req: any, res) => {
-      try {
-        const userId = req.auth.userId;
-        const user = await storage.getUser(userId);
-        
-        if (!user) {
-          return res.status(404).json({ message: "User not found" });
-        }
-
-        const AI_CREDIT_PRICE = 2.99;
-        const AI_CREDIT_AMOUNT = 25;
-
-        const paymentIntent = await stripe.paymentIntents.create({
-          amount: Math.round(AI_CREDIT_PRICE * 100),
-          currency: "usd",
-          description: `AI Batch - ${AI_CREDIT_AMOUNT} Items`,
-          metadata: {
-            userId,
-            type: "ai_credits",
-            credits: AI_CREDIT_AMOUNT.toString(),
-          },
-          automatic_payment_methods: {
-            enabled: true,
-          },
-        });
-
-        res.json({ 
-          clientSecret: paymentIntent.client_secret,
-          paymentIntentId: paymentIntent.id,
-        });
-      } catch (error: any) {
-        console.error("Error creating AI credit payment:", error);
-        res.status(500).json({ message: "Error creating payment: " + error.message });
-      }
-    });
-
     // Webhook to handle successful payments
     app.post("/api/stripe-webhook", async (req, res) => {
       const sig = req.headers['stripe-signature'];
