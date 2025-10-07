@@ -61,12 +61,23 @@ export default function PaymentSuccess() {
           setStatus('success');
           
           queryClient.invalidateQueries({ queryKey: ['/api/user/credits'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/ai/usage'] });
           
           if (data.type === 'credits') {
             toast({
               title: "Purchase Successful!",
               description: `${data.creditsAdded} AI credits have been added to your account.`,
             });
+            
+            // Check if there are pending items to resume processing
+            const hasPendingItems = localStorage.getItem('pendingItems');
+            if (hasPendingItems) {
+              // Redirect back to post-ad with payment success flag to trigger auto-resume
+              setTimeout(() => {
+                setLocation(`/post-ad?payment=success&credits=${data.creditsAdded}`);
+              }, 2000); // Give user a moment to see success message
+              return;
+            }
           } else {
             toast({
               title: "Payment Successful!",
