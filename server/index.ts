@@ -2,15 +2,6 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
-console.log('=== CLERK KEYS DEBUG ===');
-console.log('CLERK_SECRET_KEY exists:', !!process.env.CLERK_SECRET_KEY);
-console.log('CLERK_SECRET_KEY starts with:', process.env.CLERK_SECRET_KEY?.substring(0, 10));
-console.log('CLERK_PUBLISHABLE_KEY exists:', !!process.env.CLERK_PUBLISHABLE_KEY);
-console.log('CLERK_PUBLISHABLE_KEY starts with:', process.env.CLERK_PUBLISHABLE_KEY?.substring(0, 10));
-console.log('VITE_CLERK_PUBLISHABLE_KEY exists:', !!process.env.VITE_CLERK_PUBLISHABLE_KEY);
-console.log('VITE_CLERK_PUBLISHABLE_KEY starts with:', process.env.VITE_CLERK_PUBLISHABLE_KEY?.substring(0, 10));
-console.log('========================');
-
 const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));

@@ -42,7 +42,9 @@ export function PaymentModal({
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { getToken } = useAuth();
-  const payPerUsePrice = (remainingCount * 0.20).toFixed(2);
+  const subtotal = remainingCount * 0.20;
+  const payPerUsePrice = Math.max(0.50, subtotal).toFixed(2);
+  const hasMinimumApplied = subtotal < 0.50;
 
   const handlePayPerUse = async () => {
     try {
@@ -200,13 +202,20 @@ export function PaymentModal({
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold">${payPerUsePrice}</div>
-                      <div className="text-xs text-muted-foreground">$0.20 per item</div>
+                      <div className="text-xs text-muted-foreground">
+                        {hasMinimumApplied ? "$0.50 minimum" : "$0.20 per item"}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Sparkles className="h-4 w-4 text-primary" />
                     <span>Generate AI for {remainingCount} item{remainingCount > 1 ? 's' : ''}</span>
                   </div>
+                  {hasMinimumApplied && (
+                    <p className="text-xs text-muted-foreground">
+                      Note: $0.50 minimum charge applies (payment processor requirement)
+                    </p>
+                  )}
                   <Button 
                     className="w-full gap-2" 
                     onClick={handlePayPerUse}

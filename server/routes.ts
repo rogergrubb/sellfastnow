@@ -1212,7 +1212,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const pricePerItem = 0.20;
-        const totalAmount = Math.round(itemCount * pricePerItem * 100); // Convert to cents
+        const subtotal = itemCount * pricePerItem;
+        const totalAmount = Math.round(Math.max(0.50, subtotal) * 100); // Stripe minimum $0.50
 
         const session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
@@ -1222,7 +1223,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 currency: 'usd',
                 product_data: {
                   name: `AI Description Generation - ${itemCount} item${itemCount > 1 ? 's' : ''}`,
-                  description: 'AI-powered title, description, and category generation',
+                  description: subtotal < 0.50 
+                    ? `AI-powered listing generation ($0.20/item, $0.50 minimum)` 
+                    : 'AI-powered title, description, and category generation',
                 },
                 unit_amount: totalAmount,
               },
