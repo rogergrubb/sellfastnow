@@ -23,6 +23,60 @@ interface ProgressModalProps {
   phaseMessage?: string;
 }
 
+// Educational tips about AI, SEO, pricing, and selling
+const PROCESSING_TIPS = [
+  {
+    icon: "🎯",
+    title: "Smart Pricing Psychology",
+    description: "Pricing at $99 instead of $100 can increase click-through rates by 20%. Round numbers suggest firm pricing, while precise amounts ($47) feel more negotiable and research-backed."
+  },
+  {
+    icon: "🔍",
+    title: "SEO-Optimized Keywords",
+    description: "AI-generated descriptions include keywords buyers actually search for, making your items 3x more likely to appear in search results. More visibility = faster sales."
+  },
+  {
+    icon: "📝",
+    title: "Detailed Descriptions Sell Faster",
+    description: "Listings with detailed descriptions sell 40% faster than vague ones. AI captures specific details like materials, dimensions, and condition that buyers want to know."
+  },
+  {
+    icon: "🏷️",
+    title: "Meta Tags Drive Discovery",
+    description: "Proper meta tags help search engines categorize your items correctly. AI analyzes your product and assigns the most relevant tags automatically for maximum exposure."
+  },
+  {
+    icon: "💡",
+    title: "Professional Titles Matter",
+    description: "Items with clear, descriptive titles get 60% more views. AI creates titles that include brand, condition, size, and key features - exactly what buyers search for."
+  },
+  {
+    icon: "📊",
+    title: "Accurate Categories = More Buyers",
+    description: "Placing items in the right category increases visibility by 50%. AI analyzes your product and selects the most accurate category automatically."
+  },
+  {
+    icon: "⚡",
+    title: "Save 30+ Minutes Per Listing",
+    description: "Writing quality descriptions manually takes time. AI generates professional product descriptions in seconds, letting you list items 10x faster."
+  },
+  {
+    icon: "✨",
+    title: "Higher Quality = More Sales",
+    description: "Professional-looking listings build buyer trust. AI-generated content is consistent, detailed, and error-free - making your items look premium."
+  },
+  {
+    icon: "🎨",
+    title: "Condition Assessment Accuracy",
+    description: "AI analyzes visible wear and tear to suggest accurate condition ratings (New, Like New, Good, Fair). Honest condition descriptions reduce returns and disputes."
+  },
+  {
+    icon: "💰",
+    title: "Smart Price Suggestions",
+    description: "AI compares similar items to suggest both retail and used pricing. Price competitively from the start to sell faster and maximize your profit."
+  }
+];
+
 export function ProgressModal({ 
   open, 
   currentIndex, 
@@ -58,46 +112,38 @@ export function ProgressModal({
   
   const currentPhaseConfig = phaseConfig[phase];
 
-  // Phase-specific processing tips
-  const uploadTips = [
-    "High-quality images upload faster and look better",
-    "Multiple angles help AI understand your product",
-    "Clear photos lead to better AI descriptions",
-    "Well-lit images get more buyer attention"
-  ];
-  
-  const aiTips = [
-    "AI-generated descriptions help items sell 40% faster",
-    "Quality descriptions increase buyer confidence",
-    "Professional listings get 3x more views", 
-    "Accurate pricing attracts serious buyers",
-    "AI detects details you might miss",
-    "Save hours of manual description writing"
-  ];
-
-  const processingTips = phase === 'upload' ? uploadTips : aiTips;
-  const [currentTip, setCurrentTip] = useState(processingTips[0]);
+  // Educational tip rotation
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
+  const [fadeClass, setFadeClass] = useState('opacity-100');
 
   // Reset tip when modal opens or phase changes
   useEffect(() => {
     if (open) {
-      setCurrentTip(processingTips[0]);
+      setCurrentTipIndex(0);
+      setFadeClass('opacity-100');
     }
   }, [open, phase]);
 
-  // Rotate tips every 5 seconds
+  // Rotate tips every 6 seconds with fade animation
   useEffect(() => {
     if (!open || isComplete) return;
     
     const tipRotation = setInterval(() => {
-      setCurrentTip(prev => {
-        const currentIndex = processingTips.indexOf(prev);
-        return processingTips[(currentIndex + 1) % processingTips.length];
-      });
-    }, 5000);
+      // Fade out
+      setFadeClass('opacity-0');
+      
+      // Wait for fade out, then change tip and fade in
+      setTimeout(() => {
+        setCurrentTipIndex((prev) => (prev + 1) % PROCESSING_TIPS.length);
+        setFadeClass('opacity-100');
+      }, 300);
+      
+    }, 6000); // 6 seconds per tip
 
     return () => clearInterval(tipRotation);
-  }, [open, isComplete, processingTips]);
+  }, [open, isComplete]);
+
+  const currentTip = PROCESSING_TIPS[currentTipIndex];
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -228,13 +274,41 @@ export function ProgressModal({
             ))}
           </div>
 
-          {/* Rotating Tip */}
-          <div className="p-4 bg-accent/30 rounded-lg border">
-            <div className="flex items-start gap-2">
-              <span className="text-lg">💡</span>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {currentTip}
-              </p>
+          {/* Educational Tips with Auto-Rotation */}
+          <div 
+            className={`p-6 bg-gradient-to-br from-primary/90 to-primary rounded-xl text-primary-foreground transition-opacity duration-300 ${fadeClass}`}
+            data-testid="educational-tip"
+          >
+            <div className="text-center space-y-4">
+              {/* Icon */}
+              <div className="text-5xl" data-testid="tip-icon">
+                {currentTip.icon}
+              </div>
+              
+              {/* Content */}
+              <div className="space-y-2">
+                <h4 className="text-lg font-bold" data-testid="tip-title">
+                  {currentTip.title}
+                </h4>
+                <p className="text-sm leading-relaxed opacity-95" data-testid="tip-description">
+                  {currentTip.description}
+                </p>
+              </div>
+              
+              {/* Progress Indicators */}
+              <div className="flex justify-center gap-2 pt-2" data-testid="tip-indicators">
+                {PROCESSING_TIPS.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`transition-all duration-300 rounded-full ${
+                      index === currentTipIndex
+                        ? 'w-6 h-2 bg-white'
+                        : 'w-2 h-2 bg-white/40'
+                    }`}
+                    data-testid={`tip-dot-${index}`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
