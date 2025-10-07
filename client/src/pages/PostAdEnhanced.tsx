@@ -663,6 +663,53 @@ export default function PostAdEnhanced() {
     }
   };
 
+  // Handler for purchasing AI credits (redirects directly to Stripe Checkout)
+  const handlePurchaseCredits = async () => {
+    try {
+      const token = await getToken();
+      
+      if (!token) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to purchase credits",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create Stripe Checkout Session for 25 credits at $2.99
+      const response = await fetch('/api/create-checkout-session/credits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          credits: 25, 
+          amount: 2.99 
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const data = await response.json();
+      
+      // Redirect directly to Stripe Checkout (no intermediate page)
+      if (data.url) {
+        console.log('💳 Redirecting to Stripe Checkout:', data.url);
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start checkout process",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Handler for "Auto-Generate Descriptions" button click
   // Handler for photo processing choice modal
   const handlePhotoProcessingChoice = (multipleAngles: boolean) => {
@@ -929,7 +976,7 @@ export default function PostAdEnhanced() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => setLocation('/purchase-ai-credits')}
+                onClick={handlePurchaseCredits}
                 className="mt-2"
                 data-testid="button-purchase-credits"
               >
@@ -2020,7 +2067,7 @@ export default function PostAdEnhanced() {
                                   <Button 
                                     variant="default" 
                                     size="sm"
-                                    onClick={() => setLocation('/purchase-ai-credits')}
+                                    onClick={handlePurchaseCredits}
                                     data-testid="button-upgrade-credits"
                                   >
                                     <Sparkles className="mr-2 h-3 w-3" />
