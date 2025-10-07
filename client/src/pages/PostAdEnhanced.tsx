@@ -1504,6 +1504,12 @@ export default function PostAdEnhanced() {
               setShowPaymentModal(false);
               setShowBulkReview(true);
             }}
+            onBeforeRedirect={() => {
+              // Save pending items and processed items before redirect
+              console.log('💾 Saving pending items before redirect');
+              localStorage.setItem('pendingItems', JSON.stringify(remainingItemsInfo));
+              localStorage.setItem('processedItems', JSON.stringify(bulkProducts));
+            }}
           />
         )}
       </>

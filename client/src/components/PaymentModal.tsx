@@ -18,6 +18,7 @@ interface PaymentModalProps {
   processedCount: number;
   remainingCount: number;
   onSkip: () => void;
+  onBeforeRedirect?: () => void; // Called before redirecting to save state
 }
 
 const CREDIT_BUNDLES = [
@@ -34,6 +35,7 @@ export function PaymentModal({
   processedCount,
   remainingCount,
   onSkip,
+  onBeforeRedirect,
 }: PaymentModalProps) {
   const { toast } = useToast();
   const { user } = useUser();
@@ -73,6 +75,11 @@ export function PaymentModal({
         variant: "destructive",
       });
       return;
+    }
+    
+    // Save pending items state before redirect
+    if (onBeforeRedirect) {
+      onBeforeRedirect();
     }
     
     const userId = user?.id || '';
