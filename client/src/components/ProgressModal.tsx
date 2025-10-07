@@ -43,8 +43,16 @@ export function ProgressModal({
   ];
 
   const [currentTip, setCurrentTip] = useState(processingTips[0]);
-  const [startTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(Date.now());
   const [timeRemaining, setTimeRemaining] = useState(countdown);
+
+  // Reset start time when modal opens
+  useEffect(() => {
+    if (open) {
+      setStartTime(Date.now());
+      setTimeRemaining(countdown);
+    }
+  }, [open, countdown]);
 
   // Rotate tips every 5 seconds
   useEffect(() => {
