@@ -198,7 +198,7 @@ export default function PostAdEnhanced() {
     status: 'completed' | 'analyzing' | 'waiting' | 'failed';
     imageUrl?: string;
   }[]>([]);
-  const [processingPhase, setProcessingPhase] = useState<'upload' | 'ai' | 'complete'>('upload');
+  const [processingPhase, setProcessingPhase] = useState<'upload' | 'ai' | 'description' | 'complete'>('upload');
   const [phaseMessage, setPhaseMessage] = useState<string>('');
   
   // Opt-in AI analysis states
@@ -1056,9 +1056,10 @@ export default function PostAdEnhanced() {
     setProcessingPhase('ai');
     setPhaseMessage(`Analyzing ${imageUrls.length} item${imageUrls.length > 1 ? 's' : ''} with AI`);
     
-    // Estimate: ~6 seconds per AI analysis
-    const aiEstimate = Math.ceil(imageUrls.length * 6);
-    setCountdown(aiEstimate);
+    // Estimate: Phase 2 (AI Analysis) ~2.5s per item, Phase 3 (Descriptions) ~5.5s per item
+    // Total: ~8s per item
+    const totalEstimate = Math.ceil(imageUrls.length * 8);
+    setCountdown(totalEstimate);
     
     // Initialize progress state
     setBulkProgress({ current: 0, total: imageUrls.length });
@@ -1074,12 +1075,24 @@ export default function PostAdEnhanced() {
       const token = await getToken();
       console.log('🔑 Auth token obtained for bulk analysis');
       
-      // Simulate progressive updates (since we can't get real-time progress from the backend)
-      // In a real implementation, you'd use WebSockets or polling
+      // Simulate progressive updates with phase transitions
+      // Phase 2 (AI Analysis): First 40% of progress
+      // Phase 3 (Description Generation): Remaining 60% of progress
+      let hasTransitionedToDescription = false;
       const updateInterval = setInterval(() => {
         setBulkProgress(prev => {
           if (prev.current < prev.total) {
             const newCurrent = Math.min(prev.current + 1, prev.total);
+            const progressPercent = (newCurrent / prev.total) * 100;
+            
+            // Transition from 'ai' to 'description' phase at 40% progress
+            // OR after first item for small batches (ensures description phase always shows)
+            if (!hasTransitionedToDescription && (progressPercent >= 40 || newCurrent >= Math.max(1, Math.floor(prev.total * 0.4)))) {
+              hasTransitionedToDescription = true;
+              setProcessingPhase('description');
+              setPhaseMessage(`Generating descriptions and meta tags for ${imageUrls.length} item${imageUrls.length > 1 ? 's' : ''}`);
+            }
+            
             setAnalyzedItems(items => items.map((item, i) => {
               if (i < newCurrent - 1) return { ...item, status: 'completed' as const };
               if (i === newCurrent - 1) return { ...item, status: 'analyzing' as const };

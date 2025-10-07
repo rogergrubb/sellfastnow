@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle2, Clock, Loader2, ImageIcon, Upload, Brain } from "lucide-react";
+import { CheckCircle2, Clock, Loader2, ImageIcon, Upload, Brain, FileEdit } from "lucide-react";
 
 interface AnalyzedItem {
   index: number;
@@ -9,7 +9,7 @@ interface AnalyzedItem {
   imageUrl?: string;
 }
 
-export type ProcessingPhase = 'upload' | 'ai' | 'complete';
+export type ProcessingPhase = 'upload' | 'ai' | 'description' | 'complete';
 
 interface ProgressModalProps {
   open: boolean;
@@ -74,6 +74,11 @@ const PROCESSING_TIPS = [
     icon: "💰",
     title: "Smart Price Suggestions",
     description: "AI compares similar items to suggest both retail and used pricing. Price competitively from the start to sell faster and maximize your profit."
+  },
+  {
+    icon: "⏱️",
+    title: "Why Description Generation Takes Longer",
+    description: "Creating detailed descriptions, meta tags, and SEO keywords requires more AI processing than basic image analysis. This extra time ensures your listings are professional, searchable, and optimized for sales."
   }
 ];
 
@@ -96,17 +101,26 @@ export function ProgressModal({
     upload: {
       title: "📤 Uploading Your Photos",
       icon: Upload,
-      description: "Preparing images for AI analysis"
+      description: "Preparing images for AI analysis",
+      color: "from-green-500 to-green-600"
     },
     ai: {
-      title: "🤖 AI Analyzing Your Items",
+      title: "🔍 AI Analyzing Your Items",
       icon: Brain,
-      description: "Generating descriptions and pricing"
+      description: "Detecting products and features",
+      color: "from-blue-500 to-blue-600"
+    },
+    description: {
+      title: "✍️ Generating Descriptions & Meta Tags",
+      icon: FileEdit,
+      description: "Creating detailed content for each item",
+      color: "from-purple-500 to-purple-600"
     },
     complete: {
       title: "✅ Processing Complete",
       icon: CheckCircle2,
-      description: "All items ready for review"
+      description: "All items ready for review",
+      color: "from-emerald-500 to-emerald-600"
     }
   };
   
@@ -162,24 +176,58 @@ export function ProgressModal({
           </DialogDescription>
         </DialogHeader>
         
-        {/* Phase Indicator */}
-        <div className="flex items-center justify-center gap-2 py-2">
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-all ${
-            phase === 'upload' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+        {/* 3-Phase Indicator */}
+        <div className="flex items-center justify-center gap-1 py-2">
+          {/* Phase 1: Upload */}
+          <div className={`flex items-center gap-2 px-2 py-1.5 rounded-full text-xs transition-all ${
+            phase === 'upload' 
+              ? 'bg-primary text-primary-foreground' 
+              : phase === 'ai' || phase === 'description' || phase === 'complete'
+              ? 'bg-muted text-muted-foreground' 
+              : 'bg-muted/50 text-muted-foreground/50'
           }`}>
-            <Upload className="h-4 w-4" />
-            <span>1. Upload</span>
-            {phase !== 'upload' && <CheckCircle2 className="h-4 w-4 text-green-600" />}
+            <Upload className="h-3 w-3" />
+            <span className="hidden sm:inline">1. Upload</span>
+            <span className="sm:hidden">1</span>
+            {(phase === 'ai' || phase === 'description' || phase === 'complete') && (
+              <CheckCircle2 className="h-3 w-3 text-green-600" />
+            )}
           </div>
           
-          <div className="h-px w-8 bg-border" />
+          <div className="h-px w-4 bg-border" />
           
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-all ${
-            phase === 'ai' ? 'bg-primary text-primary-foreground' : phase === 'complete' ? 'bg-muted text-muted-foreground' : 'bg-muted/50 text-muted-foreground/50'
+          {/* Phase 2: AI Analysis */}
+          <div className={`flex items-center gap-2 px-2 py-1.5 rounded-full text-xs transition-all ${
+            phase === 'ai' 
+              ? 'bg-primary text-primary-foreground' 
+              : phase === 'description' || phase === 'complete'
+              ? 'bg-muted text-muted-foreground'
+              : 'bg-muted/50 text-muted-foreground/50'
           }`}>
-            <Brain className="h-4 w-4" />
-            <span>2. AI Analysis</span>
-            {phase === 'complete' && <CheckCircle2 className="h-4 w-4 text-green-600" />}
+            <Brain className="h-3 w-3" />
+            <span className="hidden sm:inline">2. Analysis</span>
+            <span className="sm:hidden">2</span>
+            {(phase === 'description' || phase === 'complete') && (
+              <CheckCircle2 className="h-3 w-3 text-green-600" />
+            )}
+          </div>
+          
+          <div className="h-px w-4 bg-border" />
+          
+          {/* Phase 3: Description Generation */}
+          <div className={`flex items-center gap-2 px-2 py-1.5 rounded-full text-xs transition-all ${
+            phase === 'description' 
+              ? 'bg-primary text-primary-foreground' 
+              : phase === 'complete'
+              ? 'bg-muted text-muted-foreground'
+              : 'bg-muted/50 text-muted-foreground/50'
+          }`}>
+            <FileEdit className="h-3 w-3" />
+            <span className="hidden sm:inline">3. Descriptions</span>
+            <span className="sm:hidden">3</span>
+            {phase === 'complete' && (
+              <CheckCircle2 className="h-3 w-3 text-green-600" />
+            )}
           </div>
         </div>
         
@@ -189,7 +237,8 @@ export function ProgressModal({
             <div className="text-center">
               <p className="text-sm text-muted-foreground mb-2">
                 {phase === 'upload' && `Uploading photo ${currentIndex} of ${totalImages}`}
-                {phase === 'ai' && `Processing item ${currentIndex} of ${totalImages}`}
+                {phase === 'ai' && `Analyzing item ${currentIndex} of ${totalImages}`}
+                {phase === 'description' && `Generating content for item ${currentIndex} of ${totalImages}`}
                 {phase === 'complete' && `All ${totalImages} items complete`}
               </p>
             </div>
@@ -197,13 +246,7 @@ export function ProgressModal({
             {/* Linear Progress Bar with Percentage Inside */}
             <div className="relative w-full h-8 bg-muted rounded-full overflow-hidden">
               <div 
-                className={`h-full transition-all duration-300 ease-out flex items-center justify-center text-sm font-bold text-white ${
-                  phase === 'upload' 
-                    ? 'bg-gradient-to-r from-green-500 to-green-600' 
-                    : phase === 'ai'
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600'
-                    : 'bg-gradient-to-r from-emerald-500 to-emerald-600'
-                }`}
+                className={`h-full transition-all duration-300 ease-out flex items-center justify-center text-sm font-bold text-white bg-gradient-to-r ${currentPhaseConfig.color}`}
                 style={{ width: `${Math.max(progress, 8)}%` }}
                 data-testid="progress-bar"
               >
@@ -212,8 +255,22 @@ export function ProgressModal({
             </div>
             
             <p className="text-center text-sm text-muted-foreground">
-              {currentIndex} of {totalImages} {phase === 'upload' ? 'photos uploaded' : 'items analyzed'}
+              {currentIndex} of {totalImages} {
+                phase === 'upload' ? 'photos uploaded' 
+                : phase === 'ai' ? 'items analyzed'
+                : phase === 'description' ? 'descriptions generated'
+                : 'items complete'
+              }
             </p>
+            
+            {/* Phase 3 Explanation */}
+            {phase === 'description' && (
+              <div className="mt-4 p-3 bg-purple-500/10 border-l-4 border-purple-500 rounded text-sm">
+                <p className="text-muted-foreground leading-relaxed">
+                  <strong className="text-purple-600 dark:text-purple-400">Most detailed phase:</strong> AI is writing professional titles, detailed descriptions, selecting categories, analyzing condition, suggesting prices, and creating SEO-optimized meta tags.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Item Status List with Thumbnails */}
@@ -252,7 +309,10 @@ export function ProgressModal({
                       <>
                         <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />
                         <span className="text-sm font-medium">
-                          {phase === 'upload' ? 'Uploading...' : 'Analyzing...'}
+                          {phase === 'upload' ? 'Uploading...' 
+                            : phase === 'ai' ? 'Analyzing...'
+                            : phase === 'description' ? 'Generating...'
+                            : 'Processing...'}
                         </span>
                       </>
                     )}
