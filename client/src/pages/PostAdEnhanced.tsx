@@ -195,7 +195,8 @@ export default function PostAdEnhanced() {
   const [analyzedItems, setAnalyzedItems] = useState<{
     index: number;
     title: string;
-    status: 'completed' | 'analyzing' | 'waiting';
+    status: 'completed' | 'analyzing' | 'waiting' | 'failed';
+    imageUrl?: string;
   }[]>([]);
   
   // Opt-in AI analysis states
@@ -556,10 +557,11 @@ export default function PostAdEnhanced() {
     // Show progress modal with countdown for 1-3 images
     setShowProgressModal(true);
     setBulkProgress({ current: 0, total: imageUrls.length });
-    setAnalyzedItems(imageUrls.map((_, i) => ({
+    setAnalyzedItems(imageUrls.map((url, i) => ({
       index: i + 1,
       title: '',
-      status: 'waiting' as const
+      status: 'waiting' as const,
+      imageUrl: url
     })));
     
     // Use standard multi-image analysis for 1-3 images
@@ -591,10 +593,11 @@ export default function PostAdEnhanced() {
         setDetectionMessage(analysis.message || null);
 
         // Update analyzed items to show completion
-        setAnalyzedItems(imageUrls.map((_, i) => ({
+        setAnalyzedItems(imageUrls.map((url, i) => ({
           index: i + 1,
           title: i < analysis.products.length ? analysis.products[i].title : 'Unknown',
-          status: 'completed' as const
+          status: 'completed' as const,
+          imageUrl: url
         })));
         setBulkProgress({ current: imageUrls.length, total: imageUrls.length });
 
@@ -774,10 +777,11 @@ export default function PostAdEnhanced() {
     // Show progress modal
     setShowProgressModal(true);
     setBulkProgress({ current: 0, total: imageUrls.length });
-    setAnalyzedItems(imageUrls.map((_, i) => ({
+    setAnalyzedItems(imageUrls.map((url, i) => ({
       index: i + 1,
       title: '',
-      status: 'waiting' as const
+      status: 'waiting' as const,
+      imageUrl: url
     })));
     
     setIsAnalyzingImage(true);
@@ -806,10 +810,11 @@ export default function PostAdEnhanced() {
         setDetectionMessage(`All ${imageUrls.length} photos analyzed as one product`);
 
         // Update progress to show completion
-        setAnalyzedItems(imageUrls.map((_, i) => ({
+        setAnalyzedItems(imageUrls.map((url, i) => ({
           index: i + 1,
           title: analysis.products[0]?.title || 'Product',
-          status: 'completed' as const
+          status: 'completed' as const,
+          imageUrl: url
         })));
         setBulkProgress({ current: imageUrls.length, total: imageUrls.length });
 
@@ -882,10 +887,11 @@ export default function PostAdEnhanced() {
     
     // Initialize progress state
     setBulkProgress({ current: 0, total: imageUrls.length });
-    setAnalyzedItems(imageUrls.map((_, i) => ({
+    setAnalyzedItems(imageUrls.map((url, i) => ({
       index: i + 1,
       title: '',
-      status: 'waiting' as const
+      status: 'waiting' as const,
+      imageUrl: url
     })));
     setShowProgressModal(true);
 
@@ -935,7 +941,8 @@ export default function PostAdEnhanced() {
         setAnalyzedItems(products.map((p: any, i: number) => ({
           index: i + 1,
           title: p.title,
-          status: 'completed' as const
+          status: 'completed' as const,
+          imageUrl: imageUrls[i]
         })));
         setBulkProgress({ current: products.length, total: products.length });
         
