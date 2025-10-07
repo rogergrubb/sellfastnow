@@ -628,8 +628,13 @@ export default function PostAdEnhanced() {
         // OPT-IN: Remove automatic photo analysis even in coached mode
       }
       
-      // Hide upload progress modal after completion
+      // Mark upload phase as complete
       if (files.length > 1) {
+        setProcessingPhase('complete');
+        setPhaseMessage('Upload complete!');
+        
+        // Short delay to show completion before hiding
+        await new Promise(resolve => setTimeout(resolve, 500));
         setShowProgressModal(false);
       }
 
@@ -781,14 +786,27 @@ export default function PostAdEnhanced() {
 
           console.log('✨ Form fields updated successfully for same product');
           
+          // Mark AI phase as complete
+          setProcessingPhase('complete');
+          setPhaseMessage('Analysis complete!');
+          
           // Hide progress modal and show success modal
-          setShowProgressModal(false);
-          setShowSuccessModal(true);
+          setTimeout(() => {
+            setShowProgressModal(false);
+            setShowSuccessModal(true);
+          }, 500);
         } else {
           // Multiple different products detected - hide progress and show multi-product modal
           console.log(`🔀 Multiple products detected (${analysis.products.length} items), showing modal...`);
-          setShowProgressModal(false);
-          setShowMultiProductModal(true);
+          
+          // Mark AI phase as complete
+          setProcessingPhase('complete');
+          setPhaseMessage('Analysis complete!');
+          
+          setTimeout(() => {
+            setShowProgressModal(false);
+            setShowMultiProductModal(true);
+          }, 500);
         }
       } else {
         const errorData = await response.text();
@@ -998,8 +1016,14 @@ export default function PostAdEnhanced() {
             setAiSuggestions(prev => ({ ...prev, condition: true }));
           }
 
-          setShowProgressModal(false);
-          setShowSuccessModal(true);
+          // Mark AI phase as complete
+          setProcessingPhase('complete');
+          setPhaseMessage('Analysis complete!');
+          
+          setTimeout(() => {
+            setShowProgressModal(false);
+            setShowSuccessModal(true);
+          }, 500);
         }
       } else if (response.status === 403) {
         const errorData = await response.json();
@@ -1109,6 +1133,10 @@ export default function PostAdEnhanced() {
             products: remainingItems.products || []
           });
         }
+        
+        // Mark AI phase as complete
+        setProcessingPhase('complete');
+        setPhaseMessage('AI analysis complete!');
         
         // Wait a moment to show completion
         setTimeout(() => {
