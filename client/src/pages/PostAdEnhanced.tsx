@@ -536,14 +536,45 @@ export default function PostAdEnhanced() {
 
     console.log('📤 Starting image upload for', files.length, 'files');
     setIsUploading(true);
+    
+    // Show progress modal for upload phase
+    if (files.length > 1) {
+      setProcessingPhase('upload');
+      setShowProgressModal(true);
+      setBulkProgress({ current: 0, total: files.length });
+      setAnalyzedItems(files.map((file, i) => ({
+        index: i + 1,
+        title: file.name,
+        status: 'waiting' as const,
+        imageUrl: undefined
+      })));
+      
+      // Estimate: ~2.5 seconds per photo upload
+      const uploadEstimate = Math.ceil(files.length * 2.5);
+      setCountdown(uploadEstimate);
+      setPhaseMessage(`Uploading ${files.length} photo${files.length > 1 ? 's' : ''}`);
+    }
+    
     try {
       const token = await getToken();
       console.log('🔑 Auth token obtained for upload:', token ? 'Token present' : 'No token');
       
       const uploadedUrls: string[] = [];
+      const uploadStartTime = Date.now();
 
-      for (const file of files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         console.log('📁 Uploading file:', file.name, 'Size:', file.size, 'bytes');
+        
+        // Update progress - mark current file as analyzing (uploading)
+        if (files.length > 1) {
+          setAnalyzedItems(prev => prev.map(item => 
+            item.index === i + 1 
+              ? { ...item, status: 'analyzing' as const }
+              : item
+          ));
+        }
+        
         const formData = new FormData();
         formData.append('image', file);
 
@@ -560,14 +591,46 @@ export default function PostAdEnhanced() {
         if (!uploadResponse.ok) {
           const errorText = await uploadResponse.text();
           console.error('❌ Upload failed:', uploadResponse.status, errorText);
+          
+          // Mark as failed
+          if (files.length > 1) {
+            setAnalyzedItems(prev => prev.map(item => 
+              item.index === i + 1 
+                ? { ...item, status: 'failed' as const }
+                : item
+            ));
+          }
+          
           throw new Error('Failed to upload image');
         }
 
         const { imageUrl } = await uploadResponse.json();
         console.log('✅ Image uploaded successfully:', imageUrl);
         uploadedUrls.push(imageUrl);
+        
+        // Update progress - mark as completed
+        if (files.length > 1) {
+          setBulkProgress({ current: i + 1, total: files.length });
+          setAnalyzedItems(prev => prev.map(item => 
+            item.index === i + 1 
+              ? { ...item, status: 'completed' as const, imageUrl, title: file.name }
+              : item
+          ));
+          
+          // Update countdown based on actual upload speed
+          const elapsed = (Date.now() - uploadStartTime) / 1000;
+          const avgTimePerUpload = elapsed / (i + 1);
+          const remaining = files.length - (i + 1);
+          const estimatedRemaining = Math.ceil(remaining * avgTimePerUpload);
+          setCountdown(estimatedRemaining);
+        }
 
         // OPT-IN: Remove automatic photo analysis even in coached mode
+      }
+      
+      // Hide upload progress modal after completion
+      if (files.length > 1) {
+        setShowProgressModal(false);
       }
 
       const allImages = [...uploadedImages, ...uploadedUrls];
@@ -617,6 +680,14 @@ export default function PostAdEnhanced() {
       await analyzeBulkImages(imageUrls);
       return;
     }
+    
+    // Set phase to AI analysis
+    setProcessingPhase('ai');
+    setPhaseMessage(`Analyzing ${imageUrls.length} item${imageUrls.length > 1 ? 's' : ''} with AI`);
+    
+    // Estimate: ~6 seconds per AI analysis
+    const aiEstimate = Math.ceil(imageUrls.length * 6);
+    setCountdown(aiEstimate);
     
     // Show progress modal with countdown for 1-3 images
     setShowProgressModal(true);
@@ -838,6 +909,14 @@ export default function PostAdEnhanced() {
   const analyzeMultipleImagesAsOneProduct = async (imageUrls: string[]) => {
     console.log(`📸 Analyzing ${imageUrls.length} images as ONE product (multiple angles)`);
     
+    // Set phase to AI analysis
+    setProcessingPhase('ai');
+    setPhaseMessage(`Analyzing product from ${imageUrls.length} angle${imageUrls.length > 1 ? 's' : ''}`);
+    
+    // Estimate: ~6 seconds per AI analysis (single product from multiple angles)
+    const aiEstimate = Math.ceil(imageUrls.length * 6);
+    setCountdown(aiEstimate);
+    
     // Show progress modal
     setShowProgressModal(true);
     setBulkProgress({ current: 0, total: imageUrls.length });
@@ -948,6 +1027,14 @@ export default function PostAdEnhanced() {
 
   const analyzeBulkImages = async (imageUrls: string[]) => {
     console.log('📦 Starting bulk analysis for', imageUrls.length, 'images');
+    
+    // Set phase to AI analysis
+    setProcessingPhase('ai');
+    setPhaseMessage(`Analyzing ${imageUrls.length} item${imageUrls.length > 1 ? 's' : ''} with AI`);
+    
+    // Estimate: ~6 seconds per AI analysis
+    const aiEstimate = Math.ceil(imageUrls.length * 6);
+    setCountdown(aiEstimate);
     
     // Initialize progress state
     setBulkProgress({ current: 0, total: imageUrls.length });
