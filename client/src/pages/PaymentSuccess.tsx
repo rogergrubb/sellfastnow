@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@clerk/clerk-react";
+import { queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
@@ -9,22 +10,48 @@ import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 export default function PaymentSuccess() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { getToken } = useAuth();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [details, setDetails] = useState<{ type: string; creditsAdded?: number; itemCount?: number }>({ type: '' });
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get('session_id');
-    const type = params.get('type');
+    const verifyPayment = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
 
-    if (!sessionId) {
-      setStatus('error');
-      return;
-    }
+      if (!sessionId) {
+        setStatus('error');
+        return;
+      }
 
-    apiRequest("POST", "/api/verify-checkout-session", { sessionId })
-      .then((res) => res.json())
-      .then((data) => {
+      try {
+        const token = await getToken();
+        
+        if (!token) {
+          setStatus('error');
+          toast({
+            title: "Authentication Required",
+            description: "Please sign in to verify your payment.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const response = await fetch('/api/verify-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ sessionId }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to verify payment');
+        }
+
+        const data = await response.json();
+        
         if (data.success) {
           setDetails({
             type: data.type,
@@ -49,8 +76,7 @@ export default function PaymentSuccess() {
         } else {
           setStatus('error');
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error verifying payment:", error);
         setStatus('error');
         toast({
@@ -58,8 +84,11 @@ export default function PaymentSuccess() {
           description: "Failed to verify your payment. Please contact support.",
           variant: "destructive",
         });
-      });
-  }, [toast]);
+      }
+    };
+
+    verifyPayment();
+  }, [toast, getToken]);
 
   if (status === 'loading') {
     return (

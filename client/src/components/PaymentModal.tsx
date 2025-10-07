@@ -13,7 +13,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@clerk/clerk-react";
 
 interface PaymentModalProps {
   open: boolean;
@@ -41,16 +41,38 @@ export function PaymentModal({
   const [selectedTab, setSelectedTab] = useState<'pay-per-use' | 'bundles'>('pay-per-use');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { getToken } = useAuth();
   const payPerUsePrice = (remainingCount * 0.20).toFixed(2);
 
   const handlePayPerUse = async () => {
     try {
       setLoading(true);
-      const response = await apiRequest(
-        'POST',
-        '/api/create-checkout-session/pay-per-use',
-        { itemCount: remainingCount }
-      );
+      const token = await getToken();
+      
+      if (!token) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to continue with payment",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch('/api/create-checkout-session/pay-per-use', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ itemCount: remainingCount }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create checkout session');
+      }
+
       const data = await response.json();
       
       if (data.url) {
@@ -69,11 +91,32 @@ export function PaymentModal({
   const handleBundlePurchase = async (credits: number, price: number) => {
     try {
       setLoading(true);
-      const response = await apiRequest(
-        'POST',
-        '/api/create-checkout-session/credits',
-        { credits, amount: price }
-      );
+      const token = await getToken();
+      
+      if (!token) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to continue with payment",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch('/api/create-checkout-session/credits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ credits, amount: price }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create checkout session');
+      }
+
       const data = await response.json();
       
       if (data.url) {
