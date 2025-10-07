@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth, useUser } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -134,6 +134,7 @@ export default function PostAdEnhanced() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { isSignedIn, isLoaded, getToken } = useAuth();
+  const { user } = useUser();
   
   // Check if we're in edit mode
   const urlParams = new URLSearchParams(window.location.search);
@@ -666,45 +667,34 @@ export default function PostAdEnhanced() {
   // Handler for purchasing AI credits (redirects directly to Stripe Checkout)
   const handlePurchaseCredits = async () => {
     try {
-      const token = await getToken();
+      const stripeLink = import.meta.env.VITE_STRIPE_25_CREDITS_LINK;
       
-      if (!token) {
+      if (!stripeLink) {
         toast({
-          title: "Authentication Required",
-          description: "Please sign in to purchase credits",
+          title: "Payment Link Not Configured",
+          description: "Payment link is not configured. Please contact support.",
           variant: "destructive",
         });
         return;
       }
 
-      // Create Stripe Checkout Session for 25 credits at $2.99
-      const response = await fetch('/api/create-checkout-session/credits', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ 
-          credits: 25, 
-          amount: 2.99 
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create checkout session');
-      }
-
-      const data = await response.json();
+      const userId = user?.id || '';
+      const userEmail = user?.primaryEmailAddress?.emailAddress || '';
+      const checkoutUrl = `${stripeLink}?client_reference_id=${userId}&prefilled_email=${userEmail}`;
       
-      // Redirect directly to Stripe Checkout (no intermediate page)
-      if (data.url) {
-        console.log('💳 Redirecting to Stripe Checkout:', data.url);
-        // Break out of Replit iframe - Stripe requires top-level navigation
+      console.log('💳 Redirecting to Stripe checkout:', checkoutUrl);
+      
+      // Break out of Replit iframe - Stripe requires top-level navigation
+      try {
         if (window.top) {
-          window.top.location.href = data.url;
+          window.top.location.href = checkoutUrl;
         } else {
-          window.location.href = data.url;
+          window.location.href = checkoutUrl;
         }
+      } catch (error) {
+        console.error('❌ Redirect error:', error);
+        // Fallback: open in new tab
+        window.open(checkoutUrl, '_blank');
       }
     } catch (error: any) {
       toast({

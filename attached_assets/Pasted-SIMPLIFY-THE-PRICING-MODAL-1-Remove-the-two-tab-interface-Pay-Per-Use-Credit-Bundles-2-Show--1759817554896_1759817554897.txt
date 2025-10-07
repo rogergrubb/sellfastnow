@@ -1,0 +1,109 @@
+SIMPLIFY THE PRICING MODAL:
+
+1. Remove the two-tab interface (Pay Per Use / Credit Bundles)
+2. Show ONLY the 5 credit bundle options
+3. Remove all Pay Per Use code and dynamic pricing logic
+
+UPDATE MODAL TO SHOW ONLY BUNDLES:
+```jsx
+<div className="pricing-modal">
+  <h2>First 7 Items Processed!</h2>
+  <p>We've generated AI descriptions for your first 7 items.</p>
+  <p>You have 2 more items remaining.</p>
+  
+  <h3>Choose a Credit Bundle:</h3>
+  
+  <div className="credit-bundles">
+    <div className="bundle-card">
+      <span className="badge popular">POPULAR</span>
+      <h4>25 Credits</h4>
+      <div className="price">$2.99</div>
+      <p className="price-per">$0.12 per credit</p>
+      <button onClick={() => handlePurchase(25)}>
+        Buy Now
+      </button>
+    </div>
+    
+    <div className="bundle-card">
+      <span className="badge">40% off</span>
+      <h4>50 Credits</h4>
+      <div className="price">$4.99</div>
+      <p className="price-per">$0.10 per credit</p>
+      <button onClick={() => handlePurchase(50)}>
+        Buy Now
+      </button>
+    </div>
+    
+    <div className="bundle-card">
+      <span className="badge">50% off</span>
+      <h4>75 Credits</h4>
+      <div className="price">$6.99</div>
+      <p className="price-per">$0.09 per credit</p>
+      <button onClick={() => handlePurchase(75)}>
+        Buy Now
+      </button>
+    </div>
+    
+    <div className="bundle-card">
+      <span className="badge">55% off</span>
+      <h4>100 Credits</h4>
+      <div className="price">$8.99</div>
+      <p className="price-per">$0.09 per credit</p>
+      <button onClick={() => handlePurchase(100)}>
+        Buy Now
+      </button>
+    </div>
+    
+    <div className="bundle-card highlighted">
+      <span className="badge best-value">BEST VALUE - 60% off</span>
+      <h4>500 Credits</h4>
+      <div className="price">$39.99</div>
+      <p className="price-per">$0.08 per credit</p>
+      <button onClick={() => handlePurchase(500)}>
+        Buy Now
+      </button>
+    </div>
+  </div>
+  
+  <button className="skip-button" onClick={handleSkip}>
+    Skip AI - I'll enter details manually
+  </button>
+</div>
+PURCHASE HANDLER (already working):
+javascriptconst handlePurchase = (creditAmount) => {
+  const links = {
+    25: import.meta.env.VITE_STRIPE_25_CREDITS_LINK,
+    50: import.meta.env.VITE_STRIPE_50_CREDITS_LINK,
+    75: import.meta.env.VITE_STRIPE_75_CREDITS_LINK,
+    100: import.meta.env.VITE_STRIPE_100_CREDITS_LINK,
+    500: import.meta.env.VITE_STRIPE_500_CREDITS_LINK
+  };
+  
+  const stripeLink = links[creditAmount];
+  
+  if (!stripeLink) {
+    alert('Payment option not available');
+    return;
+  }
+  
+  const checkoutUrl = `${stripeLink}?client_reference_id=${userId}&prefilled_email=${userEmail}`;
+  
+  // Break out of iframe
+  window.top.location.href = checkoutUrl;
+};
+REMOVE ALL OF THESE:
+
+Pay Per Use tab
+Pay Per Use button handler
+Dynamic pricing logic
+$0.50 minimum charge code
+/api/create-checkout-session endpoint
+
+KEEP ONLY:
+
+5 credit bundle cards
+handlePurchase function with 5 Stripe links
+Skip button for manual entry
+
+This simplifies the entire payment flow to just: Choose bundle → Click Buy Now → Stripe checkout loads.
+Implement this now and confirm all 5 "Buy Now" buttons work correctly.
