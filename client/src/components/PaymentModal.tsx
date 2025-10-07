@@ -79,7 +79,11 @@ export function PaymentModal({
     
     // Save pending items state before redirect
     if (onBeforeRedirect) {
+      console.log('💾 Calling onBeforeRedirect to save state');
       onBeforeRedirect();
+      console.log('✅ onBeforeRedirect completed');
+    } else {
+      console.warn('⚠️ No onBeforeRedirect callback provided');
     }
     
     const userId = user?.id || '';

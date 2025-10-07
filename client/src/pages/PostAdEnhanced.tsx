@@ -327,7 +327,11 @@ export default function PostAdEnhanced() {
     const paymentSuccess = urlParams.get('payment') === 'success';
     const newCredits = urlParams.get('credits');
     
+    console.log('🔍 Checking for payment success...', { paymentSuccess, newCredits });
+    
     if (paymentSuccess) {
+      console.log('✅ Payment success detected!');
+      
       // Show success toast
       toast({
         title: "Payment Successful!",
@@ -341,11 +345,19 @@ export default function PostAdEnhanced() {
       const pendingItemsStr = localStorage.getItem('pendingItems');
       const processedItemsStr = localStorage.getItem('processedItems');
       
+      console.log('📦 Checking localStorage:', { 
+        hasPendingItems: !!pendingItemsStr, 
+        hasProcessedItems: !!processedItemsStr 
+      });
+      
       if (pendingItemsStr && processedItemsStr) {
         console.log('🔄 Auto-resuming processing after payment');
         
         const pendingItems = JSON.parse(pendingItemsStr);
         const processedItems = JSON.parse(processedItemsStr);
+        
+        console.log('📋 Pending items:', pendingItems);
+        console.log('✅ Processed items:', processedItems);
         
         // Restore state
         setBulkProducts(processedItems);
@@ -354,13 +366,19 @@ export default function PostAdEnhanced() {
         // Clear localStorage
         localStorage.removeItem('pendingItems');
         localStorage.removeItem('processedItems');
+        console.log('🧹 Cleared localStorage');
         
         // Resume processing remaining items
         setTimeout(() => {
           if (pendingItems.imageUrls && pendingItems.imageUrls.length > 0) {
+            console.log('🚀 Resuming analysis for', pendingItems.imageUrls.length, 'items');
             analyzeBulkImages(pendingItems.imageUrls);
+          } else {
+            console.warn('⚠️ No imageUrls found in pending items');
           }
         }, 1000);
+      } else {
+        console.log('ℹ️ No pending items found in localStorage');
       }
     }
   }, [toast]);
