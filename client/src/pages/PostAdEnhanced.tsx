@@ -198,6 +198,8 @@ export default function PostAdEnhanced() {
     status: 'completed' | 'analyzing' | 'waiting' | 'failed';
     imageUrl?: string;
   }[]>([]);
+  const [processingPhase, setProcessingPhase] = useState<'upload' | 'ai' | 'complete'>('upload');
+  const [phaseMessage, setPhaseMessage] = useState<string>('');
   
   // Opt-in AI analysis states
   const [showWarningModal, setShowWarningModal] = useState(false);
@@ -1546,6 +1548,8 @@ export default function PostAdEnhanced() {
           analyzedItems={analyzedItems}
           countdown={countdown}
           formatTime={formatTime}
+          phase={processingPhase}
+          phaseMessage={phaseMessage}
           onClose={() => {
             setShowProgressModal(false);
             if (bulkProducts.length > 0) {
@@ -2805,6 +2809,8 @@ export default function PostAdEnhanced() {
         analyzedItems={analyzedItems}
         countdown={countdown}
         formatTime={formatTime}
+        phase={processingPhase}
+        phaseMessage={phaseMessage}
         onClose={() => {
           setShowProgressModal(false);
           if (bulkProducts.length > 0) {
