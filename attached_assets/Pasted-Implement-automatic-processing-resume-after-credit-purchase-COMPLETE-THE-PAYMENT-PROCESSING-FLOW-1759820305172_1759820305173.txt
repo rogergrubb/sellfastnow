@@ -1,0 +1,146 @@
+Implement automatic processing resume after credit purchase:
+
+COMPLETE THE PAYMENT → PROCESSING FLOW:
+
+1. UPDATE STRIPE PAYMENT LINKS WITH SUCCESS URL:
+
+In Stripe Dashboard, edit all 5 payment links:
+- Success URL: https://[your-replit-url]/payment-success?credits={AMOUNT}
+- Cancel URL: https://[your-replit-url]/post-ad
+
+Or recreate them with success_url parameter.
+
+2. CREATE WEBHOOK ENDPOINT:
+```javascript
+app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  
+  let event;
+  
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+  
+  // Handle successful payment
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const userId = session.client_reference_id;
+    
+    // Determine credits purchased based on amount
+    const amount = session.amount_total / 100; // Convert from cents
+    let creditsToAdd = 0;
+    
+    if (amount === 2.99) creditsToAdd = 25;
+    else if (amount === 4.99) creditsToAdd = 50;
+    else if (amount === 6.99) creditsToAdd = 75;
+    else if (amount === 8.99) creditsToAdd = 100;
+    else if (amount === 39.99) creditsToAdd = 500;
+    
+    // Add credits to user account
+    await db.query(
+      'UPDATE users SET ai_credits_purchased = ai_credits_purchased + $1 WHERE id = $2',
+      [creditsToAdd, userId]
+    );
+    
+    console.log(`Added ${creditsToAdd} credits to user ${userId}`);
+  }
+  
+  res.json({ received: true });
+});
+
+CREATE PAYMENT SUCCESS PAGE:
+
+javascript// /payment-success route
+app.get('/payment-success', async (req, res) => {
+  const { session_id } = req.query;
+  const userId = req.auth.userId;
+  
+  // Get updated credit balance
+  const user = await db.query('SELECT ai_credits_purchased FROM users WHERE id = $1', [userId]);
+  const credits = user.ai_credits_purchased;
+  
+  // Return to upload page with success state
+  res.redirect(`/post-ad?payment=success&credits=${credits}`);
+});
+
+AUTO-RESUME PROCESSING ON RETURN:
+
+javascript// In PostAd component
+useEffect(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const paymentSuccess = urlParams.get('payment') === 'success';
+  const newCredits = urlParams.get('credits');
+  
+  if (paymentSuccess && pendingItems.length > 0) {
+    // Show success toast
+    toast.success(`Payment successful! ${newCredits} credits added to your account.`);
+    
+    // Auto-resume processing remaining items
+    setTimeout(() => {
+      resumeProcessing(pendingItems);
+    }, 1000);
+  }
+}, []);
+
+const resumeProcessing = async (remainingItems) => {
+  setShowProgressModal(true);
+  setProcessingStatus('Resuming AI processing...');
+  
+  try {
+    // Process remaining items with purchased credits
+    const results = await processAIBatch(remainingItems);
+    
+    // Update UI with results
+    setAllItemsProcessed(true);
+    toast.success('All items processed successfully!');
+    
+  } catch (error) {
+    console.error('Resume processing failed:', error);
+    toast.error('Failed to process remaining items. Please try again.');
+  }
+};
+
+STORE PENDING ITEMS IN SESSION:
+
+When user clicks "Buy Now", save the pending items:
+javascriptconst handlePurchase = (creditAmount) => {
+  // Save pending items to localStorage before redirect
+  localStorage.setItem('pendingItems', JSON.stringify(remainingImages));
+  localStorage.setItem('processedItems', JSON.stringify(completedItems));
+  
+  // Redirect to Stripe
+  window.top.location.href = stripeCheckoutUrl;
+};
+
+// On return, retrieve pending items
+const pendingItems = JSON.parse(localStorage.getItem('pendingItems') || '[]');
+const processedItems = JSON.parse(localStorage.getItem('processedItems') || '[]');
+
+SET UP STRIPE WEBHOOK IN DASHBOARD:
+
+
+Go to: https://dashboard.stripe.com/test/webhooks
+Click "Add endpoint"
+Endpoint URL: https://[your-replit-url]/api/stripe/webhook
+Select events: checkout.session.completed
+Copy webhook signing secret
+Add to Replit Secrets as: STRIPE_WEBHOOK_SECRET
+
+EXPECTED USER FLOW:
+
+Upload 9 items
+First 5 process (free)
+"Buy credits" modal appears
+Click "Buy 25 Credits - $2.99"
+Complete Stripe payment
+Auto-redirect back to app
+Toast: "Payment successful! 25 credits added"
+Progress modal: "Resuming processing..."
+Remaining 4 items process automatically
+All 9 items complete, ready to review
+
+Implement this complete flow and test end-to-end.

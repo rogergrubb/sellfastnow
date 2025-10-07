@@ -1110,6 +1110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).send(`Webhook Error: ${err.message}`);
       }
 
+      // Handle Payment Intent success (legacy)
       if (event.type === 'payment_intent.succeeded') {
         const paymentIntent = event.data.object;
         const { userId, type, credits } = paymentIntent.metadata;
@@ -1121,6 +1122,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } catch (error) {
             console.error("Error adding AI credits:", error);
           }
+        }
+      }
+
+      // Handle Checkout Session completion (Payment Links)
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        const userId = session.client_reference_id;
+        
+        if (!userId) {
+          console.error('No client_reference_id in checkout session');
+          return res.json({ received: true });
+        }
+        
+        // Determine credits based on amount
+        const amount = (session.amount_total || 0) / 100; // Convert from cents
+        let creditsToAdd = 0;
+        
+        if (amount === 2.99) creditsToAdd = 25;
+        else if (amount === 4.99) creditsToAdd = 50;
+        else if (amount === 6.99) creditsToAdd = 75;
+        else if (amount === 8.99) creditsToAdd = 100;
+        else if (amount === 39.99) creditsToAdd = 500;
+        
+        if (creditsToAdd > 0) {
+          try {
+            await storage.purchaseCredits(userId, creditsToAdd, amount, session.id);
+            console.log(`✅ Webhook: Added ${creditsToAdd} credits to user ${userId} from checkout session`);
+          } catch (error) {
+            console.error("Error adding credits from checkout session:", error);
+          }
+        } else {
+          console.warn(`Unknown amount in checkout session: $${amount}`);
         }
       }
 
