@@ -13,7 +13,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth, useUser } from "@clerk/clerk-react";
 
 interface PaymentModalProps {
   open: boolean;
@@ -27,7 +27,6 @@ const CREDIT_BUNDLES = [
   { credits: 25, price: 2.99, pricePerCredit: 0.12, popular: true, savings: "40% off" },
   { credits: 50, price: 4.99, pricePerCredit: 0.10, popular: false, savings: "50% off" },
   { credits: 100, price: 8.99, pricePerCredit: 0.09, popular: false, savings: "55% off" },
-  { credits: 1000, price: 59.99, pricePerCredit: 0.06, popular: false, savings: "70% off" },
 ];
 
 export function PaymentModal({
@@ -42,6 +41,7 @@ export function PaymentModal({
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { getToken } = useAuth();
+  const { user } = useUser();
   const subtotal = remainingCount * 0.20;
   const payPerUsePrice = Math.max(0.50, subtotal).toFixed(2);
   const hasMinimumApplied = subtotal < 0.50;
@@ -141,6 +141,47 @@ export function PaymentModal({
         variant: "destructive",
       });
       setLoading(false);
+    }
+  };
+
+  // Handler for direct Stripe payment links (simpler approach)
+  const handleBuyCredits = (tier: number) => {
+    let stripeLink;
+    
+    if (tier === 25) {
+      stripeLink = import.meta.env.VITE_STRIPE_25_CREDITS_LINK;
+    } else if (tier === 50) {
+      stripeLink = import.meta.env.VITE_STRIPE_50_CREDITS_LINK;
+    } else if (tier === 100) {
+      stripeLink = import.meta.env.VITE_STRIPE_100_CREDITS_LINK;
+    }
+    
+    if (!stripeLink) {
+      toast({
+        title: "Payment Link Not Configured",
+        description: `Payment link for ${tier} credits is not configured yet. Please contact support.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const userId = user?.id || '';
+    const userEmail = user?.primaryEmailAddress?.emailAddress || '';
+    const checkoutUrl = `${stripeLink}?client_reference_id=${userId}&prefilled_email=${userEmail}`;
+    
+    console.log('💳 Redirecting to Stripe checkout:', checkoutUrl);
+    
+    // Use top-level window to avoid iframe issues
+    try {
+      if (window.top) {
+        window.top.location.href = checkoutUrl;
+      } else {
+        window.location.href = checkoutUrl;
+      }
+    } catch (error) {
+      console.error('❌ Redirect error:', error);
+      // Fallback: open in new tab
+      window.open(checkoutUrl, '_blank');
     }
   };
 
@@ -252,7 +293,7 @@ export function PaymentModal({
                     className={`p-4 cursor-pointer transition-all hover-elevate ${
                       bundle.popular ? 'border-2 border-primary' : ''
                     }`}
-                    onClick={() => !loading && handleBundlePurchase(bundle.credits, bundle.price)}
+                    onClick={() => handleBuyCredits(bundle.credits)}
                     data-testid={`card-bundle-${bundle.credits}`}
                   >
                     <div className="flex items-center justify-between">
