@@ -1200,6 +1200,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ message: "Error confirming purchase: " + error.message });
       }
     });
+
+    // Create Stripe Checkout Session for Pay-Per-Use
+    app.post("/api/create-checkout-session/pay-per-use", isAuthenticated, async (req: any, res) => {
+      try {
+        const userId = req.auth.userId;
+        const { itemCount } = req.body;
+
+        if (!itemCount || itemCount <= 0) {
+          return res.status(400).json({ message: "Invalid item count" });
+        }
+
+        const pricePerItem = 0.20;
+        const totalAmount = Math.round(itemCount * pricePerItem * 100); // Convert to cents
+
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price_data: {
+                currency: 'usd',
+                product_data: {
+                  name: `AI Description Generation - ${itemCount} item${itemCount > 1 ? 's' : ''}`,
+                  description: 'AI-powered title, description, and category generation',
+                },
+                unit_amount: totalAmount,
+              },
+              quantity: 1,
+            },
+          ],
+          mode: 'payment',
+          success_url: `${process.env.CLIENT_URL || 'http://localhost:5000'}/payment/success?session_id={CHECKOUT_SESSION_ID}&type=pay-per-use&items=${itemCount}`,
+          cancel_url: `${process.env.CLIENT_URL || 'http://localhost:5000'}/payment/cancel`,
+          metadata: {
+            userId,
+            type: 'pay_per_use',
+            itemCount: itemCount.toString(),
+          },
+        });
+
+        res.json({ sessionId: session.id, url: session.url });
+      } catch (error: any) {
+        console.error("Error creating checkout session:", error);
+        res.status(500).json({ message: "Error creating checkout session: " + error.message });
+      }
+    });
+
+    // Create Stripe Checkout Session for Credit Bundles
+    app.post("/api/create-checkout-session/credits", isAuthenticated, async (req: any, res) => {
+      try {
+        const userId = req.auth.userId;
+        const { credits, amount } = req.body;
+
+        if (!credits || credits <= 0 || !amount || amount <= 0) {
+          return res.status(400).json({ message: "Invalid credits or amount" });
+        }
+
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price_data: {
+                currency: 'usd',
+                product_data: {
+                  name: `${credits} AI Credits`,
+                  description: 'Credits never expire - Use for AI-powered listing generation',
+                },
+                unit_amount: Math.round(amount * 100), // Convert to cents
+              },
+              quantity: 1,
+            },
+          ],
+          mode: 'payment',
+          success_url: `${process.env.CLIENT_URL || 'http://localhost:5000'}/payment/success?session_id={CHECKOUT_SESSION_ID}&type=credits&credits=${credits}`,
+          cancel_url: `${process.env.CLIENT_URL || 'http://localhost:5000'}/payment/cancel`,
+          metadata: {
+            userId,
+            type: 'credit_bundle',
+            credits: credits.toString(),
+          },
+        });
+
+        res.json({ sessionId: session.id, url: session.url });
+      } catch (error: any) {
+        console.error("Error creating checkout session:", error);
+        res.status(500).json({ message: "Error creating checkout session: " + error.message });
+      }
+    });
+
+    // Verify Checkout Session and Complete Purchase
+    app.post("/api/verify-checkout-session", isAuthenticated, async (req: any, res) => {
+      try {
+        const userId = req.auth.userId;
+        const { sessionId } = req.body;
+
+        if (!sessionId) {
+          return res.status(400).json({ message: "Session ID required" });
+        }
+
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+        if (session.payment_status !== 'paid') {
+          return res.status(400).json({ message: "Payment not completed" });
+        }
+
+        if (session.metadata?.userId !== userId) {
+          return res.status(403).json({ message: "Session does not belong to you" });
+        }
+
+        const type = session.metadata?.type;
+        
+        if (type === 'credit_bundle') {
+          const credits = parseInt(session.metadata?.credits || '0');
+          if (credits > 0) {
+            await storage.purchaseCredits(userId, credits, session.amount_total! / 100, sessionId);
+            res.json({ 
+              success: true, 
+              type: 'credits',
+              creditsAdded: credits,
+            });
+          } else {
+            res.status(400).json({ message: "Invalid credit amount" });
+          }
+        } else if (type === 'pay_per_use') {
+          const itemCount = parseInt(session.metadata?.itemCount || '0');
+          res.json({ 
+            success: true, 
+            type: 'pay_per_use',
+            itemCount,
+          });
+        } else {
+          res.status(400).json({ message: "Invalid session type" });
+        }
+      } catch (error: any) {
+        console.error("Error verifying checkout session:", error);
+        res.status(500).json({ message: "Error verifying session: " + error.message });
+      }
+    });
   }
 
   // ======================
