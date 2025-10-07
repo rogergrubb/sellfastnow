@@ -321,6 +321,50 @@ export default function PostAdEnhanced() {
     }
   }, [showProgressModal, countdown]);
 
+  // Auto-resume processing after successful payment
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentSuccess = urlParams.get('payment') === 'success';
+    const newCredits = urlParams.get('credits');
+    
+    if (paymentSuccess) {
+      // Show success toast
+      toast({
+        title: "Payment Successful!",
+        description: `${newCredits} AI credits added to your account. Resuming processing...`,
+      });
+      
+      // Clear URL parameters
+      window.history.replaceState({}, '', '/post-ad');
+      
+      // Check for pending items
+      const pendingItemsStr = localStorage.getItem('pendingItems');
+      const processedItemsStr = localStorage.getItem('processedItems');
+      
+      if (pendingItemsStr && processedItemsStr) {
+        console.log('🔄 Auto-resuming processing after payment');
+        
+        const pendingItems = JSON.parse(pendingItemsStr);
+        const processedItems = JSON.parse(processedItemsStr);
+        
+        // Restore state
+        setBulkProducts(processedItems);
+        setRemainingItemsInfo(pendingItems);
+        
+        // Clear localStorage
+        localStorage.removeItem('pendingItems');
+        localStorage.removeItem('processedItems');
+        
+        // Resume processing remaining items
+        setTimeout(() => {
+          if (pendingItems.imageUrls && pendingItems.imageUrls.length > 0) {
+            analyzeBulkImages(pendingItems.imageUrls);
+          }
+        }, 1000);
+      }
+    }
+  }, [toast]);
+
   // Calculate estimated time based on number of photos
   const calculateEstimatedTime = (photoCount: number): number => {
     if (photoCount === 1) return 22;
