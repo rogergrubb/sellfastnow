@@ -78,7 +78,12 @@ export function PaymentModal({
       const data = await response.json();
       
       if (data.url) {
-        window.location.href = data.url;
+        // Break out of Replit iframe - Stripe requires top-level navigation
+        if (window.top) {
+          window.top.location.href = data.url;
+        } else {
+          window.location.href = data.url;
+        }
       }
     } catch (error: any) {
       toast({
@@ -122,7 +127,12 @@ export function PaymentModal({
       const data = await response.json();
       
       if (data.url) {
-        window.location.href = data.url;
+        // Break out of Replit iframe - Stripe requires top-level navigation
+        if (window.top) {
+          window.top.location.href = data.url;
+        } else {
+          window.location.href = data.url;
+        }
       }
     } catch (error: any) {
       toast({

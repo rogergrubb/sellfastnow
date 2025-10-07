@@ -699,7 +699,12 @@ export default function PostAdEnhanced() {
       // Redirect directly to Stripe Checkout (no intermediate page)
       if (data.url) {
         console.log('💳 Redirecting to Stripe Checkout:', data.url);
-        window.location.href = data.url;
+        // Break out of Replit iframe - Stripe requires top-level navigation
+        if (window.top) {
+          window.top.location.href = data.url;
+        } else {
+          window.location.href = data.url;
+        }
       }
     } catch (error: any) {
       toast({
