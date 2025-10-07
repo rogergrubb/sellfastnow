@@ -78,7 +78,7 @@ const PROCESSING_TIPS = [
   {
     icon: "⏱️",
     title: "Why Description Generation Takes Longer",
-    description: "Creating detailed descriptions, meta tags, and SEO keywords requires more AI processing than basic image analysis. This extra time ensures your listings are professional, searchable, and optimized for sales."
+    description: "Phase 3 takes ~24 seconds per item because AI is creating professional titles, detailed descriptions, accurate categories, condition assessment, price suggestions, and SEO meta tags. This is 3x longer than analysis, but ensures your listings are complete and optimized for sales."
   }
 ];
 
@@ -267,7 +267,7 @@ export function ProgressModal({
             {phase === 'description' && (
               <div className="mt-4 p-3 bg-purple-500/10 border-l-4 border-purple-500 rounded text-sm">
                 <p className="text-muted-foreground leading-relaxed">
-                  <strong className="text-purple-600 dark:text-purple-400">Most detailed phase:</strong> AI is writing professional titles, detailed descriptions, selecting categories, analyzing condition, suggesting prices, and creating SEO-optimized meta tags.
+                  <strong className="text-purple-600 dark:text-purple-400">Most detailed phase (~24s per item):</strong> AI is writing professional titles, detailed descriptions, selecting categories, analyzing condition, suggesting prices, and creating SEO-optimized meta tags.
                 </p>
               </div>
             )}

@@ -1054,11 +1054,21 @@ export default function PostAdEnhanced() {
     
     // Set phase to AI analysis
     setProcessingPhase('ai');
-    setPhaseMessage(`Analyzing ${imageUrls.length} item${imageUrls.length > 1 ? 's' : ''} with AI`);
+    setPhaseMessage(`Analyzing ${imageUrls.length} photo${imageUrls.length > 1 ? 's' : ''} with AI`);
     
-    // Estimate: Phase 2 (AI Analysis) ~2.5s per item, Phase 3 (Descriptions) ~5.5s per item
-    // Total: ~8s per item
-    const totalEstimate = Math.ceil(imageUrls.length * 8);
+    // REAL-WORLD TIMING (from actual test: 14 photos, 5 items, 4 minutes):
+    // Phase 1: Upload - 4.3s per photo
+    // Phase 2: Analysis - 4.3s per photo  
+    // Phase 3: Descriptions - 24s per ITEM (not photo!)
+    // 
+    // Initial estimate based on photo count (we don't know item count yet)
+    // Phases 1 & 2: photos × 4.3s each = photos × 8.6s
+    // Phase 3: Will update after we know actual item count
+    const phase1And2Time = Math.ceil(imageUrls.length * 8.6);
+    
+    // Conservative Phase 3 estimate (assume worst case: all photos are unique items)
+    const estimatedPhase3 = Math.ceil(imageUrls.length * 24);
+    const totalEstimate = phase1And2Time + estimatedPhase3;
     setCountdown(totalEstimate);
     
     // Initialize progress state
@@ -1076,8 +1086,9 @@ export default function PostAdEnhanced() {
       console.log('🔑 Auth token obtained for bulk analysis');
       
       // Simulate progressive updates with phase transitions
-      // Phase 2 (AI Analysis): First 40% of progress
-      // Phase 3 (Description Generation): Remaining 60% of progress
+      // Phase 2 (AI Analysis): ~33% of total time (photos × 4.3s)
+      // Phase 3 (Description): ~67% of total time (items × 24s)
+      // Note: We process all photos in Phase 2, then all items in Phase 3
       let hasTransitionedToDescription = false;
       const updateInterval = setInterval(() => {
         setBulkProgress(prev => {
@@ -1085,12 +1096,14 @@ export default function PostAdEnhanced() {
             const newCurrent = Math.min(prev.current + 1, prev.total);
             const progressPercent = (newCurrent / prev.total) * 100;
             
-            // Transition from 'ai' to 'description' phase at 40% progress
-            // OR after first item for small batches (ensures description phase always shows)
-            if (!hasTransitionedToDescription && (progressPercent >= 40 || newCurrent >= Math.max(1, Math.floor(prev.total * 0.4)))) {
+            // Transition from 'ai' to 'description' phase at 33% progress
+            // (Phase 2 is ~33% of total time based on real-world data)
+            // OR after first photo for small batches (ensures description phase always shows)
+            if (!hasTransitionedToDescription && (progressPercent >= 33 || newCurrent >= Math.max(1, Math.floor(prev.total * 0.33)))) {
               hasTransitionedToDescription = true;
               setProcessingPhase('description');
-              setPhaseMessage(`Generating descriptions and meta tags for ${imageUrls.length} item${imageUrls.length > 1 ? 's' : ''}`);
+              // Note: We'll update the message with actual item count when API returns
+              setPhaseMessage(`Generating descriptions and meta tags (most detailed phase)`);
             }
             
             setAnalyzedItems(items => items.map((item, i) => {
@@ -1102,7 +1115,7 @@ export default function PostAdEnhanced() {
           }
           return prev;
         });
-      }, 2000); // Update every 2 seconds as simulation
+      }, 3000); // Update every 3 seconds (more realistic for actual processing time)
 
       console.log('📤 Calling /api/ai/analyze-bulk-images endpoint...');
       const response = await fetch('/api/ai/analyze-bulk-images', {
@@ -1147,9 +1160,18 @@ export default function PostAdEnhanced() {
           });
         }
         
+        // Update Phase 3 message with actual item count
+        // Real-world timing: 24 seconds per item for description generation
+        const actualItemCount = products.length;
+        const phase3Time = Math.ceil(actualItemCount * 24);
+        const formattedPhase3Time = phase3Time >= 60 
+          ? `${Math.floor(phase3Time / 60)}:${String(phase3Time % 60).padStart(2, '0')}`
+          : `${phase3Time}s`;
+        
+        setPhaseMessage(`Generated descriptions for ${actualItemCount} item${actualItemCount > 1 ? 's' : ''} (${formattedPhase3Time} at ~24s per item)`);
+        
         // Mark AI phase as complete
         setProcessingPhase('complete');
-        setPhaseMessage('AI analysis complete!');
         
         // Wait a moment to show completion
         setTimeout(() => {
