@@ -12,6 +12,8 @@ import { useLocation } from "wouter";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface PaymentModalProps {
   open: boolean;
@@ -37,15 +39,54 @@ export function PaymentModal({
 }: PaymentModalProps) {
   const [, setLocation] = useLocation();
   const [selectedTab, setSelectedTab] = useState<'pay-per-use' | 'bundles'>('pay-per-use');
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
   const payPerUsePrice = (remainingCount * 0.20).toFixed(2);
 
-  const handlePayPerUse = () => {
-    // Navigate to payment with pay-per-use option
-    setLocation(`/payment/pay-per-use?items=${remainingCount}&amount=${payPerUsePrice}`);
+  const handlePayPerUse = async () => {
+    try {
+      setLoading(true);
+      const response = await apiRequest(
+        'POST',
+        '/api/create-checkout-session/pay-per-use',
+        { itemCount: remainingCount }
+      );
+      const data = await response.json();
+      
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create checkout session",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
   };
 
-  const handleBundlePurchase = (credits: number, price: number) => {
-    setLocation(`/payment/credits?credits=${credits}&amount=${price}`);
+  const handleBundlePurchase = async (credits: number, price: number) => {
+    try {
+      setLoading(true);
+      const response = await apiRequest(
+        'POST',
+        '/api/create-checkout-session/credits',
+        { credits, amount: price }
+      );
+      const data = await response.json();
+      
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create checkout session",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
   };
 
   const handleSkipClick = () => {
@@ -126,9 +167,10 @@ export function PaymentModal({
                   <Button 
                     className="w-full gap-2" 
                     onClick={handlePayPerUse}
+                    disabled={loading}
                     data-testid="button-pay-per-use"
                   >
-                    Continue with ${payPerUsePrice}
+                    {loading ? "Redirecting to checkout..." : `Continue with $${payPerUsePrice}`}
                   </Button>
                 </div>
               </Card>
@@ -148,7 +190,7 @@ export function PaymentModal({
                     className={`p-4 cursor-pointer transition-all hover-elevate ${
                       bundle.popular ? 'border-2 border-primary' : ''
                     }`}
-                    onClick={() => handleBundlePurchase(bundle.credits, bundle.price)}
+                    onClick={() => !loading && handleBundlePurchase(bundle.credits, bundle.price)}
                     data-testid={`card-bundle-${bundle.credits}`}
                   >
                     <div className="flex items-center justify-between">
@@ -173,9 +215,10 @@ export function PaymentModal({
                         <Button 
                           size="sm" 
                           className="mt-2"
+                          disabled={loading}
                           data-testid={`button-buy-bundle-${bundle.credits}`}
                         >
-                          Buy Now
+                          {loading ? "Processing..." : "Buy Now"}
                         </Button>
                       </div>
                     </div>
