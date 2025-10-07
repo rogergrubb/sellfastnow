@@ -88,17 +88,29 @@ export function PaymentModal({
     
     console.log('💳 Redirecting to Stripe checkout:', checkoutUrl);
     
-    // Use top-level window to avoid iframe issues
+    // Try multiple redirect strategies for iframe/embedded environments
     try {
-      if (window.top) {
+      // Strategy 1: Try to break out of iframe to parent window
+      if (window.top && window.top !== window.self) {
+        console.log('📍 Attempting top-level redirect');
         window.top.location.href = checkoutUrl;
       } else {
+        // Strategy 2: Direct redirect if not in iframe
+        console.log('📍 Attempting direct redirect');
         window.location.href = checkoutUrl;
       }
     } catch (error) {
-      console.error('❌ Redirect error:', error);
-      // Fallback: open in new tab
-      window.open(checkoutUrl, '_blank');
+      console.error('❌ Redirect error (trying fallback):', error);
+      // Strategy 3: Fallback - open in new tab
+      console.log('📍 Opening in new tab as fallback');
+      const newWindow = window.open(checkoutUrl, '_blank');
+      if (!newWindow) {
+        toast({
+          title: "Popup Blocked",
+          description: "Please allow popups to complete your purchase, then try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
