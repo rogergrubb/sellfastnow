@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Clock, Loader2, ImageIcon, Upload, Brain } from "lucide-react";
 
 interface AnalyzedItem {
@@ -78,17 +77,13 @@ export function ProgressModal({
 
   const processingTips = phase === 'upload' ? uploadTips : aiTips;
   const [currentTip, setCurrentTip] = useState(processingTips[0]);
-  const [startTime, setStartTime] = useState(Date.now());
-  const [timeRemaining, setTimeRemaining] = useState(countdown);
 
-  // Reset start time when modal opens or phase changes
+  // Reset tip when modal opens or phase changes
   useEffect(() => {
     if (open) {
-      setStartTime(Date.now());
-      setTimeRemaining(countdown);
-      setCurrentTip(processingTips[0]); // Reset tip when phase changes
+      setCurrentTip(processingTips[0]);
     }
-  }, [open, countdown, phase]);
+  }, [open, phase]);
 
   // Rotate tips every 5 seconds
   useEffect(() => {
@@ -103,37 +98,6 @@ export function ProgressModal({
 
     return () => clearInterval(tipRotation);
   }, [open, isComplete, processingTips]);
-
-  // Accurate time calculation based on actual processing speed
-  useEffect(() => {
-    if (!open || isComplete) return;
-
-    const timer = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      const completedItems = analyzedItems.filter(item => item.status === 'completed').length;
-      
-      if (completedItems > 0) {
-        // Calculate average time per item based on actual processing
-        const avgTimePerItem = elapsed / completedItems;
-        const remainingItems = totalImages - completedItems;
-        const estimated = Math.max(0, Math.round(avgTimePerItem * remainingItems));
-        setTimeRemaining(estimated);
-      } else {
-        // Before any items complete, use initial estimate
-        setTimeRemaining(prev => Math.max(0, prev - 1));
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [open, isComplete, analyzedItems, totalImages, startTime]);
-
-  // Calculate circular progress for countdown ring based on items completed
-  const circumference = 2 * Math.PI * 45; // radius = 45
-  const completedFraction = totalImages > 0 ? currentIndex / totalImages : 0;
-  const progressOffset = circumference * (1 - completedFraction);
-
-  const minutes = Math.floor(timeRemaining / 60);
-  const seconds = timeRemaining % 60;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -174,52 +138,36 @@ export function ProgressModal({
         </div>
         
         <div className="space-y-6 py-4">
-          {/* Circular Countdown Timer */}
-          <div className="flex justify-center">
-            <div className="relative w-32 h-32">
-              <svg className="w-full h-full -rotate-90">
-                {/* Background circle */}
-                <circle
-                  cx="64"
-                  cy="64"
-                  r="45"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  fill="none"
-                  className="text-muted-foreground/20"
-                />
-                {/* Progress circle */}
-                <circle
-                  cx="64"
-                  cy="64"
-                  r="45"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  fill="none"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={progressOffset}
-                  className="text-primary transition-all duration-500 ease-linear"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold tabular-nums">
-                  {minutes}:{seconds.toString().padStart(2, '0')}
-                </span>
-                <span className="text-xs text-muted-foreground">remaining</span>
+          {/* Sequential Linear Progress Bar */}
+          <div className="space-y-3">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-2">
+                {phase === 'upload' && `Uploading photo ${currentIndex} of ${totalImages}`}
+                {phase === 'ai' && `Processing item ${currentIndex} of ${totalImages}`}
+                {phase === 'complete' && `All ${totalImages} items complete`}
+              </p>
+            </div>
+            
+            {/* Linear Progress Bar with Percentage Inside */}
+            <div className="relative w-full h-8 bg-muted rounded-full overflow-hidden">
+              <div 
+                className={`h-full transition-all duration-300 ease-out flex items-center justify-center text-sm font-bold text-white ${
+                  phase === 'upload' 
+                    ? 'bg-gradient-to-r from-green-500 to-green-600' 
+                    : phase === 'ai'
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600'
+                    : 'bg-gradient-to-r from-emerald-500 to-emerald-600'
+                }`}
+                style={{ width: `${Math.max(progress, 8)}%` }}
+                data-testid="progress-bar"
+              >
+                <span className="relative z-10">{Math.round(progress)}%</span>
               </div>
             </div>
-          </div>
-
-          {/* Linear Progress Bar */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Progress</span>
-              <span className="font-semibold">{Math.round(progress)}%</span>
-            </div>
-            <div className="relative">
-              <Progress value={progress} className="h-3" data-testid="progress-bar" />
-            </div>
+            
+            <p className="text-center text-sm text-muted-foreground">
+              {currentIndex} of {totalImages} {phase === 'upload' ? 'photos uploaded' : 'items analyzed'}
+            </p>
           </div>
 
           {/* Item Status List with Thumbnails */}
@@ -257,7 +205,9 @@ export function ProgressModal({
                     {item.status === 'analyzing' && (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />
-                        <span className="text-sm font-medium">Analyzing...</span>
+                        <span className="text-sm font-medium">
+                          {phase === 'upload' ? 'Uploading...' : 'Analyzing...'}
+                        </span>
                       </>
                     )}
                     {item.status === 'waiting' && (
