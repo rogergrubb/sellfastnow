@@ -1,0 +1,150 @@
+CRITICAL BUG: Payment button leads to 404 error - payment route not configured.
+
+User clicks "Continue with $1.00" → Gets 404 "Page Not Found - Did you forget to add the page to the router?"
+
+ISSUE: Payment endpoint/page doesn't exist in the routing configuration.
+
+FIX THE ROUTING:
+
+1. CHECK WHAT URL THE BUTTON IS TRYING TO ACCESS:
+```javascript
+   // Add logging to the button click
+   const handlePayment = (amount) => {
+     console.log('Payment button clicked');
+     console.log('Amount:', amount);
+     console.log('Redirecting to:', window.location);
+     
+     // What route is it trying to navigate to?
+   };
+
+ADD THE MISSING ROUTE:
+If using React Router, add payment route:
+
+javascript   // In your router configuration (App.tsx or routes.tsx)
+   import { BrowserRouter, Routes, Route } from 'react-router-dom';
+   import PaymentPage from './pages/PaymentPage';
+   
+   <Routes>
+     <Route path="/" element={<Home />} />
+     <Route path="/post-ad" element={<PostAd />} />
+     <Route path="/payment" element={<PaymentPage />} />  // ← ADD THIS
+     <Route path="/checkout" element={<CheckoutPage />} /> // ← OR THIS
+     // ... other routes
+   </Routes>
+
+CREATE STRIPE CHECKOUT SESSION:
+Don't navigate to separate page - handle payment in modal:
+
+javascript   const handlePayment = async (amount, itemCount) => {
+     try {
+       console.log('Creating payment intent...');
+       
+       // Create Stripe checkout session
+       const response = await fetch('/api/create-checkout-session', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+           amount: Math.round(amount * 100), // Convert to cents
+           itemCount: itemCount,
+           userId: user.id
+         })
+       });
+       
+       const { sessionId } = await response.json();
+       
+       // Redirect to Stripe checkout
+       const stripe = await loadStripe(process.env.STRIPE_PUBLISHABLE_KEY);
+       await stripe.redirectToCheckout({ sessionId });
+       
+     } catch (error) {
+       console.error('Payment error:', error);
+       alert('Payment failed. Please try again.');
+     }
+   };
+
+CREATE BACKEND CHECKOUT ENDPOINT:
+
+javascript   // server/routes.ts
+   import Stripe from 'stripe';
+   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+   
+   app.post('/api/create-checkout-session', async (req, res) => {
+     const { amount, itemCount, userId } = req.body;
+     
+     try {
+       const session = await stripe.checkout.sessions.create({
+         payment_method_types: ['card'],
+         line_items: [
+           {
+             price_data: {
+               currency: 'usd',
+               product_data: {
+                 name: `AI Descriptions for ${itemCount} items`,
+                 description: `Generate AI descriptions, titles, and metadata`,
+               },
+               unit_amount: amount, // Amount in cents
+             },
+             quantity: 1,
+           },
+         ],
+         mode: 'payment',
+         success_url: `${process.env.CLIENT_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+         cancel_url: `${process.env.CLIENT_URL}/payment/cancel`,
+         metadata: {
+           userId: userId,
+           itemCount: itemCount,
+         },
+       });
+       
+       res.json({ sessionId: session.id });
+     } catch (error) {
+       console.error('Stripe error:', error);
+       res.status(500).json({ error: error.message });
+     }
+   });
+
+ADD SUCCESS/CANCEL ROUTES:
+
+javascript   // Add these routes to your router
+   <Route path="/payment/success" element={<PaymentSuccess />} />
+   <Route path="/payment/cancel" element={<PaymentCancel />} />
+
+VERIFY STRIPE KEYS ARE SET:
+Check Replit Secrets has:
+
+STRIPE_SECRET_KEY (starts with sk_test_ or sk_live_)
+STRIPE_PUBLISHABLE_KEY (starts with pk_test_ or pk_live_)
+
+
+INSTALL STRIPE PACKAGES IF MISSING:
+
+bash   npm install stripe @stripe/stripe-js
+
+BUTTON SHOULD NOT NAVIGATE:
+Change button to trigger Stripe checkout, not navigate:
+
+javascript   <button 
+     onClick={() => handleStripeCheckout(1.00, 5)}
+     disabled={loading}
+   >
+     {loading ? 'Processing...' : 'Continue with $1.00'}
+   </button>
+IMMEDIATE DEBUG STEPS:
+
+Check browser console - what URL is it trying to load?
+Check Network tab - is there a failed API request?
+Verify router configuration includes payment routes
+Add console.log to payment button click handler
+
+The 404 means either:
+
+Payment route not defined in router
+Payment endpoint doesn't exist on backend
+Button trying to navigate to wrong URL
+
+Fix the routing and implement Stripe checkout properly.
+Report back with:
+
+What URL the button is trying to access
+Whether Stripe keys are configured
+Console errors when button clicked
