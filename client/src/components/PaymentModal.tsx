@@ -24,9 +24,11 @@ interface PaymentModalProps {
 }
 
 const CREDIT_BUNDLES = [
-  { credits: 25, price: 2.99, pricePerCredit: 0.12, popular: true, savings: "40% off" },
-  { credits: 50, price: 4.99, pricePerCredit: 0.10, popular: false, savings: "50% off" },
-  { credits: 100, price: 8.99, pricePerCredit: 0.09, popular: false, savings: "55% off" },
+  { credits: 25, price: 2.99, pricePerCredit: 0.12, popular: true, badge: "POPULAR", savings: null },
+  { credits: 50, price: 4.99, pricePerCredit: 0.10, popular: false, badge: "40% off", savings: "40%" },
+  { credits: 75, price: 6.99, pricePerCredit: 0.09, popular: false, badge: "50% off", savings: "50%" },
+  { credits: 100, price: 8.99, pricePerCredit: 0.09, popular: false, badge: "55% off", savings: "55%" },
+  { credits: 500, price: 39.99, pricePerCredit: 0.08, popular: false, badge: "BEST VALUE - 60% off", savings: "60%" },
 ];
 
 export function PaymentModal({
@@ -145,21 +147,38 @@ export function PaymentModal({
   };
 
   // Handler for direct Stripe payment links (simpler approach)
-  const handleBuyCredits = (tier: number) => {
+  const handleBuyCredits = (creditAmount: number) => {
     let stripeLink;
     
-    if (tier === 25) {
-      stripeLink = import.meta.env.VITE_STRIPE_25_CREDITS_LINK;
-    } else if (tier === 50) {
-      stripeLink = import.meta.env.VITE_STRIPE_50_CREDITS_LINK;
-    } else if (tier === 100) {
-      stripeLink = import.meta.env.VITE_STRIPE_100_CREDITS_LINK;
+    switch(creditAmount) {
+      case 25:
+        stripeLink = import.meta.env.VITE_STRIPE_25_CREDITS_LINK;
+        break;
+      case 50:
+        stripeLink = import.meta.env.VITE_STRIPE_50_CREDITS_LINK;
+        break;
+      case 75:
+        stripeLink = import.meta.env.VITE_STRIPE_75_CREDITS_LINK;
+        break;
+      case 100:
+        stripeLink = import.meta.env.VITE_STRIPE_100_CREDITS_LINK;
+        break;
+      case 500:
+        stripeLink = import.meta.env.VITE_STRIPE_500_CREDITS_LINK;
+        break;
+      default:
+        toast({
+          title: "Invalid Credit Amount",
+          description: `${creditAmount} credits is not a valid bundle size.`,
+          variant: "destructive",
+        });
+        return;
     }
     
     if (!stripeLink) {
       toast({
         title: "Payment Link Not Configured",
-        description: `Payment link for ${tier} credits is not configured yet. Please contact support.`,
+        description: `Payment link for ${creditAmount} credits is not configured yet. Please contact support.`,
         variant: "destructive",
       });
       return;
@@ -284,7 +303,7 @@ export function PaymentModal({
           {selectedTab === 'bundles' && (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                Buy credits in bulk and save up to 70%. Credits never expire!
+                Buy credits in bulk and save up to 60%. Credits never expire!
               </p>
               <div className="grid gap-3">
                 {CREDIT_BUNDLES.map((bundle) => (
@@ -300,14 +319,15 @@ export function PaymentModal({
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h4 className="font-semibold">{bundle.credits} Credits</h4>
-                          {bundle.popular && (
-                            <Badge variant="default" className="text-xs" data-testid="badge-popular">
-                              POPULAR
+                          {bundle.badge && (
+                            <Badge 
+                              variant={bundle.popular ? "default" : "secondary"} 
+                              className="text-xs" 
+                              data-testid={`badge-${bundle.credits}`}
+                            >
+                              {bundle.badge}
                             </Badge>
                           )}
-                          <Badge variant="secondary" className="text-xs" data-testid={`badge-savings-${bundle.credits}`}>
-                            {bundle.savings}
-                          </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
                           ${bundle.pricePerCredit.toFixed(2)} per credit
