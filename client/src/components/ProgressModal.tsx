@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { CheckCircle2, Clock, Loader2, ImageIcon } from "lucide-react";
 
 interface AnalyzedItem {
   index: number;
@@ -83,9 +83,10 @@ export function ProgressModal({
     return () => clearInterval(timer);
   }, [open, isComplete, analyzedItems, totalImages, startTime]);
 
-  // Calculate circular progress for countdown ring
+  // Calculate circular progress for countdown ring based on items completed
   const circumference = 2 * Math.PI * 45; // radius = 45
-  const progressOffset = circumference - ((timeRemaining / countdown) * circumference);
+  const completedFraction = totalImages > 0 ? currentIndex / totalImages : 0;
+  const progressOffset = circumference * (1 - completedFraction);
 
   const minutes = Math.floor(timeRemaining / 60);
   const seconds = timeRemaining % 60;
@@ -167,15 +168,17 @@ export function ProgressModal({
                 data-testid={`item-status-${item.index}`}
               >
                 {/* Thumbnail */}
-                {item.imageUrl && (
-                  <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-muted">
+                <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                  {item.imageUrl ? (
                     <img 
                       src={item.imageUrl} 
                       alt={`Item ${item.index}`}
                       className="w-full h-full object-cover"
                     />
-                  </div>
-                )}
+                  ) : (
+                    <ImageIcon className="h-6 w-6 text-muted-foreground/50" />
+                  )}
+                </div>
                 
                 {/* Status Info */}
                 <div className="flex-1 min-w-0">
