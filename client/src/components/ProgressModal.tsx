@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Clock, Loader2, ImageIcon } from "lucide-react";
+import { CheckCircle2, Clock, Loader2, ImageIcon, Upload, Brain } from "lucide-react";
 
 interface AnalyzedItem {
   index: number;
@@ -9,6 +9,8 @@ interface AnalyzedItem {
   status: 'completed' | 'analyzing' | 'waiting' | 'failed';
   imageUrl?: string;
 }
+
+export type ProcessingPhase = 'upload' | 'ai' | 'complete';
 
 interface ProgressModalProps {
   open: boolean;
@@ -18,6 +20,8 @@ interface ProgressModalProps {
   onClose?: () => void;
   countdown?: number;
   formatTime?: (seconds: number) => string;
+  phase?: ProcessingPhase;
+  phaseMessage?: string;
 }
 
 export function ProgressModal({ 
@@ -27,13 +31,43 @@ export function ProgressModal({
   analyzedItems, 
   onClose, 
   countdown = 0,
-  formatTime 
+  formatTime,
+  phase = 'upload',
+  phaseMessage
 }: ProgressModalProps) {
   const progress = totalImages > 0 ? (currentIndex / totalImages) * 100 : 0;
   const isComplete = progress === 100 && analyzedItems.every(item => item.status === 'completed');
+  
+  // Phase-specific configuration
+  const phaseConfig = {
+    upload: {
+      title: "📤 Uploading Your Photos",
+      icon: Upload,
+      description: "Preparing images for AI analysis"
+    },
+    ai: {
+      title: "🤖 AI Analyzing Your Items",
+      icon: Brain,
+      description: "Generating descriptions and pricing"
+    },
+    complete: {
+      title: "✅ Processing Complete",
+      icon: CheckCircle2,
+      description: "All items ready for review"
+    }
+  };
+  
+  const currentPhaseConfig = phaseConfig[phase];
 
-  // Processing tips
-  const processingTips = [
+  // Phase-specific processing tips
+  const uploadTips = [
+    "High-quality images upload faster and look better",
+    "Multiple angles help AI understand your product",
+    "Clear photos lead to better AI descriptions",
+    "Well-lit images get more buyer attention"
+  ];
+  
+  const aiTips = [
     "AI-generated descriptions help items sell 40% faster",
     "Quality descriptions increase buyer confidence",
     "Professional listings get 3x more views", 
@@ -42,17 +76,19 @@ export function ProgressModal({
     "Save hours of manual description writing"
   ];
 
+  const processingTips = phase === 'upload' ? uploadTips : aiTips;
   const [currentTip, setCurrentTip] = useState(processingTips[0]);
   const [startTime, setStartTime] = useState(Date.now());
   const [timeRemaining, setTimeRemaining] = useState(countdown);
 
-  // Reset start time when modal opens
+  // Reset start time when modal opens or phase changes
   useEffect(() => {
     if (open) {
       setStartTime(Date.now());
       setTimeRemaining(countdown);
+      setCurrentTip(processingTips[0]); // Reset tip when phase changes
     }
-  }, [open, countdown]);
+  }, [open, countdown, phase]);
 
   // Rotate tips every 5 seconds
   useEffect(() => {
@@ -66,7 +102,7 @@ export function ProgressModal({
     }, 5000);
 
     return () => clearInterval(tipRotation);
-  }, [open, isComplete]);
+  }, [open, isComplete, processingTips]);
 
   // Accurate time calculation based on actual processing speed
   useEffect(() => {
@@ -109,12 +145,33 @@ export function ProgressModal({
       >
         <DialogHeader>
           <DialogTitle className="text-xl">
-            🤖 AI is Analyzing Your Items...
+            {currentPhaseConfig.title}
           </DialogTitle>
           <DialogDescription>
-            Processing {currentIndex} of {totalImages} items
+            {phaseMessage || `Processing ${currentIndex} of ${totalImages} items`}
           </DialogDescription>
         </DialogHeader>
+        
+        {/* Phase Indicator */}
+        <div className="flex items-center justify-center gap-2 py-2">
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-all ${
+            phase === 'upload' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+          }`}>
+            <Upload className="h-4 w-4" />
+            <span>1. Upload</span>
+            {phase !== 'upload' && <CheckCircle2 className="h-4 w-4 text-green-600" />}
+          </div>
+          
+          <div className="h-px w-8 bg-border" />
+          
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-all ${
+            phase === 'ai' ? 'bg-primary text-primary-foreground' : phase === 'complete' ? 'bg-muted text-muted-foreground' : 'bg-muted/50 text-muted-foreground/50'
+          }`}>
+            <Brain className="h-4 w-4" />
+            <span>2. AI Analysis</span>
+            {phase === 'complete' && <CheckCircle2 className="h-4 w-4 text-green-600" />}
+          </div>
+        </div>
         
         <div className="space-y-6 py-4">
           {/* Circular Countdown Timer */}
