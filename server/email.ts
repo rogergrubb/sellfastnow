@@ -1,43 +1,22 @@
 import { Resend } from 'resend';
 
-let connectionSettings: any;
+// Initialize Resend client with API key from environment
+const resendApiKey = process.env.RESEND_API_KEY;
 
-async function getCredentials() {
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const xReplitToken = process.env.REPL_IDENTITY 
-    ? 'repl ' + process.env.REPL_IDENTITY 
-    : process.env.WEB_REPL_RENEWAL 
-    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
-    : null;
-
-  if (!xReplitToken) {
-    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
-  }
-
-  connectionSettings = await fetch(
-    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
-    {
-      headers: {
-        'Accept': 'application/json',
-        'X_REPLIT_TOKEN': xReplitToken
-      }
-    }
-  ).then(res => res.json()).then(data => data.items?.[0]);
-
-  if (!connectionSettings || (!connectionSettings.settings.api_key)) {
-    throw new Error('Resend not connected');
-  }
-  return {
-    apiKey: connectionSettings.settings.api_key, 
-    fromEmail: connectionSettings.settings.from_email
-  };
+if (!resendApiKey) {
+  console.warn('RESEND_API_KEY not set - email features will be disabled');
 }
 
+const resendClient = resendApiKey ? new Resend(resendApiKey) : null;
+
 export async function getUncachableResendClient() {
-  const { apiKey, fromEmail } = await getCredentials();
+  if (!resendClient) {
+    throw new Error('Resend API key not configured. Set RESEND_API_KEY environment variable.');
+  }
+  
   return {
-    client: new Resend(apiKey),
-    fromEmail: fromEmail || 'noreply@sellfast.now'
+    client: resendClient,
+    fromEmail: process.env.RESEND_FROM_EMAIL || 'noreply@sellfast.now'
   };
 }
 
