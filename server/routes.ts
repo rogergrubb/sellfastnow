@@ -20,6 +20,7 @@ import {
   transactionEvents,
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import trustRoutes from "./routes/trust";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -50,6 +51,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch AI usage info" });
     }
   });
+
+  // ======================
+  // Trust & Reputation Routes
+  // ======================
+  app.use('/api/trust', trustRoutes);
 
   // ======================
   // User Routes

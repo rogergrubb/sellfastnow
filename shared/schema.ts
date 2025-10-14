@@ -537,3 +537,8 @@ export const insertCreditTransactionSchema = createInsertSchema(creditTransactio
 
 export type InsertCreditTransaction = z.infer<typeof insertCreditTransactionSchema>;
 export type CreditTransaction = typeof creditTransactions.$inferSelect;
+
+// ============================================
+// TRUST SYSTEM TABLES
+// ============================================
+export * from './trust-schema';
