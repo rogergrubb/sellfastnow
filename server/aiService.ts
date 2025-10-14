@@ -398,7 +398,9 @@ export async function analyzeMultipleImages(imageUrls: string[], manualCategory?
     const content: any[] = [
       {
         type: "text",
-        text: `Analyze ${imageUrls.length} images. Group by product.
+        text: `Analyze ${imageUrls.length} images. Group by product. Respond in JSON format.
+
+RULES:
 
 RULES:
 1. SAME ITEM: Match features (color, shape, texture, labels). Group together with all imageIndices.
