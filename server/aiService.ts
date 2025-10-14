@@ -401,13 +401,11 @@ export async function analyzeMultipleImages(imageUrls: string[], manualCategory?
         text: `Analyze ${imageUrls.length} images. Group by product. Respond in JSON format.
 
 RULES:
-
-RULES:
 1. SAME ITEM: Match features (color, shape, texture, labels). Group together with all imageIndices.
 2. DIFFERENT ITEMS: Separate products, list only relevant imageIndices.
 3. 80%+ similarity = same item.
 
-OUTPUT:
+JSON OUTPUT FORMAT:
 Same product: {"scenario": "same_product", "products": [{"imageIndices": [0,1,2], "title": string, "description": string, "category": string, "retailPrice": number, "usedPrice": number, "condition": string, "confidence": number}]}
 
 Multiple products: {"scenario": "multiple_products", "products": [{"imageIndices": [0,2], ...}, {"imageIndices": [1,3], ...}]}
