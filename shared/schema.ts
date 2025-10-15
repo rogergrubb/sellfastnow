@@ -2,7 +2,7 @@
 // Location: shared/schema.ts
 // This file contains ALL tables for your application
 
-import { randomUUID } from "crypto";
+import { sql } from "drizzle-orm";
 import { 
   pgTable, 
   text, 
@@ -23,7 +23,7 @@ import { relations } from "drizzle-orm";
 // ============================================
 
 export const users = pgTable("users", {
-  id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+  id: text("id").primaryKey().$defaultFn(() => sql`gen_random_uuid()`),
   email: text("email").notNull().unique(),
   username: text("username").unique(),
   name: text("name"),
@@ -51,7 +51,7 @@ export const users = pgTable("users", {
 // ============================================
 
 export const trustScores = pgTable("trust_scores", {
-  id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+  id: text("id").primaryKey().$defaultFn(() => sql`gen_random_uuid()`),
   userId: text("user_id").notNull().unique(),
   
   // Overall Score (0-100)
@@ -96,7 +96,7 @@ export const trustScores = pgTable("trust_scores", {
 }));
 
 export const verifications = pgTable("verifications", {
-  id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+  id: text("id").primaryKey().$defaultFn(() => sql`gen_random_uuid()`),
   userId: text("user_id").notNull(),
   
   // Verification Types
@@ -129,7 +129,7 @@ export const verifications = pgTable("verifications", {
 }));
 
 export const badges = pgTable("badges", {
-  id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+  id: text("id").primaryKey().$defaultFn(() => sql`gen_random_uuid()`),
   userId: text("user_id").notNull(),
   
   badgeType: text("badge_type").notNull(),
@@ -150,7 +150,7 @@ export const badges = pgTable("badges", {
 }));
 
 export const trustEvents = pgTable("trust_events", {
-  id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+  id: text("id").primaryKey().$defaultFn(() => sql`gen_random_uuid()`),
   userId: text("user_id").notNull(),
   
   eventType: text("event_type").notNull(),
@@ -174,7 +174,7 @@ export const trustEvents = pgTable("trust_events", {
 }));
 
 export const penalties = pgTable("penalties", {
-  id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+  id: text("id").primaryKey().$defaultFn(() => sql`gen_random_uuid()`),
   userId: text("user_id").notNull(),
   
   penaltyType: text("penalty_type").notNull(),
@@ -202,7 +202,7 @@ export const penalties = pgTable("penalties", {
 }));
 
 export const reports = pgTable("reports", {
-  id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+  id: text("id").primaryKey().$defaultFn(() => sql`gen_random_uuid()`),
   
   reporterId: text("reporter_id").notNull(),
   reportedUserId: text("reported_user_id").notNull(),
@@ -235,7 +235,7 @@ export const reports = pgTable("reports", {
 // ============================================
 
 export const transactions = pgTable("transactions", {
-  id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+  id: text("id").primaryKey().$defaultFn(() => sql`gen_random_uuid()`),
   
   // Parties
   buyerId: text("buyer_id").notNull(),
