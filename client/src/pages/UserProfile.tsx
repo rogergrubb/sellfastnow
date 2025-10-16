@@ -1,4 +1,4 @@
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Star, MapPin, Calendar, Package, TrendingUp, MessageCircle, X, Filter } from "lucide-react";
+import { Star, MapPin, Calendar, Package, TrendingUp, MessageCircle, X, Filter, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ReviewCard } from "@/components/ReviewCard";
 import { StatisticsDashboard } from "@/components/StatisticsDashboard";
@@ -242,10 +242,19 @@ export default function UserProfile() {
             </div>
 
             <div className="flex md:flex-col gap-2">
-              <Button variant="default" data-testid="button-message">
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Message
-              </Button>
+              {currentUser?.id === userId ? (
+                <Link href="/dashboard?tab=settings">
+                  <Button variant="default" data-testid="button-edit-profile">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Edit Profile
+                  </Button>
+                </Link>
+              ) : (
+                <Button variant="default" data-testid="button-message">
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Message
+                </Button>
+              )}
             </div>
           </div>
         </CardContent>
