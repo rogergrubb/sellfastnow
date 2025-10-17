@@ -1,0 +1,207 @@
+Improve AI processing progress indicator and time counter:
+
+CURRENT ISSUES:
+- Time counter not accurate or smooth
+- Progress bar not updating in real-time
+- User doesn't see which specific items are being processed
+- No visual feedback between items
+
+ENHANCED PROGRESS MODAL DESIGN:
+```jsx
+<div className="ai-processing-modal">
+  <div className="modal-header">
+    <h2>🤖 AI is Analyzing Your Items...</h2>
+    <div className="overall-progress">
+      Processing {currentItem} of {totalItems} items
+    </div>
+  </div>
+  
+  {/* Big Countdown Timer */}
+  <div className="countdown-circle">
+    <svg className="progress-ring">
+      <circle className="progress-ring-circle" 
+              strokeDashoffset={calculateProgress()} />
+    </svg>
+    <div className="time-remaining">
+      <span className="time-number">{Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}</span>
+      <span className="time-label">remaining</span>
+    </div>
+  </div>
+  
+  {/* Linear Progress Bar */}
+  <div className="progress-bar-container">
+    <div className="progress-bar" style={{ width: `${(currentItem / totalItems) * 100}%` }}>
+      <span className="progress-percentage">{Math.round((currentItem / totalItems) * 100)}%</span>
+    </div>
+  </div>
+  
+  {/* Item-by-Item Status List */}
+  <div className="item-status-list">
+    {items.map((item, index) => (
+      <div key={index} className={`item-status ${getStatusClass(index)}`}>
+        <div className="item-thumbnail">
+          <img src={item.thumbnail} alt={`Item ${index + 1}`} />
+        </div>
+        <div className="item-info">
+          <span className="item-number">Item {index + 1}</span>
+          {index < currentItem - 1 && (
+            <>
+              <span className="status-icon">✓</span>
+              <span className="status-text completed">{item.title}</span>
+            </>
+          )}
+          {index === currentItem - 1 && (
+            <>
+              <span className="status-icon spinning">⏳</span>
+              <span className="status-text analyzing">Analyzing...</span>
+            </>
+          )}
+          {index >= currentItem && (
+            <>
+              <span className="status-icon">⏸</span>
+              <span className="status-text waiting">Waiting...</span>
+            </>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+  
+  {/* Motivational Tips (rotate) */}
+  <div className="processing-tip">
+    💡 {currentTip}
+  </div>
+</div>
+ACCURATE TIME CALCULATION:
+javascriptconst [timeRemaining, setTimeRemaining] = useState(0);
+const [startTime, setStartTime] = useState(Date.now());
+const [itemsProcessed, setItemsProcessed] = useState(0);
+
+// Calculate estimated time based on actual processing speed
+useEffect(() => {
+  const totalItems = items.length;
+  const freeItems = Math.min(5, totalItems);
+  
+  // Estimate: 22 seconds per item
+  const estimatedTotal = freeItems * 22;
+  setTimeRemaining(estimatedTotal);
+  
+  const timer = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const avgTimePerItem = elapsed / Math.max(1, itemsProcessed);
+    const remainingItems = freeItems - itemsProcessed;
+    const estimated = Math.max(0, Math.round(avgTimePerItem * remainingItems));
+    
+    setTimeRemaining(estimated);
+  }, 1000);
+  
+  return () => clearInterval(timer);
+}, [itemsProcessed, startTime]);
+
+// Update when each item completes
+const onItemComplete = (index, result) => {
+  setItemsProcessed(prev => prev + 1);
+  updateItemStatus(index, 'completed', result.title);
+};
+REAL-TIME PROGRESS UPDATES:
+javascriptconst processItemsWithProgress = async (images) => {
+  const results = [];
+  
+  for (let i = 0; i < images.length; i++) {
+    // Update UI: show which item is being processed
+    setCurrentItem(i + 1);
+    setItemStatus(i, 'analyzing');
+    
+    try {
+      // Call AI API
+      const result = await analyzeImage(images[i]);
+      
+      // Update UI: mark as completed
+      setItemStatus(i, 'completed');
+      onItemComplete(i, result);
+      results.push(result);
+      
+    } catch (error) {
+      setItemStatus(i, 'failed');
+      console.error(`Item ${i + 1} failed:`, error);
+    }
+    
+    // Small delay between items for smoother UX
+    if (i < images.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+  
+  return results;
+};
+SMOOTH ANIMATIONS:
+css/* Circular progress ring */
+.progress-ring-circle {
+  transition: stroke-dashoffset 0.5s ease;
+  animation: rotate 2s linear infinite;
+}
+
+/* Countdown number */
+.time-number {
+  font-size: 48px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+/* Progress bar fill */
+.progress-bar {
+  transition: width 0.5s ease-in-out;
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+}
+
+/* Item status animations */
+.item-status.analyzing {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status-icon.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+ROTATING TIPS:
+javascriptconst processingTips = [
+  "AI-generated descriptions help items sell 40% faster",
+  "Quality descriptions increase buyer confidence",
+  "Professional listings get 3x more views",
+  "Accurate pricing attracts serious buyers",
+  "AI detects details you might miss",
+  "Save hours of manual description writing"
+];
+
+const [currentTip, setCurrentTip] = useState(processingTips[0]);
+
+useEffect(() => {
+  const tipRotation = setInterval(() => {
+    setCurrentTip(prev => {
+      const currentIndex = processingTips.indexOf(prev);
+      return processingTips[(currentIndex + 1) % processingTips.length];
+    });
+  }, 5000); // Change tip every 5 seconds
+  
+  return () => clearInterval(tipRotation);
+}, []);
+VISUAL HIERARCHY:
+
+Big countdown timer (most prominent)
+Progress bar (shows % complete)
+Item-by-item list (shows what's happening)
+Motivational tip (educates while waiting)
+
+RESPONSIVE BEHAVIOR:
+Desktop: Show all 4 elements
+Mobile: Stack vertically, show smaller countdown
+Implement these improvements and test with 5+ images to see smooth, accurate progress tracking.

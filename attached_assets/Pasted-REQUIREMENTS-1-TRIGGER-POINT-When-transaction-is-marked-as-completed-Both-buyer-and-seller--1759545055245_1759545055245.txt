@@ -1,0 +1,370 @@
+REQUIREMENTS:
+
+1. TRIGGER POINT
+
+When transaction is marked as "completed":
+- Both buyer and seller confirmed transaction complete
+- Status changes to 'completed'
+- Trigger: Send 2 emails (one to buyer, one to seller)
+
+Database trigger or API call after completion:
+- After transaction completes → queue review request emails
+- Send immediately (no delay)
+- Track if email was sent to prevent duplicates
+
+2. EMAIL TO BUYER (Asking to Review Seller)
+
+Subject: How was your purchase from Sarah Martinez?
+
+Hi Mike,
+
+You recently completed a purchase on SellFast.now:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📱 iPhone 15 Pro - $800
+Seller: Sarah Martinez ⭐ 4.8/5.0
+Date: October 1, 2024
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+How was your experience with Sarah?
+
+Your honest feedback helps other buyers make informed 
+decisions and helps good sellers build their reputation.
+
+            [⭐⭐⭐⭐⭐ Leave a Review]
+
+It takes less than 2 minutes!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Your review helps the SellFast.now community:
+✓ Other buyers find reliable sellers
+✓ Good sellers get recognized
+✓ Everyone makes better decisions
+
+Note: Sarah can see and respond to your review publicly.
+
+Questions? Reply to this email.
+
+- The SellFast.now Team
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SellFast.now | Safe local marketplace
+[View Transaction] [Profile Settings] [Help Center]
+
+3. EMAIL TO SELLER (Asking to Review Buyer)
+
+Subject: How was your sale to Mike L.?
+
+Hi Sarah,
+
+You recently completed a sale on SellFast.now:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📱 iPhone 15 Pro - $800
+Buyer: Mike L. ⭐ 4.9/5.0
+Date: October 1, 2024
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+How was your experience with Mike?
+
+Your feedback helps other sellers identify reliable 
+buyers and helps the community grow stronger.
+
+            [⭐⭐⭐⭐⭐ Leave a Review]
+
+It takes less than 2 minutes!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Your review helps the SellFast.now community:
+✓ Other sellers identify reliable buyers
+✓ Good buyers build their reputation
+✓ Everyone has better transactions
+
+Note: Mike can see and respond to your review publicly.
+
+Questions? Reply to this email.
+
+- The SellFast.now Team
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SellFast.now | Safe local marketplace
+[View Transaction] [Profile Settings] [Help Center]
+
+4. REVIEW BUTTON LINK
+
+The "Leave a Review" button links to:
+
+https://sellfast.now/reviews/create?transaction=[TRANSACTION_ID]
+
+This opens the review form pre-filled with:
+- Transaction details
+- Other party's information
+- Direct to star rating and text entry
+
+URL should include authentication token if user not logged in:
+https://sellfast.now/reviews/create?transaction=[ID]&token=[AUTH_TOKEN]
+
+Token is single-use, expires in 30 days.
+
+5. REMINDER EMAIL (7 Days Later)
+
+If user hasn't left review after 7 days, send ONE reminder:
+
+Subject: Still want to review your purchase from Sarah?
+
+Hi Mike,
+
+A week ago you completed a purchase on SellFast.now:
+
+📱 iPhone 15 Pro - $800
+Seller: Sarah Martinez ⭐ 4.8/5.0
+
+We noticed you haven't left a review yet. Your feedback 
+only takes 2 minutes and really helps the community!
+
+            [⭐⭐⭐⭐⭐ Leave a Review]
+
+This is our final reminder - we won't email you about 
+this transaction again.
+
+Thanks for being part of SellFast.now!
+
+- The Team
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[Unsubscribe from review reminders]
+
+6. DATABASE TRACKING
+
+Create table to track email sends:
+
+CREATE TABLE review_request_emails (
+  id SERIAL PRIMARY KEY,
+  transaction_id INTEGER REFERENCES offers(id),
+  recipient_user_id INTEGER REFERENCES users(id),
+  email_type VARCHAR(50), -- 'initial' or 'reminder'
+  sent_at TIMESTAMP DEFAULT NOW(),
+  review_left BOOLEAN DEFAULT false,
+  review_left_at TIMESTAMP,
+  
+  CONSTRAINT unique_initial_email UNIQUE(transaction_id, recipient_user_id, email_type)
+);
+
+This prevents duplicate emails.
+
+Track when review is left:
+UPDATE review_request_emails 
+SET review_left = true, review_left_at = NOW()
+WHERE transaction_id = $1 AND recipient_user_id = $2;
+
+7. EMAIL SERVICE INTEGRATION
+
+Use existing email service (Resend, SendGrid, etc.):
+
+async function sendReviewRequestEmail(
+  transaction: Transaction,
+  recipient: User,
+  role: 'buyer' | 'seller'
+) {
+  const otherParty = role === 'buyer' ? transaction.seller : transaction.buyer;
+  
+  const emailData = {
+    to: recipient.email,
+    subject: `How was your ${role === 'buyer' ? 'purchase from' : 'sale to'} ${otherParty.name}?`,
+    template: 'review-request',
+    variables: {
+      recipientName: recipient.name,
+      otherPartyName: otherParty.name,
+      otherPartyRating: otherParty.rating,
+      itemName: transaction.listing.title,
+      itemPrice: transaction.amount,
+      transactionDate: transaction.completed_at,
+      reviewUrl: generateReviewUrl(transaction.id, recipient.id),
+      role: role
+    }
+  };
+  
+  await emailService.send(emailData);
+  
+  // Track in database
+  await db.query(`
+    INSERT INTO review_request_emails 
+    (transaction_id, recipient_user_id, email_type)
+    VALUES ($1, $2, 'initial')
+    ON CONFLICT DO NOTHING
+  `, [transaction.id, recipient.id]);
+}
+
+8. CRON JOB FOR REMINDERS
+
+Set up daily cron job to send reminders:
+
+Daily at 10:00 AM:
+1. Find transactions completed 7 days ago
+2. Check if users left reviews
+3. If not, send reminder email
+4. Mark reminder as sent
+
+async function sendReminders() {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  // Find completed transactions from 7 days ago
+  const transactions = await db.query(`
+    SELECT t.*, u.email, u.name
+    FROM offers t
+    JOIN users u ON (u.id = t.buyer_id OR u.id = t.seller_id)
+    WHERE t.status = 'completed'
+      AND t.completed_at::date = $1
+      AND NOT EXISTS (
+        SELECT 1 FROM reviews r 
+        WHERE r.transaction_id = t.id 
+          AND r.reviewer_id = u.id
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM review_request_emails e
+        WHERE e.transaction_id = t.id
+          AND e.recipient_user_id = u.id
+          AND e.email_type = 'reminder'
+      )
+  `, [sevenDaysAgo]);
+  
+  for (const transaction of transactions) {
+    await sendReminderEmail(transaction);
+  }
+}
+
+9. UNSUBSCRIBE HANDLING
+
+Users can opt-out of review reminders:
+
+Link in email: https://sellfast.now/unsubscribe/review-reminders?token=[TOKEN]
+
+Add to users table:
+ALTER TABLE users ADD COLUMN review_emails_enabled BOOLEAN DEFAULT true;
+
+Check before sending:
+if (!user.review_emails_enabled) {
+  console.log('User opted out of review emails');
+  return;
+}
+
+Unsubscribe page shows:
+"You've been unsubscribed from review reminder emails. 
+You'll still receive one initial request after each 
+transaction, but no reminders."
+
+10. EMAIL TEMPLATES
+
+Create HTML email templates:
+- review-request-buyer.html
+- review-request-seller.html
+- review-reminder.html
+
+Include:
+- Clean, branded design
+- Mobile-responsive
+- Clear call-to-action button
+- Transaction details
+- Unsubscribe link
+
+11. TESTING EMAILS
+
+Test mode for development:
+- Don't send real emails in dev
+- Log to console instead
+- Or use email testing service (Mailtrap, MailHog)
+
+Production:
+- Use production email service
+- Track delivery rates
+- Monitor bounce/spam complaints
+
+TESTING:
+
+Test Case 1: Transaction completes → emails sent
+1. Complete a transaction (buyer and seller confirm)
+2. Verify 2 emails queued/sent:
+   - One to buyer
+   - One to seller
+3. Check database: review_request_emails has 2 records
+4. Verify email content correct
+
+Test Case 2: Email link works
+1. Click "Leave a Review" in email
+2. Should open review form
+3. Transaction pre-filled
+4. Other party's info visible
+5. Can submit review
+
+Test Case 3: Review left → no reminder
+1. Complete transaction
+2. Leave review within 7 days
+3. On day 7, no reminder email sent
+4. Database tracks: review_left = true
+
+Test Case 4: No review → reminder sent
+1. Complete transaction
+2. Don't leave review
+3. On day 7, reminder email sent
+4. Only ONE reminder sent (no duplicates)
+
+Test Case 5: Duplicate prevention
+1. Try to send initial email twice
+2. Database constraint prevents duplicate
+3. Only one email sent per user per transaction
+
+Test Case 6: Both parties leave reviews
+1. Buyer leaves review
+2. Seller leaves review
+3. Both review_request_emails marked as completed
+4. No reminders sent to either
+
+Test Case 7: Unsubscribe works
+1. User clicks unsubscribe
+2. review_emails_enabled = false
+3. Future reminders not sent
+4. Initial emails still sent (one per transaction)
+
+Test Case 8: Token expires
+1. Click review link after 30 days
+2. Token invalid
+3. Prompt to log in
+4. Can still leave review
+
+Test Case 9: Already reviewed
+1. Leave review
+2. Click email link again
+3. Shows: "You already reviewed this transaction"
+4. Option to edit review (if within 48 hours)
+
+Test Case 10: Cron job runs correctly
+1. Manually trigger cron job
+2. Verifies it finds correct transactions
+3. Sends reminders to right users
+4. Updates database correctly
+
+Test Case 11: Email deliverability
+1. Send test emails to various providers
+2. Gmail, Yahoo, Outlook, etc.
+3. Verify not going to spam
+4. All formatting correct
+
+Test Case 12: Mobile email view
+1. View email on mobile device
+2. Properly formatted
+3. Button tappable
+4. Links work
+
+DELIVERABLES:
+1. Review request email templates (buyer and seller)
+2. Reminder email template
+3. Email sending logic on transaction completion
+4. Database table for tracking
+5. Cron job for 7-day reminders
+6. Review creation page with pre-filled data
+7. Authentication token system
+8. Unsubscribe functionality
+9. All test cases passing

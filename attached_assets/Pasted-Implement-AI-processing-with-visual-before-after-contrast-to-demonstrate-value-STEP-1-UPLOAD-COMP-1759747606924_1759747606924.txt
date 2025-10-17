@@ -1,0 +1,170 @@
+Implement AI processing with visual before/after contrast to demonstrate value:
+
+STEP 1: UPLOAD COMPLETE DIALOG
+After photos upload, show modal:
+
+┌─────────────────────────────────────────────────────┐
+│  📸 You've uploaded 11 photos                       │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  ○ One Item - Multiple Angles                      │
+│    All photos show the SAME product                │
+│    → Creates 1 listing • Uses 1 AI credit          │
+│                                                     │
+│  ○ Multiple Different Items                        │
+│    Each photo is a DIFFERENT product               │
+│    → Creates 11 listings • Uses 11 AI credits      │
+│                                                     │
+│             [Start AI Processing]                   │
+└─────────────────────────────────────────────────────┘
+
+STEP 2: SEQUENTIAL AI PROCESSING WITH LIVE ANIMATION
+Process items one at a time with real-time visual feedback:
+
+┌─────────────────────────────────────────────────────┐
+│  ⚡ AI Processing Your Items...                     │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│  Processing item 3 of 11 • 2 remaining free        │
+└─────────────────────────────────────────────────────┘
+
+Each item shows ANIMATED population:
+
+┌────────────────────────────────────────────────────┐
+│ [Photo thumbnail]  Photo #3                        │
+│                                                    │
+│ Title: ⚡ Analyzing...                            │
+│        → (1 second) →                              │
+│ Title: ✓ Vintage Cast Iron Clothes Press         │
+│                                                    │
+│ Description: ⚡ Generating...                     │
+│              → (typing effect) →                   │
+│ Description: ✓ Heavy-duty antique cast iron      │
+│              clothes press with wooden handle...   │
+│                                                    │
+│ Tags: ⚡ Finding keywords...                      │
+│       → ✓ vintage, cast iron, antique, press     │
+│                                                    │
+│ Pricing: ⚡ Estimating value...                   │
+│          → ✓ Retail: $120 | Suggested: $45-65    │
+└────────────────────────────────────────────────────┘
+
+STEP 3: FREE LIMIT REACHED - SHOW VISUAL CONTRAST
+
+After 5 items complete, STOP processing and display ALL items with clear visual distinction:
+
+┌─────────────────────────────────────────────────────┐
+│  ✅ COMPLETED WITH AI (5 items)                     │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ ┌──────────────────────────────────────────────┐  │
+│ │ ✓ [Photo #1]  Vintage Cast Iron Press       │  │
+│ │                                              │  │
+│ │ Description: Heavy-duty antique cast iron   │  │
+│ │ clothes press with wooden handle. Shows     │  │
+│ │ natural patina and minor rust consistent... │  │
+│ │                                              │  │
+│ │ Tags: vintage, cast iron, antique, laundry  │  │
+│ │ Retail: $120 | Suggested: $45-65            │  │
+│ └──────────────────────────────────────────────┘  │
+│                                                     │
+│ ┌──────────────────────────────────────────────┐  │
+│ │ ✓ [Photo #2]  Black Leather Ankle Boots     │  │
+│ │                                              │  │
+│ │ Description: Stylish women's black leather  │  │
+│ │ ankle boots with side zipper, Size 8...     │  │
+│ │                                              │  │
+│ │ Tags: boots, leather, women's shoes, size 8 │  │
+│ │ Retail: $89 | Suggested: $35-45             │  │
+│ └──────────────────────────────────────────────┘  │
+│                                                     │
+│ [... 3 more completed items shown ...]             │
+│                                                     │
+├─────────────────────────────────────────────────────┤
+│  ⚠️ INCOMPLETE - NEEDS YOUR INPUT (6 items)        │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ ┌──────────────────────────────────────────────┐  │
+│ │ ⏸ [Photo #6]  [Empty - No Title]            │  │
+│ │                                              │  │
+│ │ Title: _________________________________     │  │
+│ │                                              │  │
+│ │ Description: ___________________________     │  │
+│ │ _________________________________________    │  │
+│ │ _________________________________________    │  │
+│ │                                              │  │
+│ │ Tags: ___________________________________    │  │
+│ │ Retail Price: _____ | Sale Price: _____     │  │
+│ └──────────────────────────────────────────────┘  │
+│                                                     │
+│ ┌──────────────────────────────────────────────┐  │
+│ │ ⏸ [Photo #7]  [Empty - No Title]            │  │
+│ │                                              │  │
+│ │ Title: _________________________________     │  │
+│ │ Description: ___________________________     │  │
+│ │ Tags: ___________________________________    │  │
+│ │ Pricing: _______________________________     │  │
+│ └──────────────────────────────────────────────┘  │
+│                                                     │
+│ [... 4 more empty items shown ...]                 │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│  🎯 Free AI Limit Reached (5/5 used this month)    │
+│  Next reset: November 1st                          │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  Choose how to complete the remaining 6 items:     │
+│                                                     │
+│  ○ Enter Details Manually (Free)                   │
+│    Fill in titles, descriptions, tags, and         │
+│    pricing for each of the 6 incomplete items      │
+│    Estimated time: ~30-45 minutes                  │
+│    [Continue Manually]                             │
+│                                                     │
+│  ○ Let AI Complete Them ($2.99 for 25 credits)    │
+│    AI will automatically generate all details      │
+│    for the remaining 6 items in ~30 seconds        │
+│    [Purchase AI Credits] 💳                        │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+
+VISUAL DESIGN REQUIREMENTS:
+
+✅ COMPLETED ITEMS (top section):
+- Green checkmark badge on each card
+- Light green border around cards
+- All fields populated and visible
+- Professional, complete appearance
+- Clearly labeled "COMPLETED WITH AI"
+
+⏸ INCOMPLETE ITEMS (bottom section):
+- Yellow/orange pause icon
+- Gray/dimmed appearance
+- Empty input fields with underscores
+- Clearly shows manual work required
+- Red border around incomplete section
+- Clearly labeled "INCOMPLETE - NEEDS YOUR INPUT"
+
+SPACING & LAYOUT:
+- Scroll to show contrast between sections
+- Top section (completed) should look "done"
+- Bottom section (incomplete) should look "overwhelming"
+- Clear visual separation with divider line
+- Count badges: "✅ 5 Complete" and "⏸ 6 Remaining"
+
+PSYCHOLOGICAL TRIGGERS:
+1. Completed items look professional and done
+2. Incomplete items show blank forms (tedious work ahead)
+3. Time estimate ("30-45 minutes") vs AI speed ("30 seconds")
+4. Visual weight of empty forms creates motivation to purchase
+5. Clear value: "I see what AI did vs what I need to do manually"
+
+STEP 4: AFTER PURCHASE
+- Resume AI processing from item #6
+- Show same animated population
+- When complete, move items to "COMPLETED" section
+- Remove red border, change to green
+- Show success: "All 11 items completed! 🎉"
+
+This creates maximum impact by showing the stark contrast between AI-completed (easy, professional) vs manual work (time-consuming, tedious).

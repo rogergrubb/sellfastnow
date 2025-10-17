@@ -1,0 +1,115 @@
+Since auto-categorization is failing, implement manual category selection BEFORE photo upload:
+
+PLAN B: PRE-SELECT CATEGORY FOR BATCH UPLOADS
+
+Option 1: Category-First Upload Flow
+┌────────────────────────────────────────────────────┐
+│  Step 1: What are you selling?                     │
+│                                                    │
+│  Select Category:                                  │
+│  ○ Electronics                                     │
+│  ○ Furniture                                       │
+│  ○ Clothing & Accessories                          │
+│  ○ Automotive (Cars, Parts, Tools)                 │
+│  ○ Books & Media                                   │
+│  ○ Sports & Outdoors                               │
+│  ○ Home & Garden                                   │
+│  ○ Toys & Games                                    │
+│  ○ Other                                           │
+│                                                    │
+│  [Continue to Upload Photos →]                     │
+└────────────────────────────────────────────────────┘
+
+Then upload 50 photos - all auto-assigned to selected category.
+
+Option 2: Batch Collection System
+┌────────────────────────────────────────────────────┐
+│  Create a Batch Listing                            │
+│                                                    │
+│  Batch Name: [Car Parts - Honda Civic]            │
+│  Category: [Automotive ▼]                          │
+│  All items are: [Used ▼] condition                │
+│                                                    │
+│  Upload Photos (up to 50):                         │
+│  [Click or drag photos here]                       │
+│                                                    │
+│  All photos will share the category and condition  │
+│  you selected above. You can edit individual       │
+│  items after upload.                               │
+└────────────────────────────────────────────────────┘
+
+Option 3: Smart Grouping After Upload
+1. User uploads 50 photos
+2. AI analyzes all photos and suggests groups:
+   "We detected 3 groups in your photos:
+   - 25 automotive parts
+   - 15 tools
+   - 10 car accessories"
+3. User confirms or adjusts groupings
+4. Each group gets assigned a category
+
+Option 4: Single "Lot" Listing
+┌────────────────────────────────────────────────────┐
+│  Selling Multiple Items as a Lot?                  │
+│                                                    │
+│  ☑ Yes, sell all 50 items together as one listing │
+│  ☐ No, create separate listings for each item     │
+│                                                    │
+│  If selling as a lot:                              │
+│  - One title, one description                      │
+│  - One price for everything                        │
+│  - All 50 photos in one gallery                    │
+│  - Faster to create                                │
+│                                                    │
+│  If creating separate listings:                    │
+│  - Individual title/description per item           │
+│  - Individual pricing                              │
+│  - Takes longer but items sell separately          │
+└────────────────────────────────────────────────────┘
+
+RECOMMENDED SOLUTION (Easiest):
+
+Implement Option 1 + Option 4 combined:
+
+STEP 1: Ask user upfront
+"Are you uploading:
+○ Multiple photos of different items (create separate listings)
+○ Multiple photos of ONE item (multiple angles)
+○ A collection/lot to sell together (one listing, many photos)"
+
+STEP 2: Based on choice:
+
+If "Different items":
+→ Select category first
+→ Upload photos
+→ AI generates description per photo
+→ All items inherit selected category
+→ User can override individual categories if needed
+
+If "One item":
+→ Upload photos
+→ AI analyzes first photo
+→ All photos attached to single listing
+
+If "Lot/collection":
+→ Upload photos
+→ Create one listing with all photos
+→ Write one description covering all items
+
+IMPLEMENTATION:
+
+1. Add category selection screen BEFORE photo upload
+2. Store selected category in state
+3. Apply category to all photos in batch
+4. Skip AI category detection (use manual selection)
+5. Still use AI for title/description generation
+6. Allow editing individual items after batch creation
+
+This solves the 50-photo problem:
+- User selects "Automotive" once
+- Uploads 50 car part photos
+- All auto-assigned to Automotive
+- AI generates titles/descriptions for each
+- User reviews and publishes
+
+Implement the category-first upload flow. Confirm when ready.

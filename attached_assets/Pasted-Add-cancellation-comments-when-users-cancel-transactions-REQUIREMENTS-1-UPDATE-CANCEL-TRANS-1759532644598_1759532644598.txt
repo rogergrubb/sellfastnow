@@ -1,0 +1,247 @@
+Add cancellation comments when users cancel transactions:
+
+REQUIREMENTS:
+
+1. UPDATE CANCEL TRANSACTION MODAL
+
+When user clicks "Cancel" on an offer/transaction, show enhanced modal:
+
+┌─────────────────────────────────────────────┐
+│ Cancel Your Offer?                          │
+│ ─────────────────────────────────────────── │
+│                                             │
+│ iPhone 15 Pro - $800                        │
+│ Seller: Sarah Martinez                      │
+│                                             │
+│ Your $50 deposit will be:                   │
+│ ✅ Fully refunded to you                    │
+│ ✅ No penalties or fees                     │
+│                                             │
+│ ⚠️ This cancellation will appear on your    │
+│ public profile in transaction history.      │
+│                                             │
+│ ─────────────────────────────────────────── │
+│                                             │
+│ Would you like to explain why?              │
+│ (Optional, but recommended)                 │
+│                                             │
+│ Reason: [Select reason ▼]                   │
+│ Options:                                    │
+│ - Found better deal                         │
+│ - Personal/family emergency                 │
+│ - Changed my mind                           │
+│ - Item concerns from photos/description     │
+│ - Scheduling conflict                       │
+│ - Seller/Buyer unresponsive                 │
+│ - Price too high                            │
+│ - Other                                     │
+│                                             │
+│ Additional comment (optional):              │
+│ ┌───────────────────────────────────────┐   │
+│ │ I'm really sorry for the late         │   │
+│ │ cancellation. My wife surprised me    │   │
+│ │ with the same laptop as an early      │   │
+│ │ birthday gift...                      │   │
+│ │                                       │   │
+│ └───────────────────────────────────────┘   │
+│ 145 / 500 characters                        │
+│                                             │
+│ ☑️ Make this comment public                 │
+│    (Recommended for transparency)           │
+│                                             │
+│ Note: Public comments help maintain your    │
+│ reputation and show you communicate well.   │
+│                                             │
+│    [Cancel Transaction] [Keep Offer]        │
+└─────────────────────────────────────────────┘
+
+2. API ENDPOINT
+
+POST /api/transactions/:transactionId/cancel
+
+Request body:
+{
+  cancelledBy: "buyer", // or "seller"
+  reasonCategory: "found_better_deal",
+  comment: "I'm really sorry for the late cancellation...",
+  isPublic: true
+}
+
+Backend logic:
+1. Update offer status to 'buyer_cancelled' or 'seller_cancelled'
+2. Create record in cancellation_comments table:
+   - transaction_id
+   - cancelled_by_user_id
+   - comment (text)
+   - is_public (boolean)
+   - cancelled_role ("buyer" or "seller")
+   - cancellation_timing (calculate: "last_minute", "same_day", "one_day_before", etc.)
+   - cancellation_reason_category
+3. Update user_statistics (already done in Step 1)
+4. Process deposit refund
+5. Send email to other party
+
+3. CALCULATE CANCELLATION TIMING
+
+Based on scheduled meetup time:
+- < 2 hours before: "last_minute"
+- 2-6 hours before: "same_day"  
+- 6-24 hours before: "one_day_before"
+- 1-3 days before: "few_days_before"
+- > 3 days before: "well_in_advance"
+
+Store in cancellation_comments.cancellation_timing
+
+4. DISPLAY IN TRANSACTION HISTORY
+
+Update the transaction history page from Step 2:
+
+┌─────────────────────────────────────────────┐
+│ ❌ CANCELLED BY BUYER - September 28, 2024 │
+│                                             │
+│ 💻 MacBook Pro 16" - $2,200                │
+│ Seller: David Chen ⭐ 4.9/5.0              │
+│ [View David's reviews]                      │
+│ Role: Buyer                                 │
+│ Status: Cancelled 2 hours before meetup     │
+│                                             │
+│ 💬 Your Cancellation Comment:               │
+│ Reason: Personal emergency                  │
+│                                             │
+│ "I'm really sorry for the late             │
+│  cancellation. My wife surprised me with   │
+│  the same laptop as an early birthday      │
+│  gift. I tried to cancel earlier but just  │
+│  found out an hour ago. Again, my          │
+│  apologies for any inconvenience."          │
+│                                             │
+│ Posted: Sep 28, 2024 at 2:15 PM             │
+│                                             │
+│ 💬 David's Response:                        │
+│ (Will be added in Step 4)                   │
+└─────────────────────────────────────────────┘
+
+If user didn't provide comment:
+┌─────────────────────────────────────────────┐
+│ ❌ CANCELLED BY BUYER - July 30, 2024      │
+│                                             │
+│ 📱 iPad Pro - $900                         │
+│ Seller: Lisa Anderson ⭐ 4.6/5.0           │
+│ Role: Buyer                                 │
+│ Status: Cancelled 1 day after offer accepted│
+│                                             │
+│ 💬 Cancellation Comment:                    │
+│ No comment provided                         │
+└─────────────────────────────────────────────┘
+
+5. DISPLAY ON PUBLIC PROFILE
+
+On other users' profile pages (when viewing their history):
+
+Show cancellations with comments when viewing someone else's profile:
+
+┌─────────────────────────────────────────────┐
+│ John Davis - Transaction History            │
+│ ─────────────────────────────────────────── │
+│                                             │
+│ ❌ CANCELLED BY BUYER - September 28, 2024 │
+│                                             │
+│ MacBook Pro 16" - $2,200                    │
+│ Role: Buyer                                 │
+│                                             │
+│ 💬 John's Cancellation Comment:             │
+│ Reason: Personal emergency                  │
+│ "My wife surprised me with the same laptop  │
+│  as a gift..."                              │
+│                                             │
+│ 💬 Seller's Response:                       │
+│ "Thanks for explaining! Congrats on gift!"  │
+└─────────────────────────────────────────────┘
+
+6. EMAIL NOTIFICATION
+
+Send email to other party when cancellation happens:
+
+Subject: Transaction Cancelled - [Item Name]
+
+Hi [Name],
+
+[User] has cancelled their offer/sale on:
+[Item Name] - $[Price]
+
+THEIR EXPLANATION:
+"[Comment text or 'No comment provided']"
+
+WHAT HAPPENS NOW:
+✅ Deposit refunded (if applicable)
+✅ Listing is available again
+✅ You can respond to their comment
+
+[Respond to Comment]
+
+This comment is now visible on their public profile.
+
+- SellFast.now Team
+
+7. EDGE CASES
+
+Handle these scenarios:
+- User cancels without comment → Show "No comment provided"
+- Comment is private (isPublic: false) → Only show to involved parties
+- Multiple cancellations → Each has separate comment
+- Very long comments → Truncate with "Read more" after 200 chars
+
+TESTING:
+
+Test Case 1: Cancel with full comment
+1. Accept an offer
+2. Click "Cancel" 
+3. Select reason: "Personal emergency"
+4. Write comment: "My daughter broke her arm..."
+5. Check "Make public"
+6. Submit cancellation
+7. Verify:
+   - Offer status = 'buyer_cancelled'
+   - Comment saved in database
+   - Comment visible in transaction history
+   - Email sent to other party
+
+Test Case 2: Cancel with no comment
+1. Cancel a transaction
+2. Leave comment field empty
+3. Submit
+4. Verify transaction history shows "No comment provided"
+
+Test Case 3: View someone else's cancellation
+1. Navigate to another user's profile
+2. Go to their transaction history
+3. See their cancellation with comment
+4. Verify comment is public and visible
+
+Test Case 4: Private comment
+1. Cancel with comment
+2. Uncheck "Make public"
+3. Verify only involved parties see comment
+4. Other users see "No comment provided"
+
+Test Case 5: Cancellation timing
+1. Cancel 1 hour before meetup → Shows "last_minute"
+2. Cancel 1 day before → Shows "one_day_before"
+3. Cancel 5 days before → Shows "well_in_advance"
+
+Test Case 6: Email sent
+1. Cancel with comment
+2. Check other party receives email
+3. Verify email contains comment text
+4. Verify "Respond to Comment" link works
+
+DELIVERABLES:
+1. Enhanced cancellation modal with comment field
+2. Reason dropdown with common options
+3. Character counter (500 max)
+4. Public/private toggle
+5. API endpoint saving comments
+6. Comments display in transaction history
+7. Cancellation timing calculation
+8. Email notification sent
+9. All test cases passing

@@ -1,0 +1,338 @@
+Add filtering and sorting to the reviews section on user profiles:
+
+REQUIREMENTS:
+
+1. UPDATE REVIEWS TAB UI
+
+Add filter and sort controls above the review list:
+
+┌─────────────────────────────────────────────────────────┐
+│ Sarah Martinez - Reviews                                │
+│ ⭐⭐⭐⭐⭐ 4.8/5.0 (47 reviews)                           │
+│ ─────────────────────────────────────────────────────── │
+│                                                         │
+│ Filter by:                                              │
+│ Stars: [All Stars ▼] Role: [All ▼] Period: [All Time ▼]│
+│ Sort by: [Most Recent ▼]                                │
+│                                                         │
+│ Showing 47 reviews                                      │
+│                                                         │
+│ ═══════════════════════════════════════════════════════ │
+│                                                         │
+│ [Reviews display here...]                               │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+
+2. FILTER OPTIONS
+
+Stars Filter:
+- All Stars (default)
+- 5 Stars only
+- 4 Stars only
+- 3 Stars only
+- 2 Stars only
+- 1 Star only
+
+Role Filter:
+- All (default)
+- As Seller (reviews received when selling)
+- As Buyer (reviews received when buying)
+
+Period Filter:
+- All Time (default)
+- Last 30 Days
+- Last 3 Months
+- Last 6 Months
+- Last 12 Months
+
+3. SORT OPTIONS
+
+- Most Recent (default) - newest first
+- Oldest First - oldest first
+- Highest Rating - 5 stars first
+- Lowest Rating - 1 star first
+- Most Helpful - highest helpful vote count first
+
+4. UPDATE API ENDPOINT
+
+Modify existing review endpoint to support filters:
+
+GET /api/reviews/user/:userId?stars=5&role=seller&period=12months&sort=recent&limit=20&offset=0
+
+Query Parameters:
+- stars: 1|2|3|4|5 (optional, filter by rating)
+- role: seller|buyer (optional, filter by which role they had)
+- period: 30d|3m|6m|12m|all (optional, filter by date)
+- sort: recent|oldest|highest|lowest|helpful (optional, default: recent)
+- limit: number (optional, default: 20, pagination)
+- offset: number (optional, default: 0, pagination)
+
+Backend Implementation:
+
+async getUserReviews(
+  userId: number,
+  filters: {
+    stars?: number,
+    role?: 'seller' | 'buyer',
+    period?: '30d' | '3m' | '6m' | '12m' | 'all',
+    sort?: 'recent' | 'oldest' | 'highest' | 'lowest' | 'helpful',
+    limit?: number,
+    offset?: number
+  }
+) {
+  let query = `
+    SELECT 
+      r.*,
+      reviewer.username as reviewer_name,
+      reviewer.avatar_url as reviewer_avatar
+    FROM reviews r
+    JOIN users reviewer ON r.reviewer_id = reviewer.id
+    WHERE r.reviewed_user_id = $1
+  `;
+  
+  const params = [userId];
+  let paramIndex = 2;
+  
+  // Filter by stars
+  if (filters.stars) {
+    query += ` AND r.overall_rating = $${paramIndex}`;
+    params.push(filters.stars);
+    paramIndex++;
+  }
+  
+  // Filter by role
+  if (filters.role) {
+    query += ` AND r.reviewer_role = $${paramIndex}`;
+    params.push(filters.role === 'seller' ? 'buyer' : 'seller');
+    // Note: If they want reviews "as seller", show reviews from buyers
+    paramIndex++;
+  }
+  
+  // Filter by period
+  if (filters.period && filters.period !== 'all') {
+    const periodMap = {
+      '30d': '30 days',
+      '3m': '3 months',
+      '6m': '6 months',
+      '12m': '12 months'
+    };
+    query += ` AND r.created_at >= NOW() - INTERVAL '${periodMap[filters.period]}'`;
+  }
+  
+  // Sort
+  const sortMap = {
+    recent: 'r.created_at DESC',
+    oldest: 'r.created_at ASC',
+    highest: 'r.overall_rating DESC, r.created_at DESC',
+    lowest: 'r.overall_rating ASC, r.created_at DESC',
+    helpful: 'r.helpful_count DESC, r.created_at DESC'
+  };
+  query += ` ORDER BY ${sortMap[filters.sort || 'recent']}`;
+  
+  // Pagination
+  query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+  params.push(filters.limit || 20, filters.offset || 0);
+  
+  return await db.query(query, params);
+}
+
+Also add count endpoint:
+
+GET /api/reviews/user/:userId/count?stars=5&role=seller&period=12months
+
+Returns: { count: 23 }
+
+This is used to update the "Showing X reviews" text.
+
+5. FRONTEND STATE MANAGEMENT
+
+Create ReviewFilters component:
+
+interface ReviewFilters {
+  stars?: number;
+  role?: 'seller' | 'buyer' | 'all';
+  period?: '30d' | '3m' | '6m' | '12m' | 'all';
+  sort?: 'recent' | 'oldest' | 'highest' | 'lowest' | 'helpful';
+}
+
+const [filters, setFilters] = useState<ReviewFilters>({
+  stars: undefined,
+  role: 'all',
+  period: 'all',
+  sort: 'recent'
+});
+
+When filter changes:
+1. Update URL query params (for bookmarking/sharing)
+2. Fetch new reviews with filters
+3. Update "Showing X reviews" count
+
+Example URL:
+/profile/123/reviews?stars=5&role=seller&period=12m&sort=helpful
+
+6. ACTIVE FILTER INDICATOR
+
+Show which filters are active:
+
+┌─────────────────────────────────────────────────────────┐
+│ Active Filters:                                         │
+│ [5 Stars ✕] [As Seller ✕] [Last 12 Months ✕]          │
+│                                                         │
+│ Showing 23 reviews (filtered from 47 total)            │
+│                                                         │
+│ [Clear All Filters]                                     │
+└─────────────────────────────────────────────────────────┘
+
+Each filter tag is clickable to remove that filter.
+
+7. EMPTY STATES
+
+When filters return no results:
+
+┌─────────────────────────────────────────────────────────┐
+│ No reviews match your filters                           │
+│                                                         │
+│ Active filters:                                         │
+│ • 1 Star reviews                                        │
+│ • As Seller                                             │
+│ • Last 30 Days                                          │
+│                                                         │
+│ Try adjusting your filters or [Clear All Filters]      │
+└─────────────────────────────────────────────────────────┘
+
+8. PAGINATION
+
+Add "Load More" button at bottom:
+
+┌─────────────────────────────────────────────────────────┐
+│ [20 reviews displayed]                                  │
+│                                                         │
+│    [Load More Reviews (27 remaining)]                   │
+│                                                         │
+│ Or show all 47 reviews at once [Show All]              │
+└─────────────────────────────────────────────────────────┘
+
+Pagination state:
+- Load 20 at a time
+- "Load More" fetches next 20
+- "Show All" loads everything
+
+9. URL PERSISTENCE
+
+Filters persist in URL for:
+- Bookmarking filtered views
+- Sharing links with filters
+- Browser back/forward works correctly
+
+Example URLs:
+- /profile/123/reviews (all reviews)
+- /profile/123/reviews?stars=5 (5-star only)
+- /profile/123/reviews?role=seller&sort=helpful (as seller, most helpful)
+- /profile/123/reviews?period=30d (last 30 days)
+
+10. MOBILE OPTIMIZATION
+
+On mobile, show filters in dropdown menu:
+
+┌─────────────────────────┐
+│ [☰ Filters & Sort]      │
+└─────────────────────────┘
+
+Expands to show all filter options when tapped.
+
+TESTING:
+
+Test Case 1: Filter by 5 stars
+1. Navigate to reviews tab
+2. Select "5 Stars" from stars filter
+3. Verify only 5-star reviews shown
+4. Verify count updates: "Showing 44 reviews (filtered from 47)"
+5. URL updates to include ?stars=5
+
+Test Case 2: Filter by role
+1. Select "As Seller" from role filter
+2. Verify only reviews where user was seller shown
+3. These are reviews FROM buyers
+4. Count updates correctly
+
+Test Case 3: Filter by period
+1. Select "Last 30 Days"
+2. Verify only reviews from last 30 days shown
+3. Older reviews hidden
+4. Count updates
+
+Test Case 4: Sort by highest rating
+1. Select "Highest Rating" from sort
+2. Verify reviews sorted 5→4→3→2→1
+3. Within same rating, sorted by date (newest first)
+
+Test Case 5: Sort by most helpful
+1. Select "Most Helpful"
+2. Verify reviews sorted by helpful_count DESC
+3. Reviews with most thumbs-up at top
+
+Test Case 6: Multiple filters combined
+1. Filter: 5 stars + As Seller + Last 12 months
+2. Verify all filters apply simultaneously (AND logic)
+3. Count shows filtered total
+4. URL has all query params
+
+Test Case 7: Clear individual filter
+1. Apply multiple filters
+2. Click ✕ on one filter tag
+3. That filter removes, others remain
+4. Reviews update
+5. URL updates
+
+Test Case 8: Clear all filters
+1. Apply multiple filters
+2. Click "Clear All Filters"
+3. All filters reset to default
+4. Shows all reviews
+5. URL clears query params
+
+Test Case 9: Empty state
+1. Filter to combination with no results
+2. Shows "No reviews match" message
+3. Lists active filters
+4. "Clear All" button works
+
+Test Case 10: Pagination
+1. Load 20 reviews
+2. Click "Load More"
+3. Next 20 reviews append to list
+4. Button updates count
+5. Can load all reviews incrementally
+
+Test Case 11: URL persistence
+1. Apply filters
+2. Copy URL
+3. Open in new tab
+4. Same filters applied automatically
+5. Reviews display correctly
+
+Test Case 12: Mobile filters
+1. View on mobile
+2. Tap "Filters & Sort"
+3. Menu expands
+4. Can apply filters
+5. Menu collapses after selection
+
+Test Case 13: Performance
+1. User with 200+ reviews
+2. Filters apply quickly (<500ms)
+3. No UI lag when changing filters
+4. Pagination works smoothly
+
+DELIVERABLES:
+1. Filter dropdowns (stars, role, period)
+2. Sort dropdown
+3. Active filter tags with remove buttons
+4. "Clear All Filters" button
+5. Updated API endpoint with all filters
+6. Count endpoint for "Showing X reviews"
+7. URL query param persistence
+8. Empty state handling
+9. Pagination ("Load More")
+10. Mobile-friendly filter menu
+11. All test cases passing

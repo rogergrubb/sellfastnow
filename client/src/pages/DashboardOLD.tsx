@@ -1,0 +1,819 @@
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation, Link } from "wouter";
+import { useState, useEffect } from "react";
+import { useAuth } from "@clerk/clerk-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Home,
+  Heart,
+  MessageCircle,
+  Settings,
+  Plus,
+  Search,
+  Edit2,
+  Trash2,
+  CheckCircle,
+  Rocket,
+  Menu,
+  X,
+} from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import type { User, Listing } from "@shared/schema";
+import ListingCard from "@/components/ListingCard";
+
+type DashboardStats = {
+  totalActive: number;
+  totalViews: number;
+  totalMessages: number;
+  totalSold: number;
+};
+
+// Settings Form Component
+function SettingsForm({ user }: { user: User }) {
+  const { toast } = useToast();
+  const [firstName, setFirstName] = useState(user.firstName || "");
+  const [lastName, setLastName] = useState(user.lastName || "");
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: { firstName: string; lastName: string }) => {
+      return apiRequest("/api/users/profile", "PUT", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateProfileMutation.mutate({ firstName, lastName });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4" data-testid="form-settings">
+      <div className="space-y-2">
+        <Label htmlFor="firstName">First Name</Label>
+        <Input
+          id="firstName"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          placeholder="Enter first name"
+          data-testid="input-first-name"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="lastName">Last Name</Label>
+        <Input
+          id="lastName"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          placeholder="Enter last name"
+          data-testid="input-last-name"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          value={user.email || ""}
+          disabled
+          className="bg-muted"
+          data-testid="input-email"
+        />
+        <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+      </div>
+      <Button
+        type="submit"
+        disabled={updateProfileMutation.isPending}
+        data-testid="button-save-profile"
+      >
+        {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+      </Button>
+    </form>
+  );
+}
+
+export default function Dashboard() {
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
+  
+  const [activeTab, setActiveTab] = useState("my-listings");
+  const [listingFilter, setListingFilter] = useState("active");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Sync active tab with URL query parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get("tab");
+    if (tabParam === "favorites" || tabParam === "settings") {
+      setActiveTab(tabParam);
+    } else {
+      setActiveTab("my-listings");
+    }
+  }, []);
+
+  // Fetch current user with Bearer token auth
+  const { data: user, isLoading: userLoading, isSuccess, isError } = useQuery<User>({
+    queryKey: ["/api/auth/user"],
+    queryFn: async () => {
+      const token = await getToken();
+      console.log('🔑 Dashboard fetching user with token:', token ? 'present' : 'missing');
+      
+      const response = await fetch('/api/auth/user', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        console.error('❌ Dashboard user fetch failed:', response.status);
+        throw new Error(`Failed to fetch user: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Dashboard user fetch successful:', data?.id);
+      return data;
+    },
+    retry: false,
+    enabled: isLoaded && isSignedIn,
+  });
+
+  // Fetch dashboard stats
+  const { data: stats } = useQuery<DashboardStats>({
+    queryKey: ["/api/listings/stats"],
+    enabled: !!user,
+  });
+
+  // Fetch user's listings
+  const { data: userListings = [], isLoading: listingsLoading } = useQuery<Listing[]>({
+    queryKey: ["/api/user/listings"],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch('/api/user/listings', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch listings: ${response.status}`);
+      }
+      
+      return response.json();
+    },
+    enabled: !!user,
+  });
+
+  // Fetch favorites
+  const { data: favorites = [], isLoading: favoritesLoading } = useQuery<Listing[]>({
+    queryKey: ["/api/favorites"],
+    enabled: !!user && activeTab === "favorites",
+  });
+
+  // Delete listing mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      const response = await fetch(`/api/listings/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to delete listing: ${response.status}`);
+      }
+      
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/listings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/listings/stats"] });
+      toast({
+        title: "Success",
+        description: "Listing deleted successfully",
+      });
+    },
+  });
+
+  // Mark as sold mutation
+  const markAsSoldMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      const response = await fetch(`/api/listings/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'sold' }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to mark as sold: ${response.status}`);
+      }
+      
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/listings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/listings/stats"] });
+      toast({
+        title: "Success",
+        description: "Listing marked as sold",
+      });
+    },
+  });
+
+  // Redirect if not signed in with Clerk
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      console.log('❌ Dashboard: User not signed in, redirecting to home');
+      navigate("/");
+      toast({
+        title: "Authentication required",
+        description: "Please log in to access your dashboard",
+        variant: "destructive",
+      });
+    }
+  }, [isLoaded, isSignedIn, navigate, toast]);
+
+  // Redirect if API call fails or user not found
+  useEffect(() => {
+    if (isError || (isSuccess && !user)) {
+      console.log('❌ Dashboard: User fetch failed or user not found, redirecting to home');
+      navigate("/");
+      toast({
+        title: "Authentication required",
+        description: "Please log in to access your dashboard",
+        variant: "destructive",
+      });
+    }
+  }, [isError, isSuccess, user, navigate, toast]);
+
+  // Show loading state while checking auth
+  if (!isLoaded || userLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-lg text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  // If not logged in or error, don't render (useEffect will redirect)
+  if (!isSignedIn || !isSuccess || !user) {
+    return null;
+  }
+
+  const currentUser = user;
+
+  // Get user display name
+  const userName =
+    currentUser.firstName && currentUser.lastName
+      ? `${currentUser.firstName} ${currentUser.lastName}`
+      : currentUser.email || "User";
+
+  const userInitials =
+    currentUser.firstName && currentUser.lastName
+      ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`
+      : currentUser.email?.[0]?.toUpperCase() || "U";
+
+  // Get formatted member since date
+  const memberSince = currentUser.createdAt
+    ? new Date(currentUser.createdAt).toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      })
+    : "N/A";
+
+  // Filter and sort listings
+  const filteredListings = userListings
+    .filter((listing) => {
+      if (listingFilter !== "all" && listing.status !== listingFilter) return false;
+      if (searchQuery && !listing.title.toLowerCase().includes(searchQuery.toLowerCase()))
+        return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "newest") {
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      } else if (sortBy === "oldest") {
+        return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+      } else if (sortBy === "price-high") {
+        return parseFloat(b.price) - parseFloat(a.price);
+      } else if (sortBy === "price-low") {
+        return parseFloat(a.price) - parseFloat(b.price);
+      }
+      return 0;
+    });
+
+  // Sidebar content
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      {/* User Profile Section */}
+      <div className="p-6 border-b">
+        <div className="flex flex-col items-center text-center">
+          <Avatar className="h-20 w-20 mb-3" data-testid="avatar-user">
+            <AvatarImage src={currentUser.profileImageUrl || ""} />
+            <AvatarFallback className="text-2xl">{userInitials}</AvatarFallback>
+          </Avatar>
+          <h2 className="text-xl font-semibold" data-testid="text-user-name">
+            {userName}
+          </h2>
+          <p className="text-sm text-muted-foreground" data-testid="text-member-since">
+            Member since {memberSince}
+          </p>
+          <Link href="/dashboard?tab=settings">
+            <Button variant="ghost" size="sm" className="mt-2" data-testid="link-edit-profile">
+              Edit Profile
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Navigation Menu */}
+      <nav className="flex-1 p-4">
+        <div className="space-y-1">
+          <Button
+            variant={activeTab === "my-listings" ? "secondary" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => {
+              setActiveTab("my-listings");
+              setSidebarOpen(false);
+            }}
+            data-testid="button-nav-my-listings"
+          >
+            <Home className="mr-2 h-4 w-4" />
+            My Listings
+          </Button>
+          <Button
+            variant={activeTab === "favorites" ? "secondary" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => {
+              setActiveTab("favorites");
+              setSidebarOpen(false);
+            }}
+            data-testid="button-nav-favorites"
+          >
+            <Heart className="mr-2 h-4 w-4" />
+            Favorites
+          </Button>
+          <Button
+            variant={activeTab === "messages" ? "secondary" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => {
+              navigate("/messages");
+            }}
+            data-testid="button-nav-messages"
+          >
+            <MessageCircle className="mr-2 h-4 w-4" />
+            Messages
+          </Button>
+          <Button
+            variant={activeTab === "settings" ? "secondary" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => {
+              setActiveTab("settings");
+              setSidebarOpen(false);
+            }}
+            data-testid="button-nav-settings"
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </Button>
+        </div>
+      </nav>
+    </div>
+  );
+
+  return (
+    <div className="flex h-screen bg-background">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+          data-testid="overlay-sidebar"
+        />
+      )}
+
+      {/* Left Sidebar */}
+      <aside
+        className={`fixed lg:static inset-y-0 left-0 w-60 bg-card border-r z-50 transform transition-transform duration-200 lg:transform-none ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+        data-testid="sidebar-dashboard"
+      >
+        {/* Mobile close button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-4 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+          data-testid="button-close-sidebar"
+        >
+          <X className="h-5 w-5" />
+        </Button>
+        <SidebarContent />
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto">
+        {/* Mobile Header */}
+        <div className="lg:hidden flex items-center justify-between p-4 border-b bg-card">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(true)}
+            data-testid="button-open-sidebar"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-semibold">Dashboard</h1>
+          <div className="w-10" />
+        </div>
+
+        <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            {/* My Listings Tab */}
+            <TabsContent value="my-listings" className="space-y-6 m-0">
+              {/* Stats Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card data-testid="card-stat-active">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Total Active
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-green-600" data-testid="text-stat-active">
+                      {stats?.totalActive || 0}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card data-testid="card-stat-views">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Total Views
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-blue-600" data-testid="text-stat-views">
+                      {stats?.totalViews || 0}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card data-testid="card-stat-messages">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Messages
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-purple-600" data-testid="text-stat-messages">
+                      {stats?.totalMessages || 0}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card data-testid="card-stat-sold">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Items Sold
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-orange-600" data-testid="text-stat-sold">
+                      {stats?.totalSold || 0}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Listing Management Section */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0 pb-4">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      variant={listingFilter === "active" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setListingFilter("active")}
+                      data-testid="button-filter-active"
+                    >
+                      Active
+                    </Button>
+                    <Button
+                      variant={listingFilter === "draft" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setListingFilter("draft")}
+                      data-testid="button-filter-draft"
+                    >
+                      Drafts
+                    </Button>
+                    <Button
+                      variant={listingFilter === "sold" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setListingFilter("sold")}
+                      data-testid="button-filter-sold"
+                    >
+                      Sold
+                    </Button>
+                    <Button
+                      variant={listingFilter === "expired" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setListingFilter("expired")}
+                      data-testid="button-filter-expired"
+                    >
+                      Expired
+                    </Button>
+                  </div>
+                  <Link href="/post-ad">
+                    <Button data-testid="button-create-listing">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create New Listing
+                    </Button>
+                  </Link>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Search and Sort */}
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search my listings..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                        data-testid="input-search-listings"
+                      />
+                    </div>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className="w-full sm:w-48" data-testid="select-sort">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="newest">Newest</SelectItem>
+                        <SelectItem value="oldest">Oldest</SelectItem>
+                        <SelectItem value="price-high">Price: High to Low</SelectItem>
+                        <SelectItem value="price-low">Price: Low to High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Listings List */}
+                  {listingsLoading ? (
+                    <div className="text-center py-8 text-muted-foreground">Loading...</div>
+                  ) : filteredListings.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                        <Home className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">No listings yet</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Post your first item to get started
+                      </p>
+                      <Link href="/post-ad">
+                        <Button data-testid="button-post-first-item">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Post Your First Item
+                        </Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {filteredListings.map((listing) => (
+                        <Card
+                          key={listing.id}
+                          className="hover-elevate"
+                          data-testid={`card-my-listing-${listing.id}`}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex flex-col sm:flex-row gap-4">
+                              {/* Thumbnail */}
+                              <Link href={`/listings/${listing.id}`}>
+                                <div className="w-full sm:w-32 h-32 bg-muted rounded-md overflow-hidden flex-shrink-0">
+                                  {listing.images && listing.images.length > 0 ? (
+                                    <img
+                                      src={listing.images[0]}
+                                      alt={listing.title}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                      No image
+                                    </div>
+                                  )}
+                                </div>
+                              </Link>
+
+                              {/* Details */}
+                              <div className="flex-1 min-w-0">
+                                <Link href={`/listings/${listing.id}`}>
+                                  <h3
+                                    className="font-semibold text-lg mb-1 truncate hover:text-primary"
+                                    data-testid={`text-listing-title-${listing.id}`}
+                                  >
+                                    {listing.title}
+                                  </h3>
+                                </Link>
+                                <p
+                                  className="text-xl font-bold text-primary mb-2"
+                                  data-testid={`text-listing-price-${listing.id}`}
+                                >
+                                  ${parseFloat(listing.price).toFixed(2)}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                  <Badge variant="outline" data-testid={`badge-condition-${listing.id}`}>
+                                    {listing.condition}
+                                  </Badge>
+                                  <Badge
+                                    variant={
+                                      listing.status === "active"
+                                        ? "default"
+                                        : listing.status === "sold"
+                                        ? "secondary"
+                                        : "outline"
+                                    }
+                                    data-testid={`badge-status-${listing.id}`}
+                                  >
+                                    {listing.status}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {listing.createdAt
+                                    ? new Date(listing.createdAt).toLocaleDateString()
+                                    : ""}
+                                </p>
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex sm:flex-col gap-2 justify-end">
+                                <Link href={`/post-ad?edit=${listing.id}`}>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    data-testid={`button-edit-${listing.id}`}
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                </Link>
+                                {listing.status === "active" && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => markAsSoldMutation.mutate(listing.id)}
+                                    disabled={markAsSoldMutation.isPending}
+                                    data-testid={`button-mark-sold-${listing.id}`}
+                                  >
+                                    <CheckCircle className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (confirm("Are you sure you want to delete this listing?")) {
+                                      deleteMutation.mutate(listing.id);
+                                    }
+                                  }}
+                                  disabled={deleteMutation.isPending}
+                                  data-testid={`button-delete-${listing.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Favorites Tab */}
+            <TabsContent value="favorites" className="m-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Saved Listings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {favoritesLoading ? (
+                    <div className="text-center py-8 text-muted-foreground">Loading...</div>
+                  ) : favorites.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                        <Heart className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">No saved listings</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Browse listings and save your favorites
+                      </p>
+                      <Link href="/">
+                        <Button data-testid="button-browse-listings">Browse Listings</Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {favorites.map((listing) => {
+                        const timePosted = listing.createdAt
+                          ? (() => {
+                              const now = new Date();
+                              const created = new Date(listing.createdAt);
+                              const diffMs = now.getTime() - created.getTime();
+                              const diffMins = Math.floor(diffMs / 60000);
+                              const diffHours = Math.floor(diffMins / 60);
+                              const diffDays = Math.floor(diffHours / 24);
+                              if (diffMins < 60) return `${diffMins}m ago`;
+                              if (diffHours < 24) return `${diffHours}h ago`;
+                              return `${diffDays}d ago`;
+                            })()
+                          : "N/A";
+                        
+                        return (
+                          <ListingCard
+                            key={listing.id}
+                            id={listing.id}
+                            title={listing.title}
+                            price={parseFloat(listing.price)}
+                            location={listing.location}
+                            timePosted={timePosted}
+                            image={listing.images && listing.images.length > 0 ? listing.images[0] : undefined}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Settings Tab */}
+            <TabsContent value="settings" className="m-0 space-y-6">
+              {/* Profile Settings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Profile Settings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <SettingsForm user={currentUser} />
+                </CardContent>
+              </Card>
+
+              {/* Notification Preferences */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Notification Preferences</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Manage your notification settings (coming soon)
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </main>
+
+      {/* Mobile FAB */}
+      <Link href="/post-ad">
+        <Button
+          size="icon"
+          className="lg:hidden fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-30"
+          data-testid="button-fab-create"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      </Link>
+    </div>
+  );
+}

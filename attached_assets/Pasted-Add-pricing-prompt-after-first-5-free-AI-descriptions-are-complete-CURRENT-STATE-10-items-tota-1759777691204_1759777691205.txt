@@ -1,0 +1,194 @@
+Add pricing prompt after first 5 free AI descriptions are complete:
+
+CURRENT STATE: 
+- 10 items total detected
+- Items 1-5: AI-populated (title, description, pricing, meta)
+- Items 6-10: Empty fields
+
+USER FLOW NEEDED:
+After AI completes first 5 items, show pricing modal before displaying the review form.
+
+IMPLEMENTATION:
+
+1. PRICING MODAL (shows immediately after first 5 are processed):
+┌─────────────────────────────────────────────────────┐
+│  AI Description Summary                              │
+├─────────────────────────────────────────────────────┤
+│                                                      │
+│  ✓ First 5 items completed with AI (FREE)           │
+│  • Black Office Chair                                │
+│  • Modern Table Lamp                                 │
+│  • Women's Ankle Boots                               │
+│  • Sectional Sofa                                    │
+│  • Wall Mirror                                       │
+│                                                      │
+│  ⚠️  5 items remaining without descriptions          │
+│                                                      │
+├─────────────────────────────────────────────────────┤
+│  Continue with AI for remaining items?               │
+│                                                      │
+│  Pricing Breakdown:                                  │
+│  • 5 remaining items × $0.20 each = $1.00            │
+│  • Total: $1.00                                      │
+│                                                      │
+│  [Continue Manually (Free)] [Generate All - $1.00]  │
+└─────────────────────────────────────────────────────┘
+
+2. PRICING CALCULATION LOGIC:
+```javascript
+const PRICE_PER_AI_DESCRIPTION = 0.20; // $0.20 per item
+
+const calculateRemainingCost = (totalItems, freeItemsUsed) => {
+  const remainingItems = totalItems - freeItemsUsed;
+  const totalCost = remainingItems * PRICE_PER_AI_DESCRIPTION;
+  
+  return {
+    remainingItems,
+    pricePerItem: PRICE_PER_AI_DESCRIPTION,
+    totalCost: totalCost.toFixed(2)
+  };
+};
+
+// Example: 10 total items, 5 free used
+const pricing = calculateRemainingCost(10, 5);
+// Returns: { remainingItems: 5, pricePerItem: 0.20, totalCost: "1.00" }
+
+MODAL DISPLAY TIMING:
+
+javascriptconst processItems = async (groupedImages) => {
+  const FREE_LIMIT = 5;
+  const processedItems = [];
+  
+  // Process first 5 with AI
+  for (let i = 0; i < Math.min(FREE_LIMIT, groupedImages.length); i++) {
+    const aiData = await generateAIDescription(groupedImages[i]);
+    processedItems.push({ ...groupedImages[i], ...aiData, hasAI: true });
+  }
+  
+  // Add remaining items as empty
+  for (let i = FREE_LIMIT; i < groupedImages.length; i++) {
+    processedItems.push({ ...groupedImages[i], hasAI: false });
+  }
+  
+  // Show pricing modal if there are remaining items
+  if (groupedImages.length > FREE_LIMIT) {
+    const remaining = groupedImages.length - FREE_LIMIT;
+    showPricingModal(remaining);
+  } else {
+    // All items covered by free tier, go straight to review
+    showReviewForm(processedItems);
+  }
+};
+
+PRICING MODAL COMPONENT:
+
+javascriptconst PricingModal = ({ remainingItems, onContinue }) => {
+  const pricePerItem = 0.20;
+  const totalCost = (remainingItems * pricePerItem).toFixed(2);
+  
+  return (
+    <Modal>
+      <h2>AI Description Summary</h2>
+      
+      <div className="completed-items">
+        <p>✓ First 5 items completed with AI (FREE)</p>
+      </div>
+      
+      <div className="remaining-items">
+        <p>⚠️ {remainingItems} items remaining without descriptions</p>
+      </div>
+      
+      <div className="pricing-breakdown">
+        <h3>Continue with AI for remaining items?</h3>
+        <p>Pricing Breakdown:</p>
+        <ul>
+          <li>{remainingItems} remaining items × ${pricePerItem} each = ${totalCost}</li>
+          <li><strong>Total: ${totalCost}</strong></li>
+        </ul>
+      </div>
+      
+      <div className="actions">
+        <button onClick={() => onContinue('manual')}>
+          Continue Manually (Free)
+        </button>
+        <button onClick={() => onContinue('paid')}>
+          Generate All - ${totalCost}
+        </button>
+      </div>
+    </Modal>
+  );
+};
+
+USER CHOICES:
+
+Option A: "Continue Manually (Free)"
+
+Close modal
+Show review form with items 1-5 filled, items 6-10 empty
+User manually fills remaining items
+No charge
+
+Option B: "Generate All - $X.XX"
+
+Show payment/Stripe integration
+After payment confirms, process remaining items with AI
+Show progress: "Generating item 6 of 10..."
+Then show review form with all 10 items filled
+User can still edit any field
+
+
+TRANSPARENT PRICING DETAILS:
+
+Add info tooltip:
+💡 Why the cost?
+Each AI-generated description uses advanced image 
+recognition and natural language processing. Your 
+first 5 are free each month!
+
+What you get:
+- Product title
+- Detailed description
+- Accurate category
+- Price suggestions (retail & used)
+- Condition assessment
+
+PAYMENT INTEGRATION:
+
+javascriptconst handlePurchaseAI = async (remainingItems) => {
+  const amount = remainingItems * 0.20;
+  
+  // Create Stripe payment intent
+  const paymentIntent = await createPaymentIntent(amount);
+  
+  // Show Stripe payment form
+  const result = await stripe.confirmPayment(paymentIntent);
+  
+  if (result.success) {
+    // Process remaining items with AI
+    await generateRemainingDescriptions(remainingItems);
+    showSuccessMessage('All descriptions generated!');
+  }
+};
+
+ALTERNATIVE: CREDIT SYSTEM
+
+If using credits instead of direct payment:
+You have 0 AI credits remaining
+
+Purchase credits:
+[ ] 10 credits - $1.50 ($0.15/each)
+[ ] 25 credits - $3.00 ($0.12/each) - Best value!
+[ ] 50 credits - $5.00 ($0.10/each)
+
+[Purchase Credits]
+IMPLEMENTATION REQUIREMENTS:
+
+Modal appears after first 5 items processed
+Clear pricing calculation shown
+Two clear options: manual (free) or paid (AI)
+Payment integration (Stripe recommended)
+Process remaining items after payment
+All items editable in review form
+
+Implement the pricing modal and payment flow now.
+Confirm when modal displays with correct pricing calculation.

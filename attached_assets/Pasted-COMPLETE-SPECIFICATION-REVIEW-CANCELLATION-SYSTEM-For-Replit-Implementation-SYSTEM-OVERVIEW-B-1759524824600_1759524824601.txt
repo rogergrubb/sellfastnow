@@ -1,0 +1,542 @@
+COMPLETE SPECIFICATION: REVIEW & CANCELLATION SYSTEM
+For Replit Implementation
+
+🎯 SYSTEM OVERVIEW
+Build an Amazon-style transparent review and statistics system where:
+
+All transaction outcomes are publicly visible
+Users can leave star ratings and written reviews
+Cancellations include optional public comments
+Both parties can respond to reviews and cancellation comments
+Statistics are raw numbers (not hidden point systems)
+Review helpfulness voting (like Amazon)
+Verified transaction badges
+
+
+📊 DATABASE SCHEMA
+sql-- ============================================
+-- REVIEWS TABLE
+-- ============================================
+CREATE TABLE reviews (
+  id SERIAL PRIMARY KEY,
+  transaction_id INTEGER REFERENCES offers(id),
+  reviewer_id INTEGER REFERENCES users(id),
+  reviewed_user_id INTEGER REFERENCES users(id),
+  
+  -- Rating
+  overall_rating INTEGER CHECK (overall_rating >= 1 AND overall_rating <= 5),
+  communication_rating INTEGER CHECK (communication_rating >= 1 AND communication_rating <= 5),
+  as_described_rating INTEGER CHECK (as_described_rating >= 1 AND as_described_rating <= 5),
+  punctuality_rating INTEGER CHECK (punctuality_rating >= 1 AND punctuality_rating <= 5),
+  professionalism_rating INTEGER CHECK (professionalism_rating >= 1 AND professionalism_rating <= 5),
+  
+  -- Review content
+  review_title VARCHAR(200),
+  review_text TEXT,
+  review_photos TEXT[], -- Array of image URLs
+  
+  -- Metadata
+  reviewer_role VARCHAR(20), -- buyer or seller
+  verified_transaction BOOLEAN DEFAULT true,
+  would_transact_again VARCHAR(20), -- yes_definitely, maybe, no
+  
+  -- Response from reviewed user
+  seller_response TEXT,
+  seller_response_at TIMESTAMP,
+  
+  -- Community feedback
+  helpful_count INTEGER DEFAULT 0,
+  not_helpful_count INTEGER DEFAULT 0,
+  
+  -- Status
+  is_public BOOLEAN DEFAULT true,
+  is_flagged BOOLEAN DEFAULT false,
+  flag_reason TEXT,
+  
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  
+  CONSTRAINT unique_review_per_transaction UNIQUE(transaction_id, reviewer_id)
+);
+
+-- ============================================
+-- CANCELLATION COMMENTS TABLE
+-- ============================================
+CREATE TABLE cancellation_comments (
+  id SERIAL PRIMARY KEY,
+  transaction_id INTEGER REFERENCES offers(id),
+  cancelled_by_user_id INTEGER REFERENCES users(id),
+  
+  -- Comment
+  comment TEXT,
+  is_public BOOLEAN DEFAULT true,
+  
+  -- Metadata
+  cancelled_role VARCHAR(20), -- buyer or seller
+  cancellation_timing VARCHAR(50), 
+  -- last_minute (<2 hours), same_day, one_day_before, etc.
+  cancellation_reason_category VARCHAR(100),
+  -- found_better_deal, personal_emergency, item_sold, etc.
+  
+  -- Response from other party
+  response_by_user_id INTEGER REFERENCES users(id),
+  response_text TEXT,
+  response_at TIMESTAMP,
+  
+  -- Community feedback
+  helpful_count INTEGER DEFAULT 0,
+  not_helpful_count INTEGER DEFAULT 0,
+  
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ============================================
+-- USER STATISTICS TABLE
+-- ============================================
+CREATE TABLE user_statistics (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) UNIQUE,
+  
+  -- As Seller
+  total_sales INTEGER DEFAULT 0,
+  successful_sales INTEGER DEFAULT 0,
+  cancelled_by_seller INTEGER DEFAULT 0,
+  cancelled_by_buyer_on_seller INTEGER DEFAULT 0,
+  seller_no_shows INTEGER DEFAULT 0,
+  buyer_no_shows_on_seller INTEGER DEFAULT 0,
+  
+  -- As Buyer
+  total_purchases INTEGER DEFAULT 0,
+  successful_purchases INTEGER DEFAULT 0,
+  cancelled_by_buyer INTEGER DEFAULT 0,
+  cancelled_by_seller_on_buyer INTEGER DEFAULT 0,
+  buyer_no_shows INTEGER DEFAULT 0,
+  seller_no_shows_on_buyer INTEGER DEFAULT 0,
+  
+  -- Recent activity (last 90 days)
+  recent_transactions_90d INTEGER DEFAULT 0,
+  recent_cancellations_90d INTEGER DEFAULT 0,
+  recent_no_shows_90d INTEGER DEFAULT 0,
+  
+  -- Timing stats
+  avg_response_time_minutes INTEGER,
+  response_rate_percent DECIMAL(5,2),
+  responses_within_15min INTEGER DEFAULT 0,
+  responses_within_1hour INTEGER DEFAULT 0,
+  responses_within_24hours INTEGER DEFAULT 0,
+  total_messages_received INTEGER DEFAULT 0,
+  
+  -- Punctuality
+  checked_in_early INTEGER DEFAULT 0,
+  checked_in_on_time INTEGER DEFAULT 0,
+  checked_in_late INTEGER DEFAULT 0,
+  total_checkins INTEGER DEFAULT 0,
+  
+  -- Reviews received
+  total_reviews_received INTEGER DEFAULT 0,
+  five_star_reviews INTEGER DEFAULT 0,
+  four_star_reviews INTEGER DEFAULT 0,
+  three_star_reviews INTEGER DEFAULT 0,
+  two_star_reviews INTEGER DEFAULT 0,
+  one_star_reviews INTEGER DEFAULT 0,
+  average_rating DECIMAL(3,2),
+  
+  -- Verification
+  phone_verified BOOLEAN DEFAULT false,
+  email_verified BOOLEAN DEFAULT false,
+  id_verified BOOLEAN DEFAULT false,
+  stripe_connected BOOLEAN DEFAULT false,
+  
+  -- Calculated rates
+  seller_success_rate DECIMAL(5,2),
+  buyer_success_rate DECIMAL(5,2),
+  overall_success_rate DECIMAL(5,2),
+  
+  member_since DATE,
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ============================================
+-- REVIEW VOTES TABLE
+-- ============================================
+CREATE TABLE review_votes (
+  id SERIAL PRIMARY KEY,
+  review_id INTEGER REFERENCES reviews(id),
+  user_id INTEGER REFERENCES users(id),
+  vote_type VARCHAR(20), -- helpful or not_helpful
+  created_at TIMESTAMP DEFAULT NOW(),
+  
+  CONSTRAINT unique_vote_per_user UNIQUE(review_id, user_id)
+);
+
+-- ============================================
+-- CANCELLATION COMMENT VOTES TABLE
+-- ============================================
+CREATE TABLE cancellation_comment_votes (
+  id SERIAL PRIMARY KEY,
+  comment_id INTEGER REFERENCES cancellation_comments(id),
+  user_id INTEGER REFERENCES users(id),
+  vote_type VARCHAR(20), -- helpful or not_helpful
+  created_at TIMESTAMP DEFAULT NOW(),
+  
+  CONSTRAINT unique_comment_vote UNIQUE(comment_id, user_id)
+);
+
+-- ============================================
+-- TRANSACTION EVENTS TABLE (for timeline)
+-- ============================================
+CREATE TABLE transaction_events (
+  id SERIAL PRIMARY KEY,
+  transaction_id INTEGER REFERENCES offers(id),
+  user_id INTEGER REFERENCES users(id),
+  event_type VARCHAR(50),
+  -- offer_made, offer_accepted, deposit_placed, meetup_scheduled,
+  -- checked_in, completed, cancelled, no_show, review_left
+  event_data JSONB, -- flexible data storage
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ============================================
+-- INDEXES
+-- ============================================
+CREATE INDEX idx_reviews_reviewed_user ON reviews(reviewed_user_id);
+CREATE INDEX idx_reviews_reviewer ON reviews(reviewer_id);
+CREATE INDEX idx_reviews_transaction ON reviews(transaction_id);
+CREATE INDEX idx_reviews_rating ON reviews(overall_rating);
+CREATE INDEX idx_reviews_created ON reviews(created_at DESC);
+
+CREATE INDEX idx_cancellation_comments_transaction ON cancellation_comments(transaction_id);
+CREATE INDEX idx_cancellation_comments_user ON cancellation_comments(cancelled_by_user_id);
+
+CREATE INDEX idx_user_stats_user ON user_statistics(user_id);
+CREATE INDEX idx_user_stats_rating ON user_statistics(average_rating);
+CREATE INDEX idx_user_stats_success ON user_statistics(overall_success_rate);
+
+CREATE INDEX idx_review_votes_review ON review_votes(review_id);
+CREATE INDEX idx_comment_votes_comment ON cancellation_comment_votes(comment_id);
+
+CREATE INDEX idx_transaction_events_transaction ON transaction_events(transaction_id);
+CREATE INDEX idx_transaction_events_user ON transaction_events(user_id);
+
+🔌 API ENDPOINTS
+javascript// ============================================
+// REVIEW ENDPOINTS
+// ============================================
+
+// POST /api/reviews/create
+// Create a review after transaction
+{
+  transactionId: 123,
+  overallRating: 5,
+  communicationRating: 5,
+  asDescribedRating: 5,
+  punctualityRating: 5,
+  professionalismRating: 5,
+  reviewTitle: "Great seller - highly recommend!",
+  reviewText: "Sarah was amazing! Met me exactly on time...",
+  reviewPhotos: ["url1", "url2"],
+  wouldTransactAgain: "yes_definitely"
+}
+
+// GET /api/reviews/user/:userId
+// Get all reviews for a user
+Query params: ?role=seller&sort=recent&limit=20
+
+// POST /api/reviews/:reviewId/response
+// Seller responds to a review
+{
+  responseText: "Thank you! Pleasure doing business with you."
+}
+
+// POST /api/reviews/:reviewId/vote
+// Vote if review was helpful
+{
+  voteType: "helpful" // or "not_helpful"
+}
+
+// PUT /api/reviews/:reviewId/flag
+// Flag inappropriate review
+{
+  reason: "fake_review" // or spam, inappropriate, etc.
+}
+
+// ============================================
+// CANCELLATION COMMENT ENDPOINTS
+// ============================================
+
+// POST /api/cancellations/:transactionId/comment
+// Add comment when cancelling
+{
+  comment: "I'm really sorry for the late cancellation...",
+  isPublic: true,
+  reasonCategory: "personal_emergency"
+}
+
+// POST /api/cancellations/:commentId/response
+// Other party responds to cancellation comment
+{
+  responseText: "Thanks for explaining! I understand."
+}
+
+// POST /api/cancellations/:commentId/vote
+// Vote if cancellation explanation was reasonable
+{
+  voteType: "helpful" // or "not_helpful"
+}
+
+// ============================================
+// STATISTICS ENDPOINTS
+// ============================================
+
+// GET /api/statistics/user/:userId
+// Get complete statistics for a user
+Response includes:
+- All numerical stats
+- Calculated percentages
+- Recent activity breakdown
+- Rating distribution
+
+// GET /api/statistics/user/:userId/timeline
+// Get visual timeline of transactions
+Returns: Array of all transactions with outcomes
+
+// ============================================
+// TRANSACTION HISTORY ENDPOINTS
+// ============================================
+
+// GET /api/transactions/user/:userId/history
+// Get complete transaction history with reviews/comments
+Query params: ?role=buyer&status=all&sort=recent
+
+// GET /api/transactions/:transactionId/details
+// Get full details including reviews and comments
+
+🎨 UI COMPONENTS TO BUILD
+1. User Profile Page
+Components needed:
+- Profile header with overall rating
+- Tab navigation (About, Statistics, Reviews, Transaction History)
+- Rating breakdown chart (5-star distribution)
+- Review list with sorting/filtering
+- Transaction timeline
+- Statistics dashboard
+2. Review Display Component
+Features:
+- Star rating display (1-5 stars)
+- Review text with "Read more" expansion
+- Review photos gallery
+- Helpful/Not helpful voting buttons
+- Seller response section (collapsible)
+- Verified transaction badge
+- Report/flag button
+3. Leave Review Modal
+Form fields:
+- Overall star rating (required)
+- Aspect ratings (communication, as described, etc.)
+- Review title (optional, max 200 chars)
+- Review text (required, max 5000 chars)
+- Photo upload (max 5 photos)
+- "Would you transact again?" radio buttons
+- Agreement checkboxes
+- Submit/Draft/Cancel buttons
+4. Cancellation Comment Modal
+When cancelling transaction:
+- Explanation text area (max 500 chars)
+- Pre-filled reason suggestions
+- "Make public" checkbox (default: checked)
+- Character counter
+- Warning about public visibility
+5. Statistics Dashboard
+Display sections:
+- Overall stats (transactions, success rate)
+- As Seller stats
+- As Buyer stats
+- Recent activity (last 90 days)
+- Response time metrics
+- Punctuality stats
+- Verification badges
+6. Transaction History Table
+Columns:
+- Date
+- Item name/thumbnail
+- Other party (name + rating link)
+- Role (buyer/seller)
+- Status (completed, cancelled, no-show)
+- Review given/received
+- Cancellation comment (if applicable)
+- Actions (view details)
+7. Review Link Components
+Clickable links everywhere:
+- On listing cards: "View 47 seller reviews"
+- In offers: "View John's reviews as a buyer"
+- In messages: Rating badge is clickable
+- In profiles: Prominent review tab
+8. Rating Breakdown Widget
+Visual display:
+- 5 horizontal bars showing % distribution
+- Click on bar to filter reviews
+- Total review count
+- Average rating (X.X out of 5.0)
+
+🔄 WORKFLOW LOGIC
+After Transaction Completes:
+javascript// 1. Both parties marked transaction complete
+// 2. Send review request emails to both parties
+// 3. Allow 30 days for review submission
+// 4. After review submitted:
+//    - Update user_statistics
+//    - Notify reviewed party
+//    - Allow reviewed party to respond
+// 5. Reviews become public immediately
+When Cancellation Happens:
+javascript// 1. User clicks "Cancel" button
+// 2. Show cancellation modal with comment option
+// 3. User submits cancellation + optional comment
+// 4. Create cancellation_comment record
+// 5. Notify other party via email
+// 6. Allow other party to respond
+// 7. Update user_statistics (increment cancellation count)
+// 8. Show in transaction history with comment
+// 9. Display on public profile
+Statistics Auto-Update:
+javascript// Triggers for updating user_statistics:
+// - Transaction completes → increment success counts
+// - Transaction cancelled → increment cancellation counts
+// - No-show detected → increment no-show counts
+// - Review received → update rating averages
+// - Message responded → update response time stats
+// - Check-in completed → update punctuality stats
+
+// Run calculation daily at midnight:
+// - Recalculate success rates
+// - Update 90-day rolling statistics
+// - Clear old recent_activity counters
+
+📧 EMAIL TEMPLATES NEEDED
+1. Review Request Email
+Subject: How was your transaction with [Name]?
+
+Hi [User],
+
+You recently completed a purchase/sale:
+[Item Name] - $[Price]
+[Other Party]: [Name]
+
+Help other buyers/sellers by sharing your experience!
+
+[⭐⭐⭐⭐⭐ Leave a Review]
+
+Your honest feedback helps build trust in the community.
+
+- SellFast.now Team
+2. Review Received Notification
+Subject: You received a new review! ⭐⭐⭐⭐⭐
+
+Hi [User],
+
+[Reviewer Name] left you a review:
+
+⭐⭐⭐⭐⭐ [Rating]
+"[Review excerpt...]"
+
+[Read Full Review] [Respond to Review]
+
+- SellFast.now Team
+3. Cancellation with Comment
+Subject: [Name] cancelled - but left a comment
+
+Hi [User],
+
+[Name] has cancelled their offer on:
+[Item Name] - $[Price]
+
+THEIR EXPLANATION:
+"[Cancellation comment text]"
+
+This comment is now visible on their public profile.
+
+[Respond to Comment]
+
+Your deposit refund is processing.
+
+- SellFast.now Team
+4. Response to Your Comment
+Subject: [Name] responded to your cancellation comment
+
+Hi [User],
+
+[Name] responded to your cancellation comment on:
+[Item Name] - $[Price]
+
+YOUR COMMENT:
+"[Your comment]"
+
+THEIR RESPONSE:
+"[Their response]"
+
+[View Full Conversation]
+
+- SellFast.now Team
+
+🎯 KEY IMPLEMENTATION NOTES
+1. Review Verification
+
+Only users involved in actual transaction can review
+One review per transaction per user
+Cannot edit review after 48 hours
+Cannot delete reviews (platform integrity)
+
+2. Spam Prevention
+
+Rate limit: Max 3 reviews per day per user
+Flagging system for fake reviews
+Admin review of flagged content
+Account suspension for fake review patterns
+
+3. Privacy & Safety
+
+Users can report inappropriate reviews
+Platform can hide reviews pending investigation
+No personal contact info in reviews
+No external links allowed in review text
+
+4. Performance Optimization
+
+Cache user statistics (update hourly)
+Paginate reviews (20 per page)
+Index all foreign keys
+Use database views for complex queries
+
+5. Mobile Responsiveness
+
+All components must work on mobile
+Touch-friendly star rating input
+Swipeable photo galleries
+Collapsible review sections
+
+
+✅ TESTING CHECKLIST
+□ User can leave review after transaction
+□ User can upload photos with review
+□ User can respond to reviews
+□ Reviews display correctly on profile
+□ Rating calculations are accurate
+□ Statistics update in real-time
+□ Cancellation comments are public
+□ Other party can respond to cancellation
+□ Review helpfulness voting works
+□ Links to reviews work from all pages
+□ Email notifications sent correctly
+□ Mobile UI is fully functional
+□ Performance is acceptable (<2s load)
+□ Spam prevention works
+□ Admin flagging system works
+
+🚀 DEPLOYMENT PRIORITY
+Phase 1 (MVP):
+
+Basic review system (star rating + text)
+User statistics tracking
+Cancellation comments
+Profile pages with reviews tab

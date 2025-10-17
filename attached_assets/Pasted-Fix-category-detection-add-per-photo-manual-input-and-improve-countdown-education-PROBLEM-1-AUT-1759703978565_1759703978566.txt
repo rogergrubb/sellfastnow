@@ -1,0 +1,183 @@
+Fix category detection, add per-photo manual input, and improve countdown education:
+
+PROBLEM 1: AUTOMOTIVE CATEGORY NOT POPULATING
+
+Fix AI category detection:
+- Ensure all categories are available: Electronics, Furniture, Clothing, Automotive, Books & Media, Sports, Home & Garden, Toys, Other
+- Update OpenAI prompt to specifically recognize automotive items (cars, motorcycles, parts, accessories, tools)
+- Test with car photos to verify "Automotive" category is detected
+- Log which category AI selects for each item
+
+PROBLEM 2: MANUAL INPUT NEEDS PER-PHOTO FIELDS
+
+When user chooses "Skip AI, I'll write my own descriptions", show this layout:
+┌────────────────────────────────────────────────────┐
+│  Photo #1                                          │
+│  ┌──────┐                                          │
+│  │      │  Title *                                 │
+│  │ IMG  │  [__________________________]          │
+│  │      │                                          │
+│  └──────┘  Description *                           │
+│             [_______________________]          │
+│             [_______________]          │
+│             [_________________________]          │
+│                                                    │
+│             Category *        Condition *          │
+│             [Select ▼]        [Select ▼]          │
+│                                                    │
+│             Your Price *                           │
+│             [$]                            │
+└────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────┐
+│  Photo #2                                          │
+│  ┌──────┐                                          │
+│  │      │  Title *                                 │
+│  │ IMG  │  [__________________________]          │
+│  │      │                                          │
+│  └──────┘  Description *                           │
+│             [_______________________]          │
+│             [_______________]          │
+│             [_________________________]          │
+│                                                    │
+│             Category *        Condition *          │
+│             [Select ▼]        [Select ▼]          │
+│                                                    │
+│             Your Price *                           │
+│             [$]                            │
+└────────────────────────────────────────────────────┘
+... (repeat for each photo)
+
+Each photo gets its own complete form - NOT one batch form at bottom.
+
+PROBLEM 3: EDUCATIONAL CONTENT DURING COUNTDOWN
+
+Replace simple tips with detailed explanations that rotate during AI processing:
+┌────────────────────────────────────────────────────┐
+│  🤖 AI is generating your descriptions...          │
+│                                                    │
+│           ⏱️  0:45 remaining                        │
+│                                                    │
+│  [████████░░░░░░░░░░] 50%                          │
+│                                                    │
+│  ✓ Photo 1: Complete                               │
+│  ✓ Photo 2: Complete                               │
+│  ⏳ Photo 3: Analyzing...                           │
+│                                                    │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│  💡 Did you know?                                  │
+│                                                    │
+│  AI-generated tags improve your listing's          │
+│  visibility in search results. When buyers         │
+│  search for "leather jacket" or "vintage denim",   │
+│  your item appears because AI automatically        │
+│  detected these tags. This means:                  │
+│                                                    │
+│  ✓ More buyers find your items                     │
+│  ✓ Items appear in related searches                │
+│  ✓ Higher ranking in search results                │
+│  ✓ 3x more likely to sell within 7 days            │
+│                                                    │
+│  The AI also optimizes your title and description  │
+│  with keywords buyers actually search for!         │
+└────────────────────────────────────────────────────┘
+
+EDUCATIONAL MESSAGES (rotate every 8 seconds):
+
+Message 1:
+💡 How AI Tags Boost Your Sales
+AI automatically generates meta tags from your photos - invisible
+keywords that help buyers find your items. For example:
+Photo of red Nike shoes → Tags: "athletic footwear", "running
+shoes", "Nike brand", "red sneakers", "size 10"
+Benefits:
+✓ Your item appears in multiple searches
+✓ Buyers searching "Nike" OR "running shoes" both find you
+✓ Items with tags sell 40% faster
+✓ No manual tagging needed - AI does it all
+
+Message 2:
+💡 SEO-Optimized Descriptions
+AI writes descriptions using keywords buyers search for:
+Instead of: "Nice chair for sale"
+AI writes: "Ergonomic office chair with lumbar support,
+adjustable height, mesh back - perfect for home office"
+This means:
+✓ Appears in searches for "office chair", "ergonomic", "lumbar"
+✓ Detailed keywords increase click-through rate by 60%
+✓ Professional descriptions build buyer trust
+✓ Higher search ranking = more visibility
+
+Message 3:
+💡 Smart Category & Attribute Detection
+AI doesn't just write text - it identifies product attributes:
+
+Category (Automotive, Electronics, etc.)
+Condition (New, Like New, Good, Fair)
+Brand detection (Nike, Apple, IKEA)
+Size, color, material specifications
+
+Why this matters:
+✓ Buyers can filter search by your exact attributes
+✓ Appears in category-specific searches
+✓ Accurate details reduce buyer questions
+✓ Proper categorization = right audience sees your item
+
+Message 4:
+💡 Competitive Pricing Intelligence
+AI analyzes similar items to suggest optimal pricing:
+
+Scans recent sales of comparable products
+Considers condition and features
+Suggests retail price for context
+Recommends competitive used price
+
+Results:
+✓ Price too high? AI prevents overpricing
+✓ Price too low? AI helps you get fair value
+✓ Properly priced items sell 2x faster
+✓ Reduces back-and-forth negotiation
+
+Message 5:
+💡 Multi-Tag Strategy for Maximum Reach
+One item gets tagged multiple ways to cast a wider net:
+Example: Vintage leather jacket
+Tags: "vintage clothing", "leather jacket", "men's outerwear",
+"brown leather", "motorcycle jacket", "retro fashion"
+Impact:
+✓ 6 different search queries all find your item
+✓ Reaches casual browsers AND specific searchers
+✓ Items with 5+ tags get 3x more views
+✓ Increases chance of appearing in "Related Items"
+
+Message 6:
+💡 Professional Presentation Advantage
+AI-generated listings look professional because:
+
+Proper grammar and spelling (builds trust)
+Complete sentences (not rushed descriptions)
+Highlights key features buyers care about
+Includes measurements, materials, condition details
+
+Statistics show:
+✓ Professional listings get 50% more inquiries
+✓ Buyers are willing to pay 15% more
+✓ Lower chance of returns/disputes
+✓ Faster sales with less negotiation
+
+IMPLEMENTATION:
+
+1. Create array of 6 detailed educational messages
+2. Rotate through them every 8-10 seconds during countdown
+3. Always show progress bar, timer, and photo status above message
+4. Make text readable (not too small, good contrast)
+5. Use icons/emojis to break up text
+6. Ensure messages fit on screen without scrolling
+
+FIXES REQUIRED:
+
+1. Add "Automotive" to category dropdown and AI detection
+2. Create per-photo input forms for manual mode (not batch form)
+3. Add detailed rotating educational content to countdown timer
+4. Test automotive photo detection works properly
+
+Confirm when all three issues are fixed.

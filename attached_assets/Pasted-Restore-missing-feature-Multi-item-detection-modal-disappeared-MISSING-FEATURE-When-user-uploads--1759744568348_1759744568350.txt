@@ -1,0 +1,60 @@
+Restore missing feature: Multi-item detection modal disappeared
+
+MISSING FEATURE: When user uploads multiple photos, AI should detect if they're different items or same item from multiple angles.
+
+RESTORE THIS MODAL:
+
+After user uploads photos and AI analyzes them, show:
+┌─────────────────────────────────────────────────────┐
+│  Multiple Items Detected                            │
+│  Detected 3 different items in your photos          │
+│                                                     │
+│  Product 1: Beige Sectional Sofa                    │
+│  Images: #1, #3, #5 (3 angles of same item)        │
+│                                                     │
+│  Product 2: Office Chair                            │
+│  Images: #2, #4 (2 angles of same item)            │
+│                                                     │
+│  Product 3: Table Lamp                              │
+│  Images: #6 (single photo)                          │
+│                                                     │
+│  [Create 3 Separate Listings]                       │
+│  [Create Bundle Listing]                            │
+│  [Let Me Regroup Manually]                          │
+└─────────────────────────────────────────────────────┘
+
+AI GROUPING LOGIC:
+
+When analyzing batch of images, ask OpenAI:
+Analyze these images and group them:
+
+Which photos show the SAME product from different angles?
+Which photos show DIFFERENT products?
+
+Return JSON:
+{
+"scenario": "same_product" | "multiple_products",
+"products": [
+{
+"imageIndices": [0, 2, 4],
+"title": "Beige Sectional Sofa",
+"description": "...",
+"category": "Furniture",
+"price": 450
+}
+]
+}
+
+WHERE IT SHOULD APPEAR:
+
+After user uploads photos → Before showing individual item forms
+
+WORKFLOW:
+1. User uploads 6 photos
+2. First 5 process with AI (free tier)
+3. AI detects groupings
+4. Show modal asking: "Same item or different items?"
+5. User chooses
+6. Show appropriate forms (1 form or 3 separate forms)
+
+This feature was working before - restore it now. Check git history if needed to see what changed.

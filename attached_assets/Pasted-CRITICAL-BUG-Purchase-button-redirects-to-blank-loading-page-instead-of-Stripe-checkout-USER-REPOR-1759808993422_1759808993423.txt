@@ -1,0 +1,71 @@
+CRITICAL BUG: Purchase button redirects to blank/loading page instead of Stripe checkout
+
+USER REPORT: Clicks "Purchase" → Page shows loading skeleton → Never reaches Stripe
+
+DEBUG AND FIX:
+
+1. Check what URL the purchase button redirects to:
+   - Open browser DevTools (F12) → Network tab
+   - Click purchase button
+   - Look at the navigation request
+   - What URL is it trying to load?
+   - Screenshot or log the URL
+
+2. The page shows: /purchase-ai-credits route
+   - This is WRONG - should redirect to Stripe, not internal page
+   - Remove this intermediate page
+   - Button should go DIRECTLY to Stripe checkout
+
+3. Fix the purchase button code:
+```javascript
+const handlePurchase = () => {
+  // Get Stripe payment link
+  const stripeLink = process.env.STRIPE_AI_BATCH_LINK;
+  
+  console.log('Redirecting to Stripe:', stripeLink);
+  
+  if (!stripeLink) {
+    alert('Payment system not configured. Please contact support.');
+    return;
+  }
+  
+  // Add user ID for tracking
+  const url = `${stripeLink}?client_reference_id=${userId}&prefilled_email=${userEmail}`;
+  
+  // DIRECT redirect to Stripe (no intermediate page)
+  window.location.href = url;
+};
+
+If STRIPE_AI_BATCH_LINK doesn't exist, create it NOW:
+
+Using Stripe Create Payment Link tool:
+
+Product name: "AI Credits - 25 Items"
+Amount: $0.50 (for 1-2 items) OR $0.20 per item for 3+ items
+Type: One-time payment
+Success URL: https://[your-replit-url]/payment-success
+Cancel URL: https://[your-replit-url]/post-ad
+
+Save the link as STRIPE_AI_BATCH_LINK in Secrets.
+
+Remove the /purchase-ai-credits page entirely:
+
+It's unnecessary
+Causes confusion
+Button should skip directly to Stripe
+
+
+Test the complete flow:
+
+Click purchase button
+Browser should immediately navigate to buy.stripe.com
+Stripe checkout page should load
+NOT stuck on loading page
+
+
+
+EXPECTED BEHAVIOR:
+User clicks "Purchase" → Browser redirects to https://buy.stripe.com/test_xxxxx → Stripe checkout loads
+ACTUAL BEHAVIOR:
+User clicks "Purchase" → Stuck on /purchase-ai-credits with gray skeleton
+Fix the redirect NOW and test that Stripe checkout actually loads.

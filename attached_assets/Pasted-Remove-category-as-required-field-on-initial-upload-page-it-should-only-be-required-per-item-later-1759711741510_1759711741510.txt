@@ -1,0 +1,77 @@
+Remove category as required field on initial upload page - it should only be required per-item later:
+
+LOGICAL PROBLEM:
+- User uploads 3 items: a lamp (Home Decor), a phone (Electronics), a shirt (Clothing)
+- Current flow asks for ONE category before upload → doesn't make sense for multi-category items
+- "Continue to upload photos" button is disabled if category not selected
+- This blocks the entire upload process
+
+CORRECT FLOW:
+
+1. INITIAL UPLOAD SCREEN:
+   - User uploads photos (no category selection)
+   - Remove category dropdown from this screen entirely
+   - "Continue" button is ALWAYS active after photos uploaded
+   - Don't ask for ANY details yet
+
+2. AFTER AI ANALYSIS:
+   - AI detects 3 different items
+   - Each item gets its own form with its own category dropdown
+   - Category required PER ITEM, not globally
+   - Lamp → Category: Home Decor
+   - Phone → Category: Electronics  
+   - Shirt → Category: Clothing
+
+3. UPDATE FORM STRUCTURE:
+
+   BEFORE (current - WRONG):
+[Upload Photos]
+Category: [Select...] * Required ← BLOCKS multi-category uploads
+[Continue] ← Disabled if no category
+
+   AFTER (correct):
+[Upload Photos]
+[Continue] ← Always active
+→ Then show individual item forms:
+Item 1: [Lamp photo]
+Category: [Home Decor] * ← Required here
+Item 2: [Phone photo]
+Category: [Electronics] * ← Required here
+Item 3: [Shirt photo]
+Category: [Clothing] * ← Required here
+
+4. VALIDATION RULES:
+
+   On upload screen:
+   - Only require: At least 1 photo
+   - NO category required
+   - NO title/description required
+   - "Continue" button enabled immediately after upload
+
+   On item review screen (after AI analysis):
+   - Each item requires: Title, Category, Price
+   - Each item can have different category
+   - Validate before final submission
+
+5. CODE CHANGES NEEDED:
+
+   Remove from initial upload page:
+   - Category dropdown
+   - Category validation
+   - Any logic that disables "Continue" button based on category
+
+   Add to individual item forms:
+   - Category dropdown per item (with AI pre-selection)
+   - Validation that checks each item has category
+   - Default to "General" if user skips
+
+6. USER FLOW:
+
+   Step 1: Upload photos → Click Continue (no category needed)
+   Step 2: AI analyzes and detects multiple items
+   Step 3: Review each item, each has its own category dropdown
+   Step 4: Submit all items (validate each has category)
+
+This allows users to upload mixed-category items without being blocked.
+
+Implement this flow change now and confirm when "Continue" button works without category selection.

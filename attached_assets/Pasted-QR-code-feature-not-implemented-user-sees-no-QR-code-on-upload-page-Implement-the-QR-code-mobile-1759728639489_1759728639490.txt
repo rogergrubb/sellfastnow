@@ -1,0 +1,144 @@
+QR code feature not implemented - user sees no QR code on upload page.
+
+Implement the QR code mobile upload feature NOW:
+
+1. INSTALL QR CODE LIBRARY:
+   npm install qrcode.react
+
+2. ADD QR CODE TO UPLOAD PAGE:
+   
+   In the photo upload section (PostAd.tsx or PostAdEnhanced.tsx):
+```javascript
+   import QRCode from 'qrcode.react';
+   import { useState, useEffect } from 'react';
+   
+   // Generate unique session ID for this upload session
+   const [sessionId] = useState(() => crypto.randomUUID());
+   const uploadUrl = `${window.location.origin}/mobile-upload/${sessionId}`;
+   
+   // Display QR code alongside upload area
+   <div className="upload-section">
+     <div className="desktop-upload">
+       <input type="file" multiple accept="image/*" />
+       <p>Drop images here or click to browse</p>
+     </div>
+     
+     <div className="qr-upload">
+       <QRCode value={uploadUrl} size={180} />
+       <p>Scan the QR code to upload images from your phone</p>
+       <small>Stay on this page while uploading</small>
+     </div>
+   </div>
+
+CREATE MOBILE UPLOAD ROUTE:
+Add route: /mobile-upload/:sessionId
+Create component: MobileUpload.tsx
+
+javascript   // MobileUpload.tsx
+   export default function MobileUpload() {
+     const { sessionId } = useParams();
+     const [uploading, setUploading] = useState(false);
+     
+     const handleUpload = async (files) => {
+       setUploading(true);
+       
+       for (const file of files) {
+         const formData = new FormData();
+         formData.append('image', file);
+         formData.append('sessionId', sessionId);
+         
+         await fetch('/api/mobile-upload', {
+           method: 'POST',
+           body: formData
+         });
+       }
+       
+       setUploading(false);
+       alert('Photos uploaded! Return to your computer.');
+     };
+     
+     return (
+       <div className="mobile-upload-page">
+         <h2>Upload Photos to Desktop</h2>
+         <input 
+           type="file" 
+           multiple 
+           accept="image/*"
+           capture="environment"
+           onChange={(e) => handleUpload(Array.from(e.target.files))}
+         />
+         {uploading && <p>Uploading...</p>}
+       </div>
+     );
+   }
+
+CREATE BACKEND ENDPOINT:
+POST /api/mobile-upload
+
+javascript   // Store uploaded images temporarily by session
+   const sessionUploads = new Map(); // sessionId -> [imageUrls]
+   
+   app.post('/api/mobile-upload', upload.single('image'), async (req, res) => {
+     const { sessionId } = req.body;
+     const imageUrl = await uploadToCloudinary(req.file);
+     
+     if (!sessionUploads.has(sessionId)) {
+       sessionUploads.set(sessionId, []);
+     }
+     sessionUploads.get(sessionId).push(imageUrl);
+     
+     res.json({ success: true, imageUrl });
+   });
+   
+   // Desktop polls for new images
+   app.get('/api/mobile-upload/:sessionId', (req, res) => {
+     const { sessionId } = req.params;
+     const images = sessionUploads.get(sessionId) || [];
+     res.json({ images });
+   });
+
+POLL FOR IMAGES ON DESKTOP:
+
+javascript   // In PostAd component
+   useEffect(() => {
+     const interval = setInterval(async () => {
+       const response = await fetch(`/api/mobile-upload/${sessionId}`);
+       const { images } = await response.json();
+       
+       // Add new images to form
+       setUploadedImages(prev => [...new Set([...prev, ...images])]);
+     }, 2000); // Poll every 2 seconds
+     
+     return () => clearInterval(interval);
+   }, [sessionId]);
+
+VISUAL LAYOUT:
+Show QR code on the RIGHT side of upload area:
+
+Left: Traditional file upload
+Right: QR code with instructions
+Both visible at same time
+
+
+SESSION CLEANUP:
+Expire sessions after 30 minutes:
+
+javascript   // Clean up old sessions
+   setInterval(() => {
+     const now = Date.now();
+     for (const [sessionId, data] of sessionUploads.entries()) {
+       if (now - data.timestamp > 30 * 60 * 1000) {
+         sessionUploads.delete(sessionId);
+       }
+     }
+   }, 60000);
+VERIFY IT WORKS:
+
+Navigate to post ad page
+QR code should be visible
+Scan with phone camera
+Phone opens mobile upload page
+Select photos on phone
+Desktop shows uploaded photos appear in real-time
+
+Implement this now and confirm QR code appears on upload page.

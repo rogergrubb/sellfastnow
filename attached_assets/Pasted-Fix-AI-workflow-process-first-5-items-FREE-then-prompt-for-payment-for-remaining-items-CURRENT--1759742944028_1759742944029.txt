@@ -1,0 +1,110 @@
+Fix AI workflow - process first 5 items FREE, then prompt for payment for remaining items:
+
+CURRENT PROBLEM: Error appears immediately, no items get processed.
+
+CORRECT FLOW FOR 10 UPLOADED ITEMS:
+
+1. User uploads 10 photos
+2. AI automatically processes FIRST 5 items (no prompt, no payment)
+3. Show results for those 5 items with titles/descriptions
+4. THEN show modal:
+Great! We've generated descriptions for your first 5 items.
+You have 5 more items to process.
+[Continue with 5 more items - $2.99]
+[Skip AI for remaining items - enter manually]
+
+IMPLEMENTATION:
+```javascript
+async function handleAIGeneration(uploadedImages) {
+  const imageCount = uploadedImages.length;
+  
+  // STEP 1: Always process first 5 free
+  const freeLimit = 5;
+  const freeBatch = uploadedImages.slice(0, freeLimit);
+  
+  console.log(`Processing first ${freeBatch.length} items with AI (free)`);
+  
+  // Process free batch
+  const freeResults = await processAIBatch(freeBatch);
+  
+  // Display results for first 5 items
+  setAIResults(freeResults);
+  
+  // Update usage counter
+  await incrementAIUsage(userId, freeBatch.length);
+  
+  // STEP 2: Check if there are remaining items
+  const remainingImages = uploadedImages.slice(freeLimit);
+  
+  if (remainingImages.length > 0) {
+    // Show payment modal for remaining items
+    showPaymentModal({
+      remainingCount: remainingImages.length,
+      price: 2.99,
+      onPurchase: async () => {
+        // Redirect to Stripe payment
+        const paymentLink = process.env.STRIPE_AI_BATCH_LINK;
+        window.location.href = `${paymentLink}?client_reference_id=${userId}&item_count=${remainingImages.length}`;
+      },
+      onSkip: () => {
+        // User can manually enter data for remaining items
+        showManualEntryForms(remainingImages);
+      }
+    });
+  } else {
+    // All items processed, show success
+    toast.success('All items processed with AI!');
+  }
+}
+PAYMENT MODAL UI:
+┌─────────────────────────────────────────────────────┐
+│  ✓ First 5 Items Processed!                        │
+│                                                     │
+│  We've generated AI descriptions for your first    │
+│  5 items. Review them below.                       │
+│                                                     │
+│  You have 5 more items remaining.                  │
+│                                                     │
+│  OPTIONS:                                           │
+│                                                     │
+│  [Generate AI for 5 more items - $2.99]           │
+│  Includes 25 AI credits (20 credits saved!)       │
+│                                                     │
+│  [Skip AI - I'll enter details manually]          │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+AFTER PAYMENT SUCCESS:
+javascript// Stripe webhook receives payment confirmation
+app.post('/api/stripe/webhook', async (req, res) => {
+  const event = req.body;
+  
+  if (event.type === 'checkout.session.completed') {
+    const { client_reference_id: userId } = event.data.object;
+    
+    // Add 25 credits to user account
+    await db.query(
+      'UPDATE users SET ai_credits_purchased = ai_credits_purchased + 25 WHERE id = $1',
+      [userId]
+    );
+    
+    // Redirect user back to continue processing
+    // Frontend will automatically process remaining items
+  }
+  
+  res.json({ received: true });
+});
+MONTHLY FREE TIER TRACKING:
+Each user gets 5 FREE AI descriptions per month:
+
+Month 1: Upload 10 items → 5 free, pay for 5
+Month 2 (new month): Upload 3 items → all 3 free
+Same month: Upload 5 more → 2 free (3 already used), pay for 3
+
+KEY CHANGES:
+
+Remove upfront payment check
+Process first 5 items immediately
+Show payment ONLY after user sees value
+Allow manual entry as free alternative
+
+Fix this flow now and test with 10 uploaded images.

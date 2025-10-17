@@ -1,0 +1,81 @@
+The payment link isn't working. Send this to Replit:
+Payment initialization failing with error - debug and fix NOW:
+
+ERROR: "Failed to initialize payment. Please try again."
+
+IMMEDIATE DEBUG STEPS:
+
+1. Check browser console for actual error:
+   - Open DevTools (F12) → Console tab
+   - Click "Purchase 25 AI Credits - $2.99" button
+   - Copy the EXACT error message logged
+   - Report it here
+
+2. Verify Stripe payment link exists:
+   - Check Replit Secrets for: STRIPE_AI_BATCH_LINK
+   - Is it set? Is it a valid URL?
+   - Should look like: https://buy.stripe.com/test_xxxxx or https://buy.stripe.com/xxxxx
+   - Log it: console.log('Payment link:', process.env.STRIPE_AI_BATCH_LINK)
+
+3. Test the payment link manually:
+   - Copy the Stripe payment link URL
+   - Paste it in browser address bar
+   - Does Stripe checkout page load?
+   - If NO → payment link is broken, recreate it
+
+4. Fix the payment redirect code:
+```javascript
+const handlePurchaseCredits = async () => {
+  try {
+    console.log('Purchase button clicked');
+    
+    const paymentLink = process.env.STRIPE_AI_BATCH_LINK;
+    console.log('Payment link from env:', paymentLink);
+    
+    if (!paymentLink) {
+      throw new Error('STRIPE_AI_BATCH_LINK not configured in Secrets');
+    }
+    
+    // Add user tracking
+    const checkoutUrl = `${paymentLink}?client_reference_id=${user.id}`;
+    console.log('Redirecting to:', checkoutUrl);
+    
+    // Redirect to Stripe
+    window.location.href = checkoutUrl;
+    
+  } catch (error) {
+    console.error('Payment initialization error:', error);
+    alert(`Payment error: ${error.message}`);
+  }
+};
+
+If payment link doesn't exist, CREATE IT NOW:
+
+Use Stripe tool to create:
+
+Product: "AI Credits - 25 Items"
+Price: $2.99
+Type: One-time payment
+Get the payment link URL
+Add to Replit Secrets as STRIPE_AI_BATCH_LINK
+
+
+Test end-to-end:
+
+Upload 10 images
+Click "Auto-Generate with AI"
+First 5 process free
+Modal shows with "Purchase" button
+Click "Purchase 25 AI Credits - $2.99"
+Should redirect to Stripe checkout page
+NOT show error
+
+
+
+Report back with:
+
+Console error message
+Whether STRIPE_AI_BATCH_LINK exists in Secrets
+Whether payment link URL works when pasted in browser
+
+Fix this NOW before claiming implementation is complete.

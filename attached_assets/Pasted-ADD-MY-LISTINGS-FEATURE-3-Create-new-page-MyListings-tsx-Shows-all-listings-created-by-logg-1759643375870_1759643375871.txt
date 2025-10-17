@@ -1,0 +1,88 @@
+ADD "MY LISTINGS" FEATURE:
+
+3. Create new page: MyListings.tsx
+   Shows all listings created by logged-in user:
+┌────────────────────────────────────────────────┐
+│  My Listings (3)              [+ Post New Ad]  │
+└────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────┐
+│  Active Listings (2)                           │
+├────────────────────────────────────────────────┤
+│  ┌──────┐                                      │
+│  │ IMG  │  Beige Sectional Sofa                │
+│  └──────┘  $450 • Furniture • 2 views          │
+│            Posted 5 minutes ago                │
+│            [Edit] [Mark as Sold] [Delete]      │
+├────────────────────────────────────────────────┤
+│  ┌──────┐                                      │
+│  │ IMG  │  Office Chair - Ergonomic             │
+│  └──────┘  $85 • Furniture • 0 views           │
+│            Posted 5 minutes ago                │
+│            [Edit] [Mark as Sold] [Delete]      │
+└────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────┐
+│  Sold (1)                                      │
+├────────────────────────────────────────────────┤
+│  ┌──────┐                                      │
+│  │ IMG  │  Women's Black Ankle Boots            │
+│  └──────┘  $35 • Clothing • Sold 2 days ago    │
+│            [Archive] [Relist]                  │
+└────────────────────────────────────────────────┘
+
+4. Add to main navigation (header):
+   
+   Current navigation:
+   [Home] [Search] [Post Ad] [Profile ▼]
+   
+   Update to:
+   [Home] [Search] [My Listings] [Post Ad] [Profile ▼]
+   
+   Or in user dropdown:
+   [Profile ▼]
+     ├─ My Listings
+     ├─ My Offers
+     ├─ Messages
+     ├─ Settings
+     └─ Sign Out
+
+5. Backend API endpoint:
+   GET /api/user/listings
+   - Returns all listings for authenticated user
+   - Include: title, price, category, images, views, createdAt, status
+   - Sort by: newest first
+   - Filter by: active, sold, archived
+
+6. Features for My Listings page:
+   - View count for each listing
+   - Edit button (opens edit form)
+   - Mark as Sold button (updates status)
+   - Delete button (with confirmation)
+   - Relist sold items (creates new listing)
+   - Archive old listings
+   - Filter tabs: All / Active / Sold / Archived
+   - Search within my listings
+
+7. Add quick stats at top:
+┌─────────────────────────────────────────────┐
+│  📊 Your Stats                              │
+│  Active Listings: 2 | Total Views: 47      │
+│  Items Sold: 1 | Total Earnings: $35       │
+└─────────────────────────────────────────────┘
+
+8. Mobile navigation:
+   - Add "My Listings" to bottom tab bar or hamburger menu
+   - Make it easily accessible (primary navigation item)
+
+ENSURE LISTINGS ARE SAVED:
+- Verify database INSERT operations complete successfully
+- Return created listing IDs to frontend
+- Show confirmation with links to view listings
+- Don't redirect until database confirms save
+
+Test the complete flow:
+1. Create 3 listings
+2. Verify they appear in "My Listings" page
+3. Verify they appear in main search/home
+4. Test edit, delete, mark as sold
+
+Confirm when My Listings page is live and listings persist correctly.

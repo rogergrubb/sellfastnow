@@ -1,0 +1,303 @@
+Add 10 auto-rotating educational tips during photo processing to educate users and make wait time feel productive.
+
+EDUCATIONAL TIPS CONTENT:
+
+10 tips about AI descriptions, meta tags, SEO, and selling success:
+```javascript
+const PROCESSING_TIPS = [
+  {
+    icon: "🎯",
+    title: "Smart Pricing Psychology",
+    description: "Pricing at $99 instead of $100 can increase click-through rates by 20%. Round numbers suggest firm pricing, while precise amounts ($47) feel more negotiable and research-backed."
+  },
+  {
+    icon: "🔍",
+    title: "SEO-Optimized Keywords",
+    description: "AI-generated descriptions include keywords buyers actually search for, making your items 3x more likely to appear in search results. More visibility = faster sales."
+  },
+  {
+    icon: "📝",
+    title: "Detailed Descriptions Sell Faster",
+    description: "Listings with detailed descriptions sell 40% faster than vague ones. AI captures specific details like materials, dimensions, and condition that buyers want to know."
+  },
+  {
+    icon: "🏷️",
+    title: "Meta Tags Drive Discovery",
+    description: "Proper meta tags help search engines categorize your items correctly. AI analyzes your product and assigns the most relevant tags automatically for maximum exposure."
+  },
+  {
+    icon: "💡",
+    title: "Professional Titles Matter",
+    description: "Items with clear, descriptive titles get 60% more views. AI creates titles that include brand, condition, size, and key features - exactly what buyers search for."
+  },
+  {
+    icon: "📊",
+    title: "Accurate Categories = More Buyers",
+    description: "Placing items in the right category increases visibility by 50%. AI analyzes your product and selects the most accurate category automatically."
+  },
+  {
+    icon: "⚡",
+    title: "Save 30+ Minutes Per Listing",
+    description: "Writing quality descriptions manually takes time. AI generates professional product descriptions in seconds, letting you list items 10x faster."
+  },
+  {
+    icon: "✨",
+    title: "Higher Quality = More Sales",
+    description: "Professional-looking listings build buyer trust. AI-generated content is consistent, detailed, and error-free - making your items look premium."
+  },
+  {
+    icon: "🎨",
+    title: "Condition Assessment Accuracy",
+    description: "AI analyzes visible wear and tear to suggest accurate condition ratings (New, Like New, Good, Fair). Honest condition descriptions reduce returns and disputes."
+  },
+  {
+    icon: "💰",
+    title: "Smart Price Suggestions",
+    description: "AI compares similar items to suggest both retail and used pricing. Price competitively from the start to sell faster and maximize your profit."
+  }
+];
+AUTO-ROTATION IMPLEMENTATION:
+javascriptconst ProcessingTips = ({ isVisible }) => {
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
+  const [fadeClass, setFadeClass] = useState('fade-in');
+  
+  useEffect(() => {
+    if (!isVisible) return;
+    
+    // Rotate tips every 6 seconds
+    const interval = setInterval(() => {
+      // Fade out
+      setFadeClass('fade-out');
+      
+      // Wait for fade out animation
+      setTimeout(() => {
+        // Change tip
+        setCurrentTipIndex((prev) => (prev + 1) % PROCESSING_TIPS.length);
+        // Fade in
+        setFadeClass('fade-in');
+      }, 300);
+      
+    }, 6000); // 6 seconds per tip
+    
+    return () => clearInterval(interval);
+  }, [isVisible]);
+  
+  const currentTip = PROCESSING_TIPS[currentTipIndex];
+  
+  return (
+    <div className={`processing-tips ${fadeClass}`}>
+      <div className="tip-icon">{currentTip.icon}</div>
+      <div className="tip-content">
+        <h4 className="tip-title">{currentTip.title}</h4>
+        <p className="tip-description">{currentTip.description}</p>
+      </div>
+      
+      {/* Progress dots showing which tip */}
+      <div className="tip-indicators">
+        {PROCESSING_TIPS.map((_, index) => (
+          <span 
+            key={index}
+            className={`dot ${index === currentTipIndex ? 'active' : ''}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+INTEGRATION WITH PROGRESS MODAL:
+javascriptconst ProcessingModal = ({ phase, uploadProgress, aiProgress }) => {
+  return (
+    <div className="processing-modal">
+      {/* Progress bar section */}
+      {phase === 'upload' && (
+        <PhotoUploadProgress 
+          current={uploadProgress.current}
+          total={uploadProgress.total}
+        />
+      )}
+      
+      {phase === 'ai' && (
+        <AIProcessingProgress 
+          current={aiProgress.current}
+          total={aiProgress.total}
+        />
+      )}
+      
+      {/* Educational tips - always visible during processing */}
+      <ProcessingTips isVisible={phase === 'upload' || phase === 'ai'} />
+    </div>
+  );
+};
+STYLING:
+css.processing-tips {
+  margin-top: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+  min-height: 150px;
+  transition: opacity 0.3s ease;
+}
+
+.processing-tips.fade-in {
+  opacity: 1;
+  animation: fadeIn 0.3s ease;
+}
+
+.processing-tips.fade-out {
+  opacity: 0;
+  animation: fadeOut 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-10px); }
+}
+
+.tip-icon {
+  font-size: 48px;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.tip-content {
+  text-align: center;
+}
+
+.tip-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.tip-description {
+  font-size: 15px;
+  line-height: 1.5;
+  opacity: 0.95;
+}
+
+.tip-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.tip-indicators .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transition: all 0.3s ease;
+}
+
+.tip-indicators .dot.active {
+  background: white;
+  width: 24px;
+  border-radius: 4px;
+}
+VISUAL LAYOUT:
+┌────────────────────────────────────────────┐
+│  AI Generating Descriptions                │
+│  Processing item 4 of 10                   │
+│                                            │
+│  [████████░░░░░░░░] 40%                    │
+│                                            │
+│  4 of 10 items analyzed                    │
+│                                            │
+│ ┌────────────────────────────────────────┐ │
+│ │              🔍                        │ │
+│ │                                        │ │
+│ │     SEO-Optimized Keywords             │ │
+│ │                                        │ │
+│ │  AI-generated descriptions include     │ │
+│ │  keywords buyers actually search for,  │ │
+│ │  making your items 3x more likely to   │ │
+│ │  appear in search results. More        │ │
+│ │  visibility = faster sales.            │ │
+│ │                                        │ │
+│ │  ○ ● ○ ○ ○ ○ ○ ○ ○ ○                  │ │
+│ └────────────────────────────────────────┘ │
+└────────────────────────────────────────────┘
+ADVANCED FEATURES:
+
+Manual Navigation (Optional):
+
+javascriptconst ProcessingTips = ({ isVisible }) => {
+  // ... existing code ...
+  
+  const nextTip = () => {
+    setCurrentTipIndex((prev) => (prev + 1) % PROCESSING_TIPS.length);
+  };
+  
+  const prevTip = () => {
+    setCurrentTipIndex((prev) => (prev - 1 + PROCESSING_TIPS.length) % PROCESSING_TIPS.length);
+  };
+  
+  return (
+    <div className="processing-tips">
+      <button className="tip-nav prev" onClick={prevTip}>‹</button>
+      {/* Tip content */}
+      <button className="tip-nav next" onClick={nextTip}>›</button>
+    </div>
+  );
+};
+
+Pause on Hover:
+
+javascriptconst [isPaused, setIsPaused] = useState(false);
+
+useEffect(() => {
+  if (!isVisible || isPaused) return;
+  // ... rotation logic
+}, [isVisible, isPaused]);
+
+return (
+  <div 
+    className="processing-tips"
+    onMouseEnter={() => setIsPaused(true)}
+    onMouseLeave={() => setIsPaused(false)}
+  >
+    {/* Content */}
+  </div>
+);
+
+Progress Animation:
+
+javascript// Add a progress bar showing time until next tip
+const [tipProgress, setTipProgress] = useState(0);
+
+useEffect(() => {
+  const progressInterval = setInterval(() => {
+    setTipProgress(prev => (prev + 1.67) % 100); // 100% in 6 seconds
+  }, 100);
+  
+  return () => clearInterval(progressInterval);
+}, []);
+
+<div className="tip-progress">
+  <div className="tip-progress-fill" style={{ width: `${tipProgress}%` }} />
+</div>
+TIMING STRATEGY:
+
+6 seconds per tip = 60 seconds for all 10 tips
+If processing takes 2 minutes, user sees all tips almost twice
+If processing takes 30 seconds, user sees 5 tips
+Rotation keeps content fresh and engaging
+
+BENEFITS:
+
+✓ Makes wait time feel productive
+✓ Educates users on AI value
+✓ Builds trust in the platform
+✓ Justifies the pricing
+✓ Reduces perceived wait time
+✓ Professional, polished experience
+
+Implement rotating educational tips now.
+Test with 10-item upload and verify tips rotate smoothly every 6 seconds during both upload and AI phases.

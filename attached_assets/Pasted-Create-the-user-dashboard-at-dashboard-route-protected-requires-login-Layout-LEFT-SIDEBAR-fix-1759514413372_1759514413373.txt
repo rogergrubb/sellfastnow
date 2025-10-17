@@ -1,0 +1,110 @@
+Create the user dashboard at /dashboard route (protected, requires login).
+Layout:
+LEFT SIDEBAR (fixed, 240px wide):
+
+User profile section at top:
+
+Large avatar circle
+User name
+"Member since [date]"
+"Edit Profile" link
+
+
+
+Navigation menu (active state styling):
+
+My Listings (House icon)
+Favorites (Heart icon)
+Messages (MessageCircle icon)
+Settings (Settings icon)
+
+MAIN CONTENT AREA:
+MY LISTINGS TAB (default):
+Stats Cards Row (4 cards):
+
+Total Active: [number] (green)
+Total Views: [number] (blue)
+Messages: [number] (purple)
+Items Sold: [number] (orange)
+
+Listing Management Section:
+
+Tab pills: Active | Drafts | Sold | Expired
+"Create New Listing" button (top right, prominent)
+Search my listings input
+Sort dropdown: Newest, Oldest, Most Views, Price
+
+Listing Cards (vertical list):
+Each card shows:
+
+Thumbnail image (left, 120x120px)
+Title, Price, Condition badge
+Stats: 👁️ [views]  💬 [messages]
+Posted date (relative)
+Status badge (Active/Draft/Sold/Expired)
+Action buttons (right side):
+
+Edit (pencil icon)
+Delete (trash icon)
+Mark as Sold (if active)
+Boost (rocket icon) - premium feature
+
+
+
+Empty state:
+
+Empty box icon
+"No listings yet"
+"Post your first item" CTA button
+
+FAVORITES TAB:
+
+Grid of saved listings (use existing ListingCard)
+"Remove from favorites" button on hover
+Empty state: "No saved listings"
+
+MESSAGES TAB:
+
+Redirect to /messages page (we'll build this next)
+
+SETTINGS TAB:
+
+Profile settings form:
+
+Display name
+Email (read-only)
+Phone number
+Location
+Bio (textarea)
+
+
+Notification preferences (checkboxes):
+
+Email notifications
+New message alerts
+Price drop alerts
+
+
+"Save Changes" button
+
+API Endpoints:
+typescript// GET /api/listings/mine - Get user's listings
+// GET /api/listings/stats - Get dashboard stats
+// GET /api/favorites - Get saved listings
+// DELETE /api/listings/:id - Delete listing
+// PUT /api/listings/:id/status - Update status (sold/active)
+// PUT /api/users/profile - Update profile
+Mobile:
+
+Hamburger menu for sidebar
+Stack layout
+Fixed "Create Listing" FAB button (bottom right)
+
+Test:
+
+Login required check
+View multiple listings in each tab
+Edit a listing
+Delete a listing
+Mark as sold
+Update profile settings

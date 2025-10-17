@@ -1,0 +1,199 @@
+CRITICAL BUG: Payment failing with 401 Unauthorized error.
+
+User clicks "Continue with $0.60" → Gets error: 401: {"message":"Unauthorized"}
+
+ISSUE: Authentication token not being passed to payment endpoint OR token is invalid.
+
+DEBUG AND FIX AUTHENTICATION:
+
+1. CHECK IF CLERK TOKEN IS BEING SENT:
+```javascript
+   const handlePayment = async (amount, itemCount) => {
+     try {
+       // Get Clerk auth token
+       const token = await window.Clerk.session.getToken();
+       console.log('Auth token:', token ? 'Present' : 'MISSING');
+       
+       const response = await fetch('/api/create-checkout-session', {
+         method: 'POST',
+         headers: {
+           'Content-Type': 'application/json',
+           'Authorization': `Bearer ${token}`  // ← ADD THIS
+         },
+         body: JSON.stringify({
+           amount: Math.round(amount * 100),
+           itemCount: itemCount
+         })
+       });
+       
+       if (!response.ok) {
+         console.error('Payment request failed:', response.status);
+         const error = await response.json();
+         console.error('Error details:', error);
+       }
+       
+     } catch (error) {
+       console.error('Payment error:', error);
+     }
+   };
+
+VERIFY BACKEND AUTHENTICATION MIDDLEWARE:
+
+javascript   // server/routes.ts
+   app.post('/api/create-checkout-session', requireAuth, async (req, res) => {
+     // ↑ Make sure requireAuth middleware is present
+     
+     const userId = req.auth.userId;
+     
+     if (!userId) {
+       console.error('No userId in request');
+       return res.status(401).json({ message: 'Unauthorized' });
+     }
+     
+     console.log('Authenticated user:', userId);
+     
+     // Create Stripe session...
+   });
+
+CHECK CLERK AUTH MIDDLEWARE:
+
+javascript   // Make sure Clerk middleware is configured
+   import { requireAuth } from '@clerk/clerk-sdk-node';
+   
+   // Or if using custom middleware:
+   const requireAuth = async (req, res, next) => {
+     try {
+       const token = req.headers.authorization?.replace('Bearer ', '');
+       
+       if (!token) {
+         return res.status(401).json({ message: 'No auth token provided' });
+       }
+       
+       // Verify Clerk token
+       const session = await clerkClient.verifyToken(token);
+       req.auth = { userId: session.sub };
+       next();
+     } catch (error) {
+       console.error('Auth verification failed:', error);
+       return res.status(401).json({ message: 'Unauthorized' });
+     }
+   };
+
+ALTERNATIVE - USE CLERK'S BUILT-IN FETCH:
+
+javascript   // Use Clerk's authenticated fetch
+   import { useAuth } from '@clerk/clerk-react';
+   
+   const { getToken } = useAuth();
+   
+   const handlePayment = async (amount, itemCount) => {
+     const token = await getToken();
+     
+     const response = await fetch('/api/create-checkout-session', {
+       method: 'POST',
+       headers: {
+         'Content-Type': 'application/json',
+         'Authorization': `Bearer ${token}`
+       },
+       body: JSON.stringify({ amount, itemCount })
+     });
+   };
+
+CHECK IF USER IS ACTUALLY LOGGED IN:
+
+javascript   // Before attempting payment
+   if (!user || !user.id) {
+     alert('Please log in to continue');
+     redirectToSignIn();
+     return;
+   }
+
+VERIFY CLERK KEYS ARE SET:
+Check Replit Secrets has:
+
+CLERK_SECRET_KEY (backend)
+CLERK_PUBLISHABLE_KEY (frontend)
+Both must be from same Clerk instance
+
+
+TEST THE ENDPOINT DIRECTLY:
+
+javascript   // Add a test endpoint
+   app.get('/api/test-auth', requireAuth, (req, res) => {
+     res.json({
+       authenticated: true,
+       userId: req.auth.userId
+     });
+   });
+Then test: Open /api/test-auth in browser
+
+If 401: Auth middleware is broken
+If 200: Auth works, problem is in payment endpoint
+
+
+COMMON CAUSES OF 401:
+
+Token not being sent from frontend
+Token expired or invalid
+Clerk keys mismatch (frontend/backend different instances)
+Auth middleware not configured on endpoint
+CORS blocking auth headers
+
+
+
+IMMEDIATE FIX:
+Update payment button to include auth token:
+javascriptconst PaymentModal = () => {
+  const { getToken } = useAuth(); // From @clerk/clerk-react
+  const [loading, setLoading] = useState(false);
+  
+  const handlePayment = async () => {
+    setLoading(true);
+    try {
+      const token = await getToken();
+      
+      if (!token) {
+        alert('Please log in to continue');
+        return;
+      }
+      
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          amount: 60, // $0.60 in cents
+          itemCount: 3
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Payment request failed');
+      }
+      
+      const { sessionId } = await response.json();
+      // Redirect to Stripe...
+      
+    } catch (error) {
+      console.error(error);
+      alert('Payment failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return (
+    <button onClick={handlePayment} disabled={loading}>
+      {loading ? 'Processing...' : 'Continue with $0.60'}
+    </button>
+  );
+};
+The 401 error means the backend doesn't recognize the user as authenticated. Fix the auth token passing.
+Report back with:
+
+Is token being sent in Authorization header?
+What does console show when payment clicked?
+Does /api/test-auth endpoint work?
+
