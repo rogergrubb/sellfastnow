@@ -1181,6 +1181,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ======================
+  // Admin Routes
+  // ======================
+
+  // Seed database with sample listings (admin only)
+  app.post("/api/admin/seed-listings", isAuthenticated, async (req: any, res) => {
+    try {
+      const { categories, locations, categoryImages } = await import("./seed-data.js");
+      const userId = req.auth.userId;
+
+      console.log("🌱 Starting to seed listings...");
+
+      let totalCreated = 0;
+      const createdListings = [];
+
+      // Create listings for each category
+      for (const [category, items] of Object.entries(categories)) {
+        console.log(`📦 Creating ${items.length} listings for ${category}...`);
+
+        for (const item of items as any[]) {
+          const randomLocation = locations[Math.floor(Math.random() * locations.length)];
+          const randomImages = categoryImages[category] || [];
+          const selectedImages = randomImages.slice(0, Math.min(3, randomImages.length));
+
+          const listing = await storage.createListing({
+            userId,
+            title: item.title,
+            description: item.description,
+            price: item.price,
+            category: category,
+            condition: item.condition,
+            location: randomLocation,
+            images: selectedImages,
+            status: "active",
+          });
+
+          createdListings.push(listing);
+          totalCreated++;
+        }
+      }
+
+      console.log(`✅ Successfully created ${totalCreated} sample listings!`);
+
+      res.json({
+        success: true,
+        message: `Successfully created ${totalCreated} sample listings`,
+        totalCreated,
+        breakdown: Object.fromEntries(
+          Object.entries(categories).map(([cat, items]) => [cat, (items as any[]).length])
+        ),
+      });
+    } catch (error: any) {
+      console.error("❌ Error seeding database:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to seed database",
+        error: error.message 
+      });
+    }
+  });
+
   /* 
   ==============================================================================
   TEMPORARILY DISABLED ROUTES
