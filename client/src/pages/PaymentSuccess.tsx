@@ -15,6 +15,9 @@ export default function PaymentSuccess() {
   const [details, setDetails] = useState<{ type: string; creditsAdded?: number; itemCount?: number }>({ type: '' });
 
   useEffect(() => {
+    // Check if opened in popup window
+    const isPopup = window.opener && !window.opener.closed;
+    
     const verifyPayment = async () => {
       const params = new URLSearchParams(window.location.search);
       const sessionId = params.get('session_id');
@@ -59,6 +62,13 @@ export default function PaymentSuccess() {
             itemCount: data.itemCount,
           });
           setStatus('success');
+          
+          // If opened in popup, close it after showing success
+          if (isPopup) {
+            setTimeout(() => {
+              window.close();
+            }, 1500); // Close after 1.5 seconds
+          }
           
           queryClient.invalidateQueries({ queryKey: ['/api/user/credits'] });
           queryClient.invalidateQueries({ queryKey: ['/api/ai/usage'] });

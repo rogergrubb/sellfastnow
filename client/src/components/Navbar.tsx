@@ -20,7 +20,7 @@ export default function Navbar() {
   const { user } = useUser();
 
   // Fetch user credits with authentication
-  const { data: credits, isLoading: creditsLoading, error: creditsError } = useQuery<UserCredits>({
+  const { data: credits, isLoading: creditsLoading, error: creditsError, refetch: refetchCredits } = useQuery<UserCredits>({
     queryKey: ['/api/user/credits'],
     queryFn: async () => {
       if (!isSignedIn) return null;
@@ -44,6 +44,7 @@ export default function Navbar() {
     enabled: isSignedIn && isLoaded,
     retry: 3,
     retryDelay: 1000,
+    refetchInterval: 5000, // Refetch every 5 seconds to detect payment completion
   });
 
   // Log credits state for debugging

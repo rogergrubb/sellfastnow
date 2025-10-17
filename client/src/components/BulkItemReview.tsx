@@ -449,7 +449,35 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
     <div className="min-h-screen pb-32">
       {/* Header Section */}
       <div className="border-b bg-card sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-6">
+        <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
+          {/* Prominent CTA for generating remaining items */}
+          {products.some(p => !p.isAIGenerated) && onUpgradeRemaining && (
+            <Card className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 border-blue-400 shadow-xl">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-2 text-white">
+                    <h2 className="text-2xl font-bold flex items-center gap-2">
+                      <Sparkles className="h-6 w-6 animate-pulse" />
+                      You Have Credits! Generate Remaining Items?
+                    </h2>
+                    <p className="text-blue-50 text-sm">
+                      {products.filter(p => !p.isAIGenerated).length} item{products.filter(p => !p.isAIGenerated).length > 1 ? 's' : ''} waiting for AI-powered descriptions
+                    </p>
+                  </div>
+                  <Button
+                    onClick={onUpgradeRemaining}
+                    size="lg"
+                    variant="secondary"
+                    className="flex-shrink-0 bg-white text-blue-600 hover:bg-blue-50 font-bold shadow-lg"
+                  >
+                    <Sparkles className="h-5 w-5 mr-2" />
+                    Generate Now
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
           <Card className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-primary/20">
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
