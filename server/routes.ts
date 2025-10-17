@@ -347,10 +347,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (manualCategory) {
         console.log(`📁 Using manual category override: "${manualCategory}"`);
       }
-      const { analyzeProductImage } = await import("./aiService");
-      const analysis = await analyzeProductImage(imageUrl, manualCategory);
+      const { analyzeProductImage } = await import("./aiServiceGemini");
+      const analysis = await analyzeProductImage(imageUrl, 1, manualCategory);
       
-      console.log('✅ OpenAI analysis complete:', {
+      console.log('✅ Gemini analysis complete:', {
         title: analysis.title,
         category: analysis.category,
         confidence: analysis.confidence,
@@ -395,10 +395,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`📁 Using manual category override: "${manualCategory}"`);
       }
       
-      const { analyzeProductImage } = await import("./aiService");
-      const analysis = await analyzeProductImage(imageUrl, manualCategory);
+      const { analyzeProductImage } = await import("./aiServiceGemini");
+      const analysis = await analyzeProductImage(imageUrl, itemIndex || 1, manualCategory);
       
-      console.log(`✅ Item ${itemIndex || 'N/A'}: OpenAI analysis complete - "${analysis.title}"`);
+      console.log(`✅ Item ${itemIndex || 'N/A'}: Gemini analysis complete - "${analysis.title}"`);
       
       res.json({
         ...analysis,
@@ -426,7 +426,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (manualCategory) {
         console.log(`📁 Using manual category override: "${manualCategory}"`);
       }
-      const { analyzeMultipleImages } = await import("./aiService");
+      const { analyzeMultipleImages } = await import("./aiServiceGemini");
       const analysis = await analyzeMultipleImages(imageUrls, manualCategory);
       
       console.log('✅ Multi-image analysis complete:', {
@@ -458,7 +458,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // STEP 1: Detect product groupings from ALL images (always free)
       console.log(`🔍 Step 1: Detecting products from all ${totalImages} images...`);
-      const { analyzeMultipleImages } = await import("./aiService");
+      const { analyzeMultipleImages } = await import("./aiServiceGemini");
       const groupingAnalysis = await analyzeMultipleImages(imageUrls, manualCategory);
       
       console.log(`✅ Detection complete: Found ${groupingAnalysis.products.length} products`);
@@ -474,7 +474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`📝 Remaining ${itemsWithoutAI} items will be empty (manual entry required)`);
       
       // STEP 3: For first 5 items, call AI to generate full descriptions IN PARALLEL
-      const { analyzeProductImage } = await import("./aiService");
+      const { analyzeProductImage } = await import("./aiServiceGemini");
       
       console.log(`⚡ Running AI analysis in PARALLEL for ${itemsWithAI} items...`);
       const startTime = Date.now();
@@ -488,7 +488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`🤖 [${i + 1}/${itemsWithAI}] Starting AI analysis...`);
           try {
             const primaryImageUrl = imageUrlsForProduct[0];
-            const aiAnalysis = await analyzeProductImage(primaryImageUrl, manualCategory);
+            const aiAnalysis = await analyzeProductImage(primaryImageUrl, i + 1, manualCategory);
             
             console.log(`✅ [${i + 1}/${itemsWithAI}] AI generated: "${aiAnalysis.title}"`);
             
