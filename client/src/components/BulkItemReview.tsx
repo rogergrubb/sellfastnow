@@ -583,10 +583,66 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
 
                 {/* Form Fields */}
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    <span>AI-Generated Details</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <span>AI-Generated Details</span>
+                    </div>
+                    {!product.isAIGenerated && onUpgradeRemaining && (
+                      <Button
+                        onClick={onUpgradeRemaining}
+                        size="sm"
+                        variant="default"
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        Buy Credits
+                      </Button>
+                    )}
                   </div>
+                  
+                  {/* Inline Credit Purchase Prompt for Manual Entry Items */}
+                  {!product.isAIGenerated && (
+                    <div className="bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 space-y-2">
+                          <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                            Your first 5 free AI generations have been used (0 remaining)
+                          </p>
+                          <p className="text-xs text-blue-800 dark:text-blue-200 font-semibold">
+                            Why use AI descriptions?
+                          </p>
+                          <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1 ml-4">
+                            <li>• Save hours of writing time - generate in seconds</li>
+                            <li>• Boost search visibility with SEO-optimized keywords and meta-tags</li>
+                            <li>• Get discovered on Google and other search engines</li>
+                            <li>• Professional descriptions that sell faster</li>
+                            <li>• Only $0.10 per item - cheaper than your time!</li>
+                          </ul>
+                          <div className="flex gap-2 pt-2">
+                            {onUpgradeRemaining && (
+                              <Button
+                                onClick={onUpgradeRemaining}
+                                size="sm"
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                <Sparkles className="h-3 w-3 mr-1" />
+                                Buy 50 Credits - $4.99
+                              </Button>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {}}
+                            >
+                              Enter Details Manually
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Title */}
                   <div className="space-y-1.5">
