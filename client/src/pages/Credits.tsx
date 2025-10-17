@@ -2,9 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@clerk/clerk-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, TrendingUp, History, ShoppingCart } from "lucide-react";
+import { Sparkles, TrendingUp, History, ShoppingCart, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import type { UserCredits } from "@shared/schema";
+import { useState } from "react";
 
 const CREDIT_BUNDLES = [
   { credits: 25, price: 2.99, pricePerCredit: 0.12, popular: true, badge: "POPULAR" },
@@ -16,6 +18,8 @@ const CREDIT_BUNDLES = [
 
 export default function Credits() {
   const { getToken } = useAuth();
+  const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Fetch user credits
   const { data: credits, isLoading } = useQuery<UserCredits>({
@@ -32,29 +36,41 @@ export default function Credits() {
     },
   });
 
-  const handleBuyCredits = (creditAmount: number) => {
-    let stripeLink;
+  const handleBuyCredits = async (creditAmount: number) => {
+    setIsProcessing(true);
     
-    switch(creditAmount) {
-      case 25:
-        stripeLink = import.meta.env.VITE_STRIPE_25_CREDITS_LINK;
-        break;
-      case 50:
-        stripeLink = import.meta.env.VITE_STRIPE_50_CREDITS_LINK;
-        break;
-      case 75:
-        stripeLink = import.meta.env.VITE_STRIPE_75_CREDITS_LINK;
-        break;
-      case 100:
-        stripeLink = import.meta.env.VITE_STRIPE_100_CREDITS_LINK;
-        break;
-      case 500:
-        stripeLink = import.meta.env.VITE_STRIPE_500_CREDITS_LINK;
-        break;
-    }
-    
-    if (stripeLink) {
-      window.location.href = stripeLink;
+    try {
+      // Create Checkout Session
+      const token = await getToken();
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ credits: creditAmount }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create checkout session');
+      }
+
+      const { url } = await response.json();
+      
+      console.log('✅ Checkout session created, redirecting to Stripe...');
+      
+      // Redirect to Stripe Checkout
+      window.location.href = url;
+      
+    } catch (error: any) {
+      console.error('Error creating checkout session:', error);
+      toast({
+        title: "Payment Error",
+        description: error.message || "Failed to start checkout. Please try again.",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
     }
   };
 
@@ -155,8 +171,8 @@ export default function Credits() {
                 key={bundle.credits} 
                 className={`p-6 cursor-pointer transition-all hover-elevate ${
                   bundle.popular ? 'border-2 border-primary' : ''
-                }`}
-                onClick={() => handleBuyCredits(bundle.credits)}
+                } ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}
+                onClick={() => !isProcessing && handleBuyCredits(bundle.credits)}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
@@ -177,8 +193,19 @@ export default function Credits() {
                   </p>
                 </div>
 
-                <Button className="w-full" variant={bundle.popular ? "default" : "outline"}>
-                  Buy Now
+                <Button 
+                  className="w-full" 
+                  variant={bundle.popular ? "default" : "outline"}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Buy Now'
+                  )}
                 </Button>
               </Card>
             ))}

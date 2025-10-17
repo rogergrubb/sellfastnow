@@ -685,6 +685,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
 
+    // Create Checkout Session for credit purchases
+    app.post("/api/create-checkout-session", isAuthenticated, async (req: any, res) => {
+      try {
+        const userId = req.auth.userId;
+        const { credits } = req.body;
+
+        if (!credits || credits <= 0) {
+          return res.status(400).json({ message: "Invalid credit amount" });
+        }
+
+        // Define credit bundles with pricing
+        const CREDIT_BUNDLES: Record<number, { price: number; name: string }> = {
+          25: { price: 2.99, name: "25 AI Credits" },
+          50: { price: 4.99, name: "50 AI Credits" },
+          75: { price: 6.99, name: "75 AI Credits" },
+          100: { price: 8.99, name: "100 AI Credits" },
+          500: { price: 39.99, name: "500 AI Credits" },
+        };
+
+        const bundle = CREDIT_BUNDLES[credits];
+        if (!bundle) {
+          return res.status(400).json({ message: "Invalid credit bundle" });
+        }
+
+        // Get user email for prefilling
+        const user = await storage.getUser(userId);
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        // Determine base URL for success/cancel redirects
+        const baseUrl = process.env.NODE_ENV === 'production'
+          ? 'https://sellfast.now'
+          : 'http://localhost:5000';
+
+        // Create Checkout Session
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price_data: {
+                currency: 'usd',
+                product_data: {
+                  name: bundle.name,
+                  description: `Purchase ${credits} AI credits for automatic product descriptions`,
+                },
+                unit_amount: Math.round(bundle.price * 100), // Convert to cents
+              },
+              quantity: 1,
+            },
+          ],
+          mode: 'payment',
+          success_url: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${baseUrl}/credits?canceled=true`,
+          client_reference_id: userId,
+          customer_email: user.email || undefined,
+          metadata: {
+            userId,
+            credits: credits.toString(),
+            type: 'credit_bundle',
+          },
+        });
+
+        console.log(`✅ Created checkout session ${session.id} for user ${userId} - ${credits} credits`);
+
+        res.json({
+          sessionId: session.id,
+          url: session.url,
+        });
+      } catch (error: any) {
+        console.error("Error creating checkout session:", error);
+        res.status(500).json({ message: "Error creating checkout session: " + error.message });
+      }
+    });
+
     // Get payment status
     app.get("/api/payment-status/:paymentIntentId", isAuthenticated, async (req, res) => {
       try {
@@ -733,35 +808,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Handle Checkout Session completion (Payment Links)
+      // Handle Checkout Session completion
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
-        const userId = session.client_reference_id;
+        const userId = session.client_reference_id || session.metadata?.userId;
         
         if (!userId) {
-          console.error('No client_reference_id in checkout session');
+          console.error('❌ Webhook: No userId in checkout session');
           return res.json({ received: true });
         }
         
-        // Determine credits based on amount
-        const amount = (session.amount_total || 0) / 100; // Convert from cents
+        console.log(`📥 Webhook: Received checkout.session.completed for user ${userId}`);
+        console.log(`   Session ID: ${session.id}`);
+        console.log(`   Payment Status: ${session.payment_status}`);
+        console.log(`   Metadata:`, session.metadata);
+        
+        // Get credits from metadata (preferred) or fallback to amount-based logic
         let creditsToAdd = 0;
         
-        if (amount === 2.99) creditsToAdd = 25;
-        else if (amount === 4.99) creditsToAdd = 50;
-        else if (amount === 6.99) creditsToAdd = 75;
-        else if (amount === 8.99) creditsToAdd = 100;
-        else if (amount === 39.99) creditsToAdd = 500;
+        if (session.metadata?.credits) {
+          creditsToAdd = parseInt(session.metadata.credits);
+          console.log(`   Credits from metadata: ${creditsToAdd}`);
+        } else {
+          // Fallback for old Payment Links
+          const amount = (session.amount_total || 0) / 100;
+          if (amount === 2.99) creditsToAdd = 25;
+          else if (amount === 4.99) creditsToAdd = 50;
+          else if (amount === 6.99) creditsToAdd = 75;
+          else if (amount === 8.99) creditsToAdd = 100;
+          else if (amount === 39.99) creditsToAdd = 500;
+          console.log(`   Credits from amount ($${amount}): ${creditsToAdd}`);
+        }
         
         if (creditsToAdd > 0) {
           try {
+            const amount = (session.amount_total || 0) / 100;
             await storage.purchaseCredits(userId, creditsToAdd, amount, session.id);
-            console.log(`✅ Webhook: Added ${creditsToAdd} credits to user ${userId} from checkout session`);
+            console.log(`✅ Webhook: Successfully added ${creditsToAdd} credits to user ${userId}`);
           } catch (error) {
-            console.error("Error adding credits from checkout session:", error);
+            console.error("❌ Webhook: Error adding credits:", error);
           }
         } else {
-          console.warn(`Unknown amount in checkout session: $${amount}`);
+          console.warn(`⚠️ Webhook: Could not determine credits for session ${session.id}`);
         }
       }
 

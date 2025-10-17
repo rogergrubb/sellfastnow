@@ -6,11 +6,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, SkipForward } from "lucide-react";
+import { CheckCircle2, SkipForward, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/clerk-react";
+import { useState } from "react";
 
 interface PaymentModalProps {
   open: boolean;
@@ -38,80 +39,51 @@ export function PaymentModal({
   onBeforeRedirect,
 }: PaymentModalProps) {
   const { toast } = useToast();
-  const { user } = useUser();
+  const { getToken } = useAuth();
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleBuyCredits = (creditAmount: number) => {
-    let stripeLink;
+  const handleBuyCredits = async (creditAmount: number) => {
+    setIsProcessing(true);
     
-    switch(creditAmount) {
-      case 25:
-        stripeLink = import.meta.env.VITE_STRIPE_25_CREDITS_LINK;
-        break;
-      case 50:
-        stripeLink = import.meta.env.VITE_STRIPE_50_CREDITS_LINK;
-        break;
-      case 75:
-        stripeLink = import.meta.env.VITE_STRIPE_75_CREDITS_LINK;
-        break;
-      case 100:
-        stripeLink = import.meta.env.VITE_STRIPE_100_CREDITS_LINK;
-        break;
-      case 500:
-        stripeLink = import.meta.env.VITE_STRIPE_500_CREDITS_LINK;
-        break;
-      default:
-        toast({
-          title: "Invalid Credit Amount",
-          description: `${creditAmount} credits is not a valid bundle size.`,
-          variant: "destructive",
-        });
-        return;
-    }
-    
-    if (!stripeLink) {
+    try {
+      // Call onBeforeRedirect to save state
+      if (onBeforeRedirect) {
+        console.log('💾 Calling onBeforeRedirect to capture initial credits');
+        onBeforeRedirect();
+      }
+      
+      // Create Checkout Session
+      const token = await getToken();
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ credits: creditAmount }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create checkout session');
+      }
+
+      const { url } = await response.json();
+      
+      console.log('✅ Checkout session created, redirecting to Stripe...');
+      
+      // Redirect to Stripe Checkout
+      window.location.href = url;
+      
+    } catch (error: any) {
+      console.error('Error creating checkout session:', error);
       toast({
-        title: "Payment Link Not Configured",
-        description: `Payment link for ${creditAmount} credits is not configured yet. Please contact support.`,
+        title: "Payment Error",
+        description: error.message || "Failed to start checkout. Please try again.",
         variant: "destructive",
       });
-      return;
+      setIsProcessing(false);
     }
-    
-    const userId = user?.id || '';
-    const userEmail = user?.primaryEmailAddress?.emailAddress || '';
-    const checkoutUrl = `${stripeLink}?client_reference_id=${userId}&prefilled_email=${userEmail}`;
-    
-    // Call onBeforeRedirect to save state and get initial credits
-    if (onBeforeRedirect) {
-      console.log('💾 Calling onBeforeRedirect to capture initial credits');
-      onBeforeRedirect();
-    }
-    
-    console.log('🕐 Opening Stripe in new window...');
-    
-    // Open Stripe in new window/tab
-    const stripeWindow = window.open(checkoutUrl, 'stripe-checkout', 'width=600,height=800,scrollbars=yes');
-    
-    if (!stripeWindow) {
-      toast({
-        title: "Popup Blocked",
-        description: "Please allow popups to complete your purchase, then try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Show waiting message
-    toast({
-      title: "Waiting for Payment",
-      description: "Complete your purchase in the popup window. We'll automatically continue when done.",
-      duration: 10000,
-    });
-    
-    // Close modal but keep state
-    onOpenChange(false);
-    
-    console.log('✅ Stripe window opened, starting credit polling...');
   }
 
   const handleSkipClick = () => {
@@ -152,8 +124,8 @@ export function PaymentModal({
                 key={bundle.credits} 
                 className={`p-4 cursor-pointer transition-all hover-elevate ${
                   bundle.popular ? 'border-2 border-primary' : ''
-                }`}
-                onClick={() => handleBuyCredits(bundle.credits)}
+                } ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}
+                onClick={() => !isProcessing && handleBuyCredits(bundle.credits)}
                 data-testid={`card-bundle-${bundle.credits}`}
               >
                 <div className="flex items-center justify-between">
@@ -179,9 +151,17 @@ export function PaymentModal({
                     <Button 
                       size="sm" 
                       className="mt-2"
+                      disabled={isProcessing}
                       data-testid={`button-buy-bundle-${bundle.credits}`}
                     >
-                      Buy Now
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        'Buy Now'
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -195,6 +175,7 @@ export function PaymentModal({
               variant="outline"
               className="w-full gap-2"
               onClick={handleSkipClick}
+              disabled={isProcessing}
               data-testid="button-skip-ai"
             >
               <SkipForward className="h-4 w-4" />
@@ -206,3 +187,4 @@ export function PaymentModal({
     </Dialog>
   );
 }
+
