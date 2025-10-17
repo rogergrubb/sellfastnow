@@ -1046,7 +1046,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get single listing by ID
+  // Get dashboard stats (MUST be before :id route)
+  app.get("/api/listings/stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const stats = await storage.getUserListingsStats(userId);
+      console.log(`📊 Fetched stats for user ${userId}:`, stats);
+      res.json(stats);
+    } catch (error: any) {
+      console.error("❌ Error fetching stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // Get single listing by ID (MUST be after specific routes like /stats)
   app.get("/api/listings/:id", async (req, res) => {
     try {
       const { id } = req.params;
@@ -1073,19 +1086,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("❌ Error fetching user listings:", error);
       res.status(500).json({ message: "Failed to fetch listings" });
-    }
-  });
-
-  // Get dashboard stats
-  app.get("/api/listings/stats", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.auth.userId;
-      const stats = await storage.getUserListingsStats(userId);
-      console.log(`📊 Fetched stats for user ${userId}:`, stats);
-      res.json(stats);
-    } catch (error: any) {
-      console.error("❌ Error fetching stats:", error);
-      res.status(500).json({ message: "Failed to fetch stats" });
     }
   });
 
