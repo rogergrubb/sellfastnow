@@ -393,6 +393,67 @@ export async function analyzeMultipleImages(imageUrls: string[], manualCategory?
     console.log(`📁 Manual category: "${manualCategory}"`);
   }
 
+  // OPTIMIZATION: If more than 8 images, process in batches to avoid API limits
+  const MAX_IMAGES_PER_BATCH = 8;
+  if (imageUrls.length > MAX_IMAGES_PER_BATCH) {
+    console.log(`⚡ Processing ${imageUrls.length} images in batches of ${MAX_IMAGES_PER_BATCH}...`);
+    
+    const batches = [];
+    for (let i = 0; i < imageUrls.length; i += MAX_IMAGES_PER_BATCH) {
+      batches.push(imageUrls.slice(i, i + MAX_IMAGES_PER_BATCH));
+    }
+    
+    console.log(`📦 Split into ${batches.length} batches`);
+    
+    // Process batches sequentially to avoid overwhelming the API
+    const allProducts: DetectedProduct[] = [];
+    let globalImageIndex = 0;
+    
+    for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
+      const batch = batches[batchIdx];
+      console.log(`🔄 Processing batch ${batchIdx + 1}/${batches.length} (${batch.length} images)...`);
+      
+      try {
+        const batchResult = await analyzeMultipleImages(batch, manualCategory);
+        
+        // Adjust image indices to be global instead of batch-local
+        const adjustedProducts = batchResult.products.map(product => ({
+          ...product,
+          imageIndices: product.imageIndices.map(idx => idx + globalImageIndex)
+        }));
+        
+        allProducts.push(...adjustedProducts);
+        globalImageIndex += batch.length;
+        
+        console.log(`✅ Batch ${batchIdx + 1} complete: ${adjustedProducts.length} products`);
+      } catch (error: any) {
+        console.error(`❌ Batch ${batchIdx + 1} failed:`, error.message);
+        // Create fallback products for failed batch
+        for (let i = 0; i < batch.length; i++) {
+          allProducts.push({
+            imageIndices: [globalImageIndex + i],
+            title: '',
+            description: '',
+            category: manualCategory || '',
+            retailPrice: 0,
+            usedPrice: 0,
+            condition: '',
+            confidence: 0
+          });
+        }
+        globalImageIndex += batch.length;
+      }
+    }
+    
+    endMetric(startTime, 'analyzeMultipleImages');
+    
+    return {
+      scenario: 'multiple_products',
+      message: `Detected ${allProducts.length} items from ${imageUrls.length} images (batched processing)`,
+      products: allProducts
+    };
+  }
+
   try {
     // Build the content array with text prompt and all images
     const content: any[] = [
@@ -443,7 +504,19 @@ All imageIndices must cover 0-${imageUrls.length - 1}, no duplicates.`,
       max_completion_tokens: TOKEN_LIMITS.MULTI_IMAGE_ANALYSIS,
     });
 
-    const result = JSON.parse(response.choices[0].message.content!);
+    const rawContent = response.choices[0].message.content;
+    if (!rawContent) {
+      throw new Error("OpenAI returned empty response");
+    }
+    
+    // Validate JSON before parsing
+    let result;
+    try {
+      result = JSON.parse(rawContent);
+    } catch (parseError: any) {
+      console.error("❌ JSON parse error. Raw content:", rawContent.substring(0, 500));
+      throw new Error(`Invalid JSON response from OpenAI: ${parseError.message}`);
+    }
     
     // Override categories with manual category if provided
     if (manualCategory && result.products) {
