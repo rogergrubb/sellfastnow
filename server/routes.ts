@@ -473,24 +473,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`✨ Generating AI for first ${itemsWithAI} items (demo strategy)`);
       console.log(`📝 Remaining ${itemsWithoutAI} items will be empty (manual entry required)`);
       
-      // STEP 3: For first 5 items, call AI to generate full descriptions
+      // STEP 3: For first 5 items, call AI to generate full descriptions IN PARALLEL
       const { analyzeProductImage } = await import("./aiService");
-      const allProducts = [];
       
-      for (let i = 0; i < groupingAnalysis.products.length; i++) {
-        const product = groupingAnalysis.products[i];
+      console.log(`⚡ Running AI analysis in PARALLEL for ${itemsWithAI} items...`);
+      const startTime = Date.now();
+      
+      // Create promises for all AI analyses to run in parallel
+      const aiPromises = groupingAnalysis.products.map(async (product, i) => {
         const imageUrlsForProduct = product.imageIndices.map(idx => imageUrls[idx]);
         
         if (i < itemsWithAI) {
           // First 5: Generate full AI descriptions
-          console.log(`🤖 Generating AI description for item ${i + 1}/${itemsWithAI}...`);
+          console.log(`🤖 [${i + 1}/${itemsWithAI}] Starting AI analysis...`);
           try {
             const primaryImageUrl = imageUrlsForProduct[0];
             const aiAnalysis = await analyzeProductImage(primaryImageUrl, manualCategory);
             
-            console.log(`✅ AI generated: "${aiAnalysis.title}"`);
+            console.log(`✅ [${i + 1}/${itemsWithAI}] AI generated: "${aiAnalysis.title}"`);
             
-            allProducts.push({
+            return {
               imageIndices: product.imageIndices,
               imageUrls: imageUrlsForProduct,
               title: aiAnalysis.title,
@@ -502,11 +504,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               condition: aiAnalysis.condition,
               confidence: aiAnalysis.confidence,
               isAIGenerated: true,
-            });
+            };
           } catch (error) {
-            console.error(`❌ AI generation failed for item ${i + 1}:`, error);
+            console.error(`❌ [${i + 1}/${itemsWithAI}] AI generation failed:`, error);
             // On error, return empty item
-            allProducts.push({
+            return {
               imageIndices: product.imageIndices,
               imageUrls: imageUrlsForProduct,
               title: '',
@@ -518,11 +520,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               condition: '',
               confidence: 0,
               isAIGenerated: false,
-            });
+            };
           }
         } else {
           // Items 6+: Empty fields for manual entry
-          allProducts.push({
+          return {
             imageIndices: product.imageIndices,
             imageUrls: imageUrlsForProduct,
             title: '',
@@ -534,9 +536,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             condition: '',
             confidence: 0,
             isAIGenerated: false,
-          });
+          };
         }
-      }
+      });
+      
+      // Wait for all AI analyses to complete in parallel
+      const allProducts = await Promise.all(aiPromises);
+      const endTime = Date.now();
+      const totalTime = ((endTime - startTime) / 1000).toFixed(2);
+      
+      console.log(`⚡ PARALLEL AI analysis complete in ${totalTime}s (was ~${itemsWithAI * 60}s sequentially)`);
       
       // Increment AI usage counter for items that got AI descriptions
       if (itemsWithAI > 0) {
