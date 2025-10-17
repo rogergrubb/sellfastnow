@@ -20,21 +20,36 @@ export default function Navbar() {
   const { user } = useUser();
 
   // Fetch user credits with authentication
-  const { data: credits } = useQuery<UserCredits>({
+  const { data: credits, isLoading: creditsLoading, error: creditsError } = useQuery<UserCredits>({
     queryKey: ['/api/user/credits'],
     queryFn: async () => {
       if (!isSignedIn) return null;
       const token = await getToken();
+      console.log('Fetching credits with token:', token ? 'present' : 'missing');
       const res = await fetch('/api/user/credits', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!res.ok) throw new Error('Failed to fetch credits');
-      return res.json();
+      console.log('Credits API response status:', res.status);
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Credits API error:', errorText);
+        throw new Error('Failed to fetch credits');
+      }
+      const data = await res.json();
+      console.log('Credits data:', data);
+      return data;
     },
-    enabled: isSignedIn,
+    enabled: isSignedIn && isLoaded,
+    retry: 3,
+    retryDelay: 1000,
   });
+
+  // Log credits state for debugging
+  useEffect(() => {
+    console.log('Navbar state:', { isSignedIn, isLoaded, credits, creditsLoading, creditsError });
+  }, [isSignedIn, isLoaded, credits, creditsLoading, creditsError]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -86,17 +101,17 @@ export default function Navbar() {
             ) : isSignedIn ? (
               <>
                 {/* AI Credits Display */}
-                {credits && (
-                  <Badge 
-                    variant="secondary" 
-                    className="flex items-center gap-1 px-2 sm:px-3 cursor-pointer hover-elevate text-xs sm:text-sm"
-                    onClick={() => window.location.href = '/credits'}
-                    data-testid="badge-credits"
-                  >
-                    <Sparkles className="h-3 w-3" />
-                    <span data-testid="text-credits-balance">{credits.creditsRemaining}</span>
-                  </Badge>
-                )}
+                <Badge 
+                  variant="secondary" 
+                  className="flex items-center gap-1 px-2 sm:px-3 cursor-pointer hover-elevate text-xs sm:text-sm"
+                  onClick={() => window.location.href = '/credits'}
+                  data-testid="badge-credits"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  <span data-testid="text-credits-balance">
+                    {creditsLoading ? '...' : credits?.creditsRemaining ?? 0}
+                  </span>
+                </Badge>
                 <Button 
                   variant="ghost" 
                   className="hidden md:flex"
