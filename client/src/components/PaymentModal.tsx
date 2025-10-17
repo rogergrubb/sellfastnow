@@ -23,10 +23,10 @@ interface PaymentModalProps {
 
 const CREDIT_BUNDLES = [
   { credits: 25, price: 2.99, pricePerCredit: 0.12, popular: true, badge: "POPULAR" },
-  { credits: 50, price: 4.99, pricePerCredit: 0.10, popular: false, badge: "40% off" },
-  { credits: 75, price: 6.99, pricePerCredit: 0.09, popular: false, badge: "50% off" },
-  { credits: 100, price: 8.99, pricePerCredit: 0.09, popular: false, badge: "55% off" },
-  { credits: 500, price: 39.99, pricePerCredit: 0.08, popular: false, badge: "BEST VALUE - 60% off" },
+  { credits: 50, price: 4.99, pricePerCredit: 0.10, popular: false, badge: "17% off" },
+  { credits: 75, price: 6.99, pricePerCredit: 0.09, popular: false, badge: "25% off" },
+  { credits: 100, price: 8.99, pricePerCredit: 0.09, popular: false, badge: "25% off" },
+  { credits: 500, price: 39.99, pricePerCredit: 0.08, popular: false, badge: "BEST VALUE - 34% off" },
 ];
 
 export function PaymentModal({
