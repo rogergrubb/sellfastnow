@@ -357,18 +357,37 @@ export default function PostAdEnhanced() {
         
         const pendingItems = JSON.parse(pendingItemsStr);
         const processedItems = JSON.parse(processedItemsStr);
+        const savedImages = localStorage.getItem('uploadedImages');
+        const redirectTime = localStorage.getItem('paymentRedirectTime');
         
         console.log('📋 Pending items:', pendingItems);
         console.log('✅ Processed items:', processedItems);
+        console.log('🖼️ Saved images:', savedImages ? JSON.parse(savedImages).length : 0);
         
-        // Restore state
+        // Restore ALL state
         setBulkProducts(processedItems);
         setRemainingItemsInfo(pendingItems);
+        
+        // Restore uploaded images
+        if (savedImages) {
+          const images = JSON.parse(savedImages);
+          console.log('🔄 Restoring', images.length, 'uploaded images');
+          setUploadedImages(images);
+          form.setValue('images', images);
+        }
         
         // Clear localStorage
         localStorage.removeItem('pendingItems');
         localStorage.removeItem('processedItems');
+        localStorage.removeItem('uploadedImages');
+        localStorage.removeItem('paymentRedirectTime');
         console.log('🧹 Cleared localStorage');
+        
+        // Show success message
+        toast({
+          title: "Payment Successful!",
+          description: `Resuming processing for ${pendingItems.count} remaining items...`,
+        });
         
         // Resume processing remaining items
         setTimeout(() => {
@@ -1721,10 +1740,18 @@ export default function PostAdEnhanced() {
               setShowBulkReview(true);
             }}
             onBeforeRedirect={() => {
-              // Save pending items and processed items before redirect
-              console.log('💾 Saving pending items before redirect');
+              // Save ALL state before redirect to Stripe
+              console.log('💾 Saving complete state before redirect');
+              console.log('  - Uploaded images:', uploadedImages.length);
+              console.log('  - Processed items:', bulkProducts.length);
+              console.log('  - Remaining items:', remainingItemsInfo.count);
+              
+              localStorage.setItem('uploadedImages', JSON.stringify(uploadedImages));
               localStorage.setItem('pendingItems', JSON.stringify(remainingItemsInfo));
               localStorage.setItem('processedItems', JSON.stringify(bulkProducts));
+              localStorage.setItem('paymentRedirectTime', Date.now().toString());
+              
+              console.log('✅ State saved to localStorage');
             }}
           />
         )}
