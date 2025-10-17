@@ -17,6 +17,7 @@ import SignUpPage from "./pages/SignUp";
 import MobileUpload from "./pages/MobileUpload";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
+import Admin from "./pages/Admin";
 import Navbar from "@/components/Navbar";
 
 function Router() {
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/mobile-upload/:sessionId" component={MobileUpload} />
       <Route path="/payment/success" component={PaymentSuccess} />
       <Route path="/payment/cancel" component={PaymentCancel} />
+      <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
   );
