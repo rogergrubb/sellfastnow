@@ -79,6 +79,9 @@ export default function PaymentSuccess() {
               description: `${data.creditsAdded} AI credits have been added to your account.`,
             });
             
+            // Dispatch event to trigger navbar refresh
+            window.dispatchEvent(new Event('paymentSuccess'));
+            
             // Force refresh to update navbar credits
             setTimeout(() => {
               window.location.href = '/post-ad?payment=success&credits=' + data.creditsAdded;

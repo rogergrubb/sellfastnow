@@ -52,6 +52,17 @@ export default function Navbar() {
     console.log('Navbar state:', { isSignedIn, isLoaded, credits, creditsLoading, creditsError });
   }, [isSignedIn, isLoaded, credits, creditsLoading, creditsError]);
 
+  // Listen for payment success event to force refresh
+  useEffect(() => {
+    const handlePaymentSuccess = () => {
+      console.log('Payment success event received, refetching credits...');
+      refetchCredits();
+    };
+    
+    window.addEventListener('paymentSuccess', handlePaymentSuccess);
+    return () => window.removeEventListener('paymentSuccess', handlePaymentSuccess);
+  }, [refetchCredits]);
+
   useEffect(() => {
     const root = document.documentElement;
     if (isDarkMode) {

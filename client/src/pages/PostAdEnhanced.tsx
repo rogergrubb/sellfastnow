@@ -336,6 +336,9 @@ export default function PostAdEnhanced() {
     if (paymentSuccess) {
       console.log('✅ Payment success detected!');
       
+      // Trigger navbar refresh
+      window.dispatchEvent(new Event('paymentSuccess'));
+      
       // Show success toast
       toast({
         title: "Payment Successful!",
