@@ -1063,6 +1063,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create single listing
+  app.post("/api/listings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const { title, description, price, category, condition, location, images } = req.body;
+
+      if (!title || !description || !price || !category || !condition) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      console.log(`Creating single listing for user ${userId}: ${title}`);
+
+      const listing = await storage.createListing({
+        userId,
+        title,
+        description,
+        price: String(price),
+        category,
+        condition,
+        location: location || "Local Area",
+        images: images || [],
+        status: "active",
+      });
+
+      console.log(`Listing created successfully: ${listing.id}`);
+
+      res.status(201).json(listing);
+    } catch (error: any) {
+      console.error("Error creating listing:", error);
+      res.status(500).json({ message: error.message || "Failed to create listing" });
+    }
+  });
+
   // Batch create listings (for AI-generated items)
   app.post("/api/listings/batch", isAuthenticated, async (req: any, res) => {
     try {
