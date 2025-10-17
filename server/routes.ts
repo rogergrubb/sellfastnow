@@ -992,6 +992,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ======================
+  // Listing Routes
+  // ======================
+
+  // Batch create listings (for AI-generated items)
+  app.post("/api/listings/batch", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const { listings: listingsData } = req.body;
+
+      if (!listingsData || !Array.isArray(listingsData)) {
+        return res.status(400).json({ message: "listings array is required" });
+      }
+
+      console.log(`📦 Batch creating ${listingsData.length} listings for user ${userId}`);
+
+      const createdListings = [];
+      const errors = [];
+
+      for (let i = 0; i < listingsData.length; i++) {
+        try {
+          const listingData = listingsData[i];
+          
+          // Validate required fields
+          if (!listingData.title || !listingData.description || !listingData.price || 
+              !listingData.category || !listingData.condition) {
+            errors.push({ index: i, error: "Missing required fields" });
+            continue;
+          }
+
+          const listing = await storage.createListing({
+            userId,
+            title: listingData.title,
+            description: listingData.description,
+            price: String(listingData.price),
+            category: listingData.category,
+            condition: listingData.condition,
+            location: listingData.location || "Local Area",
+            images: listingData.images || [],
+            status: "active",
+          });
+
+          createdListings.push(listing);
+          console.log(`✅ Created listing ${i + 1}/${listingsData.length}: ${listing.title}`);
+        } catch (error: any) {
+          console.error(`❌ Error creating listing ${i + 1}:`, error);
+          errors.push({ index: i, error: error.message });
+        }
+      }
+
+      console.log(`✅ Batch create complete: ${createdListings.length} created, ${errors.length} errors`);
+
+      res.json({
+        created: createdListings.length,
+        listings: createdListings,
+        errors: errors.length > 0 ? errors : undefined,
+      });
+    } catch (error: any) {
+      console.error("❌ Batch create listings error:", error);
+      res.status(500).json({ message: error.message || "Failed to create listings" });
+    }
+  });
+
   /* 
   ==============================================================================
   TEMPORARILY DISABLED ROUTES
@@ -1000,7 +1063,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   The following routes are temporarily disabled because they depend on database
   tables/schemas that haven't been migrated yet:
   
-  - Listing Routes (insertListingSchema)
+  - Additional Listing Routes (search, update, delete)
   - Message Routes (insertMessageSchema)
   - Favorite Routes (insertFavoriteSchema)
   - Review Routes (insertReviewSchema)
