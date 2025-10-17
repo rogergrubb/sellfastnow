@@ -89,7 +89,7 @@ export default function Navbar() {
                 {credits && (
                   <Badge 
                     variant="secondary" 
-                    className="hidden md:flex items-center gap-1 px-3 cursor-pointer hover-elevate"
+                    className="flex items-center gap-1 px-2 sm:px-3 cursor-pointer hover-elevate text-xs sm:text-sm"
                     onClick={() => window.location.href = '/credits'}
                     data-testid="badge-credits"
                   >
