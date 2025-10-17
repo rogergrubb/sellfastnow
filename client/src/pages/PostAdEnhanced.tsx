@@ -190,6 +190,8 @@ export default function PostAdEnhanced() {
     imageUrls: string[];
     products?: any[];
   } | null>(null);
+  const [isWaitingForPayment, setIsWaitingForPayment] = useState(false);
+  const [initialCredits, setInitialCredits] = useState<number | null>(null);
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
   const [analyzedItems, setAnalyzedItems] = useState<{
@@ -403,6 +405,60 @@ export default function PostAdEnhanced() {
       }
     }
   }, [toast]);
+
+  // Poll for credit updates when waiting for payment
+  useEffect(() => {
+    if (!isWaitingForPayment || !isSignedIn) return;
+    
+    console.log('🔍 Starting credit polling...');
+    
+    const pollInterval = setInterval(async () => {
+      try {
+        const token = await getToken();
+        const response = await fetch('/api/user/credits', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('💳 Current credits:', data.credits, '| Initial:', initialCredits);
+          
+          // Check if credits increased
+          if (initialCredits !== null && data.credits > initialCredits) {
+            console.log('✅ Payment detected! Credits increased from', initialCredits, 'to', data.credits);
+            
+            // Stop polling
+            setIsWaitingForPayment(false);
+            clearInterval(pollInterval);
+            
+            // Show success message
+            toast({
+              title: "Payment Successful!",
+              description: `${data.credits - initialCredits} credits added. Resuming AI processing...`,
+            });
+            
+            // Auto-resume processing if there are pending items
+            if (remainingItemsInfo && remainingItemsInfo.imageUrls.length > 0) {
+              console.log('🚀 Auto-resuming processing for', remainingItemsInfo.count, 'items');
+              setTimeout(() => {
+                analyzeBulkImages(remainingItemsInfo.imageUrls);
+              }, 1000);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ Credit polling error:', error);
+      }
+    }, 3000); // Poll every 3 seconds
+    
+    // Cleanup on unmount or when polling stops
+    return () => {
+      console.log('🧹 Stopping credit polling');
+      clearInterval(pollInterval);
+    };
+  }, [isWaitingForPayment, initialCredits, isSignedIn, getToken, toast, remainingItemsInfo]);
 
   // Calculate estimated time based on number of photos
   const calculateEstimatedTime = (photoCount: number): number => {
@@ -1739,19 +1795,25 @@ export default function PostAdEnhanced() {
               setShowPaymentModal(false);
               setShowBulkReview(true);
             }}
-            onBeforeRedirect={() => {
-              // Save ALL state before redirect to Stripe
-              console.log('💾 Saving complete state before redirect');
-              console.log('  - Uploaded images:', uploadedImages.length);
-              console.log('  - Processed items:', bulkProducts.length);
-              console.log('  - Remaining items:', remainingItemsInfo.count);
-              
-              localStorage.setItem('uploadedImages', JSON.stringify(uploadedImages));
-              localStorage.setItem('pendingItems', JSON.stringify(remainingItemsInfo));
-              localStorage.setItem('processedItems', JSON.stringify(bulkProducts));
-              localStorage.setItem('paymentRedirectTime', Date.now().toString());
-              
-              console.log('✅ State saved to localStorage');
+            onBeforeRedirect={async () => {
+              // Get current credits before opening Stripe
+              try {
+                const token = await getToken();
+                const response = await fetch('/api/user/credits', {
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                  },
+                });
+                
+                if (response.ok) {
+                  const data = await response.json();
+                  console.log('💳 Initial credits:', data.credits);
+                  setInitialCredits(data.credits);
+                  setIsWaitingForPayment(true);
+                }
+              } catch (error) {
+                console.error('❌ Failed to get initial credits:', error);
+              }
             }}
           />
         )}
