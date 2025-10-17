@@ -423,11 +423,13 @@ export default function PostAdEnhanced() {
         
         if (response.ok) {
           const data = await response.json();
-          console.log('💳 Current credits:', data.credits, '| Initial:', initialCredits);
+          const currentCredits = data.creditsRemaining ?? data.credits ?? 0;
+          console.log('💳 Current credits:', currentCredits, '| Initial:', initialCredits);
+          console.log('📊 Full response:', data);
           
           // Check if credits increased
-          if (initialCredits !== null && data.credits > initialCredits) {
-            console.log('✅ Payment detected! Credits increased from', initialCredits, 'to', data.credits);
+          if (initialCredits !== null && currentCredits > initialCredits) {
+            console.log('✅ Payment detected! Credits increased from', initialCredits, 'to', currentCredits);
             
             // Stop polling
             setIsWaitingForPayment(false);
@@ -436,7 +438,7 @@ export default function PostAdEnhanced() {
             // Show success message
             toast({
               title: "Payment Successful!",
-              description: `${data.credits - initialCredits} credits added. Resuming AI processing...`,
+              description: `${currentCredits - initialCredits} credits added. Resuming AI processing...`,
             });
             
             // Auto-resume processing if there are pending items
@@ -1805,12 +1807,14 @@ export default function PostAdEnhanced() {
                   },
                 });
                 
-                if (response.ok) {
-                  const data = await response.json();
-                  console.log('💳 Initial credits:', data.credits);
-                  setInitialCredits(data.credits);
-                  setIsWaitingForPayment(true);
-                }
+              if (response.ok) {
+                const data = await response.json();
+                const currentCredits = data.creditsRemaining ?? data.credits ?? 0;
+                console.log('💳 Initial credits:', currentCredits);
+                console.log('📊 Initial response:', data);
+                setInitialCredits(currentCredits);
+                setIsWaitingForPayment(true);
+              }
               } catch (error) {
                 console.error('❌ Failed to get initial credits:', error);
               }
