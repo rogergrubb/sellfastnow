@@ -996,6 +996,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Listing Routes
   // ======================
 
+  // Get all listings
+  app.get("/api/listings", async (req, res) => {
+    try {
+      const listings = await storage.getAllListings();
+      console.log(`📋 Fetched ${listings.length} listings`);
+      res.json(listings);
+    } catch (error: any) {
+      console.error("❌ Error fetching listings:", error);
+      res.status(500).json({ message: "Failed to fetch listings" });
+    }
+  });
+
+  // Search listings with filters
+  app.get("/api/listings/search", async (req, res) => {
+    try {
+      const { q, category, condition, priceMin, priceMax, location, sortBy } = req.query;
+      
+      const filters = {
+        query: q as string,
+        category: category as string,
+        condition: condition as string,
+        priceMin: priceMin ? parseFloat(priceMin as string) : undefined,
+        priceMax: priceMax ? parseFloat(priceMax as string) : undefined,
+        location: location as string,
+        sortBy: (sortBy as 'newest' | 'price-low' | 'price-high') || 'newest',
+      };
+
+      console.log('🔍 Searching listings with filters:', filters);
+      const listings = await storage.advancedSearch(filters);
+      console.log(`📋 Found ${listings.length} listings`);
+      res.json(listings);
+    } catch (error: any) {
+      console.error("❌ Error searching listings:", error);
+      res.status(500).json({ message: "Failed to search listings" });
+    }
+  });
+
+  // Get user's own listings
+  app.get("/api/listings/mine", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const listings = await storage.getUserListings(userId);
+      console.log(`📋 Fetched ${listings.length} listings for user ${userId}`);
+      res.json(listings);
+    } catch (error: any) {
+      console.error("❌ Error fetching user listings:", error);
+      res.status(500).json({ message: "Failed to fetch listings" });
+    }
+  });
+
+  // Get single listing by ID
+  app.get("/api/listings/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await storage.getListingWithSeller(id);
+      
+      if (!result) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error("❌ Error fetching listing:", error);
+      res.status(500).json({ message: "Failed to fetch listing" });
+    }
+  });
+
   // Batch create listings (for AI-generated items)
   app.post("/api/listings/batch", isAuthenticated, async (req: any, res) => {
     try {
