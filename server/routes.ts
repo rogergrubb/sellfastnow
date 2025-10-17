@@ -1063,6 +1063,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's listings (for dashboard)
+  app.get("/api/user/listings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const listings = await storage.getUserListings(userId);
+      console.log(`📋 Fetched ${listings.length} listings for user ${userId}`);
+      res.json(listings);
+    } catch (error: any) {
+      console.error("❌ Error fetching user listings:", error);
+      res.status(500).json({ message: "Failed to fetch listings" });
+    }
+  });
+
+  // Get dashboard stats
+  app.get("/api/listings/stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const stats = await storage.getUserListingsStats(userId);
+      console.log(`📊 Fetched stats for user ${userId}:`, stats);
+      res.json(stats);
+    } catch (error: any) {
+      console.error("❌ Error fetching stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
   // Create single listing
   app.post("/api/listings", isAuthenticated, async (req: any, res) => {
     try {
