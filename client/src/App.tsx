@@ -18,6 +18,7 @@ import MobileUpload from "./pages/MobileUpload";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import Admin from "./pages/Admin";
+import Credits from "./pages/Credits";
 import Navbar from "@/components/Navbar";
 
 function Router() {
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/payment/success" component={PaymentSuccess} />
       <Route path="/payment/cancel" component={PaymentCancel} />
       <Route path="/admin" component={Admin} />
+      <Route path="/credits" component={Credits} />
       <Route component={NotFound} />
     </Switch>
   );
