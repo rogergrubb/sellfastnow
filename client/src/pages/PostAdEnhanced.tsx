@@ -679,8 +679,8 @@ export default function PostAdEnhanced() {
       // Helper function to add delay
       const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
       
-      // Helper function to upload with retry
-      const uploadWithRetry = async (file: File, retries = 3): Promise<string> => {
+      // Helper function to upload with retry (5 attempts for high-volume batches)
+      const uploadWithRetry = async (file: File, retries = 5): Promise<string> => {
         for (let attempt = 1; attempt <= retries; attempt++) {
           try {
             const formData = new FormData();
@@ -759,8 +759,8 @@ export default function PostAdEnhanced() {
           
           // Add delay between uploads to avoid rate limiting (except after last one)
           if (i < files.length - 1) {
-            const UPLOAD_DELAY = 500; // 500ms delay
-            console.log(`⏱️ Waiting ${UPLOAD_DELAY}ms before next upload...`);
+            const UPLOAD_DELAY = 2000; // 2 second delay for robust large-batch uploads
+            console.log(`⏱️ Waiting ${UPLOAD_DELAY/1000}s before next upload...`);
             await delay(UPLOAD_DELAY);
           }
         } catch (error) {
