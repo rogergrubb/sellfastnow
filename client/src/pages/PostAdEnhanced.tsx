@@ -739,8 +739,15 @@ export default function PostAdEnhanced() {
       };
       
       for (let i = 0; i < files.length; i++) {
-        // Refresh token every 20 photos to prevent expiration (check at 19 to refresh before photo 20, 40, 60)
-        if (photosSinceTokenRefresh >= TOKEN_REFRESH_INTERVAL - 1 && photosSinceTokenRefresh > 0) {
+        const file = files[i];
+        
+        // Increment counter at START of loop (before upload)
+        if (i > 0) {
+          photosSinceTokenRefresh++;
+        }
+        
+        // Refresh token every 20 photos to prevent expiration
+        if (photosSinceTokenRefresh >= TOKEN_REFRESH_INTERVAL) {
           console.log(`🔄 Refreshing auth token after ${photosSinceTokenRefresh} photos...`);
           const freshToken = await getToken();
           if (freshToken) {
@@ -749,8 +756,6 @@ export default function PostAdEnhanced() {
             console.log('✅ Token refreshed successfully');
           }
         }
-        
-        const file = files[i];
         console.log(`📁 [${i + 1}/${files.length}] Uploading file:`, file.name, 'Size:', file.size, 'bytes');
         
         // Update progress - mark current file as analyzing (uploading)
@@ -766,9 +771,6 @@ export default function PostAdEnhanced() {
           const imageUrl = await uploadWithRetry(file);
           console.log(`✅ [${i + 1}/${files.length}] Upload successful:`, imageUrl);
           uploadedUrls.push(imageUrl);
-          
-          // Increment token refresh counter
-          photosSinceTokenRefresh++;
           
           // Update progress - mark as completed
           if (files.length > 1) {
