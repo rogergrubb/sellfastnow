@@ -687,14 +687,14 @@ export default function PostAdEnhanced() {
       const freshStartToken = await getToken();
       let currentToken = freshStartToken || token;
       let photosSinceTokenRefresh = 0;
-      const TOKEN_REFRESH_INTERVAL = 20;
+      const TOKEN_REFRESH_INTERVAL = 15; // Refresh every 15 photos (~45s) to stay well under 60s token expiration
       console.log('✅ Fresh token obtained, starting upload batch');
       
       // Helper function to upload with retry (5 attempts for high-volume batches)
       const uploadWithRetry = async (file: File, retries = 5): Promise<string> => {
         for (let attempt = 1; attempt <= retries; attempt++) {
           try {
-            // Use current token (refreshed every 20 photos)
+            // Use current token (refreshed every 15 photos)
             if (!currentToken) {
               throw new Error('Authentication token not available');
             }
@@ -746,7 +746,7 @@ export default function PostAdEnhanced() {
           photosSinceTokenRefresh++;
         }
         
-        // Refresh token every 20 photos to prevent expiration
+        // Refresh token every 15 photos to prevent expiration
         if (photosSinceTokenRefresh >= TOKEN_REFRESH_INTERVAL) {
           console.log(`🔄 Refreshing auth token after ${photosSinceTokenRefresh} photos...`);
           const freshToken = await getToken();
