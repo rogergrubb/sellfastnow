@@ -679,13 +679,17 @@ export default function PostAdEnhanced() {
       // Helper function to add delay
       const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
       
+      // Token refresh strategy: refresh every 30 photos to stay under 60s expiration
+      let currentToken = token;
+      let photosSinceTokenRefresh = 0;
+      const TOKEN_REFRESH_INTERVAL = 30;
+      
       // Helper function to upload with retry (5 attempts for high-volume batches)
       const uploadWithRetry = async (file: File, retries = 5): Promise<string> => {
         for (let attempt = 1; attempt <= retries; attempt++) {
           try {
-            // Get fresh token for each attempt (prevents 401 errors on long uploads)
-            const freshToken = await getToken();
-            if (!freshToken) {
+            // Use current token (refreshed every 30 photos)
+            if (!currentToken) {
               throw new Error('Authentication token not available');
             }
             
@@ -695,7 +699,7 @@ export default function PostAdEnhanced() {
             const uploadResponse = await fetch('/api/images/upload', {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${freshToken}`,
+                'Authorization': `Bearer ${currentToken}`,
               },
               body: formData,
             });
@@ -729,6 +733,17 @@ export default function PostAdEnhanced() {
       };
       
       for (let i = 0; i < files.length; i++) {
+        // Refresh token every 30 photos to prevent expiration
+        if (photosSinceTokenRefresh >= TOKEN_REFRESH_INTERVAL) {
+          console.log(`🔄 Refreshing auth token after ${photosSinceTokenRefresh} photos...`);
+          const freshToken = await getToken();
+          if (freshToken) {
+            currentToken = freshToken;
+            photosSinceTokenRefresh = 0;
+            console.log('✅ Token refreshed successfully');
+          }
+        }
+        
         const file = files[i];
         console.log(`📁 [${i + 1}/${files.length}] Uploading file:`, file.name, 'Size:', file.size, 'bytes');
         
@@ -745,6 +760,9 @@ export default function PostAdEnhanced() {
           const imageUrl = await uploadWithRetry(file);
           console.log(`✅ [${i + 1}/${files.length}] Upload successful:`, imageUrl);
           uploadedUrls.push(imageUrl);
+          
+          // Increment token refresh counter
+          photosSinceTokenRefresh++;
           
           // Update progress - mark as completed
           if (files.length > 1) {
