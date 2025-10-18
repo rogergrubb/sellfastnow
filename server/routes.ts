@@ -627,24 +627,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "imageUrl is required" });
       }
 
-      console.log(`🔍 Analyzing single product image...`);
+      console.log(`🔍 Analyzing single product image: ${imageUrl.substring(0, 80)}...`);
       const { analyzeProductImage } = await import("./aiServiceGemini");
-      const analysis = await analyzeProductImage(imageUrl, 1, manualCategory);
       
-      console.log(`✅ Product identified: "${analysis.title}"`);
-      
-      res.json({
-        title: analysis.title,
-        description: analysis.description,
-        category: analysis.category,
-        tags: analysis.tags || [],
-        retailPrice: analysis.retailPrice,
-        usedPrice: analysis.usedPrice,
-        condition: analysis.condition,
-        confidence: analysis.confidence,
-      });
+      try {
+        const analysis = await analyzeProductImage(imageUrl, 1, manualCategory);
+        console.log(`✅ Product identified: "${analysis.title}"`);
+        
+        res.json({
+          title: analysis.title,
+          description: analysis.description,
+          category: analysis.category,
+          tags: analysis.tags || [],
+          retailPrice: analysis.retailPrice,
+          usedPrice: analysis.usedPrice,
+          condition: analysis.condition,
+          confidence: analysis.confidence,
+        });
+      } catch (aiError: any) {
+        // If Gemini API fails, log the error but return empty data instead of 500
+        console.error("❌ Gemini API error for image:", imageUrl.substring(0, 80));
+        console.error("❌ Error details:", aiError.message);
+        
+        // Check if it's a quota error
+        if (aiError.message && aiError.message.includes('quota')) {
+          console.error("⚠️ QUOTA EXCEEDED - Consider upgrading Gemini API plan");
+        }
+        
+        // Return empty data so frontend can continue processing other items
+        res.json({
+          title: '',
+          description: '',
+          category: '',
+          tags: [],
+          retailPrice: 0,
+          usedPrice: 0,
+          condition: '',
+          confidence: 0,
+          error: 'AI generation failed'
+        });
+      }
     } catch (error: any) {
-      console.error("❌ Error identifying product:", error);
+      console.error("❌ Error in identify-product endpoint:", error);
+      console.error("❌ Error stack:", error.stack);
       res.status(500).json({ message: "Failed to identify product", error: error.message });
     }
   });
