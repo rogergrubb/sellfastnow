@@ -1390,20 +1390,60 @@ export default function PostAdEnhanced() {
 
   // Process remaining items with AI after credit deduction
   const processRemainingItemsWithAI = async (itemsToProcess: any[]) => {
-    console.log(`🤖 Processing ${itemsToProcess.length} items with AI`);
+    console.log(`🤖 Processing ${itemsToProcess.length} items with AI (with rate limiting)`);
     
     setShowProgressModal(true);
     setBulkProgress({ current: 0, total: itemsToProcess.length });
     
     const newlyProcessed: any[] = [];
+    const DELAY_BETWEEN_REQUESTS = 2000; // 2 seconds between each request
+    const MAX_RETRIES = 3;
+    
+    // Helper function to add delay
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+    
+    // Helper function to retry API call with exponential backoff
+    const fetchWithRetry = async (url: string, options: any, retries = MAX_RETRIES): Promise<Response> => {
+      for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+          const response = await fetch(url, options);
+          
+          // If successful or 4xx error (don't retry client errors), return
+          if (response.ok || (response.status >= 400 && response.status < 500)) {
+            return response;
+          }
+          
+          // If 5xx error and we have retries left, wait and retry
+          if (attempt < retries) {
+            const backoffDelay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+            console.log(`⚠️ API call failed (${response.status}), retrying in ${backoffDelay/1000}s... (attempt ${attempt}/${retries})`);
+            await delay(backoffDelay);
+            continue;
+          }
+          
+          return response;
+        } catch (error) {
+          if (attempt < retries) {
+            const backoffDelay = Math.pow(2, attempt) * 1000;
+            console.log(`⚠️ Network error, retrying in ${backoffDelay/1000}s... (attempt ${attempt}/${retries})`);
+            await delay(backoffDelay);
+            continue;
+          }
+          throw error;
+        }
+      }
+      throw new Error('Max retries exceeded');
+    };
     
     for (let i = 0; i < itemsToProcess.length; i++) {
       const item = itemsToProcess[i];
       setBulkProgress({ current: i + 1, total: itemsToProcess.length });
       
+      console.log(`🔍 [${i + 1}/${itemsToProcess.length}] Processing item...`);
+      
       try {
         const token = await getToken();
-        const response = await fetch('/api/ai/identify-product', {
+        const response = await fetchWithRetry('/api/ai/identify-product', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1416,24 +1456,44 @@ export default function PostAdEnhanced() {
         
         if (response.ok) {
           const data = await response.json();
-          newlyProcessed.push({
-            ...item,
-            title: data.title,
-            description: data.description,
-            category: data.category,
-            retailPrice: data.retailPrice,
-            usedPrice: data.usedPrice,
-            condition: data.condition,
-            isAIGenerated: true,
-          });
+          
+          // Check if AI generation actually succeeded (not empty response)
+          if (data.title && data.title.trim() !== '') {
+            console.log(`✅ [${i + 1}/${itemsToProcess.length}] Success: "${data.title}"`);
+            newlyProcessed.push({
+              ...item,
+              title: data.title,
+              description: data.description,
+              category: data.category,
+              retailPrice: data.retailPrice,
+              usedPrice: data.usedPrice,
+              condition: data.condition,
+              isAIGenerated: true,
+            });
+          } else {
+            console.warn(`⚠️ [${i + 1}/${itemsToProcess.length}] AI returned empty data, keeping original`);
+            newlyProcessed.push(item);
+          }
         } else {
+          console.error(`❌ [${i + 1}/${itemsToProcess.length}] API error: ${response.status}`);
           newlyProcessed.push(item);
         }
       } catch (error) {
-        console.error('Error processing item:', error);
+        console.error(`❌ [${i + 1}/${itemsToProcess.length}] Error:`, error);
         newlyProcessed.push(item);
       }
+      
+      // Add delay between requests (except after the last one)
+      if (i < itemsToProcess.length - 1) {
+        console.log(`⏱️ Waiting ${DELAY_BETWEEN_REQUESTS/1000}s before next request...`);
+        await delay(DELAY_BETWEEN_REQUESTS);
+      }
     }
+    
+    // Count successful vs failed
+    const successCount = newlyProcessed.filter(p => p.isAIGenerated).length;
+    const failCount = itemsToProcess.length - successCount;
+    console.log(`🎯 Processing complete: ${successCount} succeeded, ${failCount} failed`);
     
     // Update bulk products with newly processed items
     console.log(`🔄 Updating ${newlyProcessed.length} items in bulkProducts`);
@@ -1461,10 +1521,26 @@ export default function PostAdEnhanced() {
     });
     
     setShowProgressModal(false);
-    toast({
-      title: "Processing Complete",
-      description: `${newlyProcessed.length} item${newlyProcessed.length > 1 ? 's' : ''} processed with AI.`,
-    });
+    
+    // Show summary toast
+    if (failCount === 0) {
+      toast({
+        title: "Processing Complete",
+        description: `All ${successCount} items successfully generated with AI!`,
+      });
+    } else if (successCount > 0) {
+      toast({
+        title: "Processing Complete",
+        description: `${successCount} items succeeded, ${failCount} items failed. Failed items can be edited manually.`,
+        variant: "default",
+      });
+    } else {
+      toast({
+        title: "Processing Failed",
+        description: `All ${failCount} items failed to generate. Please try again or contact support.`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCreateBundleListing = async () => {
