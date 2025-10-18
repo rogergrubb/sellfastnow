@@ -676,9 +676,55 @@ export default function PostAdEnhanced() {
       const uploadedUrls: string[] = [];
       const uploadStartTime = Date.now();
 
+      // Helper function to add delay
+      const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+      
+      // Helper function to upload with retry
+      const uploadWithRetry = async (file: File, retries = 3): Promise<string> => {
+        for (let attempt = 1; attempt <= retries; attempt++) {
+          try {
+            const formData = new FormData();
+            formData.append('image', file);
+
+            const uploadResponse = await fetch('/api/images/upload', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+              body: formData,
+            });
+
+            if (uploadResponse.ok) {
+              const { imageUrl } = await uploadResponse.json();
+              return imageUrl;
+            }
+            
+            // If 5xx error and we have retries left, wait and retry
+            if (uploadResponse.status >= 500 && attempt < retries) {
+              const backoffDelay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+              console.log(`⚠️ Upload failed (${uploadResponse.status}), retrying in ${backoffDelay/1000}s... (attempt ${attempt}/${retries})`);
+              await delay(backoffDelay);
+              continue;
+            }
+            
+            const errorText = await uploadResponse.text();
+            throw new Error(`Upload failed: ${uploadResponse.status} ${errorText}`);
+          } catch (error) {
+            if (attempt < retries) {
+              const backoffDelay = Math.pow(2, attempt) * 1000;
+              console.log(`⚠️ Network error, retrying in ${backoffDelay/1000}s... (attempt ${attempt}/${retries})`);
+              await delay(backoffDelay);
+              continue;
+            }
+            throw error;
+          }
+        }
+        throw new Error('Max retries exceeded');
+      };
+      
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        console.log('📁 Uploading file:', file.name, 'Size:', file.size, 'bytes');
+        console.log(`📁 [${i + 1}/${files.length}] Uploading file:`, file.name, 'Size:', file.size, 'bytes');
         
         // Update progress - mark current file as analyzing (uploading)
         if (files.length > 1) {
@@ -689,22 +735,36 @@ export default function PostAdEnhanced() {
           ));
         }
         
-        const formData = new FormData();
-        formData.append('image', file);
-
-        const uploadResponse = await fetch('/api/images/upload', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        });
-
-        console.log('📥 Upload response status:', uploadResponse.status);
-        
-        if (!uploadResponse.ok) {
-          const errorText = await uploadResponse.text();
-          console.error('❌ Upload failed:', uploadResponse.status, errorText);
+        try {
+          const imageUrl = await uploadWithRetry(file);
+          console.log(`✅ [${i + 1}/${files.length}] Upload successful:`, imageUrl);
+          uploadedUrls.push(imageUrl);
+          
+          // Update progress - mark as completed
+          if (files.length > 1) {
+            setBulkProgress({ current: i + 1, total: files.length });
+            setAnalyzedItems(prev => prev.map(item => 
+              item.index === i + 1 
+                ? { ...item, status: 'completed' as const, imageUrl, title: file.name }
+                : item
+            ));
+            
+            // Update countdown based on actual upload speed
+            const elapsed = (Date.now() - uploadStartTime) / 1000;
+            const avgTimePerUpload = elapsed / (i + 1);
+            const remaining = files.length - (i + 1);
+            const estimatedRemaining = Math.ceil(remaining * avgTimePerUpload);
+            setCountdown(estimatedRemaining);
+          }
+          
+          // Add delay between uploads to avoid rate limiting (except after last one)
+          if (i < files.length - 1) {
+            const UPLOAD_DELAY = 500; // 500ms delay
+            console.log(`⏱️ Waiting ${UPLOAD_DELAY}ms before next upload...`);
+            await delay(UPLOAD_DELAY);
+          }
+        } catch (error) {
+          console.error(`❌ [${i + 1}/${files.length}] Upload failed:`, error);
           
           // Mark as failed
           if (files.length > 1) {
@@ -717,28 +777,7 @@ export default function PostAdEnhanced() {
           
           throw new Error('Failed to upload image');
         }
-
-        const { imageUrl } = await uploadResponse.json();
-        console.log('✅ Image uploaded successfully:', imageUrl);
-        uploadedUrls.push(imageUrl);
         
-        // Update progress - mark as completed
-        if (files.length > 1) {
-          setBulkProgress({ current: i + 1, total: files.length });
-          setAnalyzedItems(prev => prev.map(item => 
-            item.index === i + 1 
-              ? { ...item, status: 'completed' as const, imageUrl, title: file.name }
-              : item
-          ));
-          
-          // Update countdown based on actual upload speed
-          const elapsed = (Date.now() - uploadStartTime) / 1000;
-          const avgTimePerUpload = elapsed / (i + 1);
-          const remaining = files.length - (i + 1);
-          const estimatedRemaining = Math.ceil(remaining * avgTimePerUpload);
-          setCountdown(estimatedRemaining);
-        }
-
         // OPT-IN: Remove automatic photo analysis even in coached mode
       }
       
