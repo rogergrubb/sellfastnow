@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAuth, useUser } from "@clerk/clerk-react";
+import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -133,8 +133,9 @@ interface AIUsageInfo {
 export default function PostAdEnhanced() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { isSignedIn, isLoaded, getToken } = useAuth();
-  const { user } = useUser();
+  const { user, session, loading, getToken } = useAuth();
+  const isSignedIn = !!user;
+  const isLoaded = !loading;
   
   // Check if we're in edit mode
   const urlParams = new URLSearchParams(window.location.search);

@@ -2,7 +2,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage, db } from "./storage";
-import { setupAuth, isAuthenticated } from "./clerkAuth";
+import { setupAuth, isAuthenticated } from "./supabaseAuth";
 import {
   ObjectStorageService,
   ObjectNotFoundError,

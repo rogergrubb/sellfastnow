@@ -1,8 +1,8 @@
-import { Search, Plus, User, Menu, Moon, Sun, ListChecks, Sparkles } from "lucide-react";
+import { Search, Moon, Sun, Plus, ListChecks, Sparkles, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
-import { useAuth, useUser, UserButton, SignInButton, SignUpButton } from "@clerk/clerk-react";
+import { useAuth } from "@/lib/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,14 +10,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import type { UserCredits } from "@shared/schema";
 
 export default function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const { isSignedIn, isLoaded, getToken } = useAuth();
-  const { user } = useUser();
+  const { user, session, loading, signOut, getToken } = useAuth();
+  const isSignedIn = !!user;
+  const isLoaded = !loading;
 
   // Fetch user credits with authentication
   const { data: credits, isLoading: creditsLoading, error: creditsError, refetch: refetchCredits } = useQuery<UserCredits>({
@@ -71,6 +73,16 @@ export default function Navbar() {
       root.classList.remove("dark");
     }
   }, [isDarkMode]);
+
+  const handleSignOut = async () => {
+    await signOut();
+    window.location.href = '/';
+  };
+
+  const getUserInitials = () => {
+    if (!user?.email) return 'U';
+    return user.email.charAt(0).toUpperCase();
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-background border-b">
@@ -142,35 +154,45 @@ export default function Navbar() {
                   <Plus className="h-4 w-4 mr-2" />
                   Post Ad
                 </Button>
-                <div data-testid="user-button">
-                  <UserButton 
-                    afterSignOutUrl="/"
-                    appearance={{
-                      elements: {
-                        avatarBox: "w-9 h-9"
-                      }
-                    }}
-                  />
-                </div>
+                
+                {/* User Menu Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-9 w-9 rounded-full" data-testid="user-button">
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => window.location.href = `/users/${user?.id}`}>
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             ) : (
               <>
-                <SignInButton mode="modal">
-                  <Button 
-                    variant="ghost"
-                    data-testid="button-login"
-                  >
-                    Login
-                  </Button>
-                </SignInButton>
-                <SignUpButton mode="modal">
-                  <Button 
-                    variant="default"
-                    data-testid="button-signup"
-                  >
-                    Sign Up
-                  </Button>
-                </SignUpButton>
+                <Button 
+                  variant="ghost"
+                  data-testid="button-login"
+                  onClick={() => window.location.href = '/sign-in'}
+                >
+                  Login
+                </Button>
+                <Button 
+                  variant="default"
+                  data-testid="button-signup"
+                  onClick={() => window.location.href = '/sign-up'}
+                >
+                  Sign Up
+                </Button>
               </>
             )}
           </div>
@@ -191,3 +213,4 @@ export default function Navbar() {
     </nav>
   );
 }
+
