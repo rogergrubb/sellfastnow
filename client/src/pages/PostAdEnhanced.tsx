@@ -739,8 +739,8 @@ export default function PostAdEnhanced() {
       };
       
       for (let i = 0; i < files.length; i++) {
-        // Refresh token every 20 photos to prevent expiration
-        if (photosSinceTokenRefresh >= TOKEN_REFRESH_INTERVAL) {
+        // Refresh token every 20 photos to prevent expiration (check at 19 to refresh before photo 20, 40, 60)
+        if (photosSinceTokenRefresh >= TOKEN_REFRESH_INTERVAL - 1 && photosSinceTokenRefresh > 0) {
           console.log(`🔄 Refreshing auth token after ${photosSinceTokenRefresh} photos...`);
           const freshToken = await getToken();
           if (freshToken) {
