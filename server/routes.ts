@@ -574,7 +574,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("❌ Error in bulk image analysis:", error);
-      res.status(500).json({ message: "Failed to analyze images" });
+      console.error("❌ Error name:", error.name);
+      console.error("❌ Error message:", error.message);
+      console.error("❌ Error stack:", error.stack);
+      if (error.response) {
+        console.error("❌ Error response:", error.response);
+      }
+      res.status(500).json({ 
+        message: "Failed to analyze images",
+        error: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
     }
   });
 
