@@ -683,13 +683,19 @@ export default function PostAdEnhanced() {
       const uploadWithRetry = async (file: File, retries = 5): Promise<string> => {
         for (let attempt = 1; attempt <= retries; attempt++) {
           try {
+            // Get fresh token for each attempt (prevents 401 errors on long uploads)
+            const freshToken = await getToken();
+            if (!freshToken) {
+              throw new Error('Authentication token not available');
+            }
+            
             const formData = new FormData();
             formData.append('image', file);
 
             const uploadResponse = await fetch('/api/images/upload', {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${token}`,
+                'Authorization': `Bearer ${freshToken}`,
               },
               body: formData,
             });
