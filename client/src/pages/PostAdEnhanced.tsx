@@ -348,14 +348,48 @@ export default function PostAdEnhanced() {
       // Clear URL parameters
       window.history.replaceState({}, '', '/post-ad');
       
-      // Check for pending items
+      // Check for pending items AND bulkProducts backup
       const pendingItemsStr = localStorage.getItem('pendingItems');
       const processedItemsStr = localStorage.getItem('processedItems');
+      const bulkProductsBackup = localStorage.getItem('bulkProducts_backup');
+      const backupTimestamp = localStorage.getItem('bulkProducts_timestamp');
       
       console.log('📦 Checking localStorage:', { 
         hasPendingItems: !!pendingItemsStr, 
-        hasProcessedItems: !!processedItemsStr 
+        hasProcessedItems: !!processedItemsStr,
+        hasBulkProductsBackup: !!bulkProductsBackup,
+        backupAge: backupTimestamp ? `${Math.round((Date.now() - parseInt(backupTimestamp)) / 1000)}s ago` : 'N/A'
       });
+      
+      // Restore bulkProducts from backup if available (and recent)
+      if (bulkProductsBackup && backupTimestamp) {
+        const backupAge = Date.now() - parseInt(backupTimestamp);
+        const MAX_BACKUP_AGE = 30 * 60 * 1000; // 30 minutes
+        
+        if (backupAge < MAX_BACKUP_AGE) {
+          console.log('💾 Restoring bulkProducts from backup');
+          const restoredProducts = JSON.parse(bulkProductsBackup);
+          console.log(`✅ Restored ${restoredProducts.length} products from backup`);
+          setBulkProducts(restoredProducts);
+          
+          // Clear the backup
+          localStorage.removeItem('bulkProducts_backup');
+          localStorage.removeItem('bulkProducts_timestamp');
+          
+          // Auto-trigger "Generate Now" for items without AI
+          const itemsWithoutAI = restoredProducts.filter((p: any) => !p.isAIGenerated);
+          if (itemsWithoutAI.length > 0) {
+            console.log(`🚀 Auto-triggering AI generation for ${itemsWithoutAI.length} items`);
+            setTimeout(() => {
+              handleUpgradeRemainingItems();
+            }, 2000);
+          }
+        } else {
+          console.warn('⚠️ Backup too old, ignoring');
+          localStorage.removeItem('bulkProducts_backup');
+          localStorage.removeItem('bulkProducts_timestamp');
+        }
+      }
       
       if (pendingItemsStr && processedItemsStr) {
         console.log('🔄 Auto-resuming processing after payment');
@@ -1380,6 +1414,13 @@ export default function PostAdEnhanced() {
     
     // If we get here, either no credits or not enough credits - show payment modal
     console.log('💳 No credits or insufficient credits - showing payment modal');
+    
+    // Save bulkProducts to localStorage before payment redirect
+    // This ensures photos aren't lost when page reloads after payment
+    console.log('💾 Saving bulkProducts to localStorage before payment');
+    localStorage.setItem('bulkProducts_backup', JSON.stringify(bulkProducts));
+    localStorage.setItem('bulkProducts_timestamp', Date.now().toString());
+    
     setRemainingItemsInfo({
       count: itemCount,
       imageUrls: itemsWithoutAI.flatMap((p: any) => p.imageUrls),
