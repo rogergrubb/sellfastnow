@@ -112,6 +112,39 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
     }))
   );
   
+  // Sync internal state when initialProducts prop changes (e.g., after AI generation)
+  useEffect(() => {
+    console.log('🔄 BulkItemReview: initialProducts changed, updating internal state');
+    console.log('New products:', initialProducts.map(p => ({ title: p.title, isAI: p.isAIGenerated })));
+    
+    setProducts(prevProducts => {
+      // Merge new data with existing state (preserve isReviewed, tags, errors)
+      return initialProducts.map((newProduct, index) => {
+        const existingProduct = prevProducts[index];
+        
+        // If product exists and has the same imageUrl, merge states
+        if (existingProduct && existingProduct.imageUrls[0] === newProduct.imageUrls[0]) {
+          return {
+            ...newProduct,
+            isReviewed: existingProduct.isReviewed,
+            tags: newProduct.isAIGenerated && newProduct.title 
+              ? generateSuggestedTags(newProduct.title, newProduct.category) 
+              : existingProduct.tags,
+            errors: existingProduct.errors
+          };
+        }
+        
+        // New product, initialize fresh
+        return {
+          ...newProduct,
+          isReviewed: false,
+          tags: generateSuggestedTags(newProduct.title, newProduct.category),
+          errors: {}
+        };
+      });
+    });
+  }, [initialProducts]);
+  
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishingProgress, setPublishingProgress] = useState<{
     current: number;
