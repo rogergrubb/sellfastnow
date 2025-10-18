@@ -605,6 +605,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate AI description for a single product (used for remaining items after credit purchase)
+  app.post("/api/ai/identify-product", isAuthenticated, async (req: any, res) => {
+    try {
+      console.log('🤖 Single product identification request received');
+      const { imageUrl, manualCategory } = req.body;
+      const userId = req.auth.userId;
+      
+      if (!imageUrl) {
+        console.error('❌ No imageUrl provided in request');
+        return res.status(400).json({ message: "imageUrl is required" });
+      }
+
+      console.log(`🔍 Analyzing single product image...`);
+      const { analyzeProductImage } = await import("./aiServiceGemini");
+      const analysis = await analyzeProductImage(imageUrl, 1, manualCategory);
+      
+      console.log(`✅ Product identified: "${analysis.title}"`);
+      
+      res.json({
+        title: analysis.title,
+        description: analysis.description,
+        category: analysis.category,
+        tags: analysis.tags || [],
+        retailPrice: analysis.retailPrice,
+        usedPrice: analysis.usedPrice,
+        condition: analysis.condition,
+        confidence: analysis.confidence,
+      });
+    } catch (error: any) {
+      console.error("❌ Error identifying product:", error);
+      res.status(500).json({ message: "Failed to identify product", error: error.message });
+    }
+  });
+
   // Serve protected images
   app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
     try {
