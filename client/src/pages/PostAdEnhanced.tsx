@@ -1436,9 +1436,28 @@ export default function PostAdEnhanced() {
     }
     
     // Update bulk products with newly processed items
+    console.log(`🔄 Updating ${newlyProcessed.length} items in bulkProducts`);
+    console.log('Newly processed items:', newlyProcessed.map(p => ({ title: p.title, imageUrl: p.imageUrls[0] })));
+    
     setBulkProducts((prev: any[]) => {
+      console.log('Previous bulkProducts count:', prev.length);
+      
+      // Create a map using the first image URL as key
       const processedMap = new Map(newlyProcessed.map(p => [p.imageUrls[0], p]));
-      return prev.map(p => processedMap.get(p.imageUrls[0]) || p);
+      
+      // Update each item if it has a match in processedMap
+      const updated = prev.map((p, index) => {
+        const match = processedMap.get(p.imageUrls[0]);
+        if (match) {
+          console.log(`✅ Updating item ${index + 1}: "${match.title}"`);
+          return match;
+        }
+        console.log(`⚠️ No match for item ${index + 1}`);
+        return p;
+      });
+      
+      console.log('Updated bulkProducts:', updated.map(p => ({ title: p.title, isAI: p.isAIGenerated })));
+      return updated;
     });
     
     setShowProgressModal(false);
