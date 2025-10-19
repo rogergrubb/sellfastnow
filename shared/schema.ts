@@ -53,6 +53,11 @@ export const users = pgTable("users", {
   aiCreditsPurchased: integer("ai_credits_purchased").notNull().default(0),
   subscriptionTier: varchar("subscription_tier", { length: 20 }).notNull().default("free"),
   
+  // Contact preferences for messaging
+  contactEmail: varchar("contact_email"), // Optional: different from account email
+  contactPreference: varchar("contact_preference", { length: 20 }).notNull().default("in_app"), // email, in_app, both
+  showEmailPublicly: boolean("show_email_publicly").notNull().default(false),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

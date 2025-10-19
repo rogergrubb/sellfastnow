@@ -38,6 +38,19 @@ export async function runMigrations() {
     await db.execute(sql`
       ALTER TABLE users ADD COLUMN IF NOT EXISTS location_display_precision varchar(20) DEFAULT 'city';
     `);
+    
+    // Add contact preference fields
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS contact_email varchar(255);
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS contact_preference varchar(20) DEFAULT 'in_app';
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS show_email_publicly boolean DEFAULT false;
+    `);
 
     console.log("✅ Database migrations completed successfully");
   } catch (error) {

@@ -145,6 +145,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user contact settings
+  app.put("/api/user/settings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const { contactEmail, contactPreference, showEmailPublicly } = req.body;
+      
+      const updateData: any = {};
+      if (contactEmail !== undefined) updateData.contactEmail = contactEmail;
+      if (contactPreference !== undefined) updateData.contactPreference = contactPreference;
+      if (showEmailPublicly !== undefined) updateData.showEmailPublicly = showEmailPublicly;
+
+      await db.update(users)
+        .set(updateData)
+        .where(eq(users.id, userId));
+      
+      const updatedUser = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      res.json(updatedUser[0]);
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      res.status(500).json({ message: "Failed to update settings" });
+    }
+  });
+
   // ======================
   // Image Upload Routes (Cloudflare R2 + Images)
   // ======================
@@ -1406,6 +1429,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("❌ Batch create listings error:", error);
       res.status(500).json({ message: error.message || "Failed to create listings" });
+    }
+  });
+
+  // ======================
+  // Messaging Routes
+  // ======================
+
+  // Get messages for current user (conversation threads)
+  app.get("/api/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const { messages } = await import("@shared/schema");
+      const { desc, or } = await import("drizzle-orm");
+      
+      // Get all messages where user is sender or receiver
+      const userMessages = await db.select()
+        .from(messages)
+        .where(or(eq(messages.senderId, userId), eq(messages.receiverId, userId)))
+        .orderBy(desc(messages.createdAt));
+      
+      res.json(userMessages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  // Get messages for a specific listing conversation
+  app.get("/api/messages/listing/:listingId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const { listingId } = req.params;
+      const { messages } = await import("@shared/schema");
+      const { desc, and, or } = await import("drizzle-orm");
+      
+      // Get messages for this listing where user is involved
+      const listingMessages = await db.select()
+        .from(messages)
+        .where(
+          and(
+            eq(messages.listingId, listingId),
+            or(eq(messages.senderId, userId), eq(messages.receiverId, userId))
+          )
+        )
+        .orderBy(desc(messages.createdAt));
+      
+      res.json(listingMessages);
+    } catch (error) {
+      console.error("Error fetching listing messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  // Send a message
+  app.post("/api/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const senderId = req.auth.userId;
+      const { listingId, receiverId, content } = req.body;
+      const { messages, listings } = await import("@shared/schema");
+      
+      if (!listingId || !receiverId || !content) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      // Verify listing exists
+      const listing = await db.select().from(listings).where(eq(listings.id, listingId)).limit(1);
+      if (!listing.length) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+      
+      // Create message
+      const newMessage = await db.insert(messages).values({
+        listingId,
+        senderId,
+        receiverId,
+        content,
+      }).returning();
+      
+      res.json(newMessage[0]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Mark messages as read
+  app.put("/api/messages/:id/read", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const { id } = req.params;
+      const { messages } = await import("@shared/schema");
+      const { and } = await import("drizzle-orm");
+      
+      // Only the receiver can mark as read
+      await db.update(messages)
+        .set({ isRead: true })
+        .where(and(
+          eq(messages.id, id),
+          eq(messages.receiverId, userId)
+        ));
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking message as read:", error);
+      res.status(500).json({ message: "Failed to mark message as read" });
     }
   });
 

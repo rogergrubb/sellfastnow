@@ -13,6 +13,7 @@ import { LeaveReviewModal } from "@/components/LeaveReviewModal";
 import { CancellationCommentModal } from "@/components/CancellationCommentModal";
 import { CancelTransactionModal } from "@/components/CancelTransactionModal";
 import { MakeOfferModal } from "@/components/MakeOfferModal";
+import { MessageModal } from "@/components/MessageModal";
 import {
   MapPin,
   Heart,
@@ -41,6 +42,7 @@ export default function ListingDetail() {
   const [isCancellationModalOpen, setIsCancellationModalOpen] = useState(false);
   const [isCancelTransactionModalOpen, setIsCancelTransactionModalOpen] = useState(false);
   const [isMakeOfferModalOpen, setIsMakeOfferModalOpen] = useState(false);
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
 
   // Fetch current user
   const { data: currentUser } = useQuery<User>({
@@ -115,6 +117,49 @@ export default function ListingDetail() {
         title: "Failed to copy link",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleMessageSeller = () => {
+    if (!currentUser) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to message the seller.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (currentUser.id === seller?.id) {
+      toast({
+        title: "Cannot message yourself",
+        description: "This is your own listing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const contactPreference = seller?.contactPreference || 'in_app';
+    const contactEmail = seller?.contactEmail || seller?.email;
+
+    if (contactPreference === 'email') {
+      // Open email client
+      const subject = encodeURIComponent(`Inquiry about: ${listing?.title}`);
+      const body = encodeURIComponent(`Hi,\n\nI'm interested in your listing "${listing?.title}".\n\nPlease let me know if it's still available.\n\nThanks!`);
+      window.location.href = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
+    } else if (contactPreference === 'both') {
+      // Show option to choose
+      const choice = confirm(`Contact seller via:\n\nOK = In-app messaging\nCancel = Email (${contactEmail})`);
+      if (choice) {
+        setIsMessageModalOpen(true);
+      } else {
+        const subject = encodeURIComponent(`Inquiry about: ${listing?.title}`);
+        const body = encodeURIComponent(`Hi,\n\nI'm interested in your listing "${listing?.title}".\n\nPlease let me know if it's still available.\n\nThanks!`);
+        window.location.href = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
+      }
+    } else {
+      // Default to in-app messaging
+      setIsMessageModalOpen(true);
     }
   };
 
@@ -362,7 +407,12 @@ export default function ListingDetail() {
             {/* Action Buttons - Desktop */}
             <Card className="p-6 hidden lg:block" data-testid="card-desktop-actions">
               <div className="space-y-3">
-                <Button className="w-full" size="lg" data-testid="button-message-seller">
+                <Button 
+                  className="w-full" 
+                  size="lg" 
+                  onClick={handleMessageSeller}
+                  data-testid="button-message-seller"
+                >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Message Seller
                 </Button>
@@ -459,7 +509,12 @@ export default function ListingDetail() {
               Make Offer
             </Button>
           )}
-          <Button className="flex-1" size="lg" data-testid="button-mobile-message">
+          <Button 
+            className="flex-1" 
+            size="lg" 
+            onClick={handleMessageSeller}
+            data-testid="button-mobile-message"
+          >
             <MessageCircle className="h-4 w-4 mr-2" />
             Message
           </Button>
@@ -509,6 +564,16 @@ export default function ListingDetail() {
               listingId={id!}
               sellerId={seller.id}
               askingPrice={Number(listing.price)}
+              listingTitle={listing.title}
+            />
+          )}
+          {data?.listing.userId !== currentUser.id && (
+            <MessageModal
+              isOpen={isMessageModalOpen}
+              onClose={() => setIsMessageModalOpen(false)}
+              listingId={id!}
+              sellerId={seller.id}
+              sellerName={getSellerName(seller)}
               listingTitle={listing.title}
             />
           )}

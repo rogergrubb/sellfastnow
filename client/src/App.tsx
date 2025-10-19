@@ -15,6 +15,7 @@ import Unsubscribe from "./pages/Unsubscribe";
 import SignInPage from "./pages/SignIn";
 import SignUpPage from "./pages/SignUp";
 import LocationSetup from "./pages/LocationSetup";
+import Settings from "./pages/Settings";
 import MobileUpload from "./pages/MobileUpload";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/payment/cancel" component={PaymentCancel} />
       <Route path="/admin" component={Admin} />
       <Route path="/credits" component={Credits} />
+      <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
   );
