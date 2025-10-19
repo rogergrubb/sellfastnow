@@ -373,9 +373,9 @@ export default function PostAdEnhanced() {
           console.log(`✅ Restored ${restoredProducts.length} products from backup`);
           setBulkProducts(restoredProducts);
           
-          // Clear the backup
-          localStorage.removeItem('bulkProducts_backup');
-          localStorage.removeItem('bulkProducts_timestamp');
+          // DON'T clear the backup yet - keep it in case user navigates away again
+          // It will be cleared when user publishes or after 30 minutes
+          console.log('💾 Keeping backup in localStorage for safety');
           
           // Auto-trigger "Generate Now" for items without AI
           const itemsWithoutAI = restoredProducts.filter((p: any) => !p.isAIGenerated);
@@ -386,7 +386,7 @@ export default function PostAdEnhanced() {
             }, 2000);
           }
         } else {
-          console.warn('⚠️ Backup too old, ignoring');
+          console.warn('⚠️ Backup too old (>30 min), clearing');
           localStorage.removeItem('bulkProducts_backup');
           localStorage.removeItem('bulkProducts_timestamp');
         }

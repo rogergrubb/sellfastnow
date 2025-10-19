@@ -384,6 +384,11 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
             variant: partialSuccess ? "default" : "default",
           });
           
+          // Clear localStorage backup after successful publish
+          console.log('🧺 Clearing bulkProducts backup after successful publish');
+          localStorage.removeItem('bulkProducts_backup');
+          localStorage.removeItem('bulkProducts_timestamp');
+          
           // Redirect to dashboard immediately
           setLocation('/dashboard');
         } else {
