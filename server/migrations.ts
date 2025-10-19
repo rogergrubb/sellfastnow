@@ -10,6 +10,21 @@ export async function runMigrations() {
   console.log("🔄 Running database migrations...");
 
   try {
+    // Create messages table if it doesn't exist
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS messages (
+        id varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        listing_id varchar NOT NULL,
+        sender_id varchar NOT NULL,
+        receiver_id varchar NOT NULL,
+        content text NOT NULL,
+        is_read boolean DEFAULT false NOT NULL,
+        created_at timestamp DEFAULT now()
+      );
+    `);
+    
+    console.log("✅ Messages table created/verified");
+    
     // Add location fields to users table (safe - uses IF NOT EXISTS)
     await db.execute(sql`
       ALTER TABLE users ADD COLUMN IF NOT EXISTS location_city varchar(100);
