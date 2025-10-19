@@ -64,9 +64,9 @@ export function EmailVerificationPrompt({
                   3
                 </div>
                 <div>
-                  <p className="font-medium">Return to SellFast.Now</p>
+                  <p className="font-medium">Return to SellFast.Now and sign in</p>
                   <p className="text-sm text-muted-foreground">
-                    After verifying, come back to this page and sign in to start selling
+                    After verifying, sign in and complete your profile setup
                   </p>
                 </div>
               </div>
