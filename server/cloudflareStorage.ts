@@ -1,5 +1,7 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
+import FormData from "form-data";
+import fetch from "node-fetch";
 
 // Cloudflare R2 configuration
 const R2_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID!;
@@ -51,8 +53,10 @@ export async function uploadToCloudflare(
 
     // Step 2: Upload to Cloudflare Images for optimization and delivery
     const formData = new FormData();
-    const blob = new Blob([buffer], { type: `image/${extension}` });
-    formData.append('file', blob, filename);
+    formData.append('file', buffer, {
+      filename: filename,
+      contentType: `image/${extension}`,
+    });
     formData.append('id', imageId);
     formData.append('requireSignedURLs', 'false');
 
@@ -62,8 +66,9 @@ export async function uploadToCloudflare(
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${CLOUDFLARE_IMAGES_API_TOKEN}`,
+          ...formData.getHeaders(),
         },
-        body: formData,
+        body: formData as any,
       }
     );
 
