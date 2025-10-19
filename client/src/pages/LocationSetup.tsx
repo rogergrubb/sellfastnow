@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 import { useAuth } from "@/lib/AuthContext";
 import { LocationInput, LocationData } from "@/components/LocationInput";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ export default function LocationSetupPage() {
   const [saving, setSaving] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
 
   // Auto-detect location on mount
   useEffect(() => {
@@ -86,7 +86,7 @@ export default function LocationSetupPage() {
           description: "Your location has been set successfully!",
         });
         // Redirect to dashboard or home
-        navigate('/');
+        setLocation('/');
       } else {
         throw new Error('Failed to save location');
       }
@@ -104,7 +104,7 @@ export default function LocationSetupPage() {
 
   const handleSkip = () => {
     // Allow users to skip and set location later
-    navigate('/');
+    setLocation('/');
   };
 
   return (
