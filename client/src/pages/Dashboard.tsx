@@ -120,7 +120,9 @@ function SettingsForm({ user }: { user: User }) {
 export default function Dashboard() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { getToken, isSignedIn, isLoaded } = useAuth();
+  const { getToken, user: authUser, loading: authLoading } = useAuth();
+  const isSignedIn = !!authUser;
+  const isLoaded = !authLoading;
   
   const [activeTab, setActiveTab] = useState("my-listings");
   const [listingFilter, setListingFilter] = useState("active");
@@ -280,7 +282,7 @@ export default function Dashboard() {
   }, [isError, isSuccess, user, navigate, toast]);
 
   // Show loading state while checking auth
-  if (!isLoaded || userLoading) {
+  if (authLoading || userLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-lg text-muted-foreground">Loading...</div>
