@@ -66,9 +66,8 @@ export async function uploadToCloudflare(
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${CLOUDFLARE_IMAGES_API_TOKEN}`,
-          ...formData.getHeaders(),
         },
-        body: formData as any,
+        body: formData,
       }
     );
 
