@@ -13,7 +13,7 @@ export default function LocationSetupPage() {
   const [saving, setSaving] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
 
   // Auto-detect location on mount
   useEffect(() => {
@@ -86,7 +86,7 @@ export default function LocationSetupPage() {
           description: "Your location has been set successfully!",
         });
         // Redirect to dashboard or home
-        setLocation('/');
+        navigate('/');
       } else {
         throw new Error('Failed to save location');
       }
@@ -104,7 +104,7 @@ export default function LocationSetupPage() {
 
   const handleSkip = () => {
     // Allow users to skip and set location later
-    setLocation('/');
+    navigate('/');
   };
 
   return (
