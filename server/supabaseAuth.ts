@@ -35,12 +35,23 @@ async function syncUserFromSupabase(userId: string, email: string) {
         return null;
       }
       
+      // Check if a user with this email already exists (from old auth system)
+      const existingUserByEmail = await storage.getUserByEmail(email);
+      
+      if (existingUserByEmail && existingUserByEmail.id !== userId) {
+        // Update the existing user's ID to match the new Supabase user ID
+        console.log(`🔄 Migrating existing user ${existingUserByEmail.id} to new Supabase ID ${userId}`);
+        
+        // Delete the old user record
+        await storage.deleteUser(existingUserByEmail.id);
+      }
+      
       await storage.upsertUser({
         id: userId,
         email: email || supabaseUser.user?.email || "",
-        firstName: supabaseUser.user?.user_metadata?.firstName || "",
-        lastName: supabaseUser.user?.user_metadata?.lastName || "",
-        profileImageUrl: supabaseUser.user?.user_metadata?.avatar_url || "",
+        firstName: supabaseUser.user?.user_metadata?.firstName || existingUserByEmail?.firstName || "",
+        lastName: supabaseUser.user?.user_metadata?.lastName || existingUserByEmail?.lastName || "",
+        profileImageUrl: supabaseUser.user?.user_metadata?.avatar_url || existingUserByEmail?.profileImageUrl || "",
       });
       
       user = await storage.getUser(userId);
