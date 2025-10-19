@@ -10,6 +10,8 @@ const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY!;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || "sellfastnow-images";
 // Construct R2 endpoint from account ID (standard format)
 const R2_ENDPOINT = process.env.R2_ENDPOINT || `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
+// R2 public URL for serving images
+const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || `https://pub-bc28db62ca5646428223f0bb8805346b.r2.dev`;
 
 // Cloudflare Images configuration
 const CLOUDFLARE_IMAGES_API_TOKEN = process.env.CLOUDFLARE_IMAGES_API_TOKEN!;
@@ -55,7 +57,7 @@ export async function uploadToCloudflare(
 
     // Return R2 public URL (Cloudflare Images disabled for now)
     // R2 bucket must have public access enabled for this to work
-    const r2PublicUrl = `https://pub-${R2_ACCOUNT_ID}.r2.dev/${key}`;
+    const r2PublicUrl = `${R2_PUBLIC_URL}/${key}`;
     console.log(`✅ Image available at: ${r2PublicUrl}`);
     
     return r2PublicUrl;
