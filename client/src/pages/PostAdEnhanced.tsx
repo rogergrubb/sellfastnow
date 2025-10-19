@@ -790,12 +790,7 @@ export default function PostAdEnhanced() {
             setCountdown(estimatedRemaining);
           }
           
-          // Add delay between uploads to avoid rate limiting (except after last one)
-          if (i < files.length - 1) {
-            const UPLOAD_DELAY = 2000; // 2 second delay for robust large-batch uploads
-            console.log(`⏱️ Waiting ${UPLOAD_DELAY/1000}s before next upload...`);
-            await delay(UPLOAD_DELAY);
-          }
+          // No delay needed - Cloudflare R2 handles parallel uploads efficiently
         } catch (error) {
           console.error(`❌ [${i + 1}/${files.length}] Upload failed:`, error);
           
