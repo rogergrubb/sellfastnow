@@ -5,12 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { EmailVerificationPrompt } from "@/components/EmailVerificationPrompt";
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
   const { signUp } = useAuth();
   const { toast } = useToast();
 
@@ -47,14 +50,9 @@ export default function SignUpPage() {
           variant: "destructive",
         });
       } else {
-        toast({
-          title: "Success",
-          description: "Account created! Please check your email to verify your account.",
-        });
-        // Redirect to sign in
-        setTimeout(() => {
-          window.location.href = '/sign-in';
-        }, 2000);
+        // Show verification prompt instead of redirecting
+        setRegisteredEmail(email);
+        setShowVerificationPrompt(true);
       }
     } catch (error: any) {
       toast({
@@ -66,6 +64,44 @@ export default function SignUpPage() {
       setLoading(false);
     }
   };
+
+  const handleResendEmail = async () => {
+    setLoading(true);
+    try {
+      const { error } = await signUp(registeredEmail, password);
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to resend email",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Email Sent",
+          description: "Verification email has been resent. Please check your inbox.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to resend email",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Show verification prompt after successful signup
+  if (showVerificationPrompt) {
+    return (
+      <EmailVerificationPrompt 
+        email={registeredEmail}
+        onResendEmail={handleResendEmail}
+        isResending={loading}
+      />
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-[80vh] p-4">
