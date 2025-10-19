@@ -10,7 +10,7 @@ import { CheckCircle2, SkipForward, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 
 interface PaymentModalProps {

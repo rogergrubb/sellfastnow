@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useParams, useLocation } from "wouter";
-import { useAuth, SignInButton } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";

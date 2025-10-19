@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
 import heroImage from "@assets/generated_images/Marketplace_hero_collage_image_05e817b0.png";
 
