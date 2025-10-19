@@ -96,10 +96,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ======================
-  // Image Upload Routes (Cloudinary)
+  // Image Upload Routes (Cloudflare R2 + Images)
   // ======================
 
-  // Upload image to Cloudinary
+  // Upload image to Cloudflare
   app.post("/api/images/upload", isAuthenticated, upload.single("image"), async (req: any, res) => {
     try {
       console.log('📤 Image upload request received from user:', req.auth?.userId);
@@ -109,15 +109,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No image file provided" });
       }
 
-      // Multer with CloudinaryStorage automatically uploads to Cloudinary
-      // The file object contains the Cloudinary URL
-      const imageUrl = (req.file as any).path; // Cloudinary URL
+      // Upload to Cloudflare R2 + Images
+      const { uploadToCloudflare } = await import('./cloudflareStorage');
+      const imageUrl = await uploadToCloudflare(req.file.buffer, req.file.originalname);
       
-      console.log('✅ Image uploaded successfully to Cloudinary:', imageUrl);
+      console.log('✅ Image uploaded successfully to Cloudflare:', imageUrl);
       
       res.json({ 
         imageUrl,
-        publicId: (req.file as any).filename,
+        publicId: imageUrl.split('/').pop()?.split('?')[0] || '',
       });
     } catch (error) {
       console.error("❌ Error uploading image:", error);
@@ -125,18 +125,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload multiple images to Cloudinary
-  app.post("/api/images/upload-multiple", isAuthenticated, upload.array("images", 10), async (req: any, res) => {
+  // Upload multiple images to Cloudflare (PARALLEL - NO DELAYS!)
+  app.post("/api/images/upload-multiple", isAuthenticated, upload.array("images", 200), async (req: any, res) => {
     try {
       if (!req.files || (req.files as any[]).length === 0) {
         return res.status(400).json({ message: "No image files provided" });
       }
 
-      const images = (req.files as any[]).map((file) => ({
-        imageUrl: file.path,
-        publicId: file.filename,
+      console.log(`📤 Uploading ${(req.files as any[]).length} images to Cloudflare in parallel...`);
+      
+      // Upload all images in parallel to Cloudflare
+      const { uploadMultipleToCloudflare } = await import('./cloudflareStorage');
+      const files = (req.files as any[]).map((file: any) => ({
+        buffer: file.buffer,
+        filename: file.originalname,
+      }));
+      
+      const imageUrls = await uploadMultipleToCloudflare(files);
+      
+      const images = imageUrls.map((imageUrl) => ({
+        imageUrl,
+        publicId: imageUrl.split('/').pop()?.split('?')[0] || '',
       }));
 
+      console.log(`✅ Successfully uploaded ${images.length} images to Cloudflare`);
       res.json({ images });
     } catch (error) {
       console.error("Error uploading images:", error);

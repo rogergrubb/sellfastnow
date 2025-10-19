@@ -1,40 +1,18 @@
 import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
 
-// Configure Cloudinary with environment variables
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-// Verify Cloudinary configuration
-if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-  throw new Error("Missing Cloudinary environment variables. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.");
+// Configure Cloudinary with environment variables (kept for backward compatibility)
+if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
 }
 
-// Configure multer storage with Cloudinary
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "sellfast-listings",
-    format: async (_req: any, file: any) => {
-      // Allow common image formats
-      const mimeType = file.mimetype.split("/")[1];
-      if (["jpeg", "jpg", "png", "webp", "gif"].includes(mimeType)) {
-        return mimeType;
-      }
-      return "jpg"; // Default to jpg
-    },
-    public_id: (_req: any, file: any) => {
-      // Generate unique filename with timestamp
-      const timestamp = Date.now();
-      const originalName = file.originalname.split(".")[0].replace(/[^a-zA-Z0-9]/g, "_");
-      return `${timestamp}_${originalName}`;
-    },
-  } as any,
-});
+// Use memory storage for multer (files will be in req.file.buffer)
+// This allows us to upload to Cloudflare R2 + Images instead of Cloudinary
+const storage = multer.memoryStorage();
 
 // Create multer upload instance
 export const upload = multer({

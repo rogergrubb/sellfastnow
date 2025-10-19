@@ -12,6 +12,7 @@
     "db:seed": "tsx scripts/seed-listings.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.913.0",
     "@google-cloud/storage": "^7.17.1",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.10.0",
