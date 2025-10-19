@@ -8,7 +8,8 @@ const R2_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID!;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID!;
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY!;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || "sellfastnow-images";
-const R2_ENDPOINT = process.env.R2_ENDPOINT!;
+// Construct R2 endpoint from account ID (standard format)
+const R2_ENDPOINT = process.env.R2_ENDPOINT || `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
 
 // Cloudflare Images configuration
 const CLOUDFLARE_IMAGES_API_TOKEN = process.env.CLOUDFLARE_IMAGES_API_TOKEN!;
@@ -22,6 +23,7 @@ const r2Client = new S3Client({
     accessKeyId: R2_ACCESS_KEY_ID,
     secretAccessKey: R2_SECRET_ACCESS_KEY,
   },
+  forcePathStyle: true, // Required for R2
 });
 
 /**
