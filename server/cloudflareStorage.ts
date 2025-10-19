@@ -53,42 +53,12 @@ export async function uploadToCloudflare(
     await r2Client.send(putCommand);
     console.log(`✅ Uploaded to R2: ${key}`);
 
-    // Step 2: Upload to Cloudflare Images for optimization and delivery
-    const formData = new FormData();
-    formData.append('file', buffer, {
-      filename: filename,
-      contentType: `image/${extension}`,
-    });
-    formData.append('id', imageId);
-    formData.append('requireSignedURLs', 'false');
-
-    const response = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${R2_ACCOUNT_ID}/images/v1`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${CLOUDFLARE_IMAGES_API_TOKEN}`,
-        },
-        body: formData,
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Cloudflare Images upload failed: ${response.status} - ${errorText}`);
-    }
-
-    const result = await response.json();
+    // Return R2 public URL (Cloudflare Images disabled for now)
+    // R2 bucket must have public access enabled for this to work
+    const r2PublicUrl = `https://pub-${R2_ACCOUNT_ID}.r2.dev/${key}`;
+    console.log(`✅ Image available at: ${r2PublicUrl}`);
     
-    if (!result.success) {
-      throw new Error(`Cloudflare Images API error: ${JSON.stringify(result.errors)}`);
-    }
-
-    // Return the optimized image delivery URL
-    const deliveryUrl = `${CLOUDFLARE_IMAGES_DELIVERY_URL}/${imageId}/public`;
-    console.log(`✅ Uploaded to Cloudflare Images: ${deliveryUrl}`);
-    
-    return deliveryUrl;
+    return r2PublicUrl;
   } catch (error) {
     console.error('❌ Cloudflare upload error:', error);
     throw error;
