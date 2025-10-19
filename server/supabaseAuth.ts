@@ -1,6 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Express, RequestHandler } from "express";
 import { storage } from "./storage";
+import { db } from "./db";
+import { users } from "@shared/schema";
+import { eq, and, sql } from "drizzle-orm";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
@@ -35,10 +38,15 @@ async function syncUserFromSupabase(userId: string, email: string) {
         return null;
       }
       
-      // First, delete any existing user with this email (from old Clerk auth)
+      // First, check if there's an existing user with this email (from old Clerk auth)
       try {
-        await db.execute(sql`DELETE FROM users WHERE email = ${email} AND id != ${userId}`);
-        console.log(`🔄 Removed old user records with email ${email}`);
+        const [existingUser] = await db.select().from(users).where(eq(users.email, email));
+        
+        if (existingUser && existingUser.id !== userId) {
+          console.log(`🔄 Found old user record with email ${email}, updating to new Supabase ID`);
+          // Delete the old user record
+          await db.delete(users).where(eq(users.id, existingUser.id));
+        }
       } catch (deleteError) {
         console.log("No old user records to delete");
       }
