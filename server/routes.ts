@@ -186,12 +186,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.body.shippingFeeAmount !== undefined) updateData.shippingFeeAmount = req.body.shippingFeeAmount;
 
       console.log("💾 Updating user settings:", { userId, fieldCount: Object.keys(updateData).length });
+      console.log("📝 Update data:", JSON.stringify(updateData, null, 2));
 
       const updatedUser = await storage.updateUserProfile(userId, updateData);
       res.json(updatedUser);
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Error updating settings:", error);
-      res.status(500).json({ message: "Failed to update settings" });
+      console.error("❌ Error message:", error.message);
+      console.error("❌ Error stack:", error.stack);
+      res.status(500).json({ 
+        message: error.message || "Failed to update settings",
+        error: error.toString()
+      });
     }
   });
 

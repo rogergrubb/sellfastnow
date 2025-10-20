@@ -53,7 +53,7 @@ export default function Settings() {
 
   // Fetch current settings
   const { data: currentUser, isLoading } = useQuery({
-    queryKey: ["/api/user"],
+    queryKey: ["/api/auth/user"],
   });
 
   // Load settings when data is fetched
@@ -259,10 +259,10 @@ export default function Settings() {
       firstName,
       lastName,
       bio,
-      contactEmail,
+      contactEmail: contactEmail.trim() || null,
       contactPreference,
       showEmailPublicly,
-      phoneNumber,
+      phoneNumber: phoneNumber.trim() || null,
       sharePhoneWhen,
       shareEmailWhen,
       profileVisibility,
@@ -537,10 +537,10 @@ export default function Settings() {
                 <Label htmlFor="contactEmail">Contact Email (Optional)</Label>
                 <Input
                   id="contactEmail"
-                  type="email"
+                  type="text"
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
-                  placeholder="Different from your account email"
+                  placeholder="Different from your account email (e.g., contact@example.com)"
                 />
                 <p className="text-xs text-muted-foreground">
                   Use a different email for listing inquiries
