@@ -13,6 +13,7 @@ import { Loader2, MapPin, Shield, Mail, User, Phone, CheckCircle2, AlertTriangle
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/lib/supabase";
+import { PhoneVerificationModal } from "@/components/PhoneVerificationModal";
 
 export default function Settings() {
   const { toast } = useToast();
@@ -50,6 +51,9 @@ export default function Settings() {
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [willingToShip, setWillingToShip] = useState(false);
   const [shippingFeeAmount, setShippingFeeAmount] = useState("");
+  
+  // Phone verification modal
+  const [isPhoneVerificationModalOpen, setIsPhoneVerificationModalOpen] = useState(false);
 
   // Fetch current settings
   const { data: currentUser, isLoading } = useQuery({
@@ -249,17 +253,24 @@ export default function Settings() {
       });
       return;
     }
-
-    toast({
-      title: "Coming Soon",
-      description: "Phone verification will be available soon. We're setting up SMS integration.",
-    });
     
-    // TODO: Implement phone verification with Twilio or similar
-    // 1. Send SMS with code
-    // 2. Show input for code
-    // 3. Verify code
-    // 4. Update phoneVerified in database
+    // Save the phone number first if it's not saved
+    if (phoneNumber !== currentUser?.phoneNumber) {
+      toast({
+        title: "Save phone number first",
+        description: "Please save your settings before verifying your phone number.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Open verification modal
+    setIsPhoneVerificationModalOpen(true);
+  };
+  
+  const handlePhoneVerificationSuccess = () => {
+    // Refresh user data to show verified status
+    window.location.reload();
   };
 
   // Save settings mutation
@@ -955,6 +966,14 @@ export default function Settings() {
           </Button>
         </div>
       </div>
+      
+      {/* Phone Verification Modal */}
+      <PhoneVerificationModal
+        isOpen={isPhoneVerificationModalOpen}
+        onClose={() => setIsPhoneVerificationModalOpen(false)}
+        phoneNumber={phoneNumber}
+        onSuccess={handlePhoneVerificationSuccess}
+      />
     </div>
   );
 }
