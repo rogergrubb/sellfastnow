@@ -145,16 +145,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update user contact settings
+  // Update user settings (comprehensive)
   app.put("/api/user/settings", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth.userId;
-      const { contactEmail, contactPreference, showEmailPublicly } = req.body;
-      
       const updateData: any = {};
-      if (contactEmail !== undefined) updateData.contactEmail = contactEmail;
-      if (contactPreference !== undefined) updateData.contactPreference = contactPreference;
-      if (showEmailPublicly !== undefined) updateData.showEmailPublicly = showEmailPublicly;
+      
+      // Profile Information
+      if (req.body.firstName !== undefined) updateData.firstName = req.body.firstName;
+      if (req.body.lastName !== undefined) updateData.lastName = req.body.lastName;
+      if (req.body.bio !== undefined) updateData.bio = req.body.bio;
+      
+      // Location
+      if (req.body.locationCity !== undefined) updateData.locationCity = req.body.locationCity;
+      if (req.body.locationRegion !== undefined) updateData.locationRegion = req.body.locationRegion;
+      if (req.body.locationCountry !== undefined) updateData.locationCountry = req.body.locationCountry;
+      if (req.body.locationPostalCode !== undefined) updateData.locationPostalCode = req.body.locationPostalCode;
+      if (req.body.locationLatitude !== undefined) updateData.locationLatitude = req.body.locationLatitude;
+      if (req.body.locationLongitude !== undefined) updateData.locationLongitude = req.body.locationLongitude;
+      
+      // Contact Preferences
+      if (req.body.contactEmail !== undefined) updateData.contactEmail = req.body.contactEmail;
+      if (req.body.contactPreference !== undefined) updateData.contactPreference = req.body.contactPreference;
+      if (req.body.showEmailPublicly !== undefined) updateData.showEmailPublicly = req.body.showEmailPublicly;
+      if (req.body.phoneNumber !== undefined) updateData.phoneNumber = req.body.phoneNumber;
+      if (req.body.sharePhoneWhen !== undefined) updateData.sharePhoneWhen = req.body.sharePhoneWhen;
+      if (req.body.shareEmailWhen !== undefined) updateData.shareEmailWhen = req.body.shareEmailWhen;
+      
+      // Privacy Settings
+      if (req.body.profileVisibility !== undefined) updateData.profileVisibility = req.body.profileVisibility;
+      if (req.body.showLastActive !== undefined) updateData.showLastActive = req.body.showLastActive;
+      if (req.body.showItemsSold !== undefined) updateData.showItemsSold = req.body.showItemsSold;
+      if (req.body.allowMessagesFrom !== undefined) updateData.allowMessagesFrom = req.body.allowMessagesFrom;
+      if (req.body.requireVerifiedToContact !== undefined) updateData.requireVerifiedToContact = req.body.requireVerifiedToContact;
+      
+      // Meeting Preferences
+      if (req.body.preferredMeetingLocations !== undefined) updateData.preferredMeetingLocations = req.body.preferredMeetingLocations;
+      if (req.body.availableTimes !== undefined) updateData.availableTimes = req.body.availableTimes;
+      if (req.body.willingToShip !== undefined) updateData.willingToShip = req.body.willingToShip;
+      if (req.body.shippingFeeAmount !== undefined) updateData.shippingFeeAmount = req.body.shippingFeeAmount;
+
+      console.log("💾 Updating user settings:", { userId, fieldCount: Object.keys(updateData).length });
 
       await db.update(users)
         .set(updateData)
@@ -163,7 +194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedUser = await db.select().from(users).where(eq(users.id, userId)).limit(1);
       res.json(updatedUser[0]);
     } catch (error) {
-      console.error("Error updating settings:", error);
+      console.error("❌ Error updating settings:", error);
       res.status(500).json({ message: "Failed to update settings" });
     }
   });
