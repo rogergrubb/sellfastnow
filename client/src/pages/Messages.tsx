@@ -1,74 +1,94 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Inbox } from "lucide-react";
 import { MessageModal } from "@/components/MessageModal";
 import type { Message, Listing, User } from "@shared/schema";
 
-interface MessageThread {
+interface EnrichedThread {
   listingId: string;
   listingTitle: string;
+  listingImage?: string;
   otherUserId: string;
   otherUserName: string;
   lastMessage: string;
   lastMessageTime: Date | string;
   unreadCount: number;
-  listingImage?: string;
 }
 
 export default function Messages() {
   const { user } = useAuth();
-  const [selectedThread, setSelectedThread] = useState<MessageThread | null>(null);
+  const [selectedThread, setSelectedThread] = useState<EnrichedThread | null>(null);
+  const [threads, setThreads] = useState<EnrichedThread[]>([]);
 
   // Fetch all messages for current user
-  const { data: messages = [], isLoading } = useQuery<Message[]>({
+  const { data: messages = [], isLoading: messagesLoading } = useQuery<Message[]>({
     queryKey: ['/api/messages'],
     enabled: !!user,
   });
 
-  // Group messages into threads by listing
-  const threads: MessageThread[] = [];
-  const threadMap = new Map<string, Message[]>();
+  // Fetch all listings (needed to get titles and images)
+  const { data: listings = [], isLoading: listingsLoading } = useQuery<Listing[]>({
+    queryKey: ['/api/listings'],
+    enabled: !!user && messages.length > 0,
+  });
 
-  // Group messages by listing
-  messages.forEach((msg) => {
-    if (!threadMap.has(msg.listingId)) {
-      threadMap.set(msg.listingId, []);
+  useEffect(() => {
+    if (!user || messages.length === 0) {
+      setThreads([]);
+      return;
     }
-    threadMap.get(msg.listingId)!.push(msg);
-  });
 
-  // Create thread summaries
-  threadMap.forEach((msgs, listingId) => {
-    const sortedMsgs = msgs.sort((a, b) => 
-      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-    );
-    const lastMsg = sortedMsgs[0];
-    
-    // Determine the other user (not current user)
-    const otherUserId = lastMsg.senderId === user?.id ? lastMsg.receiverId : lastMsg.senderId;
-    
-    // Count unread messages (where current user is receiver and not read)
-    const unreadCount = msgs.filter(m => m.receiverId === user?.id && !m.isRead).length;
+    // Group messages into threads by listing
+    const threadMap = new Map<string, Message[]>();
 
-    threads.push({
-      listingId,
-      listingTitle: "Loading...", // Will be fetched separately
-      otherUserId,
-      otherUserName: "User", // Will be fetched separately
-      lastMessage: lastMsg.content,
-      lastMessageTime: lastMsg.createdAt || new Date(),
-      unreadCount,
+    messages.forEach((msg) => {
+      if (!threadMap.has(msg.listingId)) {
+        threadMap.set(msg.listingId, []);
+      }
+      threadMap.get(msg.listingId)!.push(msg);
     });
-  });
 
-  // Sort threads by most recent message
-  threads.sort((a, b) => 
-    new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime()
-  );
+    // Create thread summaries
+    const enrichedThreads: EnrichedThread[] = [];
+    
+    threadMap.forEach((msgs, listingId) => {
+      const sortedMsgs = msgs.sort((a, b) => 
+        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      );
+      const lastMsg = sortedMsgs[0];
+      
+      // Determine the other user (not current user)
+      const otherUserId = lastMsg.senderId === user.id ? lastMsg.receiverId : lastMsg.senderId;
+      
+      // Count unread messages (where current user is receiver and not read)
+      const unreadCount = msgs.filter(m => m.receiverId === user.id && !m.isRead).length;
+
+      // Find listing data
+      const listing = listings.find(l => l.id === listingId);
+
+      enrichedThreads.push({
+        listingId,
+        listingTitle: listing?.title || "Listing",
+        listingImage: listing?.images?.[0],
+        otherUserId,
+        otherUserName: otherUserId.substring(0, 8), // Show first 8 chars of ID for now
+        lastMessage: lastMsg.content,
+        lastMessageTime: lastMsg.createdAt || new Date(),
+        unreadCount,
+      });
+    });
+
+    // Sort threads by most recent message
+    enrichedThreads.sort((a, b) => 
+      new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime()
+    );
+
+    setThreads(enrichedThreads);
+  }, [messages, listings, user]);
 
   const formatTime = (date: Date | string) => {
     const messageDate = new Date(date);
@@ -84,6 +104,8 @@ export default function Messages() {
     if (diffDays < 7) return `${diffDays}d ago`;
     return messageDate.toLocaleDateString();
   };
+
+  const isLoading = messagesLoading || listingsLoading;
 
   if (isLoading) {
     return (
@@ -120,11 +142,19 @@ export default function Messages() {
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
-                  <Avatar className="h-12 w-12 flex-shrink-0">
-                    <AvatarFallback>
-                      {thread.otherUserName.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  {thread.listingImage ? (
+                    <img 
+                      src={thread.listingImage} 
+                      alt={thread.listingTitle}
+                      className="h-16 w-16 object-cover rounded flex-shrink-0"
+                    />
+                  ) : (
+                    <Avatar className="h-16 w-16 flex-shrink-0">
+                      <AvatarFallback>
+                        <MessageCircle className="h-8 w-8" />
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1">
@@ -133,7 +163,7 @@ export default function Messages() {
                           {thread.listingTitle}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          {thread.otherUserName}
+                          User {thread.otherUserName}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -165,7 +195,7 @@ export default function Messages() {
           onClose={() => setSelectedThread(null)}
           listingId={selectedThread.listingId}
           sellerId={selectedThread.otherUserId}
-          sellerName={selectedThread.otherUserName}
+          sellerName={`User ${selectedThread.otherUserName}`}
           listingTitle={selectedThread.listingTitle}
         />
       )}

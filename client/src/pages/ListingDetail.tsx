@@ -74,6 +74,12 @@ export default function ListingDetail() {
     enabled: !!id,
   });
 
+  // Fetch seller statistics for rating display
+  const { data: sellerStats } = useQuery<any>({
+    queryKey: [`/api/statistics/user/${data?.seller?.id}`],
+    enabled: !!data?.seller?.id,
+  });
+
   useEffect(() => {
     if (favoriteData) {
       setIsFavorited(favoriteData.isFavorited);
@@ -335,17 +341,41 @@ export default function ListingDetail() {
               </div>
 
               <div className="space-y-2 text-sm text-muted-foreground mb-4">
-                <div className="flex items-center gap-2">
-                  <span>⭐ 4.8 (23 reviews)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
-                    Usually responds in 1 hour
-                  </Badge>
-                </div>
+                {sellerStats && sellerStats.averageRating > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`h-4 w-4 ${
+                            star <= sellerStats.averageRating
+                              ? "fill-primary text-primary"
+                              : "fill-muted text-muted"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="font-medium">{sellerStats.averageRating.toFixed(1)}</span>
+                    <span>({sellerStats.totalReviewsReceived || 0} reviews)</span>
+                  </div>
+                )}
+                {sellerStats?.responseRate && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      {sellerStats.responseRate}% response rate
+                    </Badge>
+                  </div>
+                )}
+                {sellerStats?.totalListingsSold > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      {sellerStats.totalListingsSold} items sold
+                    </Badge>
+                  </div>
+                )}
               </div>
 
-              <Link href={`/profile/${seller.id}`}>
+              <Link href={`/users/${seller.id}`}>
                 <Button variant="outline" className="w-full" data-testid="button-view-profile">
                   View Profile
                 </Button>

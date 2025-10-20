@@ -243,7 +243,7 @@ export default function UserProfile() {
 
             <div className="flex md:flex-col gap-2">
               {currentUser?.id === userId ? (
-                <Link href="/dashboard?tab=settings">
+                <Link href="/settings">
                   <Button variant="default" data-testid="button-edit-profile">
                     <Settings className="h-4 w-4 mr-2" />
                     Edit Profile
