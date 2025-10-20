@@ -54,11 +54,27 @@ export function PhoneVerificationModal({
   const handleSendCode = async () => {
     setIsSending(true);
     try {
-      console.log('📱 Sending OTP to:', phoneNumber);
+      // Format phone number to E.164 format
+      let formattedPhone = phoneNumber.trim();
+      
+      // Remove all non-digit characters
+      const digits = formattedPhone.replace(/\D/g, '');
+      
+      // Add country code if missing (assume US +1)
+      if (digits.length === 10) {
+        formattedPhone = `+1${digits}`;
+      } else if (digits.length === 11 && digits.startsWith('1')) {
+        formattedPhone = `+${digits}`;
+      } else if (!formattedPhone.startsWith('+')) {
+        formattedPhone = `+${digits}`;
+      }
+      
+      console.log('📱 Sending OTP to:', formattedPhone);
+      console.log('📝 Original phone:', phoneNumber);
       
       // Use Supabase Phone Auth to send OTP
       const { data, error } = await supabase.auth.signInWithOtp({
-        phone: phoneNumber,
+        phone: formattedPhone,
       });
 
       if (error) {
@@ -111,11 +127,23 @@ export function PhoneVerificationModal({
 
     setIsVerifying(true);
     try {
-      console.log('🔐 Verifying OTP code...');
+      // Format phone number to E.164 format (same as send)
+      let formattedPhone = phoneNumber.trim();
+      const digits = formattedPhone.replace(/\D/g, '');
+      
+      if (digits.length === 10) {
+        formattedPhone = `+1${digits}`;
+      } else if (digits.length === 11 && digits.startsWith('1')) {
+        formattedPhone = `+${digits}`;
+      } else if (!formattedPhone.startsWith('+')) {
+        formattedPhone = `+${digits}`;
+      }
+      
+      console.log('🔐 Verifying OTP code for:', formattedPhone);
       
       // Use Supabase to verify the OTP
       const { data, error } = await supabase.auth.verifyOtp({
-        phone: phoneNumber,
+        phone: formattedPhone,
         token: code,
         type: 'sms',
       });
