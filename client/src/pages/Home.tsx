@@ -7,7 +7,7 @@ import ListingCard from "@/components/ListingCard";
 import MapView from "@/components/MapView";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal, Loader2, Map, List } from "lucide-react";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import { useQuery as useAuthQuery } from "@tanstack/react-query";
 import {
   Select,
@@ -26,7 +26,7 @@ import {
 import type { Listing } from "@shared/schema";
 
 export default function Home() {
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [searchQuery, setSearchQuery] = useState("");
@@ -217,7 +217,7 @@ export default function Home() {
               <MapView
                 listings={listings}
                 userLocation={userLocation}
-                onListingClick={(id) => navigate(`/listings/${id}`)}
+                onListingClick={(id) => setLocation(`/listings/${id}`)}
               />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
