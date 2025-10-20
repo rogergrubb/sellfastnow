@@ -57,6 +57,29 @@ export const users = pgTable("users", {
   contactEmail: varchar("contact_email"), // Optional: different from account email
   contactPreference: varchar("contact_preference", { length: 20 }).notNull().default("in_app"), // email, in_app, both
   showEmailPublicly: boolean("show_email_publicly").notNull().default(false),
+  phoneNumber: varchar("phone_number", { length: 20 }),
+  sharePhoneWhen: varchar("share_phone_when", { length: 20 }).notNull().default("never"), // never, after_offer, after_acceptance, always
+  shareEmailWhen: varchar("share_email_when", { length: 20 }).notNull().default("after_acceptance"), // never, after_offer, after_acceptance, always
+  
+  // Privacy settings
+  profileVisibility: varchar("profile_visibility", { length: 20 }).notNull().default("public"), // public, members_only, private
+  showLastActive: boolean("show_last_active").notNull().default(true),
+  showItemsSold: boolean("show_items_sold").notNull().default(true),
+  allowMessagesFrom: varchar("allow_messages_from", { length: 20 }).notNull().default("verified"), // anyone, verified, none
+  requireVerifiedToContact: boolean("require_verified_to_contact").notNull().default(true),
+  
+  // Verification status
+  emailVerified: boolean("email_verified").notNull().default(false),
+  phoneVerified: boolean("phone_verified").notNull().default(false),
+  idVerified: boolean("id_verified").notNull().default(false),
+  addressVerified: boolean("address_verified").notNull().default(false),
+  verifiedAt: timestamp("verified_at"),
+  
+  // Meeting preferences
+  preferredMeetingLocations: text("preferred_meeting_locations"), // JSON array: ["public_places", "my_location", "buyer_location", "shipping_only"]
+  availableTimes: text("available_times"), // JSON array: ["weekdays", "weekends", "evenings"]
+  willingToShip: boolean("willing_to_ship").notNull().default(false),
+  shippingFeeAmount: decimal("shipping_fee_amount", { precision: 10, scale: 2 }),
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

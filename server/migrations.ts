@@ -67,6 +67,78 @@ export async function runMigrations() {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS show_email_publicly boolean DEFAULT false;
     `);
     
+    // Add phone and sharing preferences
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number varchar(20);
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS share_phone_when varchar(20) DEFAULT 'never';
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS share_email_when varchar(20) DEFAULT 'after_acceptance';
+    `);
+    
+    // Add privacy settings
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_visibility varchar(20) DEFAULT 'public';
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS show_last_active boolean DEFAULT true;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS show_items_sold boolean DEFAULT true;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS allow_messages_from varchar(20) DEFAULT 'verified';
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS require_verified_to_contact boolean DEFAULT true;
+    `);
+    
+    // Add verification status fields
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified boolean DEFAULT false;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verified boolean DEFAULT false;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS id_verified boolean DEFAULT false;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS address_verified boolean DEFAULT false;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS verified_at timestamp;
+    `);
+    
+    // Add meeting preferences
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_meeting_locations text;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS available_times text;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS willing_to_ship boolean DEFAULT false;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS shipping_fee_amount numeric(10, 2);
+    `);
+    
     // Add location fields to listings table
     await db.execute(sql`
       ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_city varchar(100);

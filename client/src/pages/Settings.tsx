@@ -1,112 +1,105 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/lib/AuthContext";
-import { supabase } from "@/lib/supabase";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, MessageCircle, Settings as SettingsIcon } from "lucide-react";
+import { Loader2, MapPin, Shield, Mail, User, Phone, CheckCircle2, AlertTriangle, Info } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/lib/supabase";
 
 export default function Settings() {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  
+  // Profile Information
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [bio, setBio] = useState("");
+  
+  // Location
+  const [locationInput, setLocationInput] = useState("");
+  const [locationData, setLocationData] = useState<any>(null);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  
+  // Contact Preferences
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPreference, setContactPreference] = useState("in_app");
+  const [showEmailPublicly, setShowEmailPublicly] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [sharePhoneWhen, setSharePhoneWhen] = useState("never");
+  const [shareEmailWhen, setShareEmailWhen] = useState("after_acceptance");
+  
+  // Privacy Settings
+  const [profileVisibility, setProfileVisibility] = useState("public");
+  const [showLastActive, setShowLastActive] = useState(true);
+  const [showItemsSold, setShowItemsSold] = useState(true);
+  const [allowMessagesFrom, setAllowMessagesFrom] = useState("verified");
+  const [requireVerifiedToContact, setRequireVerifiedToContact] = useState(true);
+  
+  // Meeting Preferences
+  const [preferredMeetingLocations, setPreferredMeetingLocations] = useState<string[]>([]);
+  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [willingToShip, setWillingToShip] = useState(false);
+  const [shippingFeeAmount, setShippingFeeAmount] = useState("");
 
-  const { data: userProfile, isLoading } = useQuery<any>({
-    queryKey: ['/api/auth/user'],
-    enabled: !!user,
+  // Fetch current settings
+  const { data: currentUser, isLoading } = useQuery({
+    queryKey: ["/api/user"],
   });
 
-  const [contactEmail, setContactEmail] = useState(userProfile?.contactEmail || userProfile?.email || '');
-  const [contactPreference, setContactPreference] = useState(userProfile?.contactPreference || 'in_app');
-  const [showEmailPublicly, setShowEmailPublicly] = useState(userProfile?.showEmailPublicly || false);
-  const [location, setLocation] = useState(userProfile?.location || '');
-  const [isGeocodingLocation, setIsGeocodingLocation] = useState(false);
-
-  const updateSettingsMutation = useMutation({
-    mutationFn: async (settings: any) => {
-      // Get Supabase session token
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
-
-      const response = await fetch('/api/user/settings', {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(settings),
-        credentials: 'include',
-      });
-      if (!response.ok) throw new Error('Failed to update settings');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      toast({
-        title: "Settings Saved",
-        description: "Your contact preferences have been updated.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to save settings. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const geocodeLocation = async (locationText: string) => {
-    try {
-      setIsGeocodingLocation(true);
-      // Use Nominatim (OpenStreetMap) for free geocoding
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationText)}&limit=1`,
-        {
-          headers: {
-            'User-Agent': 'SellFast.Now Marketplace'
-          }
+  // Load settings when data is fetched
+  useEffect(() => {
+    if (currentUser) {
+      setFirstName(currentUser.firstName || "");
+      setLastName(currentUser.lastName || "");
+      setBio(currentUser.bio || "");
+      setContactEmail(currentUser.contactEmail || "");
+      setContactPreference(currentUser.contactPreference || "in_app");
+      setShowEmailPublicly(currentUser.showEmailPublicly || false);
+      setPhoneNumber(currentUser.phoneNumber || "");
+      setSharePhoneWhen(currentUser.sharePhoneWhen || "never");
+      setShareEmailWhen(currentUser.shareEmailWhen || "after_acceptance");
+      setProfileVisibility(currentUser.profileVisibility || "public");
+      setShowLastActive(currentUser.showLastActive ?? true);
+      setShowItemsSold(currentUser.showItemsSold ?? true);
+      setAllowMessagesFrom(currentUser.allowMessagesFrom || "verified");
+      setRequireVerifiedToContact(currentUser.requireVerifiedToContact ?? true);
+      setWillingToShip(currentUser.willingToShip || false);
+      setShippingFeeAmount(currentUser.shippingFeeAmount || "");
+      
+      // Parse JSON fields
+      try {
+        if (currentUser.preferredMeetingLocations) {
+          setPreferredMeetingLocations(JSON.parse(currentUser.preferredMeetingLocations));
         }
-      );
-      
-      if (!response.ok) throw new Error('Geocoding failed');
-      
-      const data = await response.json();
-      if (data.length === 0) {
-        throw new Error('Location not found');
+        if (currentUser.availableTimes) {
+          setAvailableTimes(JSON.parse(currentUser.availableTimes));
+        }
+      } catch (e) {
+        console.error("Error parsing JSON fields:", e);
       }
       
-      const result = data[0];
-      return {
-        latitude: parseFloat(result.lat),
-        longitude: parseFloat(result.lon),
-        displayName: result.display_name,
-        city: result.address?.city || result.address?.town || result.address?.village,
-        region: result.address?.state,
-        country: result.address?.country,
-        postalCode: result.address?.postcode,
-      };
-    } catch (error) {
-      console.error('Geocoding error:', error);
-      toast({
-        title: "Location Error",
-        description: "Could not find that location. Please try a different address.",
-        variant: "destructive",
-      });
-      return null;
-    } finally {
-      setIsGeocodingLocation(false);
+      // Set location if available
+      if (currentUser.locationCity) {
+        const parts = [
+          currentUser.locationCity,
+          currentUser.locationRegion,
+          currentUser.locationCountry
+        ].filter(Boolean);
+        setLocationInput(parts.join(", "));
+      }
     }
-  };
+  }, [currentUser]);
 
-  const handleUpdateLocation = async () => {
-    if (!location.trim()) {
+  // Geocode location
+  const handleGeocodeLocation = async () => {
+    if (!locationInput.trim()) {
       toast({
         title: "Error",
         description: "Please enter a location",
@@ -114,45 +107,226 @@ export default function Settings() {
       });
       return;
     }
-    
-    const geocoded = await geocodeLocation(location);
-    if (!geocoded) return;
-    
-    updateSettingsMutation.mutate({
-      location: geocoded.displayName,
-      locationCity: geocoded.city,
-      locationRegion: geocoded.region,
-      locationCountry: geocoded.country,
-      locationPostalCode: geocoded.postalCode,
-      locationLatitude: geocoded.latitude.toString(),
-      locationLongitude: geocoded.longitude.toString(),
-    });
+
+    setIsGeocoding(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationInput)}&limit=1`
+      );
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        const result = data[0];
+        setLocationData({
+          latitude: parseFloat(result.lat),
+          longitude: parseFloat(result.lon),
+          city: result.address?.city || result.address?.town || result.address?.village || "",
+          region: result.address?.state || result.address?.region || "",
+          country: result.address?.country || "",
+          postalCode: result.address?.postcode || "",
+        });
+        toast({
+          title: "Location found!",
+          description: `${result.display_name}`,
+        });
+      } else {
+        toast({
+          title: "Location not found",
+          description: "Please try a different search term",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to geocode location",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeocoding(false);
+    }
   };
 
-  const handleSave = () => {
-    updateSettingsMutation.mutate({
+  // Save settings mutation
+  const saveSettingsMutation = useMutation({
+    mutationFn: async (settings: any) => {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch("/api/user/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(settings),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to save settings");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Settings saved!",
+        description: "Your preferences have been updated successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to save settings",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSaveSettings = () => {
+    const settings: any = {
+      firstName,
+      lastName,
+      bio,
       contactEmail,
       contactPreference,
       showEmailPublicly,
-    });
+      phoneNumber,
+      sharePhoneWhen,
+      shareEmailWhen,
+      profileVisibility,
+      showLastActive,
+      showItemsSold,
+      allowMessagesFrom,
+      requireVerifiedToContact,
+      preferredMeetingLocations: JSON.stringify(preferredMeetingLocations),
+      availableTimes: JSON.stringify(availableTimes),
+      willingToShip,
+      shippingFeeAmount: shippingFeeAmount ? parseFloat(shippingFeeAmount) : null,
+    };
+
+    // Add location data if geocoded
+    if (locationData) {
+      settings.locationCity = locationData.city;
+      settings.locationRegion = locationData.region;
+      settings.locationCountry = locationData.country;
+      settings.locationPostalCode = locationData.postalCode;
+      settings.locationLatitude = locationData.latitude;
+      settings.locationLongitude = locationData.longitude;
+    }
+
+    saveSettingsMutation.mutate(settings);
+  };
+
+  const toggleMeetingLocation = (location: string) => {
+    setPreferredMeetingLocations(prev =>
+      prev.includes(location)
+        ? prev.filter(l => l !== location)
+        : [...prev, location]
+    );
+  };
+
+  const toggleAvailableTime = (time: string) => {
+    setAvailableTimes(prev =>
+      prev.includes(time)
+        ? prev.filter(t => t !== time)
+        : [...prev, time]
+    );
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
-      <div className="flex items-center gap-3 mb-6">
-        <SettingsIcon className="h-8 w-8" />
-        <h1 className="text-3xl font-bold">Account Settings</h1>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Shield className="h-8 w-8" />
+          Account Settings
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          Manage your profile, privacy, and safety preferences
+        </p>
       </div>
 
       <div className="space-y-6">
-        {/* Location Settings */}
+        {/* Profile Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Your Location</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Profile Information
+            </CardTitle>
+            <CardDescription>
+              This information helps buyers and sellers connect with you
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">
+                  First Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="John"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Shown publicly on your profile
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">
+                  Last Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Doe"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Kept private until you meet
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bio">Bio (Optional)</Label>
+              <Textarea
+                id="bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Tell others about yourself..."
+                maxLength={200}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">
+                {bio.length}/200 characters
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Location */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Your Location
+            </CardTitle>
             <CardDescription>
               Set your location to see nearby listings and help buyers find you
             </CardDescription>
@@ -160,78 +334,85 @@ export default function Settings() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="location">City, State or ZIP Code</Label>
-              <Input
-                id="location"
-                type="text"
-                placeholder="e.g., San Francisco, CA or 94102"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-              />
-              <p className="text-sm text-muted-foreground">
+              <div className="flex gap-2">
+                <Input
+                  id="location"
+                  value={locationInput}
+                  onChange={(e) => setLocationInput(e.target.value)}
+                  placeholder="e.g., San Francisco, CA or 94102"
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handleGeocodeLocation}
+                  disabled={isGeocoding}
+                  variant="outline"
+                >
+                  {isGeocoding ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Update Location"
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
                 This helps us show you relevant nearby listings and lets buyers know your general area
               </p>
             </div>
           </CardContent>
-          <CardFooter>
-            <Button 
-              variant="outline"
-              onClick={handleUpdateLocation}
-              disabled={isGeocodingLocation || updateSettingsMutation.isPending}
-            >
-              {isGeocodingLocation ? "Finding Location..." : "Update Location"}
-            </Button>
-          </CardFooter>
         </Card>
 
         {/* Contact Preferences */}
         <Card>
           <CardHeader>
-            <CardTitle>Contact Preferences</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Contact Preferences
+            </CardTitle>
             <CardDescription>
               Choose how buyers can contact you about your listings
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Contact Method */}
-            <div className="space-y-3">
-              <Label className="text-base font-semibold">Preferred Contact Method</Label>
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Privacy Tip:</strong> Start with in-app messaging. You can always share your contact info later after getting to know the buyer.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-4">
+              <Label>How would you like buyers to contact you?</Label>
               <RadioGroup value={contactPreference} onValueChange={setContactPreference}>
-                <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4">
+                <div className="flex items-start space-x-3 space-y-0">
                   <RadioGroupItem value="in_app" id="in_app" />
-                  <div className="flex-1">
-                    <Label htmlFor="in_app" className="font-medium cursor-pointer flex items-center gap-2">
-                      <MessageCircle className="h-4 w-4" />
-                      In-App Messaging Only
+                  <div className="space-y-1">
+                    <Label htmlFor="in_app" className="font-medium cursor-pointer">
+                      In-app messaging only (Most private - recommended)
                     </Label>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Buyers can send you messages through the platform. Your email stays private.
+                    <p className="text-sm text-muted-foreground">
+                      Buyers can message you through SellFast.Now. Your email and phone stay private.
                     </p>
                   </div>
                 </div>
-
-                <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4">
+                <div className="flex items-start space-x-3 space-y-0">
                   <RadioGroupItem value="email" id="email" />
-                  <div className="flex-1">
-                    <Label htmlFor="email" className="font-medium cursor-pointer flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      Email Only
+                  <div className="space-y-1">
+                    <Label htmlFor="email" className="font-medium cursor-pointer">
+                      Email (Balanced)
                     </Label>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Buyers can contact you via email. Your email will be visible on your listings.
+                    <p className="text-sm text-muted-foreground">
+                      Buyers can message in-app or email you directly.
                     </p>
                   </div>
                 </div>
-
-                <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4">
+                <div className="flex items-start space-x-3 space-y-0">
                   <RadioGroupItem value="both" id="both" />
-                  <div className="flex-1">
-                    <Label htmlFor="both" className="font-medium cursor-pointer flex items-center gap-2">
-                      <MessageCircle className="h-4 w-4" />
-                      <Mail className="h-4 w-4" />
-                      Both Methods
+                  <div className="space-y-1">
+                    <Label htmlFor="both" className="font-medium cursor-pointer">
+                      Email and Phone (Direct contact)
                     </Label>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Buyers can choose to message you in-app or via email.
+                    <p className="text-sm text-muted-foreground">
+                      Buyers can reach you via in-app, email, or phone.
                     </p>
                   </div>
                 </div>
@@ -240,84 +421,368 @@ export default function Settings() {
 
             <Separator />
 
-            {/* Contact Email */}
-            {(contactPreference === 'email' || contactPreference === 'both') && (
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="contactEmail">Contact Email</Label>
+                <Label htmlFor="contactEmail">Contact Email (Optional)</Label>
                 <Input
                   id="contactEmail"
                   type="email"
-                  placeholder="your.email@example.com"
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="Different from your account email"
                 />
-                <p className="text-sm text-muted-foreground">
-                  This email will be shown to buyers. Leave blank to use your account email ({userProfile?.email}).
+                <p className="text-xs text-muted-foreground">
+                  Use a different email for listing inquiries
                 </p>
               </div>
-            )}
 
-            {/* Show Email Publicly */}
-            {(contactPreference === 'email' || contactPreference === 'both') && (
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <Label htmlFor="showEmailPublicly" className="text-base font-medium">
-                    Display Email on Listings
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Show your contact email directly on your listing pages
-                  </p>
-                </div>
-                <Switch
-                  id="showEmailPublicly"
-                  checked={showEmailPublicly}
-                  onCheckedChange={setShowEmailPublicly}
+              <div className="space-y-2">
+                <Label htmlFor="phoneNumber">Phone Number (Optional)</Label>
+                <Input
+                  id="phoneNumber"
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="(555) 123-4567"
                 />
               </div>
-            )}
-          </CardContent>
-          <CardFooter>
-            <Button 
-              onClick={handleSave} 
-              disabled={updateSettingsMutation.isPending}
-            >
-              {updateSettingsMutation.isPending ? "Saving..." : "Save Changes"}
-            </Button>
-          </CardFooter>
-        </Card>
+            </div>
 
-        {/* Additional Settings Sections Can Go Here */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Email Notifications</CardTitle>
-            <CardDescription>
-              Manage your email notification preferences
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            <Separator />
+
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base">New Messages</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive email notifications when you get new messages
-                  </p>
+              <Label>When to share your contact info?</Label>
+              
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Share email:</Label>
+                  <RadioGroup value={shareEmailWhen} onValueChange={setShareEmailWhen}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="never" id="email_never" />
+                      <Label htmlFor="email_never" className="font-normal cursor-pointer">Never automatically</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="after_offer" id="email_after_offer" />
+                      <Label htmlFor="email_after_offer" className="font-normal cursor-pointer">After buyer makes an offer</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="after_acceptance" id="email_after_acceptance" />
+                      <Label htmlFor="email_after_acceptance" className="font-normal cursor-pointer">After I accept their offer (Recommended)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="always" id="email_always" />
+                      <Label htmlFor="email_always" className="font-normal cursor-pointer">Show publicly on listings</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
-                <Switch defaultChecked />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base">Listing Updates</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Get notified when someone favorites or views your listings
-                  </p>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Share phone:</Label>
+                  <RadioGroup value={sharePhoneWhen} onValueChange={setSharePhoneWhen}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="never" id="phone_never" />
+                      <Label htmlFor="phone_never" className="font-normal cursor-pointer">Never automatically</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="after_offer" id="phone_after_offer" />
+                      <Label htmlFor="phone_after_offer" className="font-normal cursor-pointer">After buyer makes an offer</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="after_acceptance" id="phone_after_acceptance" />
+                      <Label htmlFor="phone_after_acceptance" className="font-normal cursor-pointer">After I accept their offer</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="always" id="phone_always" />
+                      <Label htmlFor="phone_always" className="font-normal cursor-pointer">Show publicly on listings</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
-                <Switch defaultChecked />
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Privacy & Safety */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Privacy & Safety
+            </CardTitle>
+            <CardDescription>
+              Control who can see your profile and contact you
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <Label>Profile Visibility</Label>
+              <RadioGroup value={profileVisibility} onValueChange={setProfileVisibility}>
+                <div className="flex items-start space-x-3">
+                  <RadioGroupItem value="public" id="public" />
+                  <div className="space-y-1">
+                    <Label htmlFor="public" className="font-medium cursor-pointer">Public</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Anyone can view your profile and listings
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <RadioGroupItem value="members_only" id="members_only" />
+                  <div className="space-y-1">
+                    <Label htmlFor="members_only" className="font-medium cursor-pointer">Members Only</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Only registered users can view your profile
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <RadioGroupItem value="private" id="private" />
+                  <div className="space-y-1">
+                    <Label htmlFor="private" className="font-medium cursor-pointer">Private</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Only you can view your full profile
+                    </p>
+                  </div>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Show last active time</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Let others see when you were last online
+                  </p>
+                </div>
+                <Switch
+                  checked={showLastActive}
+                  onCheckedChange={setShowLastActive}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Show items sold count</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Display your transaction history
+                  </p>
+                </div>
+                <Switch
+                  checked={showItemsSold}
+                  onCheckedChange={setShowItemsSold}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Require verified accounts to contact me</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Only users with verified email can message you
+                  </p>
+                </div>
+                <Switch
+                  checked={requireVerifiedToContact}
+                  onCheckedChange={setRequireVerifiedToContact}
+                />
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <Label>Allow messages from:</Label>
+              <RadioGroup value={allowMessagesFrom} onValueChange={setAllowMessagesFrom}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="anyone" id="anyone" />
+                  <Label htmlFor="anyone" className="font-normal cursor-pointer">Anyone</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="verified" id="verified" />
+                  <Label htmlFor="verified" className="font-normal cursor-pointer">Verified users only (Recommended)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="none" id="none" />
+                  <Label htmlFor="none" className="font-normal cursor-pointer">No one (Disable messaging)</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Verification Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5" />
+              Verification Status
+            </CardTitle>
+            <CardDescription>
+              Verify your identity to build trust with buyers and sellers
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Build Trust:</strong> Verified accounts are more likely to complete successful transactions. Buyers prefer sellers with verified contact information.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Email Verification</p>
+                    <p className="text-sm text-muted-foreground">Verify your email address</p>
+                  </div>
+                </div>
+                {currentUser?.emailVerified ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                ) : (
+                  <Button size="sm" variant="outline">Verify</Button>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Phone className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Phone Verification</p>
+                    <p className="text-sm text-muted-foreground">Verify via SMS</p>
+                  </div>
+                </div>
+                {currentUser?.phoneVerified ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                ) : (
+                  <Button size="sm" variant="outline" disabled={!phoneNumber}>
+                    {phoneNumber ? "Verify" : "Add Phone First"}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Meeting Preferences */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Meeting Preferences</CardTitle>
+            <CardDescription>
+              Let buyers know your preferences for completing transactions
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Alert>
+              <Shield className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Safety First:</strong> Always meet in public places during daylight hours. Tell a friend where you're going and when you'll be back.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-4">
+              <Label>Preferred meeting locations (select all that apply):</Label>
+              <div className="space-y-2">
+                {[
+                  { value: "public_places", label: "Public places (coffee shops, malls, police stations)" },
+                  { value: "my_location", label: "My location" },
+                  { value: "buyer_location", label: "Buyer's location" },
+                  { value: "shipping_only", label: "Shipping only (no in-person meetings)" },
+                ].map((option) => (
+                  <div key={option.value} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={option.value}
+                      checked={preferredMeetingLocations.includes(option.value)}
+                      onCheckedChange={() => toggleMeetingLocation(option.value)}
+                    />
+                    <Label htmlFor={option.value} className="font-normal cursor-pointer">
+                      {option.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <Label>Available times (select all that apply):</Label>
+              <div className="space-y-2">
+                {[
+                  { value: "weekdays", label: "Weekdays" },
+                  { value: "weekends", label: "Weekends" },
+                  { value: "evenings", label: "Evenings" },
+                ].map((option) => (
+                  <div key={option.value} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={option.value}
+                      checked={availableTimes.includes(option.value)}
+                      onCheckedChange={() => toggleAvailableTime(option.value)}
+                    />
+                    <Label htmlFor={option.value} className="font-normal cursor-pointer">
+                      {option.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Willing to ship items</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Offer shipping as an option for buyers
+                  </p>
+                </div>
+                <Switch
+                  checked={willingToShip}
+                  onCheckedChange={setWillingToShip}
+                />
+              </div>
+
+              {willingToShip && (
+                <div className="space-y-2">
+                  <Label htmlFor="shippingFee">Shipping Fee (Optional)</Label>
+                  <Input
+                    id="shippingFee"
+                    type="number"
+                    step="0.01"
+                    value={shippingFeeAmount}
+                    onChange={(e) => setShippingFeeAmount(e.target.value)}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Leave blank to calculate shipping based on item
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Save Button */}
+        <div className="flex justify-end gap-4">
+          <Button
+            onClick={handleSaveSettings}
+            disabled={saveSettingsMutation.isPending}
+            size="lg"
+          >
+            {saveSettingsMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save All Settings"
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );
