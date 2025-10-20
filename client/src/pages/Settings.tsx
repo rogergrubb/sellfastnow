@@ -254,14 +254,48 @@ export default function Settings() {
       return;
     }
     
-    // Save the phone number first if it's not saved
+    // Auto-save the phone number if it's different from saved value
     if (phoneNumber !== currentUser?.phoneNumber) {
-      toast({
-        title: "Save phone number first",
-        description: "Please save your settings before verifying your phone number.",
-        variant: "destructive",
-      });
-      return;
+      try {
+        const session = await supabase.auth.getSession();
+        const token = session.data.session?.access_token;
+        
+        if (!token) {
+          throw new Error("Not authenticated");
+        }
+
+        // Save just the phone number
+        const response = await fetch("/api/user/settings", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({ 
+            phoneNumber: phoneNumber.trim() || null 
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || "Failed to save phone number");
+        }
+
+        toast({
+          title: "Phone number saved",
+          description: "Opening verification...",
+        });
+        
+        // Small delay to show the toast
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to save phone number",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     // Open verification modal
