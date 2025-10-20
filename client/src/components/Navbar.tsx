@@ -1,4 +1,4 @@
-import { Search, Moon, Sun, Plus, ListChecks, Sparkles, User, LogOut, Settings } from "lucide-react";
+import { Search, Moon, Sun, Plus, ListChecks, Sparkles, User, LogOut, Settings, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
@@ -13,13 +13,21 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
-import type { UserCredits } from "@shared/schema";
+import type { UserCredits, Message } from "@shared/schema";
 
 export default function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { user, session, loading, signOut, getToken } = useAuth();
   const isSignedIn = !!user;
   const isLoaded = !loading;
+
+  // Fetch messages for unread count
+  const { data: messages = [] } = useQuery<Message[]>({
+    queryKey: ['/api/messages'],
+    enabled: isSignedIn && isLoaded,
+  });
+
+  const unreadCount = messages.filter(m => m.receiverId === user?.id && !m.isRead).length;
 
   // Fetch user credits with authentication
   const { data: credits, isLoading: creditsLoading, error: creditsError, refetch: refetchCredits } = useQuery<UserCredits>({
@@ -136,6 +144,23 @@ export default function Navbar() {
                     {creditsLoading ? '...' : credits?.creditsRemaining ?? 0}
                   </span>
                 </Badge>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="relative hidden md:flex"
+                  data-testid="button-messages"
+                  onClick={() => window.location.href = '/messages'}
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    >
+                      {unreadCount}
+                    </Badge>
+                  )}
+                </Button>
                 <Button 
                   variant="ghost" 
                   className="hidden md:flex"
