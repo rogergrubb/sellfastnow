@@ -26,6 +26,9 @@ export default function Settings() {
   const [locationInput, setLocationInput] = useState("");
   const [locationData, setLocationData] = useState<any>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchingLocations, setSearchingLocations] = useState(false);
   
   // Contact Preferences
   const [contactEmail, setContactEmail] = useState("");
@@ -97,54 +100,71 @@ export default function Settings() {
     }
   }, [currentUser]);
 
-  // Geocode location
-  const handleGeocodeLocation = async () => {
-    if (!locationInput.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a location",
-        variant: "destructive",
-      });
+  // Search for location suggestions with US prioritization
+  const searchLocationSuggestions = async (query: string) => {
+    if (!query || query.length < 3) {
+      setLocationSuggestions([]);
+      setShowSuggestions(false);
       return;
     }
 
-    setIsGeocoding(true);
+    setSearchingLocations(true);
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationInput)}&limit=1`
+      // First try US-only search
+      const usResponse = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=us&limit=5&addressdetails=1`
       );
-      const data = await response.json();
+      const usData = await usResponse.json();
 
-      if (data && data.length > 0) {
-        const result = data[0];
-        setLocationData({
-          latitude: parseFloat(result.lat),
-          longitude: parseFloat(result.lon),
-          city: result.address?.city || result.address?.town || result.address?.village || "",
-          region: result.address?.state || result.address?.region || "",
-          country: result.address?.country || "",
-          postalCode: result.address?.postcode || "",
-        });
-        toast({
-          title: "Location found!",
-          description: `${result.display_name}`,
-        });
-      } else {
-        toast({
-          title: "Location not found",
-          description: "Please try a different search term",
-          variant: "destructive",
-        });
-      }
+      // Then try worldwide search
+      const worldResponse = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`
+      );
+      const worldData = await worldResponse.json();
+
+      // Combine results, prioritizing US
+      const combined = [
+        ...usData,
+        ...worldData.filter((w: any) => !usData.some((u: any) => u.place_id === w.place_id))
+      ].slice(0, 8);
+
+      setLocationSuggestions(combined);
+      setShowSuggestions(combined.length > 0);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to geocode location",
-        variant: "destructive",
-      });
+      console.error("Error searching locations:", error);
     } finally {
-      setIsGeocoding(false);
+      setSearchingLocations(false);
     }
+  };
+
+  // Debounce location search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (locationInput && locationInput.length >= 3) {
+        searchLocationSuggestions(locationInput);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [locationInput]);
+
+  // Select a location from suggestions
+  const handleSelectLocation = (suggestion: any) => {
+    const displayName = suggestion.display_name;
+    setLocationInput(displayName);
+    setLocationData({
+      latitude: parseFloat(suggestion.lat),
+      longitude: parseFloat(suggestion.lon),
+      city: suggestion.address?.city || suggestion.address?.town || suggestion.address?.village || "",
+      region: suggestion.address?.state || suggestion.address?.region || "",
+      country: suggestion.address?.country || "",
+      postalCode: suggestion.address?.postcode || "",
+    });
+    setShowSuggestions(false);
+    toast({
+      title: "Location selected!",
+      description: displayName,
+    });
   };
 
   // Save settings mutation
@@ -334,28 +354,73 @@ export default function Settings() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="location">City, State or ZIP Code</Label>
-              <div className="flex gap-2">
+              <div className="relative">
                 <Input
                   id="location"
                   value={locationInput}
-                  onChange={(e) => setLocationInput(e.target.value)}
-                  placeholder="e.g., San Francisco, CA or 94102"
+                  onChange={(e) => {
+                    setLocationInput(e.target.value);
+                    setLocationData(null); // Clear selection when typing
+                  }}
+                  onFocus={() => {
+                    if (locationSuggestions.length > 0) {
+                      setShowSuggestions(true);
+                    }
+                  }}
+                  placeholder="Start typing a city name..."
                   className="flex-1"
                 />
-                <Button
-                  onClick={handleGeocodeLocation}
-                  disabled={isGeocoding}
-                  variant="outline"
-                >
-                  {isGeocoding ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Update Location"
-                  )}
-                </Button>
+                {searchingLocations && (
+                  <div className="absolute right-3 top-3">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+                
+                {/* Autocomplete Dropdown */}
+                {showSuggestions && locationSuggestions.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {locationSuggestions.map((suggestion, index) => {
+                      const isUS = suggestion.address?.country === "United States";
+                      return (
+                        <button
+                          key={suggestion.place_id}
+                          onClick={() => handleSelectLocation(suggestion)}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-100 border-b last:border-b-0 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <p className="font-medium text-sm">
+                                {suggestion.address?.city || suggestion.address?.town || suggestion.address?.village || "Unknown City"}
+                                {suggestion.address?.state && `, ${suggestion.address.state}`}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {suggestion.display_name}
+                              </p>
+                            </div>
+                            {isUS && (
+                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium whitespace-nowrap">
+                                USA
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
+              
+              {locationData && (
+                <div className="flex items-center gap-2 text-sm text-green-600">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>
+                    Location set: {locationData.city}, {locationData.region}, {locationData.country}
+                  </span>
+                </div>
+              )}
+              
               <p className="text-xs text-muted-foreground">
-                This helps us show you relevant nearby listings and lets buyers know your general area
+                Type at least 3 characters to search. US locations are shown first.
               </p>
             </div>
           </CardContent>
