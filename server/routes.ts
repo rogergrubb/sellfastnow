@@ -1487,17 +1487,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const senderId = req.auth.userId;
       const { listingId, receiverId, content } = req.body;
+      
+      console.log('📨 Sending message:', { senderId, listingId, receiverId, contentLength: content?.length });
+      
       const { messages, listings } = await import("@shared/schema");
       
       if (!listingId || !receiverId || !content) {
+        console.error('❌ Missing required fields:', { listingId: !!listingId, receiverId: !!receiverId, content: !!content });
         return res.status(400).json({ message: "Missing required fields" });
       }
       
       // Verify listing exists
       const listing = await db.select().from(listings).where(eq(listings.id, listingId)).limit(1);
       if (!listing.length) {
+        console.error('❌ Listing not found:', listingId);
         return res.status(404).json({ message: "Listing not found" });
       }
+      
+      console.log('✅ Listing verified, creating message...');
       
       // Create message
       const newMessage = await db.insert(messages).values({
@@ -1507,10 +1514,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content,
       }).returning();
       
+      console.log('✅ Message created successfully:', newMessage[0].id);
       res.json(newMessage[0]);
-    } catch (error) {
-      console.error("Error sending message:", error);
-      res.status(500).json({ message: "Failed to send message" });
+    } catch (error: any) {
+      console.error("❌ Error sending message:", error);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        detail: error.detail,
+        stack: error.stack?.split('\n').slice(0, 3).join('\n')
+      });
+      res.status(500).json({ 
+        message: "Failed to send message",
+        error: error.message,
+        code: error.code
+      });
     }
   });
 

@@ -62,7 +62,11 @@ export function MessageModal({
         }),
         credentials: "include",
       });
-      if (!response.ok) throw new Error("Failed to send message");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Message send failed:', { status: response.status, error: errorData });
+        throw new Error(errorData.message || errorData.error || "Failed to send message");
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -70,10 +74,11 @@ export function MessageModal({
       queryClient.invalidateQueries({ queryKey: [`/api/messages/listing/${listingId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Message mutation error:', error);
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: error.message || "Failed to send message. Please try again.",
         variant: "destructive",
       });
     },
