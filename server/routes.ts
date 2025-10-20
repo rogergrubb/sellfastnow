@@ -187,12 +187,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("💾 Updating user settings:", { userId, fieldCount: Object.keys(updateData).length });
 
-      await db.update(users)
-        .set(updateData)
-        .where(eq(users.id, userId));
-      
-      const updatedUser = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-      res.json(updatedUser[0]);
+      const updatedUser = await storage.updateUserProfile(userId, updateData);
+      res.json(updatedUser);
     } catch (error) {
       console.error("❌ Error updating settings:", error);
       res.status(500).json({ message: "Failed to update settings" });
