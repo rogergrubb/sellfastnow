@@ -167,6 +167,52 @@ export default function Settings() {
     });
   };
 
+  // Handle email verification
+  const handleVerifyEmail = async () => {
+    try {
+      const { data, error } = await supabase.auth.resend({
+        type: 'signup',
+        email: currentUser?.email || '',
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Verification email sent!",
+        description: "Please check your inbox and click the verification link.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send verification email",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle phone verification
+  const handleVerifyPhone = async () => {
+    if (!phoneNumber) {
+      toast({
+        title: "Error",
+        description: "Please add a phone number first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Coming Soon",
+      description: "Phone verification will be available soon. We're setting up SMS integration.",
+    });
+    
+    // TODO: Implement phone verification with Twilio or similar
+    // 1. Send SMS with code
+    // 2. Show input for code
+    // 3. Verify code
+    // 4. Update phoneVerified in database
+  };
+
   // Save settings mutation
   const saveSettingsMutation = useMutation({
     mutationFn: async (settings: any) => {
@@ -708,7 +754,13 @@ export default function Settings() {
                 {currentUser?.emailVerified ? (
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                 ) : (
-                  <Button size="sm" variant="outline">Verify</Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={handleVerifyEmail}
+                  >
+                    Verify
+                  </Button>
                 )}
               </div>
 
@@ -723,7 +775,12 @@ export default function Settings() {
                 {currentUser?.phoneVerified ? (
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                 ) : (
-                  <Button size="sm" variant="outline" disabled={!phoneNumber}>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    disabled={!phoneNumber}
+                    onClick={handleVerifyPhone}
+                  >
                     {phoneNumber ? "Verify" : "Add Phone First"}
                   </Button>
                 )}
