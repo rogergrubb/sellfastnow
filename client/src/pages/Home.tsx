@@ -4,8 +4,11 @@ import Hero from "@/components/Hero";
 import CategoryFilters from "@/components/CategoryFilters";
 import FilterSidebar from "@/components/FilterSidebar";
 import ListingCard from "@/components/ListingCard";
+import MapView from "@/components/MapView";
 import { Button } from "@/components/ui/button";
-import { SlidersHorizontal, Loader2 } from "lucide-react";
+import { SlidersHorizontal, Loader2, Map, List } from "lucide-react";
+import { useNavigate } from "wouter";
+import { useQuery as useAuthQuery } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
@@ -23,7 +26,9 @@ import {
 import type { Listing } from "@shared/schema";
 
 export default function Home() {
+  const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCondition, setSelectedCondition] = useState("");
@@ -32,6 +37,16 @@ export default function Home() {
   const [location, setLocation] = useState("");
   const [distance, setDistance] = useState("");
   const [sortBy, setSortBy] = useState<'newest' | 'price-low' | 'price-high'>('newest');
+
+  // Fetch current user's location for map
+  const { data: currentUser } = useAuthQuery<any>({
+    queryKey: ['/api/auth/user'],
+    retry: false,
+  });
+
+  const userLocation = currentUser?.locationLatitude && currentUser?.locationLongitude
+    ? { latitude: parseFloat(currentUser.locationLatitude), longitude: parseFloat(currentUser.locationLongitude) }
+    : undefined;
 
   // Build query params for search
   const buildQueryParams = () => {
@@ -129,6 +144,28 @@ export default function Home() {
               </h2>
               
               <div className="flex items-center gap-3">
+                {/* View Mode Toggle */}
+                <div className="flex items-center border rounded-md">
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('list')}
+                    className="rounded-r-none"
+                  >
+                    <List className="h-4 w-4 mr-2" />
+                    List
+                  </Button>
+                  <Button
+                    variant={viewMode === 'map' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('map')}
+                    className="rounded-l-none"
+                  >
+                    <Map className="h-4 w-4 mr-2" />
+                    Map
+                  </Button>
+                </div>
+
                 <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
                   <SelectTrigger className="w-[180px]" data-testid="select-sort">
                     <SelectValue placeholder="Sort by" />
@@ -176,6 +213,12 @@ export default function Home() {
                 <p className="text-muted-foreground text-lg">No listings found</p>
                 <p className="text-sm text-muted-foreground mt-2">Try adjusting your filters or search query</p>
               </div>
+            ) : viewMode === 'map' ? (
+              <MapView
+                listings={listings}
+                userLocation={userLocation}
+                onListingClick={(id) => navigate(`/listings/${id}`)}
+              />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {listings.map((listing: any) => (
