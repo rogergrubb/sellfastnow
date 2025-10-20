@@ -26,7 +26,7 @@ import {
 import type { Listing } from "@shared/schema";
 
 export default function Home() {
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [searchQuery, setSearchQuery] = useState("");
@@ -217,7 +217,7 @@ export default function Home() {
               <MapView
                 listings={listings}
                 userLocation={userLocation}
-                onListingClick={(id) => setLocation(`/listings/${id}`)}
+                onListingClick={(id) => navigate(`/listings/${id}`)}
               />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
