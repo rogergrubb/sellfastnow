@@ -146,6 +146,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ======================
+  // Phone Verification Routes (Twilio)
+  // ======================
+  const { sendVerificationCode, verifyCode, isTwilioConfigured } = await import('./phoneVerification');
+
+  // Send phone verification code
+  app.post("/api/phone/send-code", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const { phoneNumber } = req.body;
+
+      if (!phoneNumber) {
+        return res.status(400).json({ message: "Phone number is required" });
+      }
+
+      if (!isTwilioConfigured()) {
+        return res.status(503).json({ 
+          message: "Phone verification is not available at this time. Please contact support."
+        });
+      }
+
+      const result = await sendVerificationCode(userId, phoneNumber);
+      
+      if (result.success) {
+        res.json({ message: result.message });
+      } else {
+        res.status(400).json({ message: result.message });
+      }
+    } catch (error: any) {
+      console.error("❌ Error sending verification code:", error);
+      res.status(500).json({ message: "Failed to send verification code" });
+    }
+  });
+
+  // Verify phone code
+  app.post("/api/phone/verify-code", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const { code } = req.body;
+
+      if (!code) {
+        return res.status(400).json({ message: "Verification code is required" });
+      }
+
+      const result = await verifyCode(userId, code);
+      
+      if (result.success) {
+        // Update user's phoneVerified status in database
+        await storage.updateUserProfile(userId, { 
+          phoneVerified: true,
+          verifiedAt: new Date()
+        });
+        
+        res.json({ message: result.message });
+      } else {
+        res.status(400).json({ message: result.message });
+      }
+    } catch (error: any) {
+      console.error("❌ Error verifying code:", error);
+      res.status(500).json({ message: "Failed to verify code" });
+    }
+  });
+
+  // Check if phone verification is available
+  app.get("/api/phone/status", async (req, res) => {
+    res.json({ 
+      available: isTwilioConfigured(),
+      message: isTwilioConfigured() 
+        ? "Phone verification is available" 
+        : "Phone verification is not configured"
+    });
+  });
+
+  // ======================
   // User Settings Routes
   // ======================
 

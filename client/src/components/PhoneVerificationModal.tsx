@@ -54,35 +54,31 @@ export function PhoneVerificationModal({
   const handleSendCode = async () => {
     setIsSending(true);
     try {
-      // Format phone number to E.164 format
-      let formattedPhone = phoneNumber.trim();
+      console.log('📱 Sending verification code to:', phoneNumber);
       
-      // Remove all non-digit characters
-      const digits = formattedPhone.replace(/\D/g, '');
-      
-      // Add country code if missing (assume US +1)
-      if (digits.length === 10) {
-        formattedPhone = `+1${digits}`;
-      } else if (digits.length === 11 && digits.startsWith('1')) {
-        formattedPhone = `+${digits}`;
-      } else if (!formattedPhone.startsWith('+')) {
-        formattedPhone = `+${digits}`;
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+
+      if (!token) {
+        throw new Error("Not authenticated");
       }
-      
-      console.log('📱 Sending OTP to:', formattedPhone);
-      console.log('📝 Original phone:', phoneNumber);
-      
-      // Use Supabase Phone Auth to send OTP
-      const { data, error } = await supabase.auth.signInWithOtp({
-        phone: formattedPhone,
+
+      const response = await fetch("/api/phone/send-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ phoneNumber }),
       });
 
-      if (error) {
-        console.error('❌ Supabase OTP error:', error);
-        throw error;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to send code");
       }
 
-      console.log('✅ OTP sent:', data);
+      console.log('✅ Verification code sent');
 
       toast({
         title: "Code sent!",
@@ -93,21 +89,9 @@ export function PhoneVerificationModal({
       setCountdown(60); // 60 second cooldown before resend
     } catch (error: any) {
       console.error('❌ Error sending code:', error);
-      
-      let errorMessage = error.message || "Failed to send verification code";
-      
-      // Handle specific Supabase errors
-      if (error.message?.includes('rate limit')) {
-        errorMessage = "Too many attempts. Please wait a few minutes and try again.";
-      } else if (error.message?.includes('Phone provider not configured')) {
-        errorMessage = "Phone verification is not configured. Please contact support.";
-      } else if (error.message?.includes('Invalid phone number')) {
-        errorMessage = "Invalid phone number format. Please use format: +1234567890";
-      }
-      
       toast({
         title: "Error",
-        description: errorMessage,
+        description: error.message || "Failed to send verification code",
         variant: "destructive",
       });
     } finally {
@@ -127,56 +111,31 @@ export function PhoneVerificationModal({
 
     setIsVerifying(true);
     try {
-      // Format phone number to E.164 format (same as send)
-      let formattedPhone = phoneNumber.trim();
-      const digits = formattedPhone.replace(/\D/g, '');
+      console.log('🔐 Verifying code...');
       
-      if (digits.length === 10) {
-        formattedPhone = `+1${digits}`;
-      } else if (digits.length === 11 && digits.startsWith('1')) {
-        formattedPhone = `+${digits}`;
-      } else if (!formattedPhone.startsWith('+')) {
-        formattedPhone = `+${digits}`;
-      }
-      
-      console.log('🔐 Verifying OTP code for:', formattedPhone);
-      
-      // Use Supabase to verify the OTP
-      const { data, error } = await supabase.auth.verifyOtp({
-        phone: formattedPhone,
-        token: code,
-        type: 'sms',
-      });
-
-      if (error) {
-        console.error('❌ Supabase verify error:', error);
-        throw error;
-      }
-
-      console.log('✅ Phone verified:', data);
-
-      // Update user's phoneVerified status in our database
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
 
-      if (token) {
-        try {
-          await fetch("/api/user/settings", {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify({ 
-              phoneVerified: true,
-              verifiedAt: new Date().toISOString()
-            }),
-          });
-        } catch (err) {
-          console.error('Warning: Failed to update phoneVerified status:', err);
-          // Don't fail the verification if database update fails
-        }
+      if (!token) {
+        throw new Error("Not authenticated");
       }
+
+      const response = await fetch("/api/phone/verify-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ code }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Invalid code");
+      }
+
+      console.log('✅ Phone verified successfully');
 
       toast({
         title: "Phone verified!",
@@ -192,18 +151,9 @@ export function PhoneVerificationModal({
       }, 1500);
     } catch (error: any) {
       console.error('❌ Error verifying code:', error);
-      
-      let errorMessage = error.message || "Invalid verification code";
-      
-      if (error.message?.includes('expired')) {
-        errorMessage = "Code has expired. Please request a new code.";
-      } else if (error.message?.includes('invalid')) {
-        errorMessage = "Invalid code. Please check and try again.";
-      }
-      
       toast({
         title: "Verification failed",
-        description: errorMessage,
+        description: error.message || "Invalid verification code",
         variant: "destructive",
       });
     } finally {
