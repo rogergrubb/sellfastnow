@@ -84,7 +84,16 @@ export const listings = pgTable("listings", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   category: varchar("category", { length: 50 }).notNull(),
   condition: varchar("condition", { length: 20 }).notNull(),
-  location: varchar("location", { length: 100 }).notNull(),
+  
+  // Location fields
+  location: varchar("location", { length: 100 }).notNull(), // Display text
+  locationCity: varchar("location_city", { length: 100 }),
+  locationRegion: varchar("location_region", { length: 100 }), // State/Province
+  locationCountry: varchar("location_country", { length: 100 }),
+  locationPostalCode: varchar("location_postal_code", { length: 20 }),
+  locationLatitude: decimal("location_latitude", { precision: 10, scale: 7 }),
+  locationLongitude: decimal("location_longitude", { precision: 10, scale: 7 }),
+  
   images: text("images").array().notNull().default(sql`'{}'::text[]`),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   createdAt: timestamp("created_at").defaultNow(),

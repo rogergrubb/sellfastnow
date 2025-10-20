@@ -66,6 +66,31 @@ export async function runMigrations() {
     await db.execute(sql`
       ALTER TABLE users ADD COLUMN IF NOT EXISTS show_email_publicly boolean DEFAULT false;
     `);
+    
+    // Add location fields to listings table
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_city varchar(100);
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_region varchar(100);
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_country varchar(100);
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_postal_code varchar(20);
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_latitude numeric(10, 7);
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_longitude numeric(10, 7);
+    `);
 
     console.log("✅ Database migrations completed successfully");
   } catch (error) {

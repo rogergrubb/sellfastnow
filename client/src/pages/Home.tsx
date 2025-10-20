@@ -30,6 +30,7 @@ export default function Home() {
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
   const [location, setLocation] = useState("");
+  const [distance, setDistance] = useState("");
   const [sortBy, setSortBy] = useState<'newest' | 'price-low' | 'price-high'>('newest');
 
   // Build query params for search
@@ -41,6 +42,7 @@ export default function Home() {
     if (priceMin) params.append('priceMin', priceMin);
     if (priceMax) params.append('priceMax', priceMax);
     if (location) params.append('location', location);
+    if (distance) params.append('distance', distance);
     if (sortBy) params.append('sortBy', sortBy);
     return params.toString();
   };
@@ -69,11 +71,13 @@ export default function Home() {
     priceMin?: string;
     priceMax?: string;
     location?: string;
+    distance?: string;
   }) => {
     if (filters.condition !== undefined) setSelectedCondition(filters.condition);
     if (filters.priceMin !== undefined) setPriceMin(filters.priceMin);
     if (filters.priceMax !== undefined) setPriceMax(filters.priceMax);
     if (filters.location !== undefined) setLocation(filters.location);
+    if (filters.distance !== undefined) setDistance(filters.distance);
   };
 
   const formatPrice = (price: string) => {
@@ -111,6 +115,7 @@ export default function Home() {
                   priceMin,
                   priceMax,
                   location,
+                  distance,
                 }}
                 onFiltersChange={handleFiltersChange}
               />

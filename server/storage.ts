@@ -58,7 +58,9 @@ export interface SearchFilters {
   priceMin?: number;
   priceMax?: number;
   location?: string;
-  sortBy?: 'newest' | 'price-low' | 'price-high';
+  distance?: number; // Distance in miles
+  userLocation?: { latitude: number; longitude: number };
+  sortBy?: 'newest' | 'price-low' | 'price-high' | 'distance';
 }
 
 export interface DashboardStats {
@@ -396,6 +398,19 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(listings.createdAt));
   }
 
+  // Helper function to calculate distance between two coordinates (Haversine formula)
+  calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 3959; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
   async advancedSearch(filters: SearchFilters): Promise<any[]> {
     const conditions = [eq(listings.status, "active")];
 
@@ -434,7 +449,7 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
-    // Determine sort order
+    // Determine sort order (distance sorting handled after fetch)
     let orderByClause;
     switch (filters.sortBy) {
       case 'price-low':
@@ -443,6 +458,7 @@ export class DatabaseStorage implements IStorage {
       case 'price-high':
         orderByClause = sql`${listings.price}::numeric DESC`;
         break;
+      case 'distance':
       case 'newest':
       default:
         orderByClause = desc(listings.createdAt);
@@ -494,11 +510,55 @@ export class DatabaseStorage implements IStorage {
       ])
     );
 
-    // Combine listings with seller data
-    return listingResults.map(listing => ({
+    // Combine listings with seller data and calculate distances
+    let resultsWithSellers = listingResults.map(listing => ({
       ...listing,
       ...(sellersMap.get(listing.userId) || {}),
     }));
+
+    // Calculate distances and filter by distance if user location is provided
+    if (filters.userLocation && filters.distance) {
+      resultsWithSellers = resultsWithSellers
+        .map(listing => {
+          // Calculate distance if listing has coordinates
+          let distance = null;
+          if (listing.locationLatitude && listing.locationLongitude) {
+            distance = this.calculateDistance(
+              filters.userLocation!.latitude,
+              filters.userLocation!.longitude,
+              parseFloat(listing.locationLatitude),
+              parseFloat(listing.locationLongitude)
+            );
+          }
+          return { ...listing, distance };
+        })
+        .filter(listing => {
+          // Filter out listings beyond the distance radius
+          if (listing.distance === null) return false; // No coordinates
+          return listing.distance <= filters.distance!;
+        });
+
+      // Sort by distance if requested
+      if (filters.sortBy === 'distance') {
+        resultsWithSellers.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+      }
+    } else if (filters.userLocation) {
+      // Just add distance info without filtering
+      resultsWithSellers = resultsWithSellers.map(listing => {
+        let distance = null;
+        if (listing.locationLatitude && listing.locationLongitude) {
+          distance = this.calculateDistance(
+            filters.userLocation!.latitude,
+            filters.userLocation!.longitude,
+            parseFloat(listing.locationLatitude),
+            parseFloat(listing.locationLongitude)
+          );
+        }
+        return { ...listing, distance };
+      });
+    }
+
+    return resultsWithSellers;
   }
 
   // Message operations

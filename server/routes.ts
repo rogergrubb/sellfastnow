@@ -1260,9 +1260,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Search listings with filters
-  app.get("/api/listings/search", async (req, res) => {
+  app.get("/api/listings/search", async (req: any, res) => {
     try {
-      const { q, category, condition, priceMin, priceMax, location, sortBy } = req.query;
+      const { q, category, condition, priceMin, priceMax, location, distance, sortBy } = req.query;
+      
+      // Get user's location if authenticated
+      let userLocation = null;
+      if (req.auth?.userId) {
+        const user = await storage.getUserById(req.auth.userId);
+        if (user?.locationLatitude && user?.locationLongitude) {
+          userLocation = {
+            latitude: parseFloat(user.locationLatitude),
+            longitude: parseFloat(user.locationLongitude),
+          };
+        }
+      }
       
       const filters = {
         query: q as string,
@@ -1271,7 +1283,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         priceMin: priceMin ? parseFloat(priceMin as string) : undefined,
         priceMax: priceMax ? parseFloat(priceMax as string) : undefined,
         location: location as string,
-        sortBy: (sortBy as 'newest' | 'price-low' | 'price-high') || 'newest',
+        distance: distance ? parseFloat(distance as string) : undefined,
+        userLocation,
+        sortBy: (sortBy as 'newest' | 'price-low' | 'price-high' | 'distance') || 'newest',
       };
 
       console.log('🔍 Searching listings with filters:', filters);

@@ -24,6 +24,8 @@ export default function Settings() {
   const [contactEmail, setContactEmail] = useState(userProfile?.contactEmail || userProfile?.email || '');
   const [contactPreference, setContactPreference] = useState(userProfile?.contactPreference || 'in_app');
   const [showEmailPublicly, setShowEmailPublicly] = useState(userProfile?.showEmailPublicly || false);
+  const [location, setLocation] = useState(userProfile?.location || '');
+  const [isGeocodingLocation, setIsGeocodingLocation] = useState(false);
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (settings: any) => {
@@ -52,6 +54,73 @@ export default function Settings() {
     },
   });
 
+  const geocodeLocation = async (locationText: string) => {
+    try {
+      setIsGeocodingLocation(true);
+      // Use Nominatim (OpenStreetMap) for free geocoding
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationText)}&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'SellFast.Now Marketplace'
+          }
+        }
+      );
+      
+      if (!response.ok) throw new Error('Geocoding failed');
+      
+      const data = await response.json();
+      if (data.length === 0) {
+        throw new Error('Location not found');
+      }
+      
+      const result = data[0];
+      return {
+        latitude: parseFloat(result.lat),
+        longitude: parseFloat(result.lon),
+        displayName: result.display_name,
+        city: result.address?.city || result.address?.town || result.address?.village,
+        region: result.address?.state,
+        country: result.address?.country,
+        postalCode: result.address?.postcode,
+      };
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      toast({
+        title: "Location Error",
+        description: "Could not find that location. Please try a different address.",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsGeocodingLocation(false);
+    }
+  };
+
+  const handleUpdateLocation = async () => {
+    if (!location.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a location",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const geocoded = await geocodeLocation(location);
+    if (!geocoded) return;
+    
+    updateSettingsMutation.mutate({
+      location: geocoded.displayName,
+      locationCity: geocoded.city,
+      locationRegion: geocoded.region,
+      locationCountry: geocoded.country,
+      locationPostalCode: geocoded.postalCode,
+      locationLatitude: geocoded.latitude.toString(),
+      locationLongitude: geocoded.longitude.toString(),
+    });
+  };
+
   const handleSave = () => {
     updateSettingsMutation.mutate({
       contactEmail,
@@ -72,6 +141,40 @@ export default function Settings() {
       </div>
 
       <div className="space-y-6">
+        {/* Location Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Location</CardTitle>
+            <CardDescription>
+              Set your location to see nearby listings and help buyers find you
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="location">City, State or ZIP Code</Label>
+              <Input
+                id="location"
+                type="text"
+                placeholder="e.g., San Francisco, CA or 94102"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+              />
+              <p className="text-sm text-muted-foreground">
+                This helps us show you relevant nearby listings and lets buyers know your general area
+              </p>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              variant="outline"
+              onClick={handleUpdateLocation}
+              disabled={isGeocodingLocation || updateSettingsMutation.isPending}
+            >
+              {isGeocodingLocation ? "Finding Location..." : "Update Location"}
+            </Button>
+          </CardFooter>
+        </Card>
+
         {/* Contact Preferences */}
         <Card>
           <CardHeader>
