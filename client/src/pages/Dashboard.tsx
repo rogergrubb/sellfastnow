@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { User, Listing } from "@shared/schema";
+import type { User, Listing, Message } from "@shared/schema";
 import ListingCard from "@/components/ListingCard";
 
 type DashboardStats = {
@@ -172,6 +172,14 @@ export default function Dashboard() {
     queryKey: ["/api/listings/stats"],
     enabled: !!user,
   });
+
+  // Fetch unread message count
+  const { data: messages = [] } = useQuery<Message[]>({
+    queryKey: ["/api/messages"],
+    enabled: !!user,
+  });
+
+  const unreadCount = messages.filter(m => m.receiverId === user?.id && !m.isRead).length;
 
   // Fetch user's listings
   const { data: userListings = [], isLoading: listingsLoading } = useQuery<Listing[]>({
@@ -398,6 +406,11 @@ export default function Dashboard() {
           >
             <MessageCircle className="mr-2 h-4 w-4" />
             Messages
+            {unreadCount > 0 && (
+              <Badge className="ml-auto" variant="default">
+                {unreadCount}
+              </Badge>
+            )}
           </Button>
           <Button
             variant={activeTab === "settings" ? "secondary" : "ghost"}
@@ -493,7 +506,11 @@ export default function Dashboard() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card data-testid="card-stat-messages">
+                <Card 
+                  data-testid="card-stat-messages"
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => navigate("/messages")}
+                >
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       Messages
@@ -501,7 +518,12 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-3xl font-bold text-purple-600" data-testid="text-stat-messages">
-                      {stats?.totalMessages || 0}
+                      {messages.length || 0}
+                      {unreadCount > 0 && (
+                        <Badge className="ml-2" variant="default">
+                          {unreadCount} new
+                        </Badge>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
