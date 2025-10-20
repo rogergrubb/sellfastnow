@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 import { ReviewCard } from "@/components/ReviewCard";
 import { StatisticsDashboard } from "@/components/StatisticsDashboard";
 import { RespondToReviewModal } from "@/components/RespondToReviewModal";
+import { VerificationBadges, TrustScore } from "@/components/VerificationBadge";
 import type { ReviewWithMetadata } from "@shared/schema";
 
 interface ReviewFilters {
@@ -187,8 +188,12 @@ export default function UserProfile() {
             
             <div className="flex-1 space-y-3">
               <div className="space-y-1">
-                <h1 className="text-2xl font-bold" data-testid="text-username">{userName}</h1>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-bold" data-testid="text-username">{userName}</h1>
+                  <TrustScore user={user} size="md" showPercentage={true} />
+                </div>
+                <VerificationBadges user={user} size="md" showLabels={true} className="mt-2" />
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                   <Calendar className="h-4 w-4" />
                   <span data-testid="text-member-since">
                     Member since {new Date(statistics?.memberSince || user.createdAt).toLocaleDateString()}

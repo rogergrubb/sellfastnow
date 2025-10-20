@@ -14,6 +14,9 @@ import { CancellationCommentModal } from "@/components/CancellationCommentModal"
 import { CancelTransactionModal } from "@/components/CancelTransactionModal";
 import { MakeOfferModal } from "@/components/MakeOfferModal";
 import { MessageModal } from "@/components/MessageModal";
+import { ContactInfoDisplay } from "@/components/ContactInfoDisplay";
+import { VerificationBadges } from "@/components/VerificationBadge";
+import { MeetingPreferencesDisplay } from "@/components/SafetyPrompt";
 import {
   MapPin,
   Heart,
@@ -340,6 +343,8 @@ export default function ListingDetail() {
                 </div>
               </div>
 
+              <VerificationBadges user={seller} size="sm" className="mb-3" />
+
               <div className="space-y-2 text-sm text-muted-foreground mb-4">
                 {sellerStats && sellerStats.averageRating > 0 && (
                   <div className="flex items-center gap-2">
@@ -381,6 +386,24 @@ export default function ListingDetail() {
                 </Button>
               </Link>
             </Card>
+
+            {/* Contact Information Card */}
+            {currentUser && currentUser.id !== seller.id && (
+              <Card className="p-6">
+                <ContactInfoDisplay
+                  seller={seller}
+                  currentUser={currentUser}
+                  transactionStatus={{
+                    hasOffer: transactionDetails?.hasOffer || false,
+                    offerAccepted: transactionDetails?.offerAccepted || false,
+                  }}
+                  listingId={listing.id}
+                />
+              </Card>
+            )}
+
+            {/* Meeting Preferences Card */}
+            <MeetingPreferencesDisplay seller={seller} />
 
             {/* Review/Transaction Actions Card */}
             {currentUser && (

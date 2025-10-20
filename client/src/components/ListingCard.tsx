@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Link } from "wouter";
 import { ReviewBadge } from "./ReviewBadge";
+import { VerificationBadges } from "./VerificationBadge";
 
 interface ListingCardProps {
   id: string;
@@ -18,6 +19,10 @@ interface ListingCardProps {
     firstName?: string;
     lastName?: string;
     profileImageUrl?: string;
+    emailVerified?: boolean;
+    phoneVerified?: boolean;
+    idVerified?: boolean;
+    addressVerified?: boolean;
   };
   sellerStats?: {
     averageRating?: number | null;
@@ -85,7 +90,10 @@ export default function ListingCard({
         
         {seller && (
           <div className="mb-3 pb-3 border-b">
-            <p className="text-sm text-muted-foreground mb-1">Seller: {sellerName}</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-sm text-muted-foreground">Seller: {sellerName}</p>
+              <VerificationBadges user={seller} size="sm" />
+            </div>
             <ReviewBadge
               userId={seller.id}
               userName={sellerName}
