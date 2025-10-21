@@ -126,7 +126,7 @@ export function PhoneVerificationModal({
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ phoneNumber, code }),
       });
 
       const data = await response.json();

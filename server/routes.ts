@@ -148,7 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ======================
   // Phone Verification Routes (Twilio)
   // ======================
-  const { sendVerificationCode, verifyCode, isTwilioConfigured } = await import('./phoneVerification');
+  const { sendVerificationCode, verifyCode } = await import('./twilioVerify');
 
   // Send phone verification code
   app.post("/api/phone/send-code", isAuthenticated, async (req: any, res) => {
@@ -160,18 +160,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Phone number is required" });
       }
 
-      if (!isTwilioConfigured()) {
-        return res.status(503).json({ 
-          message: "Phone verification is not available at this time. Please contact support."
-        });
-      }
-
-      const result = await sendVerificationCode(userId, phoneNumber);
+      const result = await sendVerificationCode(phoneNumber);
       
       if (result.success) {
-        res.json({ message: result.message });
+        res.json({ message: "Verification code sent successfully" });
       } else {
-        res.status(400).json({ message: result.message });
+        res.status(400).json({ message: result.error || "Failed to send verification code" });
       }
     } catch (error: any) {
       console.error("❌ Error sending verification code:", error);
@@ -183,13 +177,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/phone/verify-code", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth.userId;
-      const { code } = req.body;
+      const { phoneNumber, code } = req.body;
 
-      if (!code) {
-        return res.status(400).json({ message: "Verification code is required" });
+      if (!phoneNumber || !code) {
+        return res.status(400).json({ message: "Phone number and verification code are required" });
       }
 
-      const result = await verifyCode(userId, code);
+      const result = await verifyCode(phoneNumber, code);
       
       if (result.success) {
         // Update user's phoneVerified status in database
@@ -198,9 +192,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           verifiedAt: new Date()
         });
         
-        res.json({ message: result.message });
+        res.json({ message: "Phone number verified successfully" });
       } else {
-        res.status(400).json({ message: result.message });
+        res.status(400).json({ message: result.error || "Invalid verification code" });
       }
     } catch (error: any) {
       console.error("❌ Error verifying code:", error);
@@ -210,9 +204,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Check if phone verification is available
   app.get("/api/phone/status", async (req, res) => {
+    const configured = !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_VERIFY_SERVICE_SID);
     res.json({ 
-      available: isTwilioConfigured(),
-      message: isTwilioConfigured() 
+      available: configured,
+      message: configured
         ? "Phone verification is available" 
         : "Phone verification is not configured"
     });
