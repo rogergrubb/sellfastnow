@@ -2,7 +2,7 @@
 // Handles secure payment processing with Stripe
 
 import { sql } from "drizzle-orm";
-import { pgTable, text, decimal, timestamp, varchar, index } from "drizzle-orm/pg-core";
+import { pgTable, text, decimal, timestamp, varchar, index, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
