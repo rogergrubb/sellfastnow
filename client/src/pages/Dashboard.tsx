@@ -129,6 +129,8 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedListings, setSelectedListings] = useState<string[]>([]);
+  const [isSelectMode, setIsSelectMode] = useState(false);
 
   // Sync active tab with URL query parameter
   useEffect(() => {
@@ -230,6 +232,47 @@ export default function Dashboard() {
       toast({
         title: "Success",
         description: "Listing deleted successfully",
+      });
+    },
+  });
+
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const token = await getToken();
+      const results = await Promise.all(
+        ids.map(id =>
+          fetch(`/api/listings/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          })
+        )
+      );
+      
+      const failed = results.filter(r => !r.ok);
+      if (failed.length > 0) {
+        throw new Error(`Failed to delete ${failed.length} listing(s)`);
+      }
+      
+      return results;
+    },
+    onSuccess: (_, ids) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/listings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/listings/stats"] });
+      setSelectedListings([]);
+      setIsSelectMode(false);
+      toast({
+        title: "Success",
+        description: `${ids.length} listing(s) deleted successfully`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete listings",
+        variant: "destructive",
       });
     },
   });
@@ -578,12 +621,62 @@ export default function Dashboard() {
                       Expired
                     </Button>
                   </div>
-                  <Link href="/post-ad">
-                    <Button data-testid="button-create-listing">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create New Listing
-                    </Button>
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    {isSelectMode ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setIsSelectMode(false);
+                            setSelectedListings([]);
+                          }}
+                          data-testid="button-cancel-select"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            if (selectedListings.length === 0) {
+                              toast({
+                                title: "No items selected",
+                                description: "Please select at least one listing to delete",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+                            if (confirm(`Are you sure you want to delete ${selectedListings.length} listing(s)?`)) {
+                              bulkDeleteMutation.mutate(selectedListings);
+                            }
+                          }}
+                          disabled={bulkDeleteMutation.isPending || selectedListings.length === 0}
+                          data-testid="button-delete-selected"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Selected ({selectedListings.length})
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsSelectMode(true)}
+                          data-testid="button-select-mode"
+                        >
+                          Select Multiple
+                        </Button>
+                        <Link href="/post-ad">
+                          <Button data-testid="button-create-listing">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Create New Listing
+                          </Button>
+                        </Link>
+                      </>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Search and Sort */}
@@ -610,6 +703,29 @@ export default function Dashboard() {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {/* Select All Checkbox */}
+                  {isSelectMode && filteredListings.length > 0 && (
+                    <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
+                      <input
+                        type="checkbox"
+                        id="select-all"
+                        checked={selectedListings.length === filteredListings.length && filteredListings.length > 0}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedListings(filteredListings.map(l => l.id));
+                          } else {
+                            setSelectedListings([]);
+                          }
+                        }}
+                        className="w-4 h-4 cursor-pointer"
+                        data-testid="checkbox-select-all"
+                      />
+                      <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
+                        Select All ({filteredListings.length} items)
+                      </label>
+                    </div>
+                  )}
 
                   {/* Listings List */}
                   {listingsLoading ? (
@@ -640,6 +756,25 @@ export default function Dashboard() {
                         >
                           <CardContent className="p-4">
                             <div className="flex flex-col sm:flex-row gap-4">
+                              {/* Checkbox for selection mode */}
+                              {isSelectMode && (
+                                <div className="flex items-start pt-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedListings.includes(listing.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedListings([...selectedListings, listing.id]);
+                                      } else {
+                                        setSelectedListings(selectedListings.filter(id => id !== listing.id));
+                                      }
+                                    }}
+                                    className="w-5 h-5 cursor-pointer"
+                                    data-testid={`checkbox-listing-${listing.id}`}
+                                  />
+                                </div>
+                              )}
+
                               {/* Thumbnail */}
                               <Link href={`/listings/${listing.id}`}>
                                 <div className="w-full sm:w-32 h-32 bg-muted rounded-md overflow-hidden flex-shrink-0">
