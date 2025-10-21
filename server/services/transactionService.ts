@@ -269,6 +269,20 @@ export const transactionService = {
       throw new Error(`Cannot cancel transaction with status: ${transaction.status}`);
     }
 
+    // Calculate if this is a last-minute cancellation
+    let isLastMinute = false;
+    let hoursBeforeMeetup = null;
+    
+    if (transaction.meetupScheduledAt) {
+      const now = new Date();
+      const meetupTime = new Date(transaction.meetupScheduledAt);
+      const hoursUntilMeetup = (meetupTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+      hoursBeforeMeetup = Math.round(hoursUntilMeetup);
+      
+      // Last-minute = within 24 hours of scheduled meetup
+      isLastMinute = hoursUntilMeetup <= 24 && hoursUntilMeetup >= 0;
+    }
+
     // Cancel Stripe PaymentIntent
     if (transaction.stripePaymentIntentId) {
       try {
@@ -284,28 +298,68 @@ export const transactionService = {
       .update(transactions)
       .set({
         status: "cancelled",
+        cancelledBy,
+        cancellationReason: reason,
+        isLastMinuteCancellation: isLastMinute,
+        hoursBeforeMeetup,
         cancelledAt: new Date(),
         updatedAt: new Date(),
-        metadata: {
-          ...(transaction.metadata as object),
-          cancelledBy,
-          cancellationReason: reason,
-        },
       })
       .where(eq(transactions.id, transactionId))
       .returning();
 
+    // 🔗 UPDATE USER STATISTICS
+    const { userStatistics } = await import("../../shared/schema");
+    
+    const isSeller = cancelledBy === transaction.sellerId;
+    const isBuyer = cancelledBy === transaction.buyerId;
+    
+    if (isSeller) {
+      await db
+        .update(userStatistics)
+        .set({
+          cancelledBySeller: sql`${userStatistics.cancelledBySeller} + 1`,
+          lastMinuteCancelsBySeller: isLastMinute 
+            ? sql`${userStatistics.lastMinuteCancelsBySeller} + 1`
+            : userStatistics.lastMinuteCancelsBySeller,
+          recentCancellations90d: sql`${userStatistics.recentCancellations90d} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(eq(userStatistics.userId, transaction.sellerId));
+    }
+    
+    if (isBuyer) {
+      await db
+        .update(userStatistics)
+        .set({
+          cancelledByBuyer: sql`${userStatistics.cancelledByBuyer} + 1`,
+          lastMinuteCancelsByBuyer: isLastMinute 
+            ? sql`${userStatistics.lastMinuteCancelsByBuyer} + 1`
+            : userStatistics.lastMinuteCancelsByBuyer,
+          recentCancellations90d: sql`${userStatistics.recentCancellations90d} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(eq(userStatistics.userId, transaction.buyerId));
+    }
+
     // 🔗 UPDATE TRUST SCORES
-    // Track cancelled transactions but don't heavily penalize
+    // Heavier penalty for last-minute cancellations
+    const penaltyPoints = isLastMinute ? -5 : -1;
+    
     await db
       .update(trustScores)
       .set({
         cancelledTransactions: sql`${trustScores.cancelledTransactions} + 1`,
         updatedAt: new Date(),
       })
-      .where(eq(trustScores.userId, transaction.sellerId));
+      .where(eq(trustScores.userId, cancelledBy));
 
-    await this.logTrustEvent(transaction.sellerId, transactionId, "transaction_cancelled", -1);
+    await this.logTrustEvent(
+      cancelledBy, 
+      transactionId, 
+      isLastMinute ? "last_minute_cancellation" : "transaction_cancelled", 
+      penaltyPoints
+    );
 
     return updated;
   },

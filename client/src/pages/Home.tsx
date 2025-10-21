@@ -6,7 +6,7 @@ import FilterSidebar from "@/components/FilterSidebar";
 import ListingCard from "@/components/ListingCard";
 import MapView from "@/components/MapView";
 import { Button } from "@/components/ui/button";
-import { SlidersHorizontal, Loader2, Map, List } from "lucide-react";
+import { SlidersHorizontal, Loader2, Map, List, Shield, Star, TrendingUp, Award } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery as useAuthQuery } from "@tanstack/react-query";
 import {
@@ -37,6 +37,16 @@ export default function Home() {
   const [location, setLocation] = useState("");
   const [distance, setDistance] = useState("");
   const [sortBy, setSortBy] = useState<'newest' | 'price-low' | 'price-high'>('newest');
+
+  // Fetch top-rated sellers for trust section
+  const { data: topSellers = [] } = useQuery<any[]>({
+    queryKey: ['/api/users/top-rated'],
+    queryFn: async () => {
+      const response = await fetch('/api/users/top-rated?limit=6');
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
 
   // Fetch current user's location for map
   const { data: currentUser } = useAuthQuery<any>({
@@ -119,6 +129,92 @@ export default function Home() {
         selectedCategory={selectedCategory}
         onCategorySelect={handleCategorySelect}
       />
+
+      {/* Trust & Safety Section */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-y border-blue-100 py-12 mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Shield className="w-8 h-8 text-blue-600" />
+              <h2 className="text-3xl font-bold text-gray-900">Safe & Trusted Marketplace</h2>
+            </div>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Unlike Facebook Marketplace and Craigslist, we verify every user and track reputation to protect you from scams and fraud.
+            </p>
+          </div>
+
+          {/* Trust Features */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+            <div className="bg-white rounded-lg p-6 text-center shadow-sm">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Shield className="w-6 h-6 text-blue-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Verified Users</h3>
+              <p className="text-sm text-gray-600">Phone, email, and ID verification required</p>
+            </div>
+
+            <div className="bg-white rounded-lg p-6 text-center shadow-sm">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star className="w-6 h-6 text-green-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Reputation System</h3>
+              <p className="text-sm text-gray-600">eBay-style ratings track seller reliability</p>
+            </div>
+
+            <div className="bg-white rounded-lg p-6 text-center shadow-sm">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="w-6 h-6 text-purple-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Anti-Fraud Detection</h3>
+              <p className="text-sm text-gray-600">AI monitors for suspicious patterns and scams</p>
+            </div>
+
+            <div className="bg-white rounded-lg p-6 text-center shadow-sm">
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Award className="w-6 h-6 text-orange-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Transaction History</h3>
+              <p className="text-sm text-gray-600">See every user's complete track record</p>
+            </div>
+          </div>
+
+          {/* Top Rated Sellers */}
+          {topSellers.length > 0 && (
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 text-center">Top Rated Sellers This Month</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {topSellers.map((seller: any) => (
+                  <div
+                    key={seller.id}
+                    onClick={() => navigate(`/profile/${seller.id}`)}
+                    className="bg-white rounded-lg p-4 text-center cursor-pointer hover:shadow-md transition-shadow"
+                  >
+                    <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-2 overflow-hidden">
+                      {seller.profileImageUrl ? (
+                        <img src={seller.profileImageUrl} alt={seller.firstName} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-500 text-xl font-semibold">
+                          {seller.firstName?.[0]}{seller.lastName?.[0]}
+                        </div>
+                      )}
+                    </div>
+                    <div className="font-medium text-sm text-gray-900 truncate">
+                      {seller.firstName} {seller.lastName?.[0]}.
+                    </div>
+                    <div className="flex items-center justify-center gap-1 mt-1">
+                      <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                      <span className="text-xs text-gray-600">{seller.rating || '5.0'}</span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {seller.transactions || 0} sales
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-8">

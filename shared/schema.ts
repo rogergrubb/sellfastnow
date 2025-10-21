@@ -244,6 +244,8 @@ export const reviews = pgTable("reviews", {
   listingId: varchar("listing_id")
     .notNull()
     .references(() => listings.id, { onDelete: "cascade" }),
+  transactionId: varchar("transaction_id")
+    .references(() => transactions.id, { onDelete: "set null" }),
   reviewerId: varchar("reviewer_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -251,12 +253,13 @@ export const reviews = pgTable("reviews", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   
-  // Ratings (1-5)
-  overallRating: integer("overall_rating").notNull(),
-  communicationRating: integer("communication_rating"),
-  asDescribedRating: integer("as_described_rating"),
-  punctualityRating: integer("punctuality_rating"),
-  professionalismRating: integer("professionalism_rating"),
+  // Ratings (1-10 for 0.5 star increments, displayed as 0.5-5.0 stars)
+  // Internal: 1-10, Display: divide by 2 for 0.5-5.0 range
+  overallRating: integer("overall_rating").notNull(), // 1-10
+  communicationRating: integer("communication_rating"), // 1-10
+  asDescribedRating: integer("as_described_rating"), // 1-10 (item quality)
+  punctualityRating: integer("punctuality_rating"), // 1-10 (timeliness)
+  professionalismRating: integer("professionalism_rating"), // 1-10
   
   // Review content
   reviewTitle: varchar("review_title", { length: 200 }),
@@ -314,6 +317,8 @@ export const cancellationComments = pgTable("cancellation_comments", {
   listingId: varchar("listing_id")
     .notNull()
     .references(() => listings.id, { onDelete: "cascade" }),
+  transactionId: varchar("transaction_id")
+    .references(() => transactions.id, { onDelete: "set null" }),
   cancelledByUserId: varchar("cancelled_by_user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -325,6 +330,8 @@ export const cancellationComments = pgTable("cancellation_comments", {
   // Metadata
   cancelledRole: varchar("cancelled_role", { length: 20 }).notNull(), // buyer or seller
   cancellationTiming: varchar("cancellation_timing", { length: 50 }),
+  isLastMinuteCancellation: boolean("is_last_minute_cancellation").default(false), // Within 24 hours of scheduled meetup
+  hoursBeforeMeetup: integer("hours_before_meetup"), // How many hours before scheduled meetup
   cancellationReasonCategory: varchar("cancellation_reason_category", { length: 100 }),
   
   // Response from other party
@@ -368,6 +375,7 @@ export const userStatistics = pgTable("user_statistics", {
   totalSales: integer("total_sales").default(0),
   successfulSales: integer("successful_sales").default(0),
   cancelledBySeller: integer("cancelled_by_seller").default(0),
+  lastMinuteCancelsBySeller: integer("last_minute_cancels_by_seller").default(0), // Anti-fraud metric
   cancelledByBuyerOnSeller: integer("cancelled_by_buyer_on_seller").default(0),
   sellerNoShows: integer("seller_no_shows").default(0),
   buyerNoShowsOnSeller: integer("buyer_no_shows_on_seller").default(0),
@@ -376,6 +384,7 @@ export const userStatistics = pgTable("user_statistics", {
   totalPurchases: integer("total_purchases").default(0),
   successfulPurchases: integer("successful_purchases").default(0),
   cancelledByBuyer: integer("cancelled_by_buyer").default(0),
+  lastMinuteCancelsByBuyer: integer("last_minute_cancels_by_buyer").default(0), // Anti-fraud metric
   cancelledBySellerOnBuyer: integer("cancelled_by_seller_on_buyer").default(0),
   buyerNoShows: integer("buyer_no_shows").default(0),
   sellerNoShowsOnBuyer: integer("seller_no_shows_on_buyer").default(0),

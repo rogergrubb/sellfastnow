@@ -55,6 +55,12 @@ export const transactions = pgTable("transactions", {
   disputeOpenedAt: timestamp("dispute_opened_at"),
   disputeResolvedAt: timestamp("dispute_resolved_at"),
   
+  // Cancellation Details
+  cancelledBy: text("cancelled_by"), // User ID who cancelled
+  cancellationReason: text("cancellation_reason"),
+  isLastMinuteCancellation: boolean("is_last_minute_cancellation").default(false),
+  hoursBeforeMeetup: integer("hours_before_meetup"),
+  
   // Timestamps
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

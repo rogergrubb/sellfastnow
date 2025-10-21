@@ -11,6 +11,8 @@ import { ObjectPermission } from "./objectAcl";
 import { upload } from "./cloudinary";
 import { eq } from "drizzle-orm";
 import transactionRoutes from "./routes/transactions";
+import reviewRoutes from "./routes/reviews";
+import reputationRoutes from "./routes/reputation";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -48,6 +50,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/transactions", transactionRoutes);
 
   // ======================
+  // Review Routes
+  // ======================
+  app.use("/api/reviews", reviewRoutes);
+
+  // ======================
+  // Reputation Routes
+  // ======================
+  app.use("/api/reputation", reputationRoutes);
+
+  // ======================
   // User Routes
   // ======================
   app.get("/api/users/:id", async (req, res) => {
@@ -63,6 +75,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Get top-rated users
+  app.get("/api/users/top-rated", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 6;
+      const { userStatistics, users } = await import("../shared/schema");
+      const { desc } = await import("drizzle-orm");
+      
+      const topUsers = await db.query.userStatistics.findMany({
+        limit,
+        orderBy: [desc(userStatistics.averageRating), desc(userStatistics.totalReviewsReceived)],
+        where: (stats, { gte }) => gte(stats.totalReviewsReceived, 5),
+        with: {
+          user: {
+            columns: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              profileImageUrl: true,
+            },
+          },
+        },
+      });
+
+      const formattedUsers = topUsers.map((stat: any) => ({
+        id: stat.user.id,
+        firstName: stat.user.firstName,
+        lastName: stat.user.lastName,
+        profileImageUrl: stat.user.profileImageUrl,
+        rating: parseFloat(stat.averageRating || "0"),
+        transactions: (stat.totalSales || 0) + (stat.totalPurchases || 0),
+      }));
+
+      res.json(formattedUsers);
+    } catch (error) {
+      console.error("Error fetching top-rated users:", error);
+      res.status(500).json({ message: "Failed to fetch top-rated users" });
     }
   });
 
