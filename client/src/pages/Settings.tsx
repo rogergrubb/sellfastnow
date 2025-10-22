@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/lib/AuthContext";act-query";
+import { useAuth } from "@/lib/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -783,7 +783,10 @@ export default function Settings() {
                   </div>
                 </div>
                 {currentUser?.emailVerified ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-md border border-green-200">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span className="text-sm font-medium">Verified</span>
+                  </div>
                 ) : (
                   <Button 
                     size="sm" 
@@ -804,7 +807,10 @@ export default function Settings() {
                   </div>
                 </div>
                 {currentUser?.phoneVerified ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-md border border-green-200">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span className="text-sm font-medium">Verified</span>
+                  </div>
                 ) : (
                   <Button 
                     size="sm" 
