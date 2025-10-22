@@ -51,6 +51,7 @@ async function syncUserFromClerk(userId: string) {
     let user = await storage.getUser(userId);
     
     if (!user) {
+      // New user - create from Clerk data
       const clerkUser = await clerkClient.users.getUser(userId);
       
       await storage.upsertUser({
@@ -59,6 +60,14 @@ async function syncUserFromClerk(userId: string) {
         firstName: clerkUser.firstName || "",
         lastName: clerkUser.lastName || "",
         profileImageUrl: clerkUser.imageUrl || "",
+        emailVerified: true, // Clerk requires email verification before login
+      });
+      
+      user = await storage.getUser(userId);
+    } else if (!user.emailVerified) {
+      // Existing user without emailVerified flag - update it
+      await storage.updateUserProfile(userId, {
+        emailVerified: true, // Clerk requires email verification before login
       });
       
       user = await storage.getUser(userId);
