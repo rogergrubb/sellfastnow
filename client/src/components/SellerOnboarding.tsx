@@ -208,15 +208,16 @@ export default function SellerOnboarding() {
     );
   }
 
-  // No account yet - show benefits landing first
-  if (showBenefits) {
+  // No account yet - show benefits landing first (only if user hasn't seen it yet)
+  if (!status?.hasAccount && showBenefits) {
     return (
       <SellerBenefitsLanding onGetStarted={() => setShowBenefits(false)} />
     );
   }
 
-  // After benefits, show Stripe setup
-  return (
+  // After benefits, show Stripe setup (or if user already started but didn't complete)
+  if (!status?.hasAccount || !status?.onboardingComplete) {
+    return (
     <Card>
       <CardHeader>
         <CardTitle>Become a Seller</CardTitle>
@@ -279,10 +280,14 @@ export default function SellerOnboarding() {
         </Button>
 
         <p className="text-xs text-center text-muted-foreground">
-          Powered by Stripe Connect. Your information is secure and encrypted.
+          Powered by Stripe — the most trusted online transaction service in the business. Your information is secure and encrypted.
         </p>
       </CardContent>
     </Card>
-  );
+    );
+  }
+
+  // Fallback - should never reach here
+  return null;
 }
 

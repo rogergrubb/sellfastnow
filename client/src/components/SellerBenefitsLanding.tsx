@@ -107,7 +107,7 @@ export function SellerBenefitsLanding({ onGetStarted }: SellerBenefitsLandingPro
         </Button>
         
         <p className="text-sm text-muted-foreground mt-4">
-          Powered by Stripe — secure, encrypted payments
+          Powered by Stripe — the most trusted online transaction service in the business
         </p>
       </div>
     </div>
