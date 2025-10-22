@@ -8,17 +8,20 @@ interface SellerBenefitsLandingProps {
 export function SellerBenefitsLanding({ onGetStarted }: SellerBenefitsLandingProps) {
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Hero Section */}
-      <div className="text-center mb-12">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-8">
+      {/* Hero Section - Compact */}
+      <div className="mb-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex-1 text-left">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
+            <h1 className="text-3xl md:text-4xl font-bold mb-3 leading-tight">
               Sell locally.
               <br />
               Get paid instantly.
             </h1>
-            <p className="text-lg text-muted-foreground mb-6">
+            <p className="text-base text-muted-foreground mb-2">
               SellFast.Now handles payments and protection — you keep 97.5% of every sale.
+            </p>
+            <p className="text-sm text-muted-foreground font-semibold">
+              💳 Accept up to $999,999 per transaction • No monthly limits
             </p>
           </div>
           
@@ -26,87 +29,87 @@ export function SellerBenefitsLanding({ onGetStarted }: SellerBenefitsLandingPro
             <img 
               src="/seller-benefits-hero.png" 
               alt="Payment received notification" 
-              className="w-full max-w-sm"
+              className="w-full max-w-xs"
             />
           </div>
         </div>
       </div>
 
-      {/* Benefits Grid */}
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
+      {/* Benefits Grid - Compact */}
+      <div className="grid md:grid-cols-2 gap-4 mb-6">
         {/* Benefit 1: Instant Payouts */}
-        <div className="flex gap-4">
-          <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
-            <DollarSign className="h-6 w-6 text-yellow-600" />
+        <div className="flex gap-3">
+          <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <DollarSign className="h-5 w-5 text-yellow-600" />
           </div>
           <div>
-            <h3 className="text-xl font-bold mb-2">Instant Payouts</h3>
-            <p className="text-muted-foreground">
+            <h3 className="text-lg font-bold mb-1">Instant Payouts</h3>
+            <p className="text-sm text-muted-foreground">
               Get paid directly to your bank — no waiting
             </p>
           </div>
         </div>
 
         {/* Benefit 2: Safe Transactions */}
-        <div className="flex gap-4">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-            <Shield className="h-6 w-6 text-blue-600" />
+        <div className="flex gap-3">
+          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <Shield className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <h3 className="text-xl font-bold mb-2">Safe Transactions</h3>
-            <p className="text-muted-foreground">
+            <h3 className="text-lg font-bold mb-1">Safe Transactions</h3>
+            <p className="text-sm text-muted-foreground">
               Buyer funds held securely until delivery confirmed
             </p>
           </div>
         </div>
 
         {/* Benefit 3: Low Fees, High Profits */}
-        <div className="flex gap-4">
-          <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-            <Zap className="h-6 w-6 text-purple-600" />
+        <div className="flex gap-3">
+          <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <Zap className="h-5 w-5 text-purple-600" />
           </div>
           <div>
-            <h3 className="text-xl font-bold mb-2">Low Fees, High Profits</h3>
-            <p className="text-muted-foreground">
+            <h3 className="text-lg font-bold mb-1">Low Fees, High Profits</h3>
+            <p className="text-sm text-muted-foreground">
               Keep 97.5% — less than half most platforms take
             </p>
           </div>
         </div>
 
         {/* Benefit 4: Cashless & Safe */}
-        <div className="flex gap-4">
-          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-            <ShieldCheck className="h-6 w-6 text-green-600" />
+        <div className="flex gap-3">
+          <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <ShieldCheck className="h-5 w-5 text-green-600" />
           </div>
           <div>
-            <h3 className="text-xl font-bold mb-2">Cashless & Safe</h3>
-            <p className="text-muted-foreground">
+            <h3 className="text-lg font-bold mb-1">Cashless & Safe</h3>
+            <p className="text-sm text-muted-foreground">
               No cash meetups — especially safe for women sellers
             </p>
           </div>
         </div>
       </div>
 
-      {/* Cashless Safety Image */}
-      <div className="mb-8 rounded-lg overflow-hidden">
+      {/* Cashless Safety Image - Smaller */}
+      <div className="mb-6 rounded-lg overflow-hidden max-h-64">
         <img 
           src="/cashless-safety.png" 
           alt="Safe cashless transaction between seller and buyer" 
-          className="w-full"
+          className="w-full h-full object-cover"
         />
       </div>
 
-      {/* CTA Button */}
+      {/* CTA Button - Compact */}
       <div className="text-center">
         <Button 
           onClick={onGetStarted}
           size="lg"
-          className="w-full md:w-auto px-12 py-6 text-lg font-semibold"
+          className="w-full md:w-auto px-8 py-4 text-base font-semibold"
         >
           Start Selling — Get Paid Today
         </Button>
         
-        <p className="text-sm text-muted-foreground mt-4">
+        <p className="text-xs text-muted-foreground mt-3">
           Powered by Stripe — the most trusted online transaction service in the business
         </p>
       </div>
