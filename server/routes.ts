@@ -13,6 +13,7 @@ import { eq } from "drizzle-orm";
 import transactionRoutes from "./routes/transactions";
 import reviewRoutes from "./routes/reviews";
 import reputationRoutes from "./routes/reputation";
+import stripeConnectRoutes from "./routes/stripe-connect";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -48,6 +49,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Transaction Routes (NEW - ENABLED)
   // ======================
   app.use("/api/transactions", transactionRoutes);
+
+  // ======================
+  // Stripe Connect Routes
+  // ======================
+  app.use("/api/stripe-connect", stripeConnectRoutes);
 
   // ======================
   // Review Routes

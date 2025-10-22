@@ -45,6 +45,7 @@ export const users = pgTable("users", {
   
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
+  stripeAccountId: varchar("stripe_account_id"), // Stripe Connect Express account for sellers
   reviewEmailsEnabled: boolean("review_emails_enabled").notNull().default(true),
   
   // AI usage tracking
