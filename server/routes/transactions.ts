@@ -315,3 +315,73 @@ router.post("/auto-release", async (req, res) => {
 });
 
 export default router;
+// Get pending transactions for current user
+router.get("/pending", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.auth.userId;
+    
+    // Get all transactions where user is buyer or seller and status requires action
+    const pendingStatuses = ['pending_payment', 'escrow', 'pending_meetup'];
+    
+    const transactions = await db
+      .select({
+        id: transactionsTable.id,
+        listingId: transactionsTable.listingId,
+        amount: transactionsTable.amount,
+        status: transactionsTable.status,
+        createdAt: transactionsTable.createdAt,
+        buyerId: transactionsTable.buyerId,
+        sellerId: transactionsTable.sellerId,
+        listingTitle: listings.title,
+        listingImage: sql<string>`(
+          SELECT "imageUrl" 
+          FROM listing_images 
+          WHERE "listingId" = ${transactionsTable.listingId} 
+          ORDER BY "order" ASC 
+          LIMIT 1
+        )`,
+      })
+      .from(transactionsTable)
+      .leftJoin(listings, eq(transactionsTable.listingId, listings.id))
+      .where(
+        and(
+          or(
+            eq(transactionsTable.buyerId, userId),
+            eq(transactionsTable.sellerId, userId)
+          ),
+          sql`${transactionsTable.status} IN (${sql.join(pendingStatuses.map(s => sql`${s}`), sql`, `)})`
+        )
+      )
+      .orderBy(desc(transactionsTable.createdAt));
+
+    // Enrich with other party information
+    const enrichedTransactions = await Promise.all(
+      transactions.map(async (tx) => {
+        const isBuyer = tx.buyerId === userId;
+        const otherPartyId = isBuyer ? tx.sellerId : tx.buyerId;
+        
+        const otherParty = await db
+          .select({
+            firstName: users.firstName,
+            lastName: users.lastName,
+          })
+          .from(users)
+          .where(eq(users.id, otherPartyId))
+          .limit(1);
+
+        return {
+          ...tx,
+          role: isBuyer ? 'buyer' : 'seller',
+          otherPartyName: otherParty[0] 
+            ? `${otherParty[0].firstName} ${otherParty[0].lastName}`
+            : 'Unknown User',
+        };
+      })
+    );
+
+    res.json(enrichedTransactions);
+  } catch (error: any) {
+    console.error("Error fetching pending transactions:", error);
+    res.status(500).json({ message: "Failed to fetch pending transactions" });
+  }
+});

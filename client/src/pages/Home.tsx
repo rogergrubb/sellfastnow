@@ -4,6 +4,7 @@ import Hero from "@/components/Hero";
 import CategoryFilters from "@/components/CategoryFilters";
 import FilterSidebar from "@/components/FilterSidebar";
 import ListingCard from "@/components/ListingCard";
+import { PendingDeals } from "@/components/PendingDeals";
 import MapView from "@/components/MapView";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal, Loader2, Map, List, Shield, Star, TrendingUp, Award, CreditCard, Lock } from "lucide-react";
@@ -252,6 +253,11 @@ export default function Home() {
             </div>
           )}
         </div>
+      </div>
+      
+      {/* Pending Deals Dashboard */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <PendingDeals />
       </div>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

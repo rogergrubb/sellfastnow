@@ -1,6 +1,8 @@
 import { clerkMiddleware, getAuth, clerkClient } from "@clerk/express";
 import type { Express, RequestHandler } from "express";
 import { storage } from "./storage";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 
 // Verify Clerk secret key is set
 if (!process.env.CLERK_SECRET_KEY) {
@@ -9,6 +11,34 @@ if (!process.env.CLERK_SECRET_KEY) {
 
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
+  
+  // Security headers with Helmet
+  app.use(helmet({
+    contentSecurityPolicy: false, // Disabled for Vite dev server compatibility
+    crossOriginEmbedderPolicy: false,
+  }));
+  
+  // Rate limiting for authentication endpoints
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: 'Too many authentication attempts, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  
+  // Stricter rate limiting for login attempts
+  const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // Limit each IP to 5 login attempts per windowMs
+    message: 'Too many login attempts, please try again after 15 minutes.',
+    skipSuccessfulRequests: true, // Don't count successful logins
+  });
+  
+  // Apply rate limiters
+  app.use('/api/auth', authLimiter);
+  app.use('/api/sign-in', loginLimiter);
+  app.use('/api/sign-up', loginLimiter);
   
   // Apply Clerk middleware globally (lax mode - doesn't enforce auth)
   app.use(clerkMiddleware({
