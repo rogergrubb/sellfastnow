@@ -1543,6 +1543,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete listing
+  app.delete("/api/listings/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.auth.userId;
+
+      // First check if the listing exists and belongs to the user
+      const listing = await storage.getListingById(id);
+      
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+
+      if (listing.userId !== userId) {
+        return res.status(403).json({ message: "You don't have permission to delete this listing" });
+      }
+
+      await storage.deleteListing(id);
+      console.log(`🗑️ Listing ${id} deleted by user ${userId}`);
+      
+      res.status(200).json({ message: "Listing deleted successfully" });
+    } catch (error: any) {
+      console.error("❌ Error deleting listing:", error);
+      res.status(500).json({ message: "Failed to delete listing" });
+    }
+  });
+
+  // Update listing status (mark as sold, etc.)
+  app.put("/api/listings/:id/status", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const userId = req.auth.userId;
+
+      // Check if the listing belongs to the user
+      const listing = await storage.getListingById(id);
+      
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+
+      if (listing.userId !== userId) {
+        return res.status(403).json({ message: "You don't have permission to update this listing" });
+      }
+
+      const updatedListing = await storage.updateListingStatus(id, status);
+      console.log(`✏️ Listing ${id} status updated to ${status} by user ${userId}`);
+      
+      res.status(200).json(updatedListing);
+    } catch (error: any) {
+      console.error("❌ Error updating listing status:", error);
+      res.status(500).json({ message: "Failed to update listing status" });
+    }
+  });
+
   // Batch create listings (for AI-generated items)
   app.post("/api/listings/batch", isAuthenticated, async (req: any, res) => {
     try {
