@@ -18,9 +18,17 @@ interface Transaction {
 }
 
 export function PendingDeals() {
+  const { data: user } = useQuery<{ id: string }>({ queryKey: ['/api/user'] });
+  
   const { data: pendingDeals = [], isLoading } = useQuery<Transaction[]>({
     queryKey: ['/api/transactions/pending'],
+    enabled: !!user, // Only fetch if user is authenticated
   });
+
+  // Don't show anything if user is not logged in
+  if (!user) {
+    return null;
+  }
 
   if (isLoading) {
     return (
