@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, AlertCircle, CreditCard, DollarSign, Shield } from "lucide-react";
+import { SellerBenefitsLanding } from "@/components/SellerBenefitsLanding";
 
 interface AccountStatus {
   hasAccount: boolean;
@@ -23,6 +24,7 @@ export default function SellerOnboarding() {
   const [status, setStatus] = useState<AccountStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [showBenefits, setShowBenefits] = useState(true);
 
   useEffect(() => {
     fetchAccountStatus();
@@ -206,7 +208,14 @@ export default function SellerOnboarding() {
     );
   }
 
-  // No account yet
+  // No account yet - show benefits landing first
+  if (showBenefits) {
+    return (
+      <SellerBenefitsLanding onGetStarted={() => setShowBenefits(false)} />
+    );
+  }
+
+  // After benefits, show Stripe setup
   return (
     <Card>
       <CardHeader>
