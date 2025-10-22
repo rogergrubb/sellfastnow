@@ -68,6 +68,7 @@ import { QRUploadWidget } from "@/components/QRUploadWidget";
 import { PaymentModal } from "@/components/PaymentModal";
 import { MultiItemGroupingModal } from "@/components/MultiItemGroupingModal";
 import { PhotoProcessingChoiceModal } from "@/components/PhotoProcessingChoiceModal";
+import { PhotoReviewModal } from "@/components/PhotoReviewModal";
 
 const formSchema = insertListingSchema.omit({ userId: true });
 
@@ -232,6 +233,7 @@ export default function PostAdEnhanced() {
   const [uploadType, setUploadType] = useState<"different-items" | "one-item" | "lot-collection" | "">(""); 
 
   // Photo processing choice modal states
+  const [showPhotoReviewModal, setShowPhotoReviewModal] = useState(false);
   const [showPhotoProcessingModal, setShowPhotoProcessingModal] = useState(false);
   const [isMultipleAngles, setIsMultipleAngles] = useState<boolean | null>(null);
 
@@ -1072,15 +1074,30 @@ export default function PostAdEnhanced() {
       return;
     }
 
-    // If multiple images and user hasn't made a choice yet, show the modal first
-    if (uploadedImages.length > 1 && isMultipleAngles === null) {
-      setShowPhotoProcessingModal(true);
-      return;
-    }
+    // First, show photo review modal to let user delete/reorganize
+    setShowPhotoReviewModal(true);
+  };
 
-    const estimated = calculateEstimatedTime(uploadedImages.length);
-    setEstimatedTime(estimated);
-    setShowWarningModal(true);
+  // Handler for photo review confirmation
+  const handlePhotoReviewConfirm = (updatedPhotos: string[]) => {
+    setUploadedImages(updatedPhotos);
+    form.setValue('images', updatedPhotos);
+    setShowPhotoReviewModal(false);
+    
+    // Now show processing choice modal if multiple images
+    if (updatedPhotos.length > 1 && isMultipleAngles === null) {
+      setShowPhotoProcessingModal(true);
+    } else {
+      // Single image, go straight to warning modal
+      const estimated = calculateEstimatedTime(updatedPhotos.length);
+      setEstimatedTime(estimated);
+      setShowWarningModal(true);
+    }
+  };
+
+  // Handler for photo review cancellation
+  const handlePhotoReviewCancel = () => {
+    setShowPhotoReviewModal(false);
   };
 
   // Handler for when user confirms they want to use AI
@@ -3268,7 +3285,15 @@ export default function PostAdEnhanced() {
         }}
       />
 
-      {/* Photo Processing Choice Modal - Shows immediately after upload to ask how to process photos */}
+      {/* Photo Review Modal - Shows first to let user delete/reorganize photos */}
+      <PhotoReviewModal
+        open={showPhotoReviewModal}
+        photos={uploadedImages}
+        onConfirm={handlePhotoReviewConfirm}
+        onCancel={handlePhotoReviewCancel}
+      />
+
+      {/* Photo Processing Choice Modal - Shows after review to ask how to process photos */}
       <PhotoProcessingChoiceModal
         open={showPhotoProcessingModal}
         photoCount={uploadedImages.length}
