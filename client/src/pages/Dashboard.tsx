@@ -586,44 +586,60 @@ export default function Dashboard() {
 
               {/* Listing Management Section */}
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0 pb-4">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Button
-                      variant={listingFilter === "active" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setListingFilter("active")}
-                      data-testid="button-filter-active"
-                    >
-                      Active
-                    </Button>
-                    <Button
-                      variant={listingFilter === "draft" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setListingFilter("draft")}
-                      data-testid="button-filter-draft"
-                    >
-                      Drafts
-                    </Button>
-                    <Button
-                      variant={listingFilter === "sold" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setListingFilter("sold")}
-                      data-testid="button-filter-sold"
-                    >
-                      Sold
-                    </Button>
-                    <Button
-                      variant={listingFilter === "expired" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setListingFilter("expired")}
-                      data-testid="button-filter-expired"
-                    >
-                      Expired
-                    </Button>
+                <CardHeader className="space-y-4 pb-4">
+                  {/* Top Row: Filters and Primary Actions */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button
+                        variant={listingFilter === "active" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setListingFilter("active")}
+                        data-testid="button-filter-active"
+                      >
+                        Active
+                      </Button>
+                      <Button
+                        variant={listingFilter === "draft" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setListingFilter("draft")}
+                        data-testid="button-filter-draft"
+                      >
+                        Drafts
+                      </Button>
+                      <Button
+                        variant={listingFilter === "sold" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setListingFilter("sold")}
+                        data-testid="button-filter-sold"
+                      >
+                        Sold
+                      </Button>
+                      <Button
+                        variant={listingFilter === "expired" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setListingFilter("expired")}
+                        data-testid="button-filter-expired"
+                      >
+                        Expired
+                      </Button>
+                    </div>
+                    <Link href="/post-ad">
+                      <Button size="default" data-testid="button-create-listing">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create New Listing
+                      </Button>
+                    </Link>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {isSelectMode ? (
-                      <>
+
+                  {/* Bulk Actions Bar */}
+                  {isSelectMode ? (
+                    <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-blue-900">
+                          {selectedListings.length} item(s) selected
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -655,28 +671,25 @@ export default function Dashboard() {
                           data-testid="button-delete-selected"
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Selected ({selectedListings.length})
+                          Delete Selected
                         </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsSelectMode(true)}
-                          data-testid="button-select-mode"
-                        >
-                          Select Multiple
-                        </Button>
-                        <Link href="/post-ad">
-                          <Button data-testid="button-create-listing">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Create New Listing
-                          </Button>
-                        </Link>
-                      </>
-                    )}
-                  </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="default"
+                        onClick={() => setIsSelectMode(true)}
+                        data-testid="button-select-mode"
+                        className="border-2 border-dashed border-gray-300 hover:border-red-400 hover:bg-red-50 hover:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Multiple Items
+                      </Button>
+                      <span className="text-xs text-muted-foreground">Select multiple listings to delete at once</span>
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Search and Sort */}
