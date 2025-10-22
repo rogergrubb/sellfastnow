@@ -636,16 +636,29 @@ export default function Dashboard() {
                         Expired
                       </Button>
                     </div>
-                    <Link href="/post-ad">
-                      <Button size="default" data-testid="button-create-listing">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create New Listing
-                      </Button>
-                    </Link>
+                    <div className="flex flex-col gap-2">
+                      <Link href="/post-ad">
+                        <Button size="default" className="w-full" data-testid="button-create-listing">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create New Listing
+                        </Button>
+                      </Link>
+                      {!isSelectMode && (
+                        <Button
+                          size="default"
+                          onClick={() => setIsSelectMode(true)}
+                          data-testid="button-select-mode"
+                          className="w-full bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Multiple Items
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Bulk Actions Bar */}
-                  {isSelectMode ? (
+                  {isSelectMode && (
                     <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-blue-900">
@@ -665,7 +678,6 @@ export default function Dashboard() {
                           Cancel
                         </Button>
                         <Button
-                          variant="destructive"
                           size="sm"
                           onClick={() => {
                             if (selectedListings.length === 0) {
@@ -682,25 +694,12 @@ export default function Dashboard() {
                           }}
                           disabled={bulkDeleteMutation.isPending || selectedListings.length === 0}
                           data-testid="button-delete-selected"
+                          className="bg-red-600 hover:bg-red-700 text-white"
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Delete Selected
                         </Button>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="default"
-                        onClick={() => setIsSelectMode(true)}
-                        data-testid="button-select-mode"
-                        className="border-2 border-dashed border-gray-300 hover:border-red-400 hover:bg-red-50 hover:text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Multiple Items
-                      </Button>
-                      <span className="text-xs text-muted-foreground">Select multiple listings to delete at once</span>
                     </div>
                   )}
                 </CardHeader>
