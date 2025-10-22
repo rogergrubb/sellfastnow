@@ -144,12 +144,12 @@ export function MultiItemGroupingModal({
 
           <Button
             onClick={onManualRegroup}
-            variant="ghost"
+            variant="outline"
             size="lg"
-            className="w-full"
+            className="w-full border-2 border-primary/50 hover:border-primary hover:bg-primary/10 font-semibold"
             data-testid="button-manual-regroup"
           >
-            <Settings2 className="mr-2 h-4 w-4" />
+            <Settings2 className="mr-2 h-5 w-5" />
             Let Me Regroup Manually
           </Button>
         </div>
