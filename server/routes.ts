@@ -1550,7 +1550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.auth.userId;
 
       // First check if the listing exists and belongs to the user
-      const listing = await storage.getListingById(id);
+      const listing = await storage.getListing(id);
       
       if (!listing) {
         return res.status(404).json({ message: "Listing not found" });
@@ -1578,7 +1578,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.auth.userId;
 
       // Check if the listing belongs to the user
-      const listing = await storage.getListingById(id);
+      const listing = await storage.getListing(id);
       
       if (!listing) {
         return res.status(404).json({ message: "Listing not found" });
