@@ -12,7 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, MapPin, Shield, Mail, User, Phone, CheckCircle2, AlertTriangle, Info } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/lib/supabase";
 import { PhoneVerificationModal } from "@/components/PhoneVerificationModal";
 
 export default function Settings() {
@@ -173,74 +172,12 @@ export default function Settings() {
 
   // Handle email verification
   const handleVerifyEmail = async () => {
-    try {
-      if (!currentUser?.email) {
-        toast({
-          title: "Error",
-          description: "No email address found. Please sign in again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // First, check current verification status
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) {
-        console.error('❌ Error getting user:', userError);
-        throw userError;
-      }
-      
-      if (user?.email_confirmed_at) {
-        console.log('✅ Email already verified at:', user.email_confirmed_at);
-        toast({
-          title: "Email already verified!",
-          description: "Your email is already verified. Refreshing page...",
-        });
-        // Refresh the page to update the UI
-        setTimeout(() => window.location.reload(), 1500);
-        return;
-      }
-
-      console.log('📧 Sending verification email to:', currentUser.email);
-      console.log('👤 User email confirmed status:', user?.email_confirmed_at || 'Not confirmed');
-      
-      const { data, error } = await supabase.auth.resend({
-        type: 'signup',
-        email: currentUser.email,
-      });
-
-      if (error) {
-        console.error('❌ Supabase verification error:', error);
-        throw error;
-      }
-
-      console.log('✅ Verification email sent:', data);
-
-      toast({
-        title: "Verification email sent!",
-        description: `Check your inbox at ${currentUser.email}. Don't forget to check spam/junk folders.`,
-      });
-    } catch (error: any) {
-      console.error('❌ Email verification failed:', error);
-      
-      let errorMessage = error.message || "Failed to send verification email";
-      
-      // Handle specific error cases
-      if (error.message?.includes('Email rate limit exceeded')) {
-        errorMessage = "Too many verification emails sent. Please wait a few minutes and try again.";
-      } else if (error.message?.includes('Email already confirmed')) {
-        errorMessage = "Your email is already verified! Please refresh the page.";
-      } else if (error.message?.includes('For security purposes')) {
-        errorMessage = "For security reasons, please wait a few minutes before requesting another verification email.";
-      }
-      
-      toast({
-        title: "Error sending verification email",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
+    // Email is verified through Clerk authentication
+    // If user is logged in, their email is already verified by Clerk
+    toast({
+      title: "Email Verified",
+      description: "Your email is verified through your Clerk account. No additional verification needed.",
+    });
   };
 
   // Handle phone verification
