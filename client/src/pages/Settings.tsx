@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/lib/AuthContext";act-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import { PhoneVerificationModal } from "@/components/PhoneVerificationModal";
 
 export default function Settings() {
   const { toast } = useToast();
+  const { getToken } = useAuth();
   
   // Profile Information
   const [firstName, setFirstName] = useState("");
@@ -194,8 +196,7 @@ export default function Settings() {
     // Auto-save the phone number if it's different from saved value
     if (phoneNumber !== currentUser?.phoneNumber) {
       try {
-        const session = await supabase.auth.getSession();
-        const token = session.data.session?.access_token;
+        const token = await getToken();
         
         if (!token) {
           throw new Error("Not authenticated");
@@ -247,8 +248,7 @@ export default function Settings() {
   // Save settings mutation
   const saveSettingsMutation = useMutation({
     mutationFn: async (settings: any) => {
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
+      const token = await getToken();
       
       if (!token) {
         throw new Error("Not authenticated");
