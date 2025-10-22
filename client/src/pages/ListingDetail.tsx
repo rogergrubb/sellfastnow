@@ -15,6 +15,7 @@ import { CancelTransactionModal } from "@/components/CancelTransactionModal";
 import { MakeOfferModal } from "@/components/MakeOfferModal";
 import { MessageModal } from "@/components/MessageModal";
 import { ContactInfoDisplay } from "@/components/ContactInfoDisplay";
+import CheckoutModal from "@/components/CheckoutModal";
 import { VerificationBadges } from "@/components/VerificationBadge";
 import { MeetingPreferencesDisplay } from "@/components/SafetyPrompt";
 import {
@@ -46,6 +47,7 @@ export default function ListingDetail() {
   const [isCancelTransactionModalOpen, setIsCancelTransactionModalOpen] = useState(false);
   const [isMakeOfferModalOpen, setIsMakeOfferModalOpen] = useState(false);
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
 
   // Fetch current user
   const { data: currentUser } = useQuery<User>({
@@ -460,9 +462,22 @@ export default function ListingDetail() {
             {/* Action Buttons - Desktop */}
             <Card className="p-6 hidden lg:block" data-testid="card-desktop-actions">
               <div className="space-y-3">
+                {currentUser && data?.listing.userId !== currentUser.id && data?.listing.status === 'active' && (
+                  <Button 
+                    className="w-full" 
+                    size="lg" 
+                    onClick={() => setIsCheckoutModalOpen(true)}
+                    data-testid="button-buy-now"
+                  >
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Buy Now - ${parseFloat(data.listing.price).toFixed(2)}
+                  </Button>
+                )}
+                
                 <Button 
                   className="w-full" 
                   size="lg" 
+                  variant={currentUser && data?.listing.userId !== currentUser.id && data?.listing.status === 'active' ? 'outline' : 'default'}
                   onClick={handleMessageSeller}
                   data-testid="button-message-seller"
                 >
@@ -628,6 +643,14 @@ export default function ListingDetail() {
               sellerId={seller.id}
               sellerName={getSellerName(seller)}
               listingTitle={listing.title}
+            />
+          )}
+          {data && (
+            <CheckoutModal
+              listing={listing}
+              seller={seller}
+              open={isCheckoutModalOpen}
+              onClose={() => setIsCheckoutModalOpen(false)}
             />
           )}
         </>

@@ -6,7 +6,7 @@ import FilterSidebar from "@/components/FilterSidebar";
 import ListingCard from "@/components/ListingCard";
 import MapView from "@/components/MapView";
 import { Button } from "@/components/ui/button";
-import { SlidersHorizontal, Loader2, Map, List, Shield, Star, TrendingUp, Award } from "lucide-react";
+import { SlidersHorizontal, Loader2, Map, List, Shield, Star, TrendingUp, Award, CreditCard, Lock } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery as useAuthQuery } from "@tanstack/react-query";
 import {
@@ -139,12 +139,12 @@ export default function Home() {
               <h2 className="text-3xl font-bold text-gray-900">Safe & Trusted Marketplace</h2>
             </div>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Unlike Facebook Marketplace and Craigslist, we verify every user and track reputation to protect you from scams and fraud.
+              Unlike Facebook Marketplace and Craigslist, we verify every user, track reputation, and offer secure electronic payments with escrow protection.
             </p>
           </div>
 
           {/* Trust Features */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-12">
             <div className="bg-white rounded-lg p-6 text-center shadow-sm">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Shield className="w-6 h-6 text-blue-600" />
@@ -176,7 +176,47 @@ export default function Home() {
               <h3 className="font-semibold text-gray-900 mb-2">Transaction History</h3>
               <p className="text-sm text-gray-600">See every user's complete track record</p>
             </div>
+
+            <div className="bg-white rounded-lg p-6 text-center shadow-sm border-2 border-blue-200">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CreditCard className="w-6 h-6 text-blue-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Secure Payments</h3>
+              <p className="text-sm text-gray-600">No cash needed - pay safely online</p>
+            </div>
+
+            <div className="bg-white rounded-lg p-6 text-center shadow-sm border-2 border-blue-200">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Lock className="w-6 h-6 text-green-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Escrow Protection</h3>
+              <p className="text-sm text-gray-600">Funds held until you confirm receipt</p>
+            </div>
           </div>
+
+          {/* Payment Feature Highlight */}
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-8 text-white text-center">
+            <h3 className="text-2xl font-bold mb-3">Safe Electronic Payments - No Cash Required</h3>
+            <p className="text-lg mb-4 opacity-90">
+              Pay securely with your credit card. Your money is held safely until you confirm receipt of the item.
+            </p>
+            <div className="flex items-center justify-center gap-8 text-sm">
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                <span>Buyer Protection</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Lock className="w-5 h-5" />
+                <span>Seller Protection</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
+                <span>2.5% Fee</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
           {/* Top Rated Sellers */}
           {topSellers.length > 0 && (

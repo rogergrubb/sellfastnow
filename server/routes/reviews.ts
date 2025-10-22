@@ -60,8 +60,32 @@ router.post("/", isAuthenticated, async (req: any, res) => {
       }
     }
 
-    // Check if user already reviewed this transaction/listing
+    // Check if transaction exists and is completed
     if (transactionId) {
+      const transaction = await db.query.transactions.findFirst({
+        where: eq(transactions.id, transactionId),
+      });
+
+      if (!transaction) {
+        return res.status(404).json({
+          error: "Transaction not found"
+        });
+      }
+
+      if (transaction.status !== "completed") {
+        return res.status(400).json({
+          error: "Can only review completed transactions"
+        });
+      }
+
+      // Verify user is part of the transaction
+      if (transaction.buyerId !== userId && transaction.sellerId !== userId) {
+        return res.status(403).json({
+          error: "You are not authorized to review this transaction"
+        });
+      }
+
+      // Check if user already reviewed this transaction
       const existingReview = await db.query.reviews.findFirst({
         where: and(
           eq(reviews.transactionId, transactionId),

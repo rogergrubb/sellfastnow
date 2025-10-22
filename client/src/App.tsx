@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import PostAdEnhanced from "./pages/PostAdEnhanced";
 import ListingDetail from "./pages/ListingDetail";
 import Dashboard from "./pages/Dashboard";
+import Transactions from "./pages/Transactions";
 import UserProfile from "./pages/UserProfile";
 import TransactionHistory from "./pages/TransactionHistory";
 import CreateReview from "./pages/CreateReview";
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/post-ad" component={PostAdEnhanced} />
       <Route path="/listings/:id" component={ListingDetail} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/transactions" component={Transactions} />
       <Route path="/users/:userId" component={UserProfile} />
       <Route path="/users/:userId/history" component={TransactionHistory} />
       <Route path="/create-review/:token" component={CreateReview} />
