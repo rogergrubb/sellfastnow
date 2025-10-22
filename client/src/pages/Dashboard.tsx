@@ -240,20 +240,33 @@ export default function Dashboard() {
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
       const token = await getToken();
+      console.log('🔑 Bulk delete - Token:', token ? 'present' : 'missing');
+      console.log('🗑️ Attempting to delete listings:', ids);
+      
       const results = await Promise.all(
-        ids.map(id =>
-          fetch(`/api/listings/${id}`, {
+        ids.map(async id => {
+          const response = await fetch(`/api/listings/${id}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`,
             },
-          })
-        )
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ Failed to delete ${id}:`, response.status, errorText);
+          } else {
+            console.log(`✅ Successfully deleted ${id}`);
+          }
+          
+          return { response, id };
+        })
       );
       
-      const failed = results.filter(r => !r.ok);
+      const failed = results.filter(r => !r.response.ok);
       if (failed.length > 0) {
-        throw new Error(`Failed to delete ${failed.length} listing(s)`);
+        const firstError = await failed[0].response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(firstError.message || `Failed to delete ${failed.length} listing(s)`);
       }
       
       return results;
