@@ -102,8 +102,36 @@ export default function Settings() {
         ].filter(Boolean);
         setLocationInput(parts.join(", "));
       }
+      
+      // Auto-sync email verification status if not verified
+      // (One-time fix for existing Clerk users)
+      if (!currentUser.emailVerified) {
+        syncEmailVerification();
+      }
     }
   }, [currentUser]);
+  
+  // Sync email verification status from Clerk
+  const syncEmailVerification = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+      
+      const response = await fetch("/api/user/sync-verification", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        // Refresh user data to show updated verification status
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Error syncing email verification:", error);
+    }
+  };
 
   // Search for location suggestions with US prioritization
   const searchLocationSuggestions = async (query: string) => {

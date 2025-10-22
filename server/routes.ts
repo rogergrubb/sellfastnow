@@ -401,6 +401,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sync email verification from Clerk (one-time fix for existing users)
+  app.post("/api/user/sync-verification", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      
+      // Get current user
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // If already verified, no need to update
+      if (user.emailVerified) {
+        return res.json({ 
+          message: "Email already verified",
+          emailVerified: true 
+        });
+      }
+      
+      // Update emailVerified to true (user is authenticated via Clerk, so email must be verified)
+      await storage.updateUserProfile(userId, {
+        emailVerified: true,
+      });
+      
+      console.log(`✅ Synced email verification for user: ${user.email}`);
+      
+      res.json({ 
+        message: "Email verification status synced successfully",
+        emailVerified: true 
+      });
+    } catch (error: any) {
+      console.error("❌ Error syncing verification:", error);
+      res.status(500).json({ 
+        message: error.message || "Failed to sync verification status"
+      });
+    }
+  });
+
   // ======================
   // Image Upload Routes (Cloudflare R2 + Images)
   // ======================
