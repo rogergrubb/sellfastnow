@@ -312,6 +312,65 @@ export default function UserProfile() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Rating System Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Star className="h-5 w-5 text-primary" />
+                Our Rating System
+              </CardTitle>
+              <CardDescription>
+                How we build trust and transparency in our community
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div>
+                  <h4 className="font-semibold mb-2">⭐ 0.5 Star Increments</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Our rating system uses half-star precision (1.0 to 5.0) to provide more accurate feedback about your experience.
+                  </p>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <h4 className="font-semibold mb-2">✅ Verified Transactions Only</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Reviews can only be left after completing a transaction through our platform, ensuring all feedback is from real buyers and sellers.
+                  </p>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <h4 className="font-semibold mb-2">📊 Comprehensive Categories</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Rate your experience across multiple dimensions: communication, punctuality, item condition, and overall satisfaction.
+                  </p>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <h4 className="font-semibold mb-2">🛡️ Anti-Fraud Protection</h4>
+                  <p className="text-sm text-muted-foreground">
+                    We track cancellations and last-minute changes to identify unreliable users. Multiple cancellations affect your trust score.
+                  </p>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <h4 className="font-semibold mb-2">💯 Trust Score</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Your overall reputation is calculated from reviews, completed transactions, verification status, and reliability. Higher scores unlock benefits like priority placement and buyer trust.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="statistics" className="space-y-4">
