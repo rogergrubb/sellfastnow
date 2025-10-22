@@ -215,12 +215,10 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
           {/* Top Rated Sellers */}
           {topSellers.length > 0 && (
-            <div>
+            <div className="mt-8">
               <h3 className="text-xl font-semibold text-gray-900 mb-4 text-center">Top Rated Sellers This Month</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 {topSellers.map((seller: any) => (
