@@ -17,6 +17,17 @@ const router = Router();
 router.post("/create-account", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.auth.userId;
+    
+    // Debug: Check if Stripe key is loaded
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error("STRIPE_SECRET_KEY is not set!");
+      return res.status(500).json({ 
+        error: "Stripe is not configured. Please contact support." 
+      });
+    }
+    
+    console.log("Creating Stripe Connect account for user:", userId);
+    console.log("Stripe key starts with:", process.env.STRIPE_SECRET_KEY.substring(0, 10));
 
     // Get user details
     const user = await db.query.users.findFirst({
@@ -35,10 +46,12 @@ router.post("/create-account", isAuthenticated, async (req: any, res) => {
     }
 
     // Create Stripe Connect account
+    console.log("Calling Stripe API to create account for email:", user.email);
     const account = await stripeConnectService.createConnectedAccount(
       user.email,
       userId
     );
+    console.log("Stripe account created successfully:", account.id);
 
     // Save account ID to user record
     await db
