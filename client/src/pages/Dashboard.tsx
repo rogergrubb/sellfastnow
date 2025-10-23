@@ -30,11 +30,13 @@ import {
   Rocket,
   Menu,
   X,
+  Share2,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { User, Listing, Message } from "@shared/schema";
 import ListingCard from "@/components/ListingCard";
+import { DashboardShareModal } from "@/components/DashboardShareModal";
 
 type DashboardStats = {
   totalActive: number;
@@ -132,6 +134,7 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedListings, setSelectedListings] = useState<string[]>([]);
   const [isSelectMode, setIsSelectMode] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Sync active tab with URL query parameter
   useEffect(() => {
@@ -650,6 +653,18 @@ export default function Dashboard() {
                       {!isSelectMode && (
                         <Button
                           size="default"
+                          onClick={() => setShowShareModal(true)}
+                          variant="outline"
+                          className="w-full"
+                          data-testid="button-share-listings"
+                        >
+                          <Share2 className="h-4 w-4 mr-2" />
+                          Share My Listings
+                        </Button>
+                      )}
+                      {!isSelectMode && (
+                        <Button
+                          size="default"
                           onClick={() => setIsSelectMode(true)}
                           data-testid="button-select-mode"
                           className="w-full bg-red-600 hover:bg-red-700 text-white"
@@ -1002,6 +1017,17 @@ export default function Dashboard() {
           <Plus className="h-6 w-6" />
         </Button>
       </Link>
+
+      {/* Share Modal */}
+      <DashboardShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        listings={(userListings || []).map(listing => ({
+          id: listing.id,
+          title: listing.title,
+        }))}
+        userId={currentUser?.id}
+      />
     </div>
   );
 }
