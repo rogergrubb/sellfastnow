@@ -565,8 +565,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No images provided" });
       }
       
-      // Extract Cloudinary URLs
-      const imageUrls = (req.files as any[]).map((file) => file.path);
+      // Upload images to Cloudflare
+      const { uploadMultipleToCloudflare } = await import('./cloudflareStorage');
+      const files = (req.files as any[]).map((file: any) => ({
+        buffer: file.buffer,
+        filename: file.originalname,
+      }));
+      
+      const imageUrls = await uploadMultipleToCloudflare(files);
       
       // Add images to session
       const updated = await storage.addImagesToSession(id, imageUrls);
