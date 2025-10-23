@@ -31,8 +31,8 @@ export default function SignInPage() {
           title: "Success",
           description: "Signed in successfully!",
         });
-        // Redirect to dashboard or home
-        window.location.href = '/dashboard';
+        // Redirect to home page
+        window.location.href = '/';
       }
     } catch (error: any) {
       toast({
