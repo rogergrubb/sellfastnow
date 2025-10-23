@@ -14,6 +14,7 @@ import transactionRoutes from "./routes/transactions";
 import reviewRoutes from "./routes/reviews";
 import reputationRoutes from "./routes/reputation";
 import stripeConnectRoutes from "./routes/stripe-connect";
+import paymentSessionRoutes from "./routes/payment-sessions";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -125,6 +126,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe Connect Routes
   // ======================
   app.use("/api/stripe-connect", stripeConnectRoutes);
+
+  // ======================
+  // Payment Session Routes
+  // ======================
+  app.use("/api/payment-sessions", paymentSessionRoutes);
 
   // ======================
   // Review Routes

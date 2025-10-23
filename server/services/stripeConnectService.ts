@@ -9,12 +9,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 
 export const stripeConnectService = {
   /**
-   * Create a Stripe Connect Express account for a seller
+   * Create a Stripe Connect account (Express or Standard) for a seller
    */
-  async createConnectedAccount(email: string, userId: string) {
+  async createConnectedAccount(email: string, userId: string, accountType: 'express' | 'standard' = 'express') {
     try {
       const account = await stripe.accounts.create({
-        type: 'express',
+        type: accountType,
         country: 'US',
         email: email,
         capabilities: {
@@ -25,6 +25,7 @@ export const stripeConnectService = {
         metadata: {
           userId: userId,
           platform: 'sellfastnow',
+          accountType: accountType,
         },
       });
 

@@ -45,7 +45,12 @@ export const users = pgTable("users", {
   
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
-  stripeAccountId: varchar("stripe_account_id"), // Stripe Connect Express account for sellers
+  stripeAccountId: varchar("stripe_account_id"), // Stripe Connect account for sellers
+  stripeAccountType: varchar("stripe_account_type", { length: 20 }), // 'express' or 'standard'
+  accountTier: varchar("account_tier", { length: 20 }).notNull().default("none"), // 'none', 'express', 'standard'
+  onboardingComplete: boolean("onboarding_complete").notNull().default(false),
+  chargesEnabled: boolean("charges_enabled").notNull().default(false),
+  payoutsEnabled: boolean("payouts_enabled").notNull().default(false),
   reviewEmailsEnabled: boolean("review_emails_enabled").notNull().default(true),
   
   // AI usage tracking

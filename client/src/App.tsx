@@ -23,6 +23,8 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import Admin from "./pages/Admin";
 import Credits from "./pages/Credits";
+import PaymentPage from "./pages/PaymentPage";
+import SellerMeetupPage from "./pages/SellerMeetupPage";
 import Navbar from "@/components/Navbar";
 
 function Router() {
@@ -47,6 +49,8 @@ function Router() {
       <Route path="/credits" component={Credits} />
       <Route path="/settings" component={Settings} />
       <Route path="/messages" component={Messages} />
+      <Route path="/pay/:sessionId" component={PaymentPage} />
+      <Route path="/meetup/:id" component={SellerMeetupPage} />
       <Route component={NotFound} />
     </Switch>
   );
