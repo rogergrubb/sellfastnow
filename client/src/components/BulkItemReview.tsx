@@ -17,6 +17,7 @@ import {
   Check, 
   PartyPopper, 
   ChevronRight,
+  ChevronLeft,
   ArrowLeft,
   Save,
   ZoomIn,
@@ -153,6 +154,9 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
     status: Array<{ title: string; status: 'completed' | 'publishing' | 'waiting' }>;
   } | null>(null);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
+  const [enlargedImageIndex, setEnlargedImageIndex] = useState<number>(0);
+  const [enlargedProductIndex, setEnlargedProductIndex] = useState<number>(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState<{ [key: number]: number }>({});
   const [newTag, setNewTag] = useState<{ [key: number]: string }>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successListingIds, setSuccessListingIds] = useState<string[]>([]);
@@ -633,28 +637,60 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
 
             <CardContent>
               <div className="grid lg:grid-cols-[200px,1fr] gap-6">
-                {/* Image Preview */}
+                {/* Image Preview with Navigation */}
                 <div className="space-y-2">
-                  {product.imageUrls.slice(0, 1).map((url, imgIndex) => (
-                    <div 
-                      key={imgIndex} 
-                      className="relative aspect-square rounded-lg overflow-hidden border-2 hover:border-primary/50 transition-colors cursor-pointer group"
-                      onClick={() => setEnlargedImage(url)}
-                    >
-                      <img 
-                        src={url} 
-                        alt={`Item ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        data-testid={`image-${index}`}
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <ZoomIn className="h-8 w-8 text-white" />
-                      </div>
+                  <div 
+                    className="relative aspect-square rounded-lg overflow-hidden border-2 hover:border-primary/50 transition-colors cursor-pointer group"
+                    onClick={() => {
+                      const imgIdx = currentImageIndex[index] || 0;
+                      setEnlargedImage(product.imageUrls[imgIdx]);
+                      setEnlargedImageIndex(imgIdx);
+                      setEnlargedProductIndex(index);
+                    }}
+                  >
+                    <img 
+                      src={product.imageUrls[currentImageIndex[index] || 0]} 
+                      alt={`Item ${index + 1}`}
+                      className="w-full h-full object-cover"
+                      data-testid={`image-${index}`}
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <ZoomIn className="h-8 w-8 text-white" />
                     </div>
-                  ))}
+                    
+                    {/* Navigation Arrows */}
+                    {product.imageUrls.length > 1 && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const currentIdx = currentImageIndex[index] || 0;
+                            const newIdx = currentIdx > 0 ? currentIdx - 1 : product.imageUrls.length - 1;
+                            setCurrentImageIndex(prev => ({ ...prev, [index]: newIdx }));
+                          }}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label="Previous image"
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const currentIdx = currentImageIndex[index] || 0;
+                            const newIdx = currentIdx < product.imageUrls.length - 1 ? currentIdx + 1 : 0;
+                            setCurrentImageIndex(prev => ({ ...prev, [index]: newIdx }));
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label="Next image"
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                   {product.imageUrls.length > 1 && (
                     <p className="text-xs text-muted-foreground text-center">
-                      +{product.imageUrls.length - 1} more image{product.imageUrls.length - 1 > 1 ? 's' : ''}
+                      {(currentImageIndex[index] || 0) + 1} / {product.imageUrls.length} images
                     </p>
                   )}
                 </div>
@@ -1057,16 +1093,56 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
           <DialogHeader>
             <DialogTitle>Image Preview</DialogTitle>
             <DialogDescription>
-              View the full-size image
+              {products[enlargedProductIndex]?.imageUrls.length > 1 && (
+                <span>
+                  Image {enlargedImageIndex + 1} of {products[enlargedProductIndex]?.imageUrls.length}
+                </span>
+              )}
             </DialogDescription>
           </DialogHeader>
           {enlargedImage && (
-            <div className="relative w-full max-h-[70vh]">
+            <div className="relative w-full max-h-[70vh] group">
               <img 
                 src={enlargedImage} 
                 alt="Enlarged preview" 
                 className="w-full h-full object-contain"
               />
+              
+              {/* Navigation Arrows for Fullscreen */}
+              {products[enlargedProductIndex]?.imageUrls.length > 1 && (
+                <>
+                  <button
+                    onClick={() => {
+                      const product = products[enlargedProductIndex];
+                      const newIdx = enlargedImageIndex > 0 
+                        ? enlargedImageIndex - 1 
+                        : product.imageUrls.length - 1;
+                      setEnlargedImageIndex(newIdx);
+                      setEnlargedImage(product.imageUrls[newIdx]);
+                      setCurrentImageIndex(prev => ({ ...prev, [enlargedProductIndex]: newIdx }));
+                    }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white rounded-full p-3 transition-all"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const product = products[enlargedProductIndex];
+                      const newIdx = enlargedImageIndex < product.imageUrls.length - 1 
+                        ? enlargedImageIndex + 1 
+                        : 0;
+                      setEnlargedImageIndex(newIdx);
+                      setEnlargedImage(product.imageUrls[newIdx]);
+                      setCurrentImageIndex(prev => ({ ...prev, [enlargedProductIndex]: newIdx }));
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white rounded-full p-3 transition-all"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </button>
+                </>
+              )}
             </div>
           )}
           <DialogFooter>
