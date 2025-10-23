@@ -29,6 +29,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { ListingSuccessModal } from "@/components/ListingSuccessModal";
 
 interface DetectedProduct {
   title: string;
@@ -153,6 +154,9 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
   } | null>(null);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const [newTag, setNewTag] = useState<{ [key: number]: string }>({});
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successListingIds, setSuccessListingIds] = useState<string[]>([]);
+  const [successListingTitles, setSuccessListingTitles] = useState<string[]>([]);
   
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const { toast } = useToast();
@@ -367,7 +371,7 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
         status: prev.status.map(s => ({ ...s, status: 'completed' as const }))
       } : null);
 
-      // Show success toast and redirect immediately
+      // Show success modal or error toast
       setTimeout(() => {
         setIsPublishing(false);
         setPublishingProgress(null);
@@ -376,21 +380,29 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
           const hasErrors = result.errors && result.errors.length > 0;
           const partialSuccess = hasErrors && actualCreatedCount < products.length;
           
-          toast({
-            title: partialSuccess ? "Partial Success" : "Success!",
-            description: partialSuccess 
-              ? `Created ${actualCreatedCount} of ${products.length} listings. Some items failed to publish.`
-              : `Successfully created ${actualCreatedCount} listing${actualCreatedCount !== 1 ? 's' : ''}!`,
-            variant: partialSuccess ? "default" : "default",
-          });
+          // Extract listing IDs and titles from the response
+          const listingIds = result.listings?.map((l: any) => String(l.id)) || [];
+          const listingTitles = result.listings?.map((l: any) => l.title) || [];
+          
+          console.log('📋 Extracted listing data for modal:', { listingIds, listingTitles });
+          
+          // Show partial success toast if some failed
+          if (partialSuccess) {
+            toast({
+              title: "Partial Success",
+              description: `Created ${actualCreatedCount} of ${products.length} listings. Some items failed to publish.`,
+            });
+          }
           
           // Clear localStorage backup after successful publish
           console.log('🧺 Clearing bulkProducts backup after successful publish');
           localStorage.removeItem('bulkProducts_backup');
           localStorage.removeItem('bulkProducts_timestamp');
           
-          // Redirect to dashboard immediately
-          setLocation('/dashboard');
+          // Show success modal with shareable links
+          setSuccessListingIds(listingIds);
+          setSuccessListingTitles(listingTitles);
+          setShowSuccessModal(true);
         } else {
           // All creates failed
           toast({
@@ -1062,6 +1074,17 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Success Modal with Social Sharing */}
+      <ListingSuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          setLocation('/dashboard');
+        }}
+        listingIds={successListingIds}
+        listingTitles={successListingTitles}
+      />
     </div>
   );
 }
