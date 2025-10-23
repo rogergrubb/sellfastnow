@@ -162,12 +162,14 @@ export default function MobileUpload() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SignInButton mode="modal">
-              <Button className="w-full" data-testid="button-sign-in">
-                <LogIn className="h-4 w-4 mr-2" />
-                Sign In to Continue
-              </Button>
-            </SignInButton>
+            <Button 
+              className="w-full" 
+              data-testid="button-sign-in"
+              onClick={() => window.location.href = '/sign-in'}
+            >
+              <LogIn className="h-4 w-4 mr-2" />
+              Sign In to Continue
+            </Button>
           </CardContent>
         </Card>
       </div>
