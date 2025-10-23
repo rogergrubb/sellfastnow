@@ -2602,7 +2602,12 @@ export default function PostAdEnhanced() {
                                   <span className="text-primary font-medium">{aiUsage.remainingFree} free credits remaining</span>
                                 </div>
                               )}
-                              {aiUsage.remainingFree === 0 && (
+                              {aiUsage.creditsPurchased > 0 && (
+                                <div className="mt-1">
+                                  <span className="text-green-600 font-medium">+ {aiUsage.creditsPurchased} purchased credits</span>
+                                </div>
+                              )}
+                              {aiUsage.remainingFree === 0 && aiUsage.creditsPurchased === 0 && (
                                 <div className="mt-3 flex items-center gap-2">
                                   <Button 
                                     variant="default" 
@@ -2639,7 +2644,7 @@ export default function PostAdEnhanced() {
                               onClick={handleAutoGenerateClick}
                               className="w-full gap-2"
                               data-testid="button-auto-generate"
-                              disabled={aiUsage && aiUsage.remainingFree === 0}
+                              disabled={aiUsage && aiUsage.remainingFree === 0 && aiUsage.creditsPurchased === 0}
                             >
                               <Brain className="h-5 w-5" />
                               Auto-Generate Descriptions with AI
