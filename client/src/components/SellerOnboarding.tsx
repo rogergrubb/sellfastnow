@@ -180,10 +180,38 @@ export default function SellerOnboarding() {
             <CardTitle className="text-yellow-900">Complete Seller Setup</CardTitle>
           </div>
           <CardDescription>
-            Finish setting up your account to start receiving payments
+            Complete your setup to enable smooth, secure transactions that protect both you and your buyers
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Benefits for completing setup */}
+          <div className="bg-white rounded-lg p-4 space-y-3 border">
+            <h4 className="font-semibold text-sm">Why complete your setup?</h4>
+            <div className="space-y-2">
+              <div className="flex items-start gap-2">
+                <Shield className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <strong className="text-green-900">For Sellers:</strong>
+                  <span className="text-muted-foreground"> Secure payments directly to your bank, fraud protection, and verified buyer transactions</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <Shield className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <strong className="text-blue-900">For Buyers:</strong>
+                  <span className="text-muted-foreground"> Escrow protection, verified sellers, secure checkout, and guaranteed refunds for issues</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <strong className="text-purple-900">Smooth Transactions:</strong>
+                  <span className="text-muted-foreground"> Automated payments, instant notifications, and seamless communication</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {status.requirements && status.requirements.currently_due.length > 0 && (
             <Alert>
               <AlertDescription>
