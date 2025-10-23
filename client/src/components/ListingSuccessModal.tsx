@@ -32,7 +32,7 @@ export function ListingSuccessModal({
   const listings = listingIds.map((id, index) => ({
     id,
     title: listingTitles[index] || "My Item",
-    url: `${baseUrl}/listing/${id}`,
+    url: `${baseUrl}/listings/${id}`,
   }));
 
   const copyToClipboard = async (url: string, index: number) => {
@@ -54,7 +54,7 @@ export function ListingSuccessModal({
   };
 
   const handleViewListing = (id: string) => {
-    window.open(`/listing/${id}`, '_blank');
+    window.open(`/listings/${id}`, '_blank');
   };
 
   return (
