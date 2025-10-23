@@ -336,18 +336,21 @@ export default function Dashboard() {
     }
   }, [isLoaded, isSignedIn, navigate, toast]);
 
-  // Redirect if API call fails or user not found
+  // Redirect if API call fails or user not found (only after loading completes)
   useEffect(() => {
-    if (isError || (isSuccess && !user)) {
-      console.log('❌ Dashboard: User fetch failed or user not found, redirecting to home');
-      navigate("/");
-      toast({
-        title: "Authentication required",
-        description: "Please log in to access your dashboard",
-        variant: "destructive",
-      });
+    // Only check after both auth and user query have loaded
+    if (isLoaded && !userLoading) {
+      if (isError || (isSuccess && !user)) {
+        console.log('❌ Dashboard: User fetch failed or user not found, redirecting to home');
+        navigate("/");
+        toast({
+          title: "Authentication required",
+          description: "Please log in to access your dashboard",
+          variant: "destructive",
+        });
+      }
     }
-  }, [isError, isSuccess, user, navigate, toast]);
+  }, [isLoaded, userLoading, isError, isSuccess, user, navigate, toast]);
 
   // Show loading state while checking auth
   if (authLoading || userLoading) {
