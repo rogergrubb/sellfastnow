@@ -71,6 +71,16 @@ export default function UserProfile() {
     queryKey: ["/api/statistics/user", userId],
   });
 
+  // Fetch user's active listings
+  const { data: userListings = [], isLoading: listingsLoading } = useQuery<any[]>({
+    queryKey: ["/api/users", userId, "listings"],
+    queryFn: async () => {
+      const res = await fetch(`/api/users/${userId}/listings`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch listings');
+      return res.json();
+    },
+  });
+
   // Build query params for reviews
   const buildReviewQueryParams = () => {
     const params = new URLSearchParams();
@@ -267,8 +277,11 @@ export default function UserProfile() {
 
       {/* Tabs Section */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4" data-testid="tabs-user-profile">
+        <TabsList className="grid w-full grid-cols-5" data-testid="tabs-user-profile">
           <TabsTrigger value="about" data-testid="tab-about">About</TabsTrigger>
+          <TabsTrigger value="listings" data-testid="tab-listings">
+            Listings ({userListings?.length || 0})
+          </TabsTrigger>
           <TabsTrigger value="statistics" data-testid="tab-statistics">Statistics</TabsTrigger>
           <TabsTrigger value="reviews" data-testid="tab-reviews">
             Reviews ({statistics?.totalReviewsReceived || 0})
@@ -294,7 +307,7 @@ export default function UserProfile() {
                 <div>
                   <p className="text-sm text-muted-foreground">Active Listings</p>
                   <p className="text-2xl font-bold" data-testid="text-active-listings">
-                    {statistics?.totalListingsActive || 0}
+                    {userListings?.length || 0}
                   </p>
                 </div>
                 <div>
@@ -371,6 +384,55 @@ export default function UserProfile() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="listings" className="space-y-4">
+          {listingsLoading ? (
+            <Card>
+              <CardContent className="py-8">
+                <div className="animate-pulse space-y-4">
+                  <div className="h-48 bg-muted rounded"></div>
+                  <div className="h-48 bg-muted rounded"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : userListings && userListings.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {userListings.map((listing: any) => (
+                <Link key={listing.id} href={`/listings/${listing.id}`}>
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardContent className="p-0">
+                      {listing.images && listing.images.length > 0 && (
+                        <img
+                          src={listing.images[0]}
+                          alt={listing.title}
+                          className="w-full h-48 object-cover rounded-t-lg"
+                        />
+                      )}
+                      <div className="p-4">
+                        <h3 className="font-semibold text-lg mb-2 line-clamp-1">{listing.title}</h3>
+                        <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{listing.description}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xl font-bold text-primary">${listing.price}</span>
+                          <Badge variant="secondary">{listing.condition}</Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-lg font-medium text-muted-foreground">No active listings</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  This user doesn't have any active listings at the moment.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="statistics" className="space-y-4">

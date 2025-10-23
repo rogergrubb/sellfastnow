@@ -1626,6 +1626,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get public listings for a specific user (for profile page)
+  app.get("/api/users/:userId/listings", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const allListings = await storage.getUserListings(userId);
+      // Only return active listings for public view
+      const activeListings = allListings.filter(l => l.status === 'active');
+      console.log(`📋 Fetched ${activeListings.length} active listings for user ${userId}`);
+      res.json(activeListings);
+    } catch (error: any) {
+      console.error("❌ Error fetching user's public listings:", error);
+      res.status(500).json({ message: "Failed to fetch listings" });
+    }
+  });
+
   // Create single listing
   app.post("/api/listings", isAuthenticated, async (req: any, res) => {
     try {
