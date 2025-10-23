@@ -26,7 +26,13 @@ interface ReviewFilters {
 export default function UserProfile() {
   const { userId } = useParams<{ userId: string }>();
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState("about");
+  // Get initial tab from URL query parameter, default to "about"
+  const getInitialTab = () => {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    return tabParam || "about";
+  };
+  const [activeTab, setActiveTab] = useState(getInitialTab());
   const [showFilters, setShowFilters] = useState(false);
   const [offset, setOffset] = useState(0);
   const [allReviews, setAllReviews] = useState<ReviewWithMetadata[]>([]);

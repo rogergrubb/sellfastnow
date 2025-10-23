@@ -28,9 +28,9 @@ export function DashboardShareModal({
 
   const baseUrl = window.location.origin;
   
-  // Generate URL for user's complete listings page
+  // Generate URL for user's complete listings page (opens Listings tab)
   const allListingsUrl = userId 
-    ? `${baseUrl}/users/${userId}` 
+    ? `${baseUrl}/users/${userId}?tab=listings` 
     : `${baseUrl}/dashboard`;
 
   const copyToClipboard = async (text: string, index?: number) => {
