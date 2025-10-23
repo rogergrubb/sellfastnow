@@ -213,6 +213,12 @@ export default function PostAdEnhanced() {
     queryKey: ['/api/ai/usage'],
     enabled: isSignedIn && isLoaded,
   });
+  
+  // Fetch general credits
+  const { data: userCredits } = useQuery<{creditsRemaining: number}>({
+    queryKey: ['/api/user/credits'],
+    enabled: isSignedIn && isLoaded,
+  });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [estimatedTime, setEstimatedTime] = useState(0);
   const [countdown, setCountdown] = useState(0);
@@ -2584,30 +2590,25 @@ export default function PostAdEnhanced() {
                     {/* Auto-Generate Descriptions Button */}
                     {uploadedImages.length > 0 && !isAnalyzingImage && (
                       <div className="mt-4 space-y-3">
-                        {/* AI Usage Counter */}
-                        {aiUsage && (
-                          <Alert className={aiUsage.remainingFree === 0 ? "border-destructive/50 bg-destructive/5" : "border-primary/20"}>
+                        {/* Credits Counter */}
+                        {userCredits && (
+                          <Alert className={userCredits.creditsRemaining === 0 ? "border-destructive/50 bg-destructive/5" : "border-primary/20"}>
                             <Sparkles className="h-4 w-4" />
                             <AlertDescription className="text-sm">
                               <div className="flex items-center justify-between">
                                 <span>
-                                  <strong>AI Descriptions:</strong> {aiUsage.usesThisMonth} of 5 used this month
+                                  <strong>Available Credits:</strong> {userCredits.creditsRemaining}
                                 </span>
                                 <span className="text-muted-foreground text-xs">
-                                  Resets: {new Date(aiUsage.resetDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                  1 credit per AI generation
                                 </span>
                               </div>
-                              {aiUsage.remainingFree > 0 && (
+                              {userCredits.creditsRemaining > 0 && (
                                 <div className="mt-1">
-                                  <span className="text-primary font-medium">{aiUsage.remainingFree} free credits remaining</span>
+                                  <span className="text-primary font-medium">Ready to generate AI descriptions!</span>
                                 </div>
                               )}
-                              {aiUsage.creditsPurchased > 0 && (
-                                <div className="mt-1">
-                                  <span className="text-green-600 font-medium">+ {aiUsage.creditsPurchased} purchased credits</span>
-                                </div>
-                              )}
-                              {aiUsage.remainingFree === 0 && aiUsage.creditsPurchased === 0 && (
+                              {userCredits.creditsRemaining === 0 && (
                                 <div className="mt-3 flex items-center gap-2">
                                   <Button 
                                     variant="default" 
@@ -2616,7 +2617,7 @@ export default function PostAdEnhanced() {
                                     data-testid="button-upgrade-credits"
                                   >
                                     <Sparkles className="mr-2 h-3 w-3" />
-                                    Purchase 25 AI Credits - $2.99
+                                    Purchase 100 Credits - $2.99
                                   </Button>
                                   <span className="text-xs text-muted-foreground">Credits never expire</span>
                                 </div>
@@ -2644,7 +2645,7 @@ export default function PostAdEnhanced() {
                               onClick={handleAutoGenerateClick}
                               className="w-full gap-2"
                               data-testid="button-auto-generate"
-                              disabled={aiUsage && aiUsage.remainingFree === 0 && aiUsage.creditsPurchased === 0}
+                              disabled={!userCredits || userCredits.creditsRemaining === 0}
                             >
                               <Brain className="h-5 w-5" />
                               Auto-Generate Descriptions with AI
