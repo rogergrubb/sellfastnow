@@ -1,5 +1,5 @@
 import { useParams, useLocation, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Star, MapPin, Calendar, Package, TrendingUp, MessageCircle, X, Filter, Settings } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Star, MapPin, Calendar, Package, TrendingUp, MessageCircle, X, Filter, Settings, Edit, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ReviewCard } from "@/components/ReviewCard";
 import { StatisticsDashboard } from "@/components/StatisticsDashboard";
@@ -31,6 +32,8 @@ export default function UserProfile() {
   const [allReviews, setAllReviews] = useState<ReviewWithMetadata[]>([]);
   const [respondModalOpen, setRespondModalOpen] = useState(false);
   const [selectedReviewForResponse, setSelectedReviewForResponse] = useState<ReviewWithMetadata | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState<string | null>(null);
   
   // Parse filters from URL
   const getFiltersFromURL = (): ReviewFilters => {
@@ -78,6 +81,28 @@ export default function UserProfile() {
       const res = await fetch(`/api/users/${userId}/listings`, { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch listings');
       return res.json();
+    },
+  });
+
+  // Query client for invalidating queries
+  const queryClient = useQueryClient();
+
+  // Delete listing mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (listingId: string) => {
+      const res = await fetch(`/api/listings/${listingId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to delete listing');
+      return res.json();
+    },
+    onSuccess: () => {
+      // Invalidate queries to refetch data
+      queryClient.invalidateQueries({ queryKey: ["/api/users", userId, "listings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/listings"] });
+      setDeleteDialogOpen(false);
+      setListingToDelete(null);
     },
   });
 
@@ -399,9 +424,9 @@ export default function UserProfile() {
           ) : userListings && userListings.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {userListings.map((listing: any) => (
-                <Link key={listing.id} href={`/listings/${listing.id}`}>
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardContent className="p-0">
+                <Card key={listing.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-0">
+                    <div className="cursor-pointer" onClick={() => window.location.href = `/listings/${listing.id}`}>
                       {listing.images && listing.images.length > 0 && (
                         <img
                           src={listing.images[0]}
@@ -417,9 +442,38 @@ export default function UserProfile() {
                           <Badge variant="secondary">{listing.condition}</Badge>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                    </div>
+                    {currentUser && currentUser.id === userId && (
+                      <div className="flex gap-2 p-4 pt-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.location.href = `/listings/${listing.id}/edit`;
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="flex-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setListingToDelete(listing.id);
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               ))}
             </div>
           ) : (
@@ -735,6 +789,36 @@ export default function UserProfile() {
           queryKey={["/api/reviews/user", userId, buildReviewQueryParams()]}
         />
       )}
+
+      {/* Delete Listing Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Listing</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this listing? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setDeleteDialogOpen(false);
+              setListingToDelete(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (listingToDelete) {
+                  deleteMutation.mutate(listingToDelete);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
