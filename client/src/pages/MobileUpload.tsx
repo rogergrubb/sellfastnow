@@ -12,7 +12,7 @@ export default function MobileUpload() {
   const { sessionId } = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { isSignedIn, isLoaded, getToken } = useAuth();
+  const { user, loading, getToken } = useAuth();
   
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -134,8 +134,8 @@ export default function MobileUpload() {
     }
   };
 
-  // Wait for Clerk to finish loading before checking authentication
-  if (!isLoaded) {
+  // Wait for auth to finish loading before checking authentication
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-background">
         <Card className="max-w-md w-full">
@@ -148,7 +148,7 @@ export default function MobileUpload() {
   }
 
   // Show sign-in prompt if user is not authenticated
-  if (!isSignedIn) {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-background">
         <Card className="max-w-md w-full">
