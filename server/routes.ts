@@ -1726,6 +1726,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update listing (full update)
+  app.put("/api/listings/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.auth.userId;
+      const updateData = req.body;
+
+      // Check if the listing belongs to the user
+      const listing = await storage.getListing(id);
+      
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+
+      if (listing.userId !== userId) {
+        return res.status(403).json({ message: "You don't have permission to update this listing" });
+      }
+
+      // Update the listing
+      const updatedListing = await storage.updateListing(id, updateData);
+      console.log(`✏️ Listing ${id} updated by user ${userId}`);
+      
+      res.status(200).json(updatedListing);
+    } catch (error: any) {
+      console.error("❌ Error updating listing:", error);
+      res.status(500).json({ message: "Failed to update listing" });
+    }
+  });
+
   // Update listing status (mark as sold, etc.)
   app.put("/api/listings/:id/status", isAuthenticated, async (req: any, res) => {
     try {
