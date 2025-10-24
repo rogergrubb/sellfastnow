@@ -1,12 +1,15 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Check, Copy, Share2 } from "lucide-react";
+import { Check, Copy, Share2, Facebook, Twitter, Instagram, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Listing {
   id: string;
   title: string;
+  images?: string[];
+  price?: number;
 }
 
 interface DashboardShareModalProps {
@@ -25,6 +28,8 @@ export function DashboardShareModal({
   const { toast } = useToast();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
+  const [selectedListings, setSelectedListings] = useState<Set<string>>(new Set());
+  const [selectAll, setSelectAll] = useState(false);
 
   const baseUrl = window.location.origin;
   
@@ -58,9 +63,129 @@ export function DashboardShareModal({
     }
   };
 
+  const toggleListingSelection = (listingId: string) => {
+    const newSelection = new Set(selectedListings);
+    if (newSelection.has(listingId)) {
+      newSelection.delete(listingId);
+    } else {
+      newSelection.add(listingId);
+    }
+    setSelectedListings(newSelection);
+    setSelectAll(newSelection.size === listings.length);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectAll) {
+      setSelectedListings(new Set());
+      setSelectAll(false);
+    } else {
+      setSelectedListings(new Set(listings.map(l => l.id)));
+      setSelectAll(true);
+    }
+  };
+
+  const getSelectedUrls = () => {
+    if (selectedListings.size === 0) return [];
+    return Array.from(selectedListings).map(id => `${baseUrl}/listings/${id}`);
+  };
+
+  const shareToFacebook = () => {
+    const urls = getSelectedUrls();
+    if (urls.length === 0) {
+      toast({
+        title: "No listings selected",
+        description: "Please select at least one listing to share",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Share first URL to Facebook
+    const url = urls[0];
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    window.open(facebookUrl, '_blank', 'width=600,height=400');
+    
+    if (urls.length > 1) {
+      toast({
+        title: "Multiple listings selected",
+        description: `Sharing first listing. Copy other links to share separately.`,
+      });
+    }
+  };
+
+  const shareToTwitter = () => {
+    const urls = getSelectedUrls();
+    if (urls.length === 0) {
+      toast({
+        title: "No listings selected",
+        description: "Please select at least one listing to share",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const selectedListing = listings.find(l => l.id === Array.from(selectedListings)[0]);
+    const text = selectedListing 
+      ? `Check out this ${selectedListing.title}${selectedListing.price ? ` - $${selectedListing.price}` : ''} on SellFast.Now!`
+      : 'Check out this item on SellFast.Now!';
+    
+    const url = urls[0];
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    window.open(twitterUrl, '_blank', 'width=600,height=400');
+    
+    if (urls.length > 1) {
+      toast({
+        title: "Multiple listings selected",
+        description: `Sharing first listing. Copy other links to share separately.`,
+      });
+    }
+  };
+
+  const shareToWhatsApp = () => {
+    const urls = getSelectedUrls();
+    if (urls.length === 0) {
+      toast({
+        title: "No listings selected",
+        description: "Please select at least one listing to share",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const selectedListing = listings.find(l => l.id === Array.from(selectedListings)[0]);
+    const text = selectedListing 
+      ? `Check out this ${selectedListing.title}${selectedListing.price ? ` - $${selectedListing.price}` : ''} on SellFast.Now: ${urls[0]}`
+      : `Check out this item on SellFast.Now: ${urls[0]}`;
+    
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
+    
+    if (urls.length > 1) {
+      toast({
+        title: "Multiple listings selected",
+        description: `Sharing first listing. Copy other links to share separately.`,
+      });
+    }
+  };
+
+  const copyAllSelected = () => {
+    const urls = getSelectedUrls();
+    if (urls.length === 0) {
+      toast({
+        title: "No listings selected",
+        description: "Please select at least one listing to copy",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const text = urls.join('\n');
+    copyToClipboard(text);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <Share2 className="w-6 h-6 text-primary" />
@@ -69,6 +194,51 @@ export function DashboardShareModal({
         </DialogHeader>
 
         <div className="space-y-6 mt-4">
+          {/* Social Media Share Buttons */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <Share2 className="w-5 h-5" />
+              Quick Share to Social Media
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Select listings below, then click a platform to share
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                onClick={shareToFacebook}
+                className="bg-[#1877F2] hover:bg-[#166FE5] text-white"
+                size="lg"
+              >
+                <Facebook className="w-5 h-5 mr-2" />
+                Facebook
+              </Button>
+              <Button
+                onClick={shareToTwitter}
+                className="bg-[#1DA1F2] hover:bg-[#1A8CD8] text-white"
+                size="lg"
+              >
+                <Twitter className="w-5 h-5 mr-2" />
+                Twitter / X
+              </Button>
+              <Button
+                onClick={shareToWhatsApp}
+                className="bg-[#25D366] hover:bg-[#22C55E] text-white"
+                size="lg"
+              >
+                <MessageCircle className="w-5 h-5 mr-2" />
+                WhatsApp
+              </Button>
+              <Button
+                onClick={copyAllSelected}
+                variant="outline"
+                size="lg"
+              >
+                <Copy className="w-5 h-5 mr-2" />
+                Copy Selected
+              </Button>
+            </div>
+          </div>
+
           {/* Share All Listings Link */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 className="font-semibold text-blue-900 mb-2">
@@ -106,46 +276,102 @@ export function DashboardShareModal({
             </div>
           </div>
 
-          {/* Individual Listings */}
+          {/* Individual Listings with Thumbnails */}
           {listings.length > 0 && (
             <div className="space-y-3">
-              <h3 className="font-semibold text-lg">Individual Listings</h3>
-              <p className="text-sm text-muted-foreground">
-                Copy links to specific items to share on social media or with buyers
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-lg">Individual Listings</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Select items and share to social media or copy links
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="select-all"
+                    checked={selectAll}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                  <label
+                    htmlFor="select-all"
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    Select All
+                  </label>
+                </div>
+              </div>
               
               {listings.map((listing, index) => {
                 const listingUrl = `${baseUrl}/listings/${listing.id}`;
+                const thumbnail = listing.images && listing.images.length > 0 ? listing.images[0] : null;
+                const isSelected = selectedListings.has(listing.id);
                 
                 return (
-                  <div key={listing.id} className="border rounded-lg p-3 space-y-2">
-                    <h4 className="font-medium">{listing.title}</h4>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={listingUrl}
-                        readOnly
-                        className="flex-1 px-3 py-2 border rounded-md bg-gray-50 text-sm font-mono"
-                        onClick={(e) => e.currentTarget.select()}
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyToClipboard(listingUrl, index)}
-                        className="shrink-0"
-                      >
-                        {copiedIndex === index ? (
-                          <>
-                            <Check className="w-4 h-4 mr-1 text-green-600" />
-                            Copied
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-4 h-4 mr-1" />
-                            Copy
-                          </>
-                        )}
-                      </Button>
+                  <div 
+                    key={listing.id} 
+                    className={`border rounded-lg p-3 transition-all ${
+                      isSelected ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Checkbox */}
+                      <div className="pt-1">
+                        <Checkbox
+                          id={`listing-${listing.id}`}
+                          checked={isSelected}
+                          onCheckedChange={() => toggleListingSelection(listing.id)}
+                        />
+                      </div>
+
+                      {/* Thumbnail */}
+                      {thumbnail ? (
+                        <img
+                          src={thumbnail}
+                          alt={listing.title}
+                          className="w-16 h-16 object-cover rounded-md border border-gray-200 shrink-0"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center shrink-0">
+                          <Share2 className="w-6 h-6 text-gray-400" />
+                        </div>
+                      )}
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div>
+                          <h4 className="font-medium text-gray-900">{listing.title}</h4>
+                          {listing.price && (
+                            <p className="text-sm font-semibold text-primary">${listing.price}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={listingUrl}
+                            readOnly
+                            className="flex-1 px-3 py-2 border rounded-md bg-gray-50 text-xs font-mono"
+                            onClick={(e) => e.currentTarget.select()}
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyToClipboard(listingUrl, index)}
+                            className="shrink-0"
+                          >
+                            {copiedIndex === index ? (
+                              <>
+                                <Check className="w-4 h-4 mr-1 text-green-600" />
+                                Copied
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-4 h-4 mr-1" />
+                                Copy
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
@@ -157,9 +383,10 @@ export function DashboardShareModal({
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <h4 className="font-semibold text-gray-900 mb-2">💡 Sharing Tips</h4>
             <ul className="text-sm text-gray-700 space-y-1">
-              <li>• Share your complete listings page to showcase all your items</li>
-              <li>• Share individual links for specific items buyers are interested in</li>
-              <li>• Post on Facebook, Twitter, Instagram, WhatsApp, or email</li>
+              <li>• Select one or more listings using the checkboxes</li>
+              <li>• Click a social media button to share instantly</li>
+              <li>• Share your complete listings page to showcase all items</li>
+              <li>• Copy individual links for specific buyers</li>
               <li>• The more you share, the faster your items will sell!</li>
             </ul>
           </div>
