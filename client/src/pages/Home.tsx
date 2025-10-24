@@ -88,6 +88,10 @@ export default function Home() {
     },
   });
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category === selectedCategory ? "" : category);
   };
