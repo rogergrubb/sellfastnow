@@ -3,7 +3,6 @@ import { useLocation, Link } from "wouter";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import SellerOnboarding from "@/components/SellerOnboarding";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -571,9 +570,6 @@ export default function Dashboard() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* My Listings Tab */}
             <TabsContent value="my-listings" className="space-y-6 m-0">
-              {/* Seller Onboarding Card */}
-              <SellerOnboarding />
-
               {/* Stats Cards - Compact Version */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <Card data-testid="card-stat-active" className="p-3">
