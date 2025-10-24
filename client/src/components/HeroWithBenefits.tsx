@@ -18,7 +18,7 @@ const benefitCards = [
     icon: Shield,
     title: "Verified Users",
     description: "Phone, email, and ID verification required",
-    detailedDescription: "Every user must verify their phone number, email address, and government-issued ID before they can buy or sell. This ensures you're always dealing with real, accountable people - not anonymous scammers or bots.",
+    detailedDescription: "Every user verifies either their email address or phone number before buying or selling. This step helps reduce scams and ensures you're connecting with real people, not bots or anonymous accounts.",
     position: "top-left",
     color: "blue", // Color theme for this card
   },
