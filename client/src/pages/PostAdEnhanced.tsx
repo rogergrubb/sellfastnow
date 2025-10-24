@@ -546,12 +546,18 @@ export default function PostAdEnhanced() {
       
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/listings'] });
       queryClient.invalidateQueries({ queryKey: ['/api/user/listings'] });
+      
+      const isDraft = data.status === 'draft';
       toast({
         title: "Success!",
-        description: isEditMode ? "Your listing has been updated successfully." : "Your listing has been posted successfully.",
+        description: isDraft 
+          ? "Your listing has been saved as a draft. You can publish it later from your dashboard."
+          : isEditMode 
+            ? "Your listing has been updated successfully." 
+            : "Your listing has been published successfully.",
       });
       setLocation('/dashboard');
     },
@@ -2997,14 +3003,36 @@ export default function PostAdEnhanced() {
                   />
 
                   {/* Submit Buttons */}
-                  <div className="flex gap-4 pt-4">
+                  <div className="flex gap-3 pt-4">
                     <Button
                       type="button"
                       variant="outline"
-                      className="flex-1"
                       onClick={() => setLocation('/')}
                     >
                       Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="flex-1"
+                      disabled={createListingMutation.isPending}
+                      onClick={() => {
+                        const data = form.getValues();
+                        createListingMutation.mutate({ ...data, status: 'draft' });
+                      }}
+                      data-testid="button-save-draft"
+                    >
+                      {createListingMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="mr-2 h-4 w-4" />
+                          Save as Draft
+                        </>
+                      )}
                     </Button>
                     <Button 
                       type="submit" 
@@ -3020,7 +3048,7 @@ export default function PostAdEnhanced() {
                       ) : (
                         <>
                           <CheckCircle2 className="mr-2 h-4 w-4" />
-                          {isEditMode ? 'Update Listing' : 'Post Listing'}
+                          {isEditMode ? 'Update Listing' : 'Publish Listing'}
                         </>
                       )}
                     </Button>

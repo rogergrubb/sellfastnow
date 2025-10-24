@@ -323,6 +323,34 @@ export default function Dashboard() {
     },
   });
 
+  const publishDraftMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      const response = await fetch(`/api/listings/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'active' }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to publish draft: ${response.status}`);
+      }
+      
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/listings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/listings/stats"] });
+      toast({
+        title: "Success",
+        description: "Listing published successfully!",
+      });
+    },
+  });
+
   // Redirect if not signed in with Clerk
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -865,11 +893,14 @@ export default function Dashboard() {
                                         ? "default"
                                         : listing.status === "sold"
                                         ? "secondary"
-                                        : "outline"
+                                        : listing.status === "draft"
+                                        ? "outline"
+                                        : "destructive"
                                     }
+                                    className={listing.status === "draft" ? "border-yellow-500 text-yellow-700 bg-yellow-50" : ""}
                                     data-testid={`badge-status-${listing.id}`}
                                   >
-                                    {listing.status}
+                                    {listing.status === "draft" ? "📝 Draft" : listing.status}
                                   </Badge>
                                 </div>
                                 <p className="text-sm text-muted-foreground">
@@ -890,6 +921,19 @@ export default function Dashboard() {
                                     <Edit2 className="h-4 w-4" />
                                   </Button>
                                 </Link>
+                                {listing.status === "draft" && (
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() => publishDraftMutation.mutate(listing.id)}
+                                    disabled={publishDraftMutation.isPending}
+                                    data-testid={`button-publish-${listing.id}`}
+                                    className="bg-green-600 hover:bg-green-700"
+                                    title="Publish this draft"
+                                  >
+                                    <Rocket className="h-4 w-4" />
+                                  </Button>
+                                )}
                                 {listing.status === "active" && (
                                   <Button
                                     variant="outline"
