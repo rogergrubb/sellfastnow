@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Hero from "@/components/Hero";
+import HeroWithBenefits from "@/components/HeroWithBenefits";
 import CategoryFilters from "@/components/CategoryFilters";
 import FilterSidebar from "@/components/FilterSidebar";
 import ListingCard from "@/components/ListingCard";
@@ -125,27 +125,17 @@ export default function Home() {
 
   return (
     <div>
-      <Hero onSearch={setSearchQuery} onCategorySelect={handleCategorySelect} />
+      <HeroWithBenefits onSearch={handleSearch} onCategorySelect={handleCategorySelect} />/>
       <CategoryFilters 
         selectedCategory={selectedCategory}
         onCategorySelect={handleCategorySelect}
       />
 
-      {/* Trust & Safety Section */}
+      {/* Top Rated Sellers Section - Benefits moved to hero */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-y border-blue-100 py-12 mb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <Shield className="w-8 h-8 text-blue-600" />
-              <h2 className="text-3xl font-bold text-gray-900">Safe & Trusted Marketplace</h2>
-            </div>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Unlike Facebook Marketplace and Craigslist, we verify every user, track reputation, and offer secure electronic payments with escrow protection.
-            </p>
-          </div>
-
-          {/* Trust Features */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-12">
+          {/* Old benefit cards removed - now in hero section */}
+          <div className="hidden">
             <div className="bg-white rounded-lg p-6 text-center shadow-sm">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Shield className="w-6 h-6 text-blue-600" />
@@ -215,6 +205,7 @@ export default function Home() {
                 <span>2.5% Fee</span>
               </div>
             </div>
+          </div>
           </div>
 
           {/* Top Rated Sellers */}
