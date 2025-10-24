@@ -18,51 +18,104 @@ const benefitCards = [
     icon: Shield,
     title: "Verified Users",
     description: "Phone, email, and ID verification required",
-    position: "top-left", // positioned around circle
+    detailedDescription: "Every user must verify their phone number, email address, and government-issued ID before they can buy or sell. This ensures you're always dealing with real, accountable people - not anonymous scammers or bots.",
+    position: "top-left",
+    color: "blue", // Color theme for this card
   },
   {
     icon: Star,
     title: "Reputation System",
     description: "eBay-style ratings track seller reliability",
+    detailedDescription: "Just like eBay, buyers and sellers rate each other after every transaction. Build your reputation over time with positive reviews, and easily spot trustworthy sellers with high ratings and lots of completed deals.",
     position: "top-right",
+    color: "green",
   },
   {
     icon: TrendingUp,
     title: "Anti-Fraud Detection",
     description: "AI monitors for suspicious patterns and scams",
+    detailedDescription: "Our advanced AI system continuously monitors all listings and user behavior for red flags like fake photos, suspicious pricing, common scam phrases, and unusual activity patterns. Suspicious accounts are automatically flagged for review.",
     position: "middle-left",
+    color: "purple",
   },
   {
     icon: Award,
     title: "Transaction History",
     description: "See every user's complete track record",
+    detailedDescription: "View the complete transaction history of any buyer or seller before you deal with them. See how many items they've bought or sold, their average rating, how long they've been a member, and any issues reported by other users.",
     position: "middle-right",
+    color: "orange",
   },
   {
     icon: CreditCard,
     title: "Secure Payments",
     description: "No cash needed - pay safely online",
+    detailedDescription: "Pay securely with your credit card through our encrypted payment system. No need to meet with cash or worry about counterfeit bills. Your payment information is never shared with the seller, and you're protected by credit card fraud guarantees.",
     position: "bottom-left",
+    color: "blue",
   },
   {
     icon: Lock,
     title: "Escrow Protection",
     description: "Funds held until you confirm receipt",
+    detailedDescription: "Your payment is held in secure escrow until you receive the item and confirm it's as described. If there's a problem, you can open a dispute and get your money back. Sellers are protected too - once you approve, they get paid immediately.",
     position: "bottom-right",
+    color: "green",
   },
 ];
 
+// Color theme configurations
+const colorThemes = {
+  blue: {
+    bg: "bg-blue-500/10",
+    hoverBg: "hover:bg-blue-500/20",
+    iconBg: "bg-blue-500/20",
+    hoverIconBg: "group-hover:bg-blue-500/30",
+    border: "border-blue-300/30",
+    popupBg: "bg-blue-600",
+    popupBorder: "border-blue-400",
+  },
+  green: {
+    bg: "bg-green-500/10",
+    hoverBg: "hover:bg-green-500/20",
+    iconBg: "bg-green-500/20",
+    hoverIconBg: "group-hover:bg-green-500/30",
+    border: "border-green-300/30",
+    popupBg: "bg-green-600",
+    popupBorder: "border-green-400",
+  },
+  purple: {
+    bg: "bg-purple-500/10",
+    hoverBg: "hover:bg-purple-500/20",
+    iconBg: "bg-purple-500/20",
+    hoverIconBg: "group-hover:bg-purple-500/30",
+    border: "border-purple-300/30",
+    popupBg: "bg-purple-600",
+    popupBorder: "border-purple-400",
+  },
+  orange: {
+    bg: "bg-orange-500/10",
+    hoverBg: "hover:bg-orange-500/20",
+    iconBg: "bg-orange-500/20",
+    hoverIconBg: "group-hover:bg-orange-500/30",
+    border: "border-orange-300/30",
+    popupBg: "bg-orange-600",
+    popupBorder: "border-orange-400",
+  },
+};
+
 export default function HeroWithBenefits({ onSearch, onCategorySelect }: HeroProps) {
   const [searchInput, setSearchInput] = useState("");
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const { isSignedIn } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Position classes for circular arrangement
+  // Position classes for circular arrangement - moved to top
   const positionClasses = {
-    "top-left": "absolute top-[10%] left-[5%] lg:left-[10%]",
-    "top-right": "absolute top-[10%] right-[5%] lg:right-[10%]",
-    "middle-left": "absolute top-[40%] left-[2%] lg:left-[5%]",
-    "middle-right": "absolute top-[40%] right-[2%] lg:right-[5%]",
+    "top-left": "absolute top-[2%] left-[5%] lg:left-[10%]",
+    "top-right": "absolute top-[2%] right-[5%] lg:right-[10%]",
+    "middle-left": "absolute top-[32%] left-[2%] lg:left-[5%]",
+    "middle-right": "absolute top-[32%] right-[2%] lg:right-[5%]",
     "bottom-left": "absolute bottom-[25%] left-[5%] lg:left-[10%]",
     "bottom-right": "absolute bottom-[25%] right-[5%] lg:right-[10%]",
   };
@@ -78,24 +131,29 @@ export default function HeroWithBenefits({ onSearch, onCategorySelect }: HeroPro
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-black/30" />
         
-        {/* Benefit Cards - Glass Morphism - Hidden on mobile, visible on tablet+ */}
+        {/* Benefit Cards - Glass Morphism with Colors - Hidden on mobile, visible on tablet+ */}
         <div className="hidden md:block absolute inset-0">
           {benefitCards.map((benefit, index) => {
             const Icon = benefit.icon;
+            const theme = colorThemes[benefit.color as keyof typeof colorThemes];
+            const isHovered = hoveredCard === index;
+            
             return (
               <div
                 key={index}
                 className={`${positionClasses[benefit.position as keyof typeof positionClasses]} 
                   w-[180px] lg:w-[220px] p-4 lg:p-5
-                  bg-white/10 backdrop-blur-md 
-                  border border-white/20 
+                  ${theme.bg} backdrop-blur-md 
+                  border ${theme.border}
                   rounded-2xl shadow-2xl
-                  hover:bg-white/15 hover:scale-105
+                  ${theme.hoverBg} hover:scale-105
                   transition-all duration-300
-                  group cursor-pointer`}
+                  group cursor-pointer relative z-10`}
+                onMouseEnter={() => setHoveredCard(index)}
+                onMouseLeave={() => setHoveredCard(null)}
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 lg:w-14 lg:h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-3 group-hover:bg-white/30 transition-colors">
+                  <div className={`w-12 h-12 lg:w-14 lg:h-14 ${theme.iconBg} backdrop-blur-sm rounded-full flex items-center justify-center mb-3 ${theme.hoverIconBg} transition-colors`}>
                     <Icon className="h-6 w-6 lg:h-7 lg:w-7 text-white" />
                   </div>
                   <h3 className="text-white font-semibold text-sm lg:text-base mb-1">
@@ -105,6 +163,32 @@ export default function HeroWithBenefits({ onSearch, onCategorySelect }: HeroPro
                     {benefit.description}
                   </p>
                 </div>
+
+                {/* Hover Popup with Detailed Information */}
+                {isHovered && (
+                  <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-4 w-[280px] lg:w-[320px] 
+                    ${theme.popupBg} backdrop-blur-lg
+                    border-2 ${theme.popupBorder}
+                    rounded-xl shadow-2xl p-5
+                    animate-in fade-in slide-in-from-top-2 duration-200
+                    z-50`}
+                  >
+                    {/* Arrow pointing up */}
+                    <div className={`absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 ${theme.popupBg} border-t-2 border-l-2 ${theme.popupBorder} rotate-45`} />
+                    
+                    <div className="relative">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`w-10 h-10 ${theme.iconBg} rounded-full flex items-center justify-center flex-shrink-0`}>
+                          <Icon className="h-5 w-5 text-white" />
+                        </div>
+                        <h4 className="text-white font-bold text-base">{benefit.title}</h4>
+                      </div>
+                      <p className="text-white/90 text-sm leading-relaxed">
+                        {benefit.detailedDescription}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -226,18 +310,20 @@ export default function HeroWithBenefits({ onSearch, onCategorySelect }: HeroPro
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {benefitCards.map((benefit, index) => {
               const Icon = benefit.icon;
+              const theme = colorThemes[benefit.color as keyof typeof colorThemes];
               return (
                 <div
                   key={index}
                   className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Icon className="h-5 w-5 text-blue-600" />
+                    <div className={`w-10 h-10 ${theme.iconBg.replace('/20', '-100')} rounded-full flex items-center justify-center flex-shrink-0`}>
+                      <Icon className={`h-5 w-5 text-${benefit.color}-600`} />
                     </div>
                     <div>
                       <h3 className="font-semibold text-sm mb-1">{benefit.title}</h3>
-                      <p className="text-xs text-muted-foreground">{benefit.description}</p>
+                      <p className="text-xs text-muted-foreground mb-2">{benefit.description}</p>
+                      <p className="text-xs text-gray-600 leading-relaxed">{benefit.detailedDescription}</p>
                     </div>
                   </div>
                 </div>
