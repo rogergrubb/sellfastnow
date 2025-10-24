@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
+import { Helmet } from "react-helmet-async";
 import ImageGallery from "@/components/ImageGallery";
 import ListingCard from "@/components/ListingCard";
 import { Button } from "@/components/ui/button";
@@ -239,8 +240,44 @@ export default function ListingDetail() {
     ? listing.description
     : listing.description.slice(0, 300) + '...';
 
+  // Prepare Open Graph data
+  const ogTitle = listing.title;
+  const ogDescription = listing.description.slice(0, 160) + (listing.description.length > 160 ? '...' : '');
+  const ogImage = listing.images && listing.images.length > 0 ? listing.images[0] : '';
+  const ogUrl = window.location.href;
+  const ogPrice = listing.price ? `$${listing.price}` : 'Contact for price';
+
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <Helmet>
+        {/* Primary Meta Tags */}
+        <title>{listing.title} - SellFast.Now</title>
+        <meta name="description" content={ogDescription} />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="product" />
+        <meta property="og:url" content={ogUrl} />
+        <meta property="og:title" content={ogTitle} />
+        <meta property="og:description" content={ogDescription} />
+        {ogImage && <meta property="og:image" content={ogImage} />}
+        <meta property="og:site_name" content="SellFast.Now" />
+        <meta property="product:price:amount" content={listing.price?.toString() || '0'} />
+        <meta property="product:price:currency" content="USD" />
+        <meta property="product:condition" content={listing.condition || 'used'} />
+        
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content={ogUrl} />
+        <meta property="twitter:title" content={ogTitle} />
+        <meta property="twitter:description" content={ogDescription} />
+        {ogImage && <meta property="twitter:image" content={ogImage} />}
+        
+        {/* Additional Meta Tags */}
+        <meta name="author" content={getSellerName(seller)} />
+        <meta name="keywords" content={`${listing.category}, ${listing.condition}, buy ${listing.title}, sell ${listing.title}`} />
+      </Helmet>
+      
+      <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* LEFT SECTION - Main Content */}
@@ -655,6 +692,7 @@ export default function ListingDetail() {
           )}
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 }
