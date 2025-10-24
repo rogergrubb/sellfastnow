@@ -50,7 +50,7 @@ const benefitCards = [
     icon: CreditCard,
     title: "Secure Payments",
     description: "No cash needed - pay safely online",
-    detailedDescription: "Pay securely with your credit card through our encrypted payment system. No need to meet with cash or worry about counterfeit bills. Your payment information is never shared with the seller, and you're protected by credit card fraud guarantees.",
+    detailedDescription: "Buyers don't pay until the item is in their hands. Both buyer and seller must be present and agree to complete the swap before any money moves. The price is always negotiable until both parties confirm the deal. Payments are processed securely through our encrypted system—no cash, no counterfeits, and full protection for both sides.",
     position: "bottom-left",
     color: "blue",
   },
