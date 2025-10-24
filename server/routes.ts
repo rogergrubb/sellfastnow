@@ -15,6 +15,7 @@ import reviewRoutes from "./routes/reviews";
 import reputationRoutes from "./routes/reputation";
 import stripeConnectRoutes from "./routes/stripe-connect";
 import paymentSessionRoutes from "./routes/payment-sessions";
+import { registerSharesRoutes } from "./routes/shares";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -57,6 +58,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Transaction Routes (NEW - ENABLED)
   // ======================
   app.use("/api/transactions", transactionRoutes);
+  
+  // ======================
+  // Social Shares Routes
+  // ======================
+  registerSharesRoutes(app);
   
   // Get pending transactions for current user
   app.get("/api/transactions/pending", isAuthenticated, async (req: any, res) => {

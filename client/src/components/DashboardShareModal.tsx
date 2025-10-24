@@ -4,6 +4,7 @@ import { Check, Copy, Share2, Facebook, Twitter, Instagram, MessageCircle } from
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useSocialShareTracking } from "@/hooks/useSocialShareTracking";
 
 interface Listing {
   id: string;
@@ -26,6 +27,7 @@ export function DashboardShareModal({
   userId,
 }: DashboardShareModalProps) {
   const { toast } = useToast();
+  const { trackShare } = useSocialShareTracking();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
   const [selectedListings, setSelectedListings] = useState<Set<string>>(new Set());
@@ -38,9 +40,25 @@ export function DashboardShareModal({
     ? `${baseUrl}/users/${userId}?tab=listings` 
     : `${baseUrl}/dashboard`;
 
-  const copyToClipboard = async (text: string, index?: number) => {
+  const copyToClipboard = async (text: string, index?: number, listingId?: string) => {
     try {
       await navigator.clipboard.writeText(text);
+      
+      // Track copy as a share event
+      if (listingId) {
+        trackShare({
+          listingId,
+          platform: "copy_link",
+          shareType: "individual_listing",
+          shareUrl: text,
+        });
+      } else if (text === allListingsUrl) {
+        trackShare({
+          platform: "copy_link",
+          shareType: "complete_listings_page",
+          shareUrl: text,
+        });
+      }
       
       if (index !== undefined) {
         setCopiedIndex(index);
@@ -102,6 +120,16 @@ export function DashboardShareModal({
 
     // Share first URL to Facebook
     const url = urls[0];
+    const listingId = Array.from(selectedListings)[0];
+    
+    // Track the share
+    trackShare({
+      listingId,
+      platform: "facebook",
+      shareType: "individual_listing",
+      shareUrl: url,
+    });
+    
     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
     window.open(facebookUrl, '_blank', 'width=600,height=400');
     
@@ -124,12 +152,22 @@ export function DashboardShareModal({
       return;
     }
 
-    const selectedListing = listings.find(l => l.id === Array.from(selectedListings)[0]);
+    const listingId = Array.from(selectedListings)[0];
+    const selectedListing = listings.find(l => l.id === listingId);
     const text = selectedListing 
       ? `Check out this ${selectedListing.title}${selectedListing.price ? ` - $${selectedListing.price}` : ''} on SellFast.Now!`
       : 'Check out this item on SellFast.Now!';
     
     const url = urls[0];
+    
+    // Track the share
+    trackShare({
+      listingId,
+      platform: "twitter",
+      shareType: "individual_listing",
+      shareUrl: url,
+    });
+    
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     window.open(twitterUrl, '_blank', 'width=600,height=400');
     
@@ -152,10 +190,19 @@ export function DashboardShareModal({
       return;
     }
 
-    const selectedListing = listings.find(l => l.id === Array.from(selectedListings)[0]);
+    const listingId = Array.from(selectedListings)[0];
+    const selectedListing = listings.find(l => l.id === listingId);
     const text = selectedListing 
       ? `Check out this ${selectedListing.title}${selectedListing.price ? ` - $${selectedListing.price}` : ''} on SellFast.Now: ${urls[0]}`
       : `Check out this item on SellFast.Now: ${urls[0]}`;
+    
+    // Track the share
+    trackShare({
+      listingId,
+      platform: "whatsapp",
+      shareType: "individual_listing",
+      shareUrl: urls[0],
+    });
     
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');
@@ -184,18 +231,41 @@ export function DashboardShareModal({
   };
 
   const shareAllListingsToFacebook = () => {
+    // Track the share
+    trackShare({
+      platform: "facebook",
+      shareType: "complete_listings_page",
+      shareUrl: allListingsUrl,
+    });
+    
     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(allListingsUrl)}`;
     window.open(facebookUrl, '_blank', 'width=600,height=400');
   };
 
   const shareAllListingsToTwitter = () => {
     const text = `Check out all my items for sale on SellFast.Now!`;
+    
+    // Track the share
+    trackShare({
+      platform: "twitter",
+      shareType: "complete_listings_page",
+      shareUrl: allListingsUrl,
+    });
+    
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(allListingsUrl)}`;
     window.open(twitterUrl, '_blank', 'width=600,height=400');
   };
 
   const shareAllListingsToWhatsApp = () => {
     const text = `Check out all my items for sale on SellFast.Now: ${allListingsUrl}`;
+    
+    // Track the share
+    trackShare({
+      platform: "whatsapp",
+      shareType: "complete_listings_page",
+      shareUrl: allListingsUrl,
+    });
+    
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -402,7 +472,7 @@ export function DashboardShareModal({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => copyToClipboard(listingUrl, index)}
+                            onClick={() => copyToClipboard(listingUrl, index, listing.id)}
                             className="shrink-0"
                           >
                             {copiedIndex === index ? (
