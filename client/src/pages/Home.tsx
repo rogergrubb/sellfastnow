@@ -125,7 +125,7 @@ export default function Home() {
 
   return (
     <div>
-      <HeroWithBenefits onSearch={handleSearch} onCategorySelect={handleCategorySelect} />/>
+      <HeroWithBenefits onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
       <CategoryFilters 
         selectedCategory={selectedCategory}
         onCategorySelect={handleCategorySelect}
