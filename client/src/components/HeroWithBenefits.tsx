@@ -110,15 +110,7 @@ export default function HeroWithBenefits({ onSearch, onCategorySelect }: HeroPro
   const { isSignedIn } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Position classes for circular arrangement - moved to top
-  const positionClasses = {
-    "top-left": "absolute top-[2%] left-[5%] lg:left-[10%]",
-    "top-right": "absolute top-[2%] right-[5%] lg:right-[10%]",
-    "middle-left": "absolute top-[32%] left-[2%] lg:left-[5%]",
-    "middle-right": "absolute top-[32%] right-[2%] lg:right-[5%]",
-    "bottom-left": "absolute bottom-[25%] left-[5%] lg:left-[10%]",
-    "bottom-right": "absolute bottom-[25%] right-[5%] lg:right-[10%]",
-  };
+  // No position classes needed - using flexbox for horizontal layout
 
   return (
     <div className="relative">
@@ -131,67 +123,70 @@ export default function HeroWithBenefits({ onSearch, onCategorySelect }: HeroPro
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-black/30" />
         
-        {/* Benefit Cards - Glass Morphism with Colors - Hidden on mobile, visible on tablet+ */}
-        <div className="hidden md:block absolute inset-0">
-          {benefitCards.map((benefit, index) => {
-            const Icon = benefit.icon;
-            const theme = colorThemes[benefit.color as keyof typeof colorThemes];
-            const isHovered = hoveredCard === index;
-            
-            return (
-              <div
-                key={index}
-                className={`${positionClasses[benefit.position as keyof typeof positionClasses]} 
-                  w-[180px] lg:w-[220px] p-4 lg:p-5
-                  ${theme.bg} backdrop-blur-md 
-                  border ${theme.border}
-                  rounded-2xl shadow-2xl
-                  ${theme.hoverBg} hover:scale-105
-                  transition-all duration-300
-                  group cursor-pointer relative z-10`}
-                onMouseEnter={() => setHoveredCard(index)}
-                onMouseLeave={() => setHoveredCard(null)}
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className={`w-12 h-12 lg:w-14 lg:h-14 ${theme.iconBg} backdrop-blur-sm rounded-full flex items-center justify-center mb-3 ${theme.hoverIconBg} transition-colors`}>
-                    <Icon className="h-6 w-6 lg:h-7 lg:w-7 text-white" />
-                  </div>
-                  <h3 className="text-white font-semibold text-sm lg:text-base mb-1">
-                    {benefit.title}
-                  </h3>
-                  <p className="text-white/80 text-xs lg:text-sm leading-tight">
-                    {benefit.description}
-                  </p>
-                </div>
+        {/* Benefit Cards - Glass Morphism Banner - Hidden on mobile, visible on tablet+ */}
+        <div className="hidden lg:block absolute top-4 left-0 right-0 z-20">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex justify-center gap-3 xl:gap-4">
+              {benefitCards.map((benefit, index) => {
+                const Icon = benefit.icon;
+                const theme = colorThemes[benefit.color as keyof typeof colorThemes];
+                const isHovered = hoveredCard === index;
+                
+                return (
+                  <div
+                    key={index}
+                    className={`flex-1 max-w-[180px] p-3 xl:p-4
+                      ${theme.bg} backdrop-blur-md 
+                      border ${theme.border}
+                      rounded-xl shadow-2xl
+                      ${theme.hoverBg} hover:scale-105
+                      transition-all duration-300
+                      group cursor-pointer relative`}
+                    onMouseEnter={() => setHoveredCard(index)}
+                    onMouseLeave={() => setHoveredCard(null)}
+                  >
+                    <div className="flex flex-col items-center text-center">
+                      <div className={`w-10 h-10 xl:w-12 xl:h-12 ${theme.iconBg} backdrop-blur-sm rounded-full flex items-center justify-center mb-2 ${theme.hoverIconBg} transition-colors`}>
+                        <Icon className="h-5 w-5 xl:h-6 xl:w-6 text-white" />
+                      </div>
+                      <h3 className="text-white font-semibold text-xs xl:text-sm mb-1">
+                        {benefit.title}
+                      </h3>
+                      <p className="text-white/80 text-[10px] xl:text-xs leading-tight">
+                        {benefit.description}
+                      </p>
+                    </div>
 
-                {/* Hover Popup with Detailed Information */}
-                {isHovered && (
-                  <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-4 w-[280px] lg:w-[320px] 
+                    {/* Hover Popup with Detailed Information */}
+                    {isHovered && (
+                      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[280px] xl:w-[300px] 
                     ${theme.popupBg} backdrop-blur-lg
                     border-2 ${theme.popupBorder}
                     rounded-xl shadow-2xl p-5
                     animate-in fade-in slide-in-from-top-2 duration-200
-                    z-50`}
-                  >
-                    {/* Arrow pointing up */}
-                    <div className={`absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 ${theme.popupBg} border-t-2 border-l-2 ${theme.popupBorder} rotate-45`} />
-                    
-                    <div className="relative">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className={`w-10 h-10 ${theme.iconBg} rounded-full flex items-center justify-center flex-shrink-0`}>
-                          <Icon className="h-5 w-5 text-white" />
+                        z-50`}
+                      >
+                        {/* Arrow pointing up */}
+                        <div className={`absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 ${theme.popupBg} border-t-2 border-l-2 ${theme.popupBorder} rotate-45`} />
+                        
+                        <div className="relative">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className={`w-10 h-10 ${theme.iconBg} rounded-full flex items-center justify-center flex-shrink-0`}>
+                              <Icon className="h-5 w-5 text-white" />
+                            </div>
+                            <h4 className="text-white font-bold text-base">{benefit.title}</h4>
+                          </div>
+                          <p className="text-white/90 text-sm leading-relaxed">
+                            {benefit.detailedDescription}
+                          </p>
                         </div>
-                        <h4 className="text-white font-bold text-base">{benefit.title}</h4>
                       </div>
-                      <p className="text-white/90 text-sm leading-relaxed">
-                        {benefit.detailedDescription}
-                      </p>
-                    </div>
+                    )}
                   </div>
-                )}
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Center Content - Search Area */}
