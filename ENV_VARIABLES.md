@@ -17,6 +17,7 @@
 | `OPENAI_API_KEY` | ⬜ Optional | - | OpenAI API key for AI coaching | [platform.openai.com](https://platform.openai.com) |
 | `STRIPE_SECRET_KEY` | ⬜ Optional | - | Stripe secret key | [dashboard.stripe.com](https://dashboard.stripe.com) |
 | `VITE_STRIPE_PUBLIC_KEY` | ⬜ Optional | - | Stripe publishable key | [dashboard.stripe.com](https://dashboard.stripe.com) |
+| `STRIPE_WEBHOOK_SECRET` | ⬜ Optional | - | Stripe webhook signing secret | [dashboard.stripe.com/webhooks](https://dashboard.stripe.com/webhooks) |
 | `RESEND_API_KEY` | ⬜ Optional | - | Resend API key for emails | [resend.com](https://resend.com) |
 
 ## Railway Variable Configuration
@@ -50,6 +51,7 @@ OPENAI_API_KEY=sk-proj-...
 # Payments (optional)
 STRIPE_SECRET_KEY=sk_live_...
 VITE_STRIPE_PUBLIC_KEY=pk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 
 # Email (optional - needs code update)
 RESEND_API_KEY=re_...
@@ -101,6 +103,7 @@ Before deploying, verify:
 - [ ] `PORT` is set (Railway auto-assigns)
 - [ ] Optional: `OPENAI_API_KEY` starts with `sk-proj-` or `sk-`
 - [ ] Optional: `STRIPE_SECRET_KEY` starts with `sk_live_` or `sk_test_`
+- [ ] Optional: `STRIPE_WEBHOOK_SECRET` starts with `whsec_`
 - [ ] Optional: `RESEND_API_KEY` starts with `re_`
 
 ## Auto-Reference Variables (Railway-specific)
