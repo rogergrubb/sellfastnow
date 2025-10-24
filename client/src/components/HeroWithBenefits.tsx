@@ -26,7 +26,7 @@ const benefitCards = [
     icon: Star,
     title: "Reputation System",
     description: "eBay-style ratings track seller reliability",
-    detailedDescription: "Just like eBay, buyers and sellers rate each other after every transaction. Build your reputation over time with positive reviews, and easily spot trustworthy sellers with high ratings and lots of completed deals.",
+    detailedDescription: "Just like eBay, buyers and sellers rate each other after every transaction. These ratings create transparency—so you always know who you're dealing with. Over time, trusted users stand out with strong reputations, helping everyone buy and sell with confidence, not guesswork.",
     position: "top-right",
     color: "green",
   },
