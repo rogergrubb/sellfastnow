@@ -50,7 +50,7 @@ const benefitCards = [
     icon: CreditCard,
     title: "Secure Payments",
     description: "No cash needed - pay safely online",
-    detailedDescription: "Buyers don't pay until the item is in their hands. Both buyer and seller must be present and agree to complete the swap before any money moves. The price is always negotiable until both parties confirm the deal. Payments are processed securely through our encrypted system—no cash, no counterfeits, and full protection for both sides.",
+    detailedDescription: "Buyers can place funds into secure escrow as a deposit, showing sellers they're serious and will actually show up. This good-faith gesture helps sellers gauge real interest and reduces no-shows. Funds are held safely until both parties meet and confirm the transaction. No cash exchanges, no counterfeits, and full protection for both sides.",
     position: "bottom-left",
     color: "blue",
   },
