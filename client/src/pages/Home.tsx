@@ -206,7 +206,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-          </div>
 
           {/* Top Rated Sellers */}
           {topSellers.length > 0 && (
