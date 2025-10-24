@@ -4,6 +4,11 @@ import { setupVite, serveStatic, log } from "./vite";
 import { runMigrations } from "./migrations";
 
 const app = express();
+
+// Stripe webhook endpoint needs raw body for signature verification
+app.use('/api/stripe-webhook', express.raw({ type: 'application/json' }));
+
+// All other routes use JSON parsing
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
