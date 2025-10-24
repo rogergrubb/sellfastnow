@@ -574,78 +574,73 @@ export default function Dashboard() {
               {/* Seller Onboarding Card */}
               <SellerOnboarding />
 
-              {/* Stats Cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card data-testid="card-stat-active">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
+              {/* Stats Cards - Compact Version */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <Card data-testid="card-stat-active" className="p-3">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium text-muted-foreground mb-1">
                       Total Active
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-green-600" data-testid="text-stat-active">
+                    </span>
+                    <span className="text-2xl font-bold text-green-600" data-testid="text-stat-active">
                       {stats?.totalActive || 0}
-                    </div>
-                  </CardContent>
+                    </span>
+                  </div>
                 </Card>
-                <Card data-testid="card-stat-views">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                <Card data-testid="card-stat-views" className="p-3">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium text-muted-foreground mb-1">
                       Total Views
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-blue-600" data-testid="text-stat-views">
+                    </span>
+                    <span className="text-2xl font-bold text-blue-600" data-testid="text-stat-views">
                       {stats?.totalViews || 0}
-                    </div>
-                  </CardContent>
+                    </span>
+                  </div>
                 </Card>
                 <Card 
                   data-testid="card-stat-messages"
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  className="p-3 cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => navigate("/messages")}
                 >
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium text-muted-foreground mb-1">
                       Messages
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-purple-600" data-testid="text-stat-messages">
-                      {messages.length || 0}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-purple-600" data-testid="text-stat-messages">
+                        {messages.length || 0}
+                      </span>
                       {unreadCount > 0 && (
-                        <Badge className="ml-2" variant="default">
+                        <Badge className="text-xs" variant="default">
                           {unreadCount} new
                         </Badge>
                       )}
                     </div>
-                  </CardContent>
+                  </div>
                 </Card>
-                <Card data-testid="card-stat-sold">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                <Card data-testid="card-stat-sold" className="p-3">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium text-muted-foreground mb-1">
                       Items Sold
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-orange-600" data-testid="text-stat-sold">
+                    </span>
+                    <span className="text-2xl font-bold text-orange-600" data-testid="text-stat-sold">
                       {stats?.totalSold || 0}
-                    </div>
-                  </CardContent>
+                    </span>
+                  </div>
                 </Card>
               </div>
 
               {/* Listing Management Section */}
               <Card>
-                <CardHeader className="space-y-4 pb-4">
-                  {/* Top Row: Filters and Primary Actions */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <CardHeader className="space-y-3 py-3 px-4">
+                  {/* Compact Top Row: Filters and Actions */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Button
                         variant={listingFilter === "active" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setListingFilter("active")}
                         data-testid="button-filter-active"
+                        className="h-8"
                       >
                         Active
                       </Button>
@@ -654,7 +649,7 @@ export default function Dashboard() {
                         size="sm"
                         onClick={() => setListingFilter("draft")}
                         data-testid="button-filter-draft"
-                        className={listingFilter === "draft" ? "bg-red-600 hover:bg-red-700" : "border-red-500 text-red-700 hover:bg-red-50"}
+                        className={`h-8 ${listingFilter === "draft" ? "bg-red-600 hover:bg-red-700" : "border-red-500 text-red-700 hover:bg-red-50"}`}
                       >
                         Drafts
                       </Button>
@@ -663,6 +658,7 @@ export default function Dashboard() {
                         size="sm"
                         onClick={() => setListingFilter("sold")}
                         data-testid="button-filter-sold"
+                        className="h-8"
                       >
                         Sold
                       </Button>
@@ -671,38 +667,39 @@ export default function Dashboard() {
                         size="sm"
                         onClick={() => setListingFilter("expired")}
                         data-testid="button-filter-expired"
+                        className="h-8"
                       >
                         Expired
                       </Button>
                     </div>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Link href="/post-ad">
-                        <Button size="default" className="w-full" data-testid="button-create-listing">
-                          <Plus className="h-4 w-4 mr-2" />
-                          Create New Listing
+                        <Button size="sm" className="h-8" data-testid="button-create-listing">
+                          <Plus className="h-3 w-3 mr-1" />
+                          Create New
                         </Button>
                       </Link>
                       {!isSelectMode && (
                         <Button
-                          size="default"
+                          size="sm"
                           onClick={() => setShowShareModal(true)}
                           variant="outline"
-                          className="w-full"
+                          className="h-8"
                           data-testid="button-share-listings"
                         >
-                          <Share2 className="h-4 w-4 mr-2" />
-                          Share My Listings
+                          <Share2 className="h-3 w-3 mr-1" />
+                          Share
                         </Button>
                       )}
                       {!isSelectMode && (
                         <Button
-                          size="default"
+                          size="sm"
                           onClick={() => setIsSelectMode(true)}
                           data-testid="button-select-mode"
-                          className="w-full bg-red-600 hover:bg-red-700 text-white"
+                          className="h-8 bg-red-600 hover:bg-red-700 text-white"
                         >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Multiple Items
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          Delete Multiple
                         </Button>
                       )}
                     </div>
@@ -754,21 +751,21 @@ export default function Dashboard() {
                     </div>
                   )}
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Search and Sort */}
-                  <div className="flex flex-col sm:flex-row gap-4">
+                <CardContent className="space-y-3 py-3">
+                  {/* Search and Sort - Compact */}
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
                       <Input
                         placeholder="Search my listings..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
+                        className="pl-8 h-8 text-sm"
                         data-testid="input-search-listings"
                       />
                     </div>
                     <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="w-full sm:w-48" data-testid="select-sort">
+                      <SelectTrigger className="w-full sm:w-40 h-8 text-sm" data-testid="select-sort">
                         <SelectValue placeholder="Sort by" />
                       </SelectTrigger>
                       <SelectContent>
@@ -782,7 +779,7 @@ export default function Dashboard() {
 
                   {/* Select All Checkbox */}
                   {isSelectMode && filteredListings.length > 0 && (
-                    <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
+                    <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
                       <input
                         type="checkbox"
                         id="select-all"
