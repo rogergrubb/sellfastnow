@@ -183,6 +183,23 @@ export function DashboardShareModal({
     copyToClipboard(text);
   };
 
+  const shareAllListingsToFacebook = () => {
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(allListingsUrl)}`;
+    window.open(facebookUrl, '_blank', 'width=600,height=400');
+  };
+
+  const shareAllListingsToTwitter = () => {
+    const text = `Check out all my items for sale on SellFast.Now!`;
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(allListingsUrl)}`;
+    window.open(twitterUrl, '_blank', 'width=600,height=400');
+  };
+
+  const shareAllListingsToWhatsApp = () => {
+    const text = `Check out all my items for sale on SellFast.Now: ${allListingsUrl}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
@@ -247,6 +264,36 @@ export function DashboardShareModal({
             <p className="text-sm text-blue-700 mb-3">
               Share this link to show all your active listings in one place
             </p>
+            
+            {/* Social Share Buttons for All Listings */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              <Button
+                onClick={shareAllListingsToFacebook}
+                className="bg-[#1877F2] hover:bg-[#166FE5] text-white"
+                size="sm"
+              >
+                <Facebook className="w-4 h-4 mr-1" />
+                Facebook
+              </Button>
+              <Button
+                onClick={shareAllListingsToTwitter}
+                className="bg-[#1DA1F2] hover:bg-[#1A8CD8] text-white"
+                size="sm"
+              >
+                <Twitter className="w-4 h-4 mr-1" />
+                Twitter
+              </Button>
+              <Button
+                onClick={shareAllListingsToWhatsApp}
+                className="bg-[#25D366] hover:bg-[#22C55E] text-white"
+                size="sm"
+              >
+                <MessageCircle className="w-4 h-4 mr-1" />
+                WhatsApp
+              </Button>
+            </div>
+
+            {/* Copy URL */}
             <div className="flex items-center gap-2">
               <input
                 type="text"

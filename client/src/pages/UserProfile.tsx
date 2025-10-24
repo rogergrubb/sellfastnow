@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Star, MapPin, Calendar, Package, TrendingUp, MessageCircle, X, Filter, Settings, Edit, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { ReviewCard } from "@/components/ReviewCard";
 import { StatisticsDashboard } from "@/components/StatisticsDashboard";
 import { RespondToReviewModal } from "@/components/RespondToReviewModal";
@@ -216,8 +217,46 @@ export default function UserProfile() {
 
   const avgRating = statistics?.averageRating ? parseFloat(statistics.averageRating) : 0;
 
+  // Prepare Open Graph meta tags
+  const baseUrl = window.location.origin;
+  const profileUrl = `${baseUrl}/users/${userId}?tab=listings`;
+  const ogTitle = `${userName}'s Listings - SellFast.Now`;
+  const listingCount = userListings?.length || 0;
+  const ogDescription = `Browse ${listingCount} item${listingCount !== 1 ? 's' : ''} for sale by ${userName} on SellFast.Now. ${avgRating > 0 ? `${avgRating.toFixed(1)} star rating.` : 'New seller.'}`;
+  
+  // Get first 4 listing images for og:image (social media will use the first one)
+  const listingImages = userListings
+    ?.filter((listing: any) => listing.images && listing.images.length > 0)
+    .slice(0, 4)
+    .map((listing: any) => listing.images[0]) || [];
+  
+  const ogImage = listingImages[0] || `${baseUrl}/og-default.png`;
+
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <>
+      <Helmet>
+        {/* Primary Meta Tags */}
+        <title>{ogTitle}</title>
+        <meta name="description" content={ogDescription} />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="profile" />
+        <meta property="og:url" content={profileUrl} />
+        <meta property="og:title" content={ogTitle} />
+        <meta property="og:description" content={ogDescription} />
+        <meta property="og:image" content={ogImage} />
+        <meta property="og:site_name" content="SellFast.Now" />
+        <meta property="profile:username" content={userName} />
+        
+        {/* Twitter Card */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content={profileUrl} />
+        <meta property="twitter:title" content={ogTitle} />
+        <meta property="twitter:description" content={ogDescription} />
+        <meta property="twitter:image" content={ogImage} />
+      </Helmet>
+
+      <div className="container mx-auto px-4 py-8 space-y-6">
       {/* User Header */}
       <Card>
         <CardContent className="pt-6">
@@ -826,5 +865,6 @@ export default function UserProfile() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </>
   );
 }
