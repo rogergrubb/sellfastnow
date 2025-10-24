@@ -1958,7 +1958,14 @@ export default function PostAdEnhanced() {
   };
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-    createListingMutation.mutate(data);
+    // Ensure status is 'active' for publish button
+    createListingMutation.mutate({ ...data, status: 'active' });
+  };
+
+  const saveDraft = () => {
+    // Get current form values and save as draft
+    const data = form.getValues();
+    createListingMutation.mutate({ ...data, status: 'draft' });
   };
 
   // Redirect to sign-in if not authenticated
@@ -3016,10 +3023,7 @@ export default function PostAdEnhanced() {
                       variant="secondary"
                       className="flex-1"
                       disabled={createListingMutation.isPending}
-                      onClick={() => {
-                        const data = form.getValues();
-                        createListingMutation.mutate({ ...data, status: 'draft' });
-                      }}
+                      onClick={saveDraft}
                       data-testid="button-save-draft"
                     >
                       {createListingMutation.isPending ? (
@@ -3061,6 +3065,37 @@ export default function PostAdEnhanced() {
 
         {/* PHASE 5: Seller Academy Sidebar */}
         <div className="space-y-4">
+          {/* Quick Actions Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-primary" />
+                Quick Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start border-red-500 text-red-700 hover:bg-red-50 hover:text-red-800"
+                onClick={saveDraft}
+                disabled={createListingMutation.isPending}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Save to Draft
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => navigate('/dashboard?tab=my-listings&filter=draft')}
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Show Drafts
+              </Button>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

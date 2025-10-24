@@ -654,6 +654,7 @@ export default function Dashboard() {
                         size="sm"
                         onClick={() => setListingFilter("draft")}
                         data-testid="button-filter-draft"
+                        className={listingFilter === "draft" ? "bg-red-600 hover:bg-red-700" : "border-red-500 text-red-700 hover:bg-red-50"}
                       >
                         Drafts
                       </Button>
