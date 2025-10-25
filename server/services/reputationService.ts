@@ -25,18 +25,22 @@ export const reputationService = {
     }
 
     // Calculate seller success rate
-    const sellerSuccessRate = stats.totalSales > 0
-      ? (stats.successfulSales / stats.totalSales) * 100
+    const totalSales = stats.totalSales ?? 0;
+    const successfulSales = stats.successfulSales ?? 0;
+    const sellerSuccessRate = totalSales > 0
+      ? (successfulSales / totalSales) * 100
       : 0;
 
     // Calculate buyer success rate
-    const buyerSuccessRate = stats.totalPurchases > 0
-      ? (stats.successfulPurchases / stats.totalPurchases) * 100
+    const totalPurchases = stats.totalPurchases ?? 0;
+    const successfulPurchases = stats.successfulPurchases ?? 0;
+    const buyerSuccessRate = totalPurchases > 0
+      ? (successfulPurchases / totalPurchases) * 100
       : 0;
 
     // Calculate overall success rate
-    const totalTransactions = stats.totalSales + stats.totalPurchases;
-    const successfulTransactions = stats.successfulSales + stats.successfulPurchases;
+    const totalTransactions = totalSales + totalPurchases;
+    const successfulTransactions = successfulSales + successfulPurchases;
     const overallSuccessRate = totalTransactions > 0
       ? (successfulTransactions / totalTransactions) * 100
       : 0;
@@ -430,16 +434,21 @@ export const reputationService = {
 
     if (!stats) return;
 
-    const sellerSuccessRate = stats.totalSales > 0
-      ? ((stats.successfulSales / stats.totalSales) * 100).toFixed(2)
+    const totalSales = stats.totalSales ?? 0;
+    const successfulSales = stats.successfulSales ?? 0;
+    const totalPurchases = stats.totalPurchases ?? 0;
+    const successfulPurchases = stats.successfulPurchases ?? 0;
+
+    const sellerSuccessRate = totalSales > 0
+      ? ((successfulSales / totalSales) * 100).toFixed(2)
       : "0";
 
-    const buyerSuccessRate = stats.totalPurchases > 0
-      ? ((stats.successfulPurchases / stats.totalPurchases) * 100).toFixed(2)
+    const buyerSuccessRate = totalPurchases > 0
+      ? ((successfulPurchases / totalPurchases) * 100).toFixed(2)
       : "0";
 
-    const totalTransactions = stats.totalSales + stats.totalPurchases;
-    const successfulTransactions = stats.successfulSales + stats.successfulPurchases;
+    const totalTransactions = totalSales + totalPurchases;
+    const successfulTransactions = successfulSales + successfulPurchases;
     const overallSuccessRate = totalTransactions > 0
       ? ((successfulTransactions / totalTransactions) * 100).toFixed(2)
       : "0";
