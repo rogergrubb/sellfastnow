@@ -1,4 +1,4 @@
-import { useQuery } from "@tantml:query-client";
+import { useQuery } from "@tanstack/react-query";
 import StarRating from "./StarRating";
 import { Shield, AlertTriangle, TrendingUp, Award } from "lucide-react";
 
