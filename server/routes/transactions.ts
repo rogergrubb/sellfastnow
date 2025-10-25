@@ -3,6 +3,7 @@
 
 import { Router } from "express";
 import { transactionService } from "../services/transactionService";
+import { TransactionMessagingService } from "../services/transactionMessagingService";
 
 const router = Router();
 
@@ -32,6 +33,22 @@ router.post("/", async (req, res) => {
       description,
       listingId,
     });
+
+    // Send automated message for deposit submitted
+    if (listingId) {
+      try {
+        await TransactionMessagingService.notifyDepositSubmitted(
+          result.id,
+          listingId,
+          buyerId,
+          sellerId,
+          parseFloat(amount)
+        );
+      } catch (msgError) {
+        console.error('Failed to send automated message:', msgError);
+        // Don't fail the transaction if message fails
+      }
+    }
 
     res.status(201).json(result);
   } catch (error) {
@@ -73,6 +90,22 @@ router.post("/:id/release", async (req, res) => {
     }
 
     const transaction = await transactionService.releaseTransaction(id, userId);
+    
+    // Send automated message for transaction completed
+    if (transaction.listingId) {
+      try {
+        await TransactionMessagingService.notifyTransactionCompleted(
+          transaction.id,
+          transaction.listingId,
+          transaction.buyerId,
+          transaction.sellerId,
+          transaction.amount
+        );
+      } catch (msgError) {
+        console.error('Failed to send automated message:', msgError);
+      }
+    }
+    
     res.json(transaction);
   } catch (error) {
     console.error("Error releasing transaction:", error);
@@ -96,6 +129,23 @@ router.post("/:id/refund", async (req, res) => {
     }
 
     const transaction = await transactionService.refundTransaction(id, userId, reason);
+    
+    // Send automated message for transaction refunded
+    if (transaction.listingId) {
+      try {
+        await TransactionMessagingService.notifyTransactionRefunded(
+          transaction.id,
+          transaction.listingId,
+          transaction.buyerId,
+          transaction.sellerId,
+          transaction.amount,
+          reason
+        );
+      } catch (msgError) {
+        console.error('Failed to send automated message:', msgError);
+      }
+    }
+    
     res.json(transaction);
   } catch (error) {
     console.error("Error refunding transaction:", error);

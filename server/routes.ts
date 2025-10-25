@@ -17,6 +17,8 @@ import stripeConnectRoutes from "./routes/stripe-connect";
 import paymentSessionRoutes from "./routes/payment-sessions";
 import { registerSharesRoutes } from "./routes/shares";
 import conversationRoutes from "./routes/conversations";
+import messageReadRoutes from "./routes/message-read";
+import messageSearchRoutes from "./routes/message-search";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -169,6 +171,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Conversation Routes
   // ======================
   app.use("/api/conversations", conversationRoutes);
+
+  // ======================
+  // Message Read Routes
+  // ======================
+  app.use("/api/messages", messageReadRoutes);
+
+  // ======================
+  // Message Search Routes
+  // ======================
+  app.use("/api/messages", messageSearchRoutes);
 
   // ======================
   // User Routes

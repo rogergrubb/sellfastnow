@@ -6,8 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Inbox } from "lucide-react";
-import { MessageModal } from "@/components/MessageModal";
+import { MessageModalEnhanced } from "@/components/MessageModalEnhanced";
+import { MessageSearch } from "@/components/MessageSearch";
+import { NotificationPrompt } from "@/components/NotificationPrompt";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { NotificationService } from "@/services/notificationService";
 import type { Message } from "@shared/schema";
 
 interface Conversation {
@@ -69,10 +72,32 @@ export default function MessagesNew() {
           queryKey: [`/api/messages/listing/${selectedConversation.listingId}`] 
         });
       }
+      
+      // Show browser notification if message is for current user and window is not focused
+      if (message.receiverId === user.id && !document.hasFocus()) {
+        const conversation = conversations.find(
+          c => c.listingId === message.listingId && c.otherUserId === message.senderId
+        );
+        
+        const senderName = conversation?.otherUser?.fullName || 
+                          conversation?.otherUser?.username || 
+                          'Someone';
+        const listingTitle = conversation?.listing?.title || 'Item';
+        
+        NotificationService.showNewMessageNotification(
+          senderName,
+          message.content.substring(0, 100),
+          listingTitle,
+          () => {
+            // Navigate to messages page
+            window.location.href = '/messages';
+          }
+        );
+      }
     });
 
     return cleanup;
-  }, [user, onNewMessage, queryClient, selectedConversation]);
+  }, [user, onNewMessage, queryClient, selectedConversation, conversations]);
 
   const formatTime = (date: Date | string) => {
     const messageDate = new Date(date);
@@ -153,14 +178,28 @@ export default function MessagesNew() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Messages</h1>
-          <p className="text-muted-foreground mt-1">
-            {isConnected && <span className="text-green-500 mr-2">● Connected</span>}
-            {conversations.length} conversation{conversations.length !== 1 ? 's' : ''}
-          </p>
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold">Messages</h1>
+            <p className="text-muted-foreground mt-1">
+              {isConnected && <span className="text-green-500 mr-2">● Connected</span>}
+              {conversations.length} conversation{conversations.length !== 1 ? 's' : ''}
+            </p>
+          </div>
         </div>
+        
+        {/* Message Search */}
+        <MessageSearch
+          onResultClick={(listingId, otherUserId) => {
+            const conversation = conversations.find(
+              c => c.listingId === listingId && c.otherUserId === otherUserId
+            );
+            if (conversation) {
+              setSelectedConversation(conversation);
+            }
+          }}
+        />
       </div>
 
       <div className="grid gap-4">
@@ -225,7 +264,7 @@ export default function MessagesNew() {
       </div>
 
       {selectedConversation && (
-        <MessageModal
+        <MessageModalEnhanced
           isOpen={true}
           onClose={() => setSelectedConversation(null)}
           listingId={selectedConversation.listingId}
@@ -233,6 +272,9 @@ export default function MessagesNew() {
           listingTitle={selectedConversation.listing?.title || 'Listing'}
         />
       )}
+      
+      {/* Notification Permission Prompt */}
+      <NotificationPrompt />
     </div>
   );
 }
