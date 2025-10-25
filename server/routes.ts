@@ -26,6 +26,7 @@ import locationRoutes from "./routes/location";
 import favoritesRoutes from "./routes/favorites";
 import aiRoutes from "./routes/ai";
 import listingsRoutes from "./routes/listings";
+import imagesRoutes from "./routes/images";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -204,6 +205,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/listings", listingsRoutes);
   app.use("/api/user", listingsRoutes); // For /user/listings
   app.use("/api/users", listingsRoutes); // For /users/:userId/listings
+
+  // ======================
+  // Images & Upload Routes
+  // ======================
+  app.use("/api/images", imagesRoutes);
+  app.use("/api", imagesRoutes); // For /upload-session routes
 
   // ======================
   // User Routes
@@ -452,194 +459,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emailVerified: true 
       });
     } catch (error: any) {
-      console.error("❌ Error syncing verification:", error);
-      res.status(500).json({ 
-        message: error.message || "Failed to sync verification status"
-      });
-    }
-  });
-
-  // ======================
-  // Image Upload Routes (Cloudflare R2 + Images)
-  // ======================
-
-  // Upload image to Cloudflare
-  app.post("/api/images/upload", isAuthenticated, upload.single("image"), async (req: any, res) => {
-    try {
-      console.log('📤 Image upload request received from user:', req.auth?.userId);
-      
-      if (!req.file) {
-        console.error('❌ No image file provided in request');
-        return res.status(400).json({ message: "No image file provided" });
-      }
-
-      // Upload to Cloudflare R2 + Images
-      const { uploadToCloudflare } = await import('./cloudflareStorage');
-      const imageUrl = await uploadToCloudflare(req.file.buffer, req.file.originalname);
-      
-      console.log('✅ Image uploaded successfully to Cloudflare:', imageUrl);
-      
-      res.json({ 
-        imageUrl,
-        publicId: imageUrl.split('/').pop()?.split('?')[0] || '',
-      });
-    } catch (error) {
-      console.error("❌ Error uploading image:", error);
-      res.status(500).json({ message: "Failed to upload image" });
-    }
-  });
-
-  // Upload multiple images to Cloudflare (PARALLEL - NO DELAYS!)
-  app.post("/api/images/upload-multiple", isAuthenticated, upload.array("images", 200), async (req: any, res) => {
-    try {
-      if (!req.files || (req.files as any[]).length === 0) {
-        return res.status(400).json({ message: "No image files provided" });
-      }
-
-      console.log(`📤 Uploading ${(req.files as any[]).length} images to Cloudflare in parallel...`);
-      
-      // Upload all images in parallel to Cloudflare
-      const { uploadMultipleToCloudflare } = await import('./cloudflareStorage');
-      const files = (req.files as any[]).map((file: any) => ({
-        buffer: file.buffer,
-        filename: file.originalname,
-      }));
-      
-      const imageUrls = await uploadMultipleToCloudflare(files);
-      
-      const images = imageUrls.map((imageUrl) => ({
-        imageUrl,
-        publicId: imageUrl.split('/').pop()?.split('?')[0] || '',
-      }));
-
-      console.log(`✅ Successfully uploaded ${images.length} images to Cloudflare`);
-      res.json({ images });
-    } catch (error) {
-      console.error("Error uploading images:", error);
-      res.status(500).json({ message: "Failed to upload images" });
-    }
-  });
-
-  // ======================
-  // Upload Session Routes (QR Code phone-to-desktop uploads)
-  // ======================
-
-  // Create a new upload session
-  app.post("/api/upload-session/create", isAuthenticated, async (req: any, res) => {
-    try {
-      const { nanoid } = await import('nanoid');
-      const userId = req.auth.userId;
-      const sessionId = nanoid(12); // Generate unique 12-char ID
-      
-      // Sessions expire in 30 minutes
-      const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
-      
-      const session = await storage.createUploadSession({
-        id: sessionId,
-        userId,
-        images: [],
-        expiresAt,
-      });
-      
-      console.log(`✅ Upload session created: ${sessionId} for user ${userId}`);
-      res.json(session);
-    } catch (error: any) {
-      console.error("Error creating upload session:", error);
-      res.status(500).json({ message: "Failed to create upload session" });
-    }
-  });
-
-  // Upload images to a session (called from mobile)
-  app.post("/api/upload-session/:id/upload", upload.array("images", 24), async (req: any, res) => {
-    try {
-      const { id } = req.params;
-      
-      console.log(`📤 Mobile upload to session ${id}`);
-      
-      const session = await storage.getUploadSession(id);
-      if (!session) {
-        return res.status(404).json({ message: "Session not found or expired" });
-      }
-      
-      // Check if session is expired
-      if (new Date() > session.expiresAt) {
-        await storage.deleteUploadSession(id);
-        return res.status(410).json({ message: "Session expired" });
-      }
-      
-      if (!req.files || (req.files as any[]).length === 0) {
-        return res.status(400).json({ message: "No images provided" });
-      }
-      
-      // Upload images to Cloudflare
-      const { uploadMultipleToCloudflare } = await import('./cloudflareStorage');
-      const files = (req.files as any[]).map((file: any) => ({
-        buffer: file.buffer,
-        filename: file.originalname,
-      }));
-      
-      const imageUrls = await uploadMultipleToCloudflare(files);
-      
-      // Add images to session
-      const updated = await storage.addImagesToSession(id, imageUrls);
-      
-      console.log(`✅ Added ${imageUrls.length} images to session ${id}`);
-      res.json({ 
-        success: true, 
-        imageCount: updated.images.length,
-        newImages: imageUrls,
-      });
-    } catch (error: any) {
-      console.error("Error uploading to session:", error);
-      res.status(500).json({ message: "Failed to upload images" });
-    }
-  });
-
-  // Get images from a session (polling endpoint for desktop)
-  app.get("/api/upload-session/:id/images", isAuthenticated, async (req: any, res) => {
-    try {
-      const { id } = req.params;
-      const userId = req.auth.userId;
-      
-      const session = await storage.getUploadSession(id);
-      if (!session) {
-        return res.status(404).json({ message: "Session not found" });
-      }
-      
-      // Verify the session belongs to this user
-      if (session.userId !== userId) {
-        return res.status(403).json({ message: "Not authorized" });
-      }
-      
-      // Check if expired
-      if (new Date() > session.expiresAt) {
-        await storage.deleteUploadSession(id);
-        return res.status(410).json({ message: "Session expired" });
-      }
-      
-      res.json({ images: session.images });
-    } catch (error: any) {
-      console.error("Error fetching session images:", error);
-      res.status(500).json({ message: "Failed to fetch images" });
-    }
-  });
-
-  // Delete/cleanup a session
-  app.delete("/api/upload-session/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      const { id } = req.params;
-      const userId = req.auth.userId;
-      
-      const session = await storage.getUploadSession(id);
-      if (session && session.userId !== userId) {
-        return res.status(403).json({ message: "Not authorized" });
-      }
-      
-      await storage.deleteUploadSession(id);
-      res.status(204).send();
-    } catch (error: any) {
-      console.error("Error deleting session:", error);
-      res.status(500).json({ message: "Failed to delete session" });
+      console.error("Error syncing email verification:", error);
+      res.status(500).json({ message: "Failed to sync email verification" });
     }
   });
 
