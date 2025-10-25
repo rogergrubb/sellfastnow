@@ -1642,6 +1642,171 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ message: "Error rejecting deposit: " + error.message });
       }
     });
+
+    /**
+     * Complete transaction - Buyer confirms item is as described
+     * Transfers funds from escrow to seller
+     * POST /api/transactions/:transactionId/complete
+     * Body: { latitude?, longitude? }
+     */
+    app.post("/api/transactions/:transactionId/complete", isAuthenticated, async (req: any, res) => {
+      try {
+        const buyerId = req.auth.userId;
+        const { transactionId } = req.params;
+        const { latitude, longitude } = req.body;
+
+        // Get transaction
+        const transaction = await db.query.transactions.findFirst({
+          where: eq(transactions.id, transactionId),
+        });
+
+        if (!transaction) {
+          return res.status(404).json({ message: "Transaction not found" });
+        }
+
+        if (transaction.buyerId !== buyerId) {
+          return res.status(403).json({ message: "You are not the buyer for this transaction" });
+        }
+
+        if (transaction.status !== "deposit_accepted" && transaction.status !== "in_escrow") {
+          return res.status(400).json({ 
+            message: `Cannot complete transaction. Current status: ${transaction.status}` 
+          });
+        }
+
+        if (!transaction.stripePaymentIntentId) {
+          return res.status(400).json({ message: "No payment intent found" });
+        }
+
+        // Get seller info
+        const seller = await db.query.users.findFirst({
+          where: eq(users.id, transaction.sellerId),
+        });
+
+        if (!seller || !seller.stripeAccountId) {
+          return res.status(400).json({ message: "Seller account not found" });
+        }
+
+        // Transfer funds to seller (already configured in PaymentIntent)
+        // The transfer happens automatically because we used transfer_data in PaymentIntent
+        // But we can create an explicit transfer for better tracking
+        const transferAmount = Math.round(parseFloat(transaction.sellerPayout) * 100);
+        const transfer = await stripe.transfers.create({
+          amount: transferAmount,
+          currency: "usd",
+          destination: seller.stripeAccountId,
+          transfer_group: transactionId,
+          metadata: {
+            transactionId,
+            buyerId,
+            sellerId: transaction.sellerId,
+            listingId: transaction.listingId,
+          },
+          description: `Payment for transaction ${transactionId}`,
+        });
+
+        // Update transaction
+        const [updatedTransaction] = await db.update(transactions)
+          .set({
+            status: "completed",
+            completedAt: new Date(),
+            completionBuyerLatitude: latitude?.toString(),
+            completionBuyerLongitude: longitude?.toString(),
+            stripeTransferId: transfer.id,
+          })
+          .where(eq(transactions.id, transactionId))
+          .returning();
+
+        // TODO: Send notifications to both parties
+        // TODO: Update listing status to sold
+        // TODO: Trigger reputation/review system
+
+        res.json({
+          success: true,
+          transaction: updatedTransaction,
+          message: "Transaction completed! Funds transferred to seller.",
+        });
+      } catch (error: any) {
+        console.error("Error completing transaction:", error);
+        res.status(500).json({ message: "Error completing transaction: " + error.message });
+      }
+    });
+
+    /**
+     * Refund transaction - Buyer cancels because item is not as described
+     * Instantly refunds money to buyer
+     * POST /api/transactions/:transactionId/refund
+     * Body: { reason?, latitude?, longitude? }
+     */
+    app.post("/api/transactions/:transactionId/refund", isAuthenticated, async (req: any, res) => {
+      try {
+        const buyerId = req.auth.userId;
+        const { transactionId } = req.params;
+        const { reason, latitude, longitude } = req.body;
+
+        // Get transaction
+        const transaction = await db.query.transactions.findFirst({
+          where: eq(transactions.id, transactionId),
+        });
+
+        if (!transaction) {
+          return res.status(404).json({ message: "Transaction not found" });
+        }
+
+        if (transaction.buyerId !== buyerId) {
+          return res.status(403).json({ message: "You are not the buyer for this transaction" });
+        }
+
+        if (transaction.status !== "deposit_accepted" && transaction.status !== "in_escrow") {
+          return res.status(400).json({ 
+            message: `Cannot refund transaction. Current status: ${transaction.status}` 
+          });
+        }
+
+        if (!transaction.stripePaymentIntentId) {
+          return res.status(400).json({ message: "No payment intent found" });
+        }
+
+        // Create instant refund
+        const refund = await stripe.refunds.create({
+          payment_intent: transaction.stripePaymentIntentId,
+          reason: "requested_by_customer",
+          metadata: {
+            transactionId,
+            buyerId,
+            sellerId: transaction.sellerId,
+            refundReason: reason || "Item not as described",
+          },
+        });
+
+        // Update transaction
+        const [updatedTransaction] = await db.update(transactions)
+          .set({
+            status: "refunded",
+            cancelledAt: new Date(),
+            cancelledBy: buyerId,
+            cancellationReason: reason || "Item not as described",
+            completionBuyerLatitude: latitude?.toString(),
+            completionBuyerLongitude: longitude?.toString(),
+            stripeRefundId: refund.id,
+          })
+          .where(eq(transactions.id, transactionId))
+          .returning();
+
+        // TODO: Send notifications to both parties
+        // TODO: Update listing status back to available
+
+        res.json({
+          success: true,
+          transaction: updatedTransaction,
+          refund,
+          message: "Refund processed instantly. Funds will appear in your account within 2-7 business days.",
+        });
+      } catch (error: any) {
+        console.error("Error processing refund:", error);
+        res.status(500).json({ message: "Error processing refund: " + error.message });
+      }
+    });
   }
 
   // ======================
