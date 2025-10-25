@@ -30,6 +30,7 @@ import {
   Menu,
   X,
   Share2,
+  Upload,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -357,6 +358,66 @@ export default function Dashboard() {
       toast({
         title: "Success",
         description: "Listing published successfully!",
+      });
+    },
+  });
+
+  // Bulk publish all drafts mutation
+  const bulkPublishMutation = useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      const draftListings = filteredListings.filter(l => l.status === 'draft');
+      
+      if (draftListings.length === 0) {
+        throw new Error('No draft listings to publish');
+      }
+      
+      console.log(`📤 Publishing ${draftListings.length} draft listing(s)`);
+      
+      const results = await Promise.all(
+        draftListings.map(async listing => {
+          const response = await fetch(`/api/listings/${listing.id}/status`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: 'active' }),
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ Failed to publish ${listing.id}:`, response.status, errorText);
+          } else {
+            console.log(`✅ Successfully published ${listing.id}`);
+          }
+          
+          return { response, id: listing.id };
+        })
+      );
+      
+      const failed = results.filter(r => !r.response.ok);
+      if (failed.length > 0) {
+        throw new Error(`Failed to publish ${failed.length} listing(s)`);
+      }
+      
+      return results;
+    },
+    onSuccess: (results) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/listings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/listings/stats"] });
+      toast({
+        title: "Success",
+        description: `${results.length} draft(s) published successfully!`,
+      });
+      // Switch to Active tab to see published listings
+      setListingFilter('active');
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to publish drafts",
+        variant: "destructive",
       });
     },
   });
@@ -696,6 +757,23 @@ export default function Dashboard() {
                         >
                           <Share2 className="h-3 w-3 mr-1" />
                           Share
+                        </Button>
+                      )}
+                      {!isSelectMode && listingFilter === "draft" && filteredListings.filter(l => l.status === 'draft').length > 0 && (
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            const draftCount = filteredListings.filter(l => l.status === 'draft').length;
+                            if (confirm(`Publish all ${draftCount} draft listing(s)? They will become visible to buyers.`)) {
+                              bulkPublishMutation.mutate();
+                            }
+                          }}
+                          disabled={bulkPublishMutation.isPending}
+                          data-testid="button-publish-all"
+                          className="h-8 bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <Upload className="h-3 w-3 mr-1" />
+                          {bulkPublishMutation.isPending ? 'Publishing...' : 'Publish All'}
                         </Button>
                       )}
                       {!isSelectMode && (
