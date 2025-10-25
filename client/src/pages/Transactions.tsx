@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   ArrowLeft
 } from "lucide-react";
+import { VerificationBadges } from "@/components/VerificationBadge";
 
 interface Transaction {
   id: string;
@@ -36,10 +37,18 @@ interface Transaction {
   buyer?: {
     firstName?: string;
     lastName?: string;
+    emailVerified?: boolean;
+    phoneVerified?: boolean;
+    idVerified?: boolean;
+    addressVerified?: boolean;
   };
   seller?: {
     firstName?: string;
     lastName?: string;
+    emailVerified?: boolean;
+    phoneVerified?: boolean;
+    idVerified?: boolean;
+    addressVerified?: boolean;
   };
 }
 
@@ -155,9 +164,18 @@ export default function Transactions() {
                       {transaction.listing?.title || "Item"}
                     </h3>
                   </Link>
-                  <p className="text-sm text-muted-foreground">
-                    {isBuyer ? "Purchased from" : "Sold to"} {otherPartyName}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground">
+                      {isBuyer ? "Purchased from" : "Sold to"} {otherPartyName}
+                    </p>
+                    {otherParty && (
+                      <VerificationBadges
+                        user={otherParty}
+                        size="sm"
+                        showLabels={false}
+                      />
+                    )}
+                  </div>
                 </div>
                 {getStatusIcon(transaction.status)}
               </div>

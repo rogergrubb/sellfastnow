@@ -67,17 +67,53 @@ export class PhoneVerificationService {
       attempts: 0,
     });
 
-    // TODO: In production, use a proper SMS service (Twilio, AWS SNS, etc.)
-    // For now, we'll log the code
-    console.log(`📱 SMS verification code for ${phoneNumber}:`);
-    console.log(`   Code: ${code}`);
-    console.log(`   Expires in ${CODE_EXPIRY_MINUTES} minutes`);
+    // Integrate with Twilio SMS service
+    const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
+    const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
+    const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
 
-    // In production, send actual SMS:
-    // await smsService.send({
-    //   to: phoneNumber,
-    //   body: `Your SellFast.now verification code is: ${code}. Valid for ${CODE_EXPIRY_MINUTES} minutes.`
-    // });
+    if (twilioAccountSid && twilioAuthToken && twilioPhoneNumber) {
+      try {
+        // Use Twilio REST API to send SMS
+        const auth = Buffer.from(`${twilioAccountSid}:${twilioAuthToken}`).toString('base64');
+        const response = await fetch(
+          `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Basic ${auth}`,
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              To: phoneNumber,
+              From: twilioPhoneNumber,
+              Body: `Your SellFast.now verification code is: ${code}\n\nThis code will expire in ${CODE_EXPIRY_MINUTES} minutes.\n\nIf you didn't request this code, please ignore this message.`,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          console.error('Twilio SMS error:', error);
+          throw new Error('Failed to send SMS via Twilio');
+        }
+
+        const result = await response.json();
+        console.log(`✅ SMS sent successfully to ${phoneNumber} via Twilio (SID: ${result.sid})`);
+      } catch (error) {
+        console.error('Error sending SMS via Twilio:', error);
+        // Fall back to console logging in development
+        console.log(`📱 SMS Verification Code for ${phoneNumber}: ${code}`);
+        console.log(`   Expires in ${CODE_EXPIRY_MINUTES} minutes`);
+        console.log(`   ⚠️  Twilio error - code logged to console instead`);
+      }
+    } else {
+      // Development mode: log to console
+      console.log(`📱 SMS Verification Code for ${phoneNumber}:`);
+      console.log(`   Code: ${code}`);
+      console.log(`   Expires in ${CODE_EXPIRY_MINUTES} minutes`);
+      console.log(`   ⚠️  Twilio not configured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER to send real SMS.`);
+    }
 
     // Clean up expired codes
     this.cleanupExpiredCodes();

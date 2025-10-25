@@ -11,6 +11,7 @@ import { MessageSearch } from "@/components/MessageSearch";
 import { NotificationPrompt } from "@/components/NotificationPrompt";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { NotificationService } from "@/services/notificationService";
+import { VerificationBadges } from "@/components/VerificationBadge";
 import type { Message } from "@shared/schema";
 
 interface Conversation {
@@ -31,6 +32,10 @@ interface Conversation {
     username: string | null;
     email: string | null;
     fullName: string | null;
+    emailVerified?: boolean;
+    phoneVerified?: boolean;
+    idVerified?: boolean;
+    addressVerified?: boolean;
   } | null;
   listing: {
     id: string;
@@ -218,9 +223,18 @@ export default function MessagesNew() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold truncate">
-                        {getUserDisplayName(conv)}
-                      </h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold truncate">
+                          {getUserDisplayName(conv)}
+                        </h3>
+                        {conv.otherUser && (
+                          <VerificationBadges
+                            user={conv.otherUser}
+                            size="sm"
+                            showLabels={false}
+                          />
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground truncate">
                         {conv.listing?.title || 'Listing'}
                       </p>
