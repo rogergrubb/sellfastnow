@@ -16,6 +16,7 @@ import reputationRoutes from "./routes/reputation";
 import stripeConnectRoutes from "./routes/stripe-connect";
 import paymentSessionRoutes from "./routes/payment-sessions";
 import { registerSharesRoutes } from "./routes/shares";
+import conversationRoutes from "./routes/conversations";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -24,6 +25,7 @@ import {
   messageSendLimiter,
 } from "./middleware/rateLimiter";
 import { validateMessage } from "./utils/messageValidation";
+import { getWebSocketService } from "./services/websocketService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -162,6 +164,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reputation Routes
   // ======================
   app.use("/api/reputation", reputationRoutes);
+
+  // ======================
+  // Conversation Routes
+  // ======================
+  app.use("/api/conversations", conversationRoutes);
 
   // ======================
   // User Routes
@@ -2348,6 +2355,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }).returning();
       
       console.log('✅ Message created successfully:', newMessage[0].id);
+      
+      // Broadcast message via WebSocket for real-time delivery
+      const wsService = getWebSocketService();
+      if (wsService) {
+        wsService.broadcastMessage(newMessage[0]);
+        console.log('📡 Message broadcasted via WebSocket');
+      }
+      
       res.json(newMessage[0]);
     } catch (error: any) {
       console.error("❌ Error sending message:", error);

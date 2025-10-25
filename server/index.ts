@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { runMigrations } from "./migrations";
+import { initializeWebSocketService } from "./services/websocketService";
 
 const app = express();
 
@@ -47,6 +48,10 @@ app.use((req, res, next) => {
   await runMigrations();
   
   const server = await registerRoutes(app);
+  
+  // Initialize WebSocket service for real-time messaging
+  initializeWebSocketService(server);
+  log("✅ WebSocket service initialized");
 
   // Global error handler - must be after all routes
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
