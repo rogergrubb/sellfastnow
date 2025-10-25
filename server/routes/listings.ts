@@ -4,7 +4,8 @@ import { storage } from "../storage";
 
 const router = Router();
 
-  router.get("", async (req, res) => {
+  // Get all listings
+  router.get("/", async (req, res) => {
     try {
       const listings = await storage.getAllListings();
       console.log(`📋 Fetched ${listings.length} listings`);
@@ -126,7 +127,7 @@ const router = Router();
   });
 
   // Create single listing
-  router.post("", isAuthenticated, async (req: any, res) => {
+  router.post("/", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth.userId;
       const { title, description, price, category, condition, location, images, status } = req.body;
@@ -313,12 +314,5 @@ const router = Router();
       res.status(500).json({ message: error.message || "Failed to create listings" });
     }
   });
-
-  // ======================
-  // Messaging Routes
-  // ======================
-
-  // Get messages for current user (conversation threads) with pagination
-  router.get("/api/messages", isAuthenticated, async (req: any, res) => {
 
 export default router;
