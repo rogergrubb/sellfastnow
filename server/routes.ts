@@ -10,7 +10,7 @@ import {
 import { ObjectPermission } from "./objectAcl";
 import { upload } from "./cloudinary";
 import { eq, and, or, desc, sql } from "drizzle-orm";
-import { transactions as transactionsTable, listings } from "@shared/schema";
+import { transactions as transactionsTable, listings, users } from "@shared/schema";
 import transactionRoutes from "./routes/transactions";
 import reviewRoutes from "./routes/reviews";
 import reputationRoutes from "./routes/reputation";
@@ -1550,7 +1550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Get transaction
         const transaction = await db.query.transactions.findFirst({
-          where: eq(transactions.id, transactionId),
+          where: eq(transactionsTable.id, transactionId),
         });
 
         if (!transaction) {
@@ -1585,7 +1585,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             depositSellerLongitude: longitude?.toString(),
             stripeChargeId: paymentIntent.latest_charge as string,
           })
-          .where(eq(transactions.id, transactionId))
+          .where(eq(transactionsTable.id, transactionId))
           .returning();
 
         // TODO: Send notification to buyer that deposit was accepted
@@ -1615,7 +1615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Get transaction
         const transaction = await db.query.transactions.findFirst({
-          where: eq(transactions.id, transactionId),
+          where: eq(transactionsTable.id, transactionId),
         });
 
         if (!transaction) {
@@ -1646,7 +1646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             depositRejectedAt: new Date(),
             depositRejectionReason: reason,
           })
-          .where(eq(transactions.id, transactionId))
+          .where(eq(transactionsTable.id, transactionId))
           .returning();
 
         // TODO: Send notification to buyer that deposit was rejected
@@ -1676,7 +1676,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Get transaction
         const transaction = await db.query.transactions.findFirst({
-          where: eq(transactions.id, transactionId),
+          where: eq(transactionsTable.id, transactionId),
         });
 
         if (!transaction) {
@@ -1733,7 +1733,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             completionBuyerLongitude: longitude?.toString(),
             stripeTransferId: transfer.id,
           })
-          .where(eq(transactions.id, transactionId))
+          .where(eq(transactionsTable.id, transactionId))
           .returning();
 
         // TODO: Send notifications to both parties
@@ -1765,7 +1765,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Get transaction
         const transaction = await db.query.transactions.findFirst({
-          where: eq(transactions.id, transactionId),
+          where: eq(transactionsTable.id, transactionId),
         });
 
         if (!transaction) {
@@ -1809,7 +1809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             completionBuyerLongitude: longitude?.toString(),
             stripeRefundId: refund.id,
           })
-          .where(eq(transactions.id, transactionId))
+          .where(eq(transactionsTable.id, transactionId))
           .returning();
 
         // TODO: Send notifications to both parties

@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, MapPin, Shield, Mail, User, Phone, CheckCircle2, AlertTriangle, Info } from "lucide-react";
+import { Loader2, MapPin, Shield, Mail, User as UserIcon, Phone, CheckCircle2, AlertTriangle, Info } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PhoneVerificationModal } from "@/components/PhoneVerificationModal";
@@ -390,7 +390,7 @@ export default function Settings() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
+              <UserIcon className="h-5 w-5" />
               Profile Information
             </CardTitle>
             <CardDescription>
