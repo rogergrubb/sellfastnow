@@ -25,9 +25,13 @@ export default function Navbar() {
   const { data: messages = [] } = useQuery<Message[]>({
     queryKey: ['/api/messages'],
     enabled: isSignedIn && isLoaded,
+    retry: false,
   });
 
-  const unreadCount = messages.filter(m => m.receiverId === user?.id && !m.isRead).length;
+  // Safely calculate unread count with proper type checking
+  const unreadCount = Array.isArray(messages) 
+    ? messages.filter(m => m.receiverId === user?.id && !m.isRead).length 
+    : 0;
 
   // Fetch user credits with authentication
   const { data: credits, isLoading: creditsLoading, error: creditsError, refetch: refetchCredits } = useQuery<UserCredits>({
