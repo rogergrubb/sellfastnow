@@ -2219,13 +2219,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/listings/batch", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth.userId;
-      const { listings: listingsData } = req.body;
+      const { listings: listingsData, status: batchStatus } = req.body;
 
       if (!listingsData || !Array.isArray(listingsData)) {
         return res.status(400).json({ message: "listings array is required" });
       }
 
-      console.log(`📦 Batch creating ${listingsData.length} listings for user ${userId}`);
+      // Default to active if not specified
+      const targetStatus = batchStatus || "active";
+      const isDraft = targetStatus === "draft";
+
+      console.log(`📦 Batch creating ${listingsData.length} listings as ${targetStatus} for user ${userId}`);
 
       const createdListings = [];
       const errors = [];
@@ -2234,23 +2238,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const listingData = listingsData[i];
           
-          // Validate required fields
-          if (!listingData.title || !listingData.description || !listingData.price || 
-              !listingData.category || !listingData.condition) {
-            errors.push({ index: i, error: "Missing required fields" });
-            continue;
+          // Validate required fields (more lenient for drafts)
+          if (!isDraft) {
+            // Strict validation for active listings
+            if (!listingData.title || !listingData.description || !listingData.price || 
+                !listingData.category || !listingData.condition) {
+              errors.push({ index: i, error: "Missing required fields" });
+              continue;
+            }
+          } else {
+            // Lenient validation for drafts - only require at least a title or description
+            if (!listingData.title && !listingData.description) {
+              errors.push({ index: i, error: "At least title or description is required" });
+              continue;
+            }
           }
 
           const listing = await storage.createListing({
             userId,
-            title: listingData.title,
-            description: listingData.description,
-            price: String(listingData.price),
-            category: listingData.category,
-            condition: listingData.condition,
+            title: listingData.title || "Untitled",
+            description: listingData.description || "",
+            price: String(listingData.price || 0),
+            category: listingData.category || "Other",
+            condition: listingData.condition || "good",
             location: listingData.location || "Local Area",
             images: listingData.images || [],
-            status: "active",
+            status: targetStatus,
           });
 
           createdListings.push(listing);

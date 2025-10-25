@@ -436,6 +436,126 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
     }
   };
 
+  const handleSaveDrafts = async () => {
+    // No validation needed for drafts - save as-is
+    setIsPublishing(true);
+    setPublishingProgress({
+      current: 0,
+      total: products.length,
+      status: products.map(p => ({ title: p.title || 'Untitled', status: 'waiting' as const }))
+    });
+
+    try {
+      const listings = products.map(product => ({
+        title: product.title,
+        description: product.description,
+        price: String(product.usedPrice || 0),
+        category: product.category,
+        condition: product.condition,
+        location: "Local Area",
+        images: product.imageUrls,
+      }));
+
+      console.log('📋 Prepared listings for batch draft save:', {
+        count: listings.length,
+        sample: listings[0],
+      });
+
+      // Simulate saving progress for visual feedback
+      for (let i = 0; i < products.length; i++) {
+        setPublishingProgress(prev => prev ? {
+          ...prev,
+          current: i + 1,
+          status: prev.status.map((s, idx) => ({
+            ...s,
+            status: idx < i ? 'completed' : idx === i ? 'publishing' : 'waiting'
+          }))
+        } : null);
+        
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+
+      console.log('🚀 Calling batch API with status: draft');
+      
+      const token = await getToken();
+      
+      const response = await fetch('/api/listings/batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          listings,
+          status: 'draft' // Save as drafts
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Batch draft save failed:', response.status, errorText);
+        throw new Error(`Failed to save drafts: ${response.status} ${errorText}`);
+      }
+
+      const result = await response.json();
+
+      console.log('✅ Batch draft save successful:', {
+        created: result.created,
+        listings: result.listings?.map((l: any) => ({ id: l.id, title: l.title })),
+        errors: result.errors
+      });
+      
+      const actualCreatedCount = result.created ?? result.listings?.length ?? products.length;
+      
+      await queryClient.invalidateQueries({ queryKey: ['/api/listings'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/listings/mine'] });
+      
+      // Update all to completed
+      setPublishingProgress(prev => prev ? {
+        ...prev,
+        current: products.length,
+        status: prev.status.map(s => ({ ...s, status: 'completed' as const }))
+      } : null);
+
+      setTimeout(() => {
+        setIsPublishing(false);
+        setPublishingProgress(null);
+        
+        if (actualCreatedCount > 0) {
+          // Clear localStorage backup after successful save
+          console.log('🧺 Clearing bulkProducts backup after successful draft save');
+          localStorage.removeItem('bulkProducts_backup');
+          localStorage.removeItem('bulkProducts_timestamp');
+          
+          toast({
+            title: "Drafts Saved!",
+            description: `Successfully saved ${actualCreatedCount} item${actualCreatedCount > 1 ? 's' : ''} as drafts.`,
+          });
+          
+          // Redirect to Dashboard with drafts tab
+          setLocation('/dashboard?tab=drafts');
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to save any drafts. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }, 500);
+      
+    } catch (error: any) {
+      console.error('❌ Batch draft save error:', error);
+      
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to save drafts. Please try again.",
+        variant: "destructive",
+      });
+      setIsPublishing(false);
+      setPublishingProgress(null);
+    }
+  };
+
   // Publishing Progress Modal
   if (publishingProgress) {
     const progress = publishingProgress.total > 0 
@@ -1058,7 +1178,8 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
-                disabled={isPublishing}
+                onClick={handleSaveDrafts}
+                disabled={isPublishing || products.length === 0}
                 data-testid="button-save-drafts"
               >
                 <Save className="h-4 w-4 mr-2" />
