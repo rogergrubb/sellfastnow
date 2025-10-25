@@ -52,3 +52,22 @@ export const generalApiLimiter = createRateLimiter(
   'Too many requests. Please try again later.'
 );
 
+
+
+// Phone verification rate limiter (10 requests per hour)
+export const phoneVerificationLimiter = createRateLimiter(
+  10,
+  60 * 60 * 1000,
+  'Too many verification attempts. Please try again later.'
+);
+
+// Export all rate limiters
+export const rateLimiters = {
+  stripeAccount: stripeAccountCreationLimiter,
+  stripePayment: stripePaymentIntentLimiter,
+  stripeCheckout: stripeCheckoutSessionLimiter,
+  messageSend: messageSendLimiter,
+  generalApi: generalApiLimiter,
+  phoneVerification: phoneVerificationLimiter,
+};
+

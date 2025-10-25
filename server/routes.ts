@@ -19,6 +19,8 @@ import { registerSharesRoutes } from "./routes/shares";
 import conversationRoutes from "./routes/conversations";
 import messageReadRoutes from "./routes/message-read";
 import messageSearchRoutes from "./routes/message-search";
+import emailVerificationRoutes from "./routes/email-verification";
+import phoneVerificationRoutes from "./routes/phone-verification";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -161,6 +163,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Review Routes
   // ======================
   app.use("/api/reviews", reviewRoutes);
+
+  // ======================
+  // Verification Routes
+  // ======================
+  app.use("/api/verification", emailVerificationRoutes);
+  app.use("/api/verification", phoneVerificationRoutes);
 
   // ======================
   // Reputation Routes
