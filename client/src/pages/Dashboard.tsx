@@ -182,9 +182,13 @@ export default function Dashboard() {
   const { data: messages = [] } = useQuery<Message[]>({
     queryKey: ["/api/messages"],
     enabled: !!user,
+    retry: false,
   });
 
-  const unreadCount = messages.filter(m => m.receiverId === user?.id && !m.isRead).length;
+  // Safely calculate unread count with proper type checking
+  const unreadCount = Array.isArray(messages)
+    ? messages.filter(m => m.receiverId === user?.id && !m.isRead).length
+    : 0;
 
   // Fetch user's listings
   const { data: userListings = [], isLoading: listingsLoading } = useQuery<Listing[]>({
