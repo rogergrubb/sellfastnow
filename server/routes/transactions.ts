@@ -101,6 +101,32 @@ router.post("/:id/release", async (req, res) => {
           transaction.sellerId,
           transaction.amount
         );
+        
+        // Send review prompts to both parties after a short delay
+        setTimeout(async () => {
+          try {
+            // Prompt buyer to review seller
+            await TransactionMessagingService.sendReviewPrompt(
+              transaction.id,
+              transaction.listingId!,
+              transaction.sellerId,
+              transaction.buyerId,
+              "the seller"
+            );
+
+            // Prompt seller to review buyer
+            await TransactionMessagingService.sendReviewPrompt(
+              transaction.id,
+              transaction.listingId!,
+              transaction.buyerId,
+              transaction.sellerId,
+              "the buyer"
+            );
+          } catch (reviewPromptError) {
+            console.error('Failed to send review prompts:', reviewPromptError);
+          }
+        }, 10000); // Wait 10 seconds after completion message
+
       } catch (msgError) {
         console.error('Failed to send automated message:', msgError);
       }

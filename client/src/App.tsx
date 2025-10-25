@@ -26,6 +26,7 @@ import Admin from "./pages/Admin";
 import Credits from "./pages/Credits";
 import PaymentPage from "./pages/PaymentPage";
 import SellerMeetupPage from "./pages/SellerMeetupPage";
+import UserReviews from "./pages/UserReviews";
 import Navbar from "@/components/Navbar";
 
 function Router() {
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/transactions" component={Transactions} />
       <Route path="/users/:userId" component={UserProfile} />
       <Route path="/users/:userId/history" component={TransactionHistory} />
+      <Route path="/users/:userId/reviews" component={UserReviews} />
       <Route path="/create-review/:token" component={CreateReview} />
       <Route path="/unsubscribe" component={Unsubscribe} />
       <Route path="/mobile-upload/:sessionId" component={MobileUpload} />

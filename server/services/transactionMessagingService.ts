@@ -242,5 +242,26 @@ export class TransactionMessagingService {
       content
     );
   }
+
+  /**
+   * Send review prompt after transaction completion
+   */
+  static async sendReviewPrompt(
+    transactionId: string,
+    listingId: string,
+    fromUserId: string,
+    toUserId: string,
+    otherUserName: string
+  ) {
+    const content = `⭐ How was your experience? Please take a moment to review your transaction with ${otherUserName}. Your feedback helps build trust in our community! Transaction ID: ${transactionId}`;
+    
+    // Send review prompt
+    await this.sendAutomatedMessage(
+      listingId,
+      fromUserId, // From the other user
+      toUserId, // To this user
+      content
+    );
+  }
 }
 
