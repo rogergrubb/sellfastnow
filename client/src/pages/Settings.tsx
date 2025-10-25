@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
+import type { User } from "@shared/schema";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,7 +58,7 @@ export default function Settings() {
   const [isPhoneVerificationModalOpen, setIsPhoneVerificationModalOpen] = useState(false);
 
   // Fetch current settings
-  const { data: currentUser, isLoading } = useQuery({
+  const { data: currentUser, isLoading } = useQuery<User>({
     queryKey: ["/api/auth/user"],
   });
 

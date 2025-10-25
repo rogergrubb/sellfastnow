@@ -1036,7 +1036,7 @@ export default function PostAdEnhanced() {
       }
 
       const userId = user?.id || '';
-      const userEmail = user?.primaryEmailAddress?.emailAddress || '';
+      const userEmail = user?.email || '';
       const checkoutUrl = `${stripeLink}?client_reference_id=${userId}&prefilled_email=${userEmail}`;
       
       console.log('💳 Redirecting to Stripe checkout:', checkoutUrl);

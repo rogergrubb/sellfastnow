@@ -9,7 +9,8 @@ import {
 } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { upload } from "./cloudinary";
-import { eq } from "drizzle-orm";
+import { eq, and, or, desc, sql } from "drizzle-orm";
+import { transactions as transactionsTable, listings } from "@shared/schema";
 import transactionRoutes from "./routes/transactions";
 import reviewRoutes from "./routes/reviews";
 import reputationRoutes from "./routes/reputation";
