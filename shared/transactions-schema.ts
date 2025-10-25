@@ -8,14 +8,21 @@ import { z } from "zod";
 
 // Transaction Status Enum
 export const TransactionStatus = {
-  PENDING: "pending",           // Transaction created, payment not captured
-  PAYMENT_CAPTURED: "payment_captured", // Payment captured, funds held in escrow
-  SHIPPED: "shipped",           // Seller marked as shipped
-  DELIVERED: "delivered",       // Buyer confirmed delivery
-  COMPLETED: "completed",       // Funds released to seller
+  PENDING: "pending",           // Transaction created, no payment yet
+  DEPOSIT_SUBMITTED: "deposit_submitted", // Buyer submitted deposit, awaiting seller acceptance
+  DEPOSIT_ACCEPTED: "deposit_accepted",   // Seller accepted deposit, funds in escrow
+  DEPOSIT_REJECTED: "deposit_rejected",   // Seller rejected deposit
+  IN_ESCROW: "in_escrow",       // Funds held in escrow (same as deposit_accepted)
+  MEETUP_SCHEDULED: "meetup_scheduled",   // Meetup time/location confirmed
+  IN_PROGRESS: "in_progress",   // Parties are meeting (live location active)
+  COMPLETED: "completed",       // Buyer confirmed, funds released to seller
+  REFUNDED: "refunded",         // Buyer cancelled, refund processed
+  CANCELLED: "cancelled",       // Transaction cancelled before completion
   DISPUTED: "disputed",         // Dispute raised
-  REFUNDED: "refunded",         // Refunded to buyer
-  CANCELLED: "cancelled",       // Transaction cancelled
+  // Legacy statuses (kept for compatibility)
+  PAYMENT_CAPTURED: "payment_captured",
+  SHIPPED: "shipped",
+  DELIVERED: "delivered",
 } as const;
 
 // ============================================
@@ -30,20 +37,52 @@ export const transactions = pgTable("transactions", {
   listingId: text("listing_id").notNull(),
   
   // Payment Details
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Total transaction amount
-  platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).notNull(), // Platform's 5% fee
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Total transaction amount (deposit amount)
+  platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).notNull(), // Platform's 2.5% fee
   sellerPayout: decimal("seller_payout", { precision: 10, scale: 2 }).notNull(), // Amount seller receives
+  
+  // Deposit Details
+  depositAmount: decimal("deposit_amount", { precision: 10, scale: 2 }), // Amount buyer deposited (may differ from listing price)
+  depositSubmittedAt: timestamp("deposit_submitted_at"), // When buyer submitted deposit
+  depositAcceptedAt: timestamp("deposit_accepted_at"), // When seller accepted deposit
+  depositRejectedAt: timestamp("deposit_rejected_at"), // When seller rejected deposit
+  depositRejectionReason: text("deposit_rejection_reason"), // Why seller rejected
   
   // Stripe Payment Details
   stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
   stripeChargeId: varchar("stripe_charge_id", { length: 255 }),
+  stripeTransferId: varchar("stripe_transfer_id", { length: 255 }), // Transfer to seller
+  stripeRefundId: varchar("stripe_refund_id", { length: 255 }), // Refund to buyer
   
   // Transaction Status
   status: varchar("status", { length: 30 }).notNull().default(TransactionStatus.PENDING),
   
   // Meetup Details
   meetupScheduledAt: timestamp("meetup_scheduled_at"),
-  meetupLocation: text("meetup_location"),
+  meetupLocation: text("meetup_location"), // Text address
+  meetupLatitude: decimal("meetup_latitude", { precision: 10, scale: 7 }),
+  meetupLongitude: decimal("meetup_longitude", { precision: 10, scale: 7 }),
+  
+  // Geo-Location Tracking (for safety and audit trail)
+  // Deposit submission locations
+  depositBuyerLatitude: decimal("deposit_buyer_latitude", { precision: 10, scale: 7 }),
+  depositBuyerLongitude: decimal("deposit_buyer_longitude", { precision: 10, scale: 7 }),
+  depositSellerLatitude: decimal("deposit_seller_latitude", { precision: 10, scale: 7 }), // Where seller was when accepting
+  depositSellerLongitude: decimal("deposit_seller_longitude", { precision: 10, scale: 7 }),
+  
+  // Live location during meetup (last known positions)
+  buyerCurrentLatitude: decimal("buyer_current_latitude", { precision: 10, scale: 7 }),
+  buyerCurrentLongitude: decimal("buyer_current_longitude", { precision: 10, scale: 7 }),
+  buyerLocationUpdatedAt: timestamp("buyer_location_updated_at"),
+  sellerCurrentLatitude: decimal("seller_current_latitude", { precision: 10, scale: 7 }),
+  sellerCurrentLongitude: decimal("seller_current_longitude", { precision: 10, scale: 7 }),
+  sellerLocationUpdatedAt: timestamp("seller_location_updated_at"),
+  
+  // Transaction completion locations
+  completionBuyerLatitude: decimal("completion_buyer_latitude", { precision: 10, scale: 7 }),
+  completionBuyerLongitude: decimal("completion_buyer_longitude", { precision: 10, scale: 7 }),
+  completionSellerLatitude: decimal("completion_seller_latitude", { precision: 10, scale: 7 }),
+  completionSellerLongitude: decimal("completion_seller_longitude", { precision: 10, scale: 7 }),
   
   // Shipping/Delivery
   shippedAt: timestamp("shipped_at"),
