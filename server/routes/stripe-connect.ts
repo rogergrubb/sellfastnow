@@ -7,6 +7,7 @@ import { users } from "../../shared/schema";
 import { eq } from "drizzle-orm";
 import { stripeConnectService } from "../services/stripeConnectService";
 import { isAuthenticated } from "../supabaseAuth";
+import { stripeAccountCreationLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
@@ -15,7 +16,7 @@ const router = Router();
  * Create a Stripe Connect account (Express or Standard) for the current user
  * Body: { accountType: 'express' | 'standard' }
  */
-router.post("/create-account", isAuthenticated, async (req: any, res) => {
+router.post("/create-account", isAuthenticated, stripeAccountCreationLimiter, async (req: any, res) => {
   try {
     const userId = req.auth.userId;
     

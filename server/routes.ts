@@ -16,6 +16,14 @@ import reputationRoutes from "./routes/reputation";
 import stripeConnectRoutes from "./routes/stripe-connect";
 import paymentSessionRoutes from "./routes/payment-sessions";
 import { registerSharesRoutes } from "./routes/shares";
+import { stripe } from "./stripe";
+import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
+import { 
+  stripePaymentIntentLimiter,
+  stripeCheckoutSessionLimiter,
+  messageSendLimiter,
+} from "./middleware/rateLimiter";
+import { validateMessage } from "./utils/messageValidation";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -1105,14 +1113,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe Payment Routes
   // ======================
 
-  if (process.env.STRIPE_SECRET_KEY) {
-    const { Stripe } = await import("stripe");
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2025-09-30.clover",
-    });
-
-    // Create payment intent for listing promotion or premium features
-    app.post("/api/create-payment-intent", isAuthenticated, async (req, res) => {
+  // Stripe routes are now using the centralized stripe client imported at the top
+  // Create payment intent for listing promotion or premium features
+  app.post("/api/create-payment-intent", isAuthenticated, stripePaymentIntentLimiter, async (req, res) => {
       try {
         const { amount, description } = req.body;
         
@@ -1127,6 +1130,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           automatic_payment_methods: {
             enabled: true,
           },
+        }, {
+          idempotencyKey: `payment_${(req as any).auth.userId}_${Date.now()}`,
         });
 
         res.json({ clientSecret: paymentIntent.client_secret });
@@ -1136,8 +1141,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
 
-    // Create Checkout Session for credit purchases
-    app.post("/api/create-checkout-session", isAuthenticated, async (req: any, res) => {
+  // Create Checkout Session for credit purchases
+  app.post("/api/create-checkout-session", isAuthenticated, stripeCheckoutSessionLimiter, async (req: any, res) => {
       try {
         const userId = req.auth.userId;
         const { credits } = req.body;
@@ -1146,16 +1151,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Invalid credit amount" });
         }
 
-        // Define credit bundles with pricing
-        const CREDIT_BUNDLES: Record<number, { price: number; name: string }> = {
-          25: { price: 2.99, name: "25 AI Credits" },
-          50: { price: 4.99, name: "50 AI Credits" },
-          75: { price: 6.99, name: "75 AI Credits" },
-          100: { price: 8.99, name: "100 AI Credits" },
-          500: { price: 39.99, name: "500 AI Credits" },
-        };
-
-        const bundle = CREDIT_BUNDLES[credits];
+        // Use centralized credit bundles configuration
+        const bundle = STRIPE_CONFIG.CREDIT_BUNDLES[credits];
         if (!bundle) {
           return res.status(400).json({ message: "Invalid credit bundle" });
         }
@@ -1166,10 +1163,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "User not found" });
         }
 
-        // Determine base URL for success/cancel redirects
-        const baseUrl = process.env.NODE_ENV === 'production'
-          ? 'https://sellfast.now'
-          : 'http://localhost:5000';
+        // Use centralized base URL configuration
+        const baseUrl = getBaseUrl();
 
         // Create Checkout Session
         const session = await stripe.checkout.sessions.create({
@@ -1197,6 +1192,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             credits: credits.toString(),
             type: 'credit_bundle',
           },
+        }, {
+          idempotencyKey: `checkout_${userId}_${credits}_${Date.now()}`,
         });
 
         console.log(`✅ Created checkout session ${session.id} for user ${userId} - ${credits} credits`);
@@ -1392,20 +1389,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ message: "Error verifying session: " + error.message });
       }
     });
-  }
 
   // ======================
   // Escrow Deposit Routes
   // ======================
+  // Using centralized stripe client
 
-  if (process.env.STRIPE_SECRET_KEY) {
-    const { Stripe } = await import("stripe");
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2025-09-30.clover",
-    });
-
-    /**
-     * Submit deposit - Buyer submits deposit for a listing
+  /**
+   * Submit deposit - Buyer submits deposit for a listing
      * Creates Stripe PaymentIntent with manual capture
      * POST /api/deposits/submit
      * Body: { listingId, amount, latitude?, longitude? }
@@ -1463,8 +1454,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .where(eq(users.id, buyerId));
         }
 
-        // Calculate platform fee (2.5%)
-        const platformFee = amount * 0.025;
+        // Calculate platform fee using centralized config
+        const platformFee = calculatePlatformFee(amount);
         const sellerPayout = amount - platformFee;
 
         // Create Stripe PaymentIntent with manual capture (authorize only)
@@ -1807,7 +1798,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ message: "Error processing refund: " + error.message });
       }
     });
-  }
 
   // ======================
   // User Statistics Routes
@@ -2261,20 +2251,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Messaging Routes
   // ======================
 
-  // Get messages for current user (conversation threads)
+  // Get messages for current user (conversation threads) with pagination
   app.get("/api/messages", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth.userId;
-      const { messages } = await import("@shared/schema");
-      const { desc, or } = await import("drizzle-orm");
       
-      // Get all messages where user is sender or receiver
+      // Pagination parameters
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = (page - 1) * limit;
+      
+      const { messages } = await import("@shared/schema");
+      const { desc, or, count } = await import("drizzle-orm");
+      
+      // Get total count
+      const [totalResult] = await db.select({ count: count() })
+        .from(messages)
+        .where(or(eq(messages.senderId, userId), eq(messages.receiverId, userId)));
+      
+      const total = totalResult.count;
+      
+      // Get paginated messages
       const userMessages = await db.select()
         .from(messages)
         .where(or(eq(messages.senderId, userId), eq(messages.receiverId, userId)))
-        .orderBy(desc(messages.createdAt));
+        .orderBy(desc(messages.createdAt))
+        .limit(limit)
+        .offset(offset);
       
-      res.json(userMessages);
+      res.json({
+        messages: userMessages,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      });
     } catch (error) {
       console.error("Error fetching messages:", error);
       res.status(500).json({ message: "Failed to fetch messages" });
@@ -2307,36 +2320,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Send a message
-  app.post("/api/messages", isAuthenticated, async (req: any, res) => {
+  // Send a message with validation and rate limiting
+  app.post("/api/messages", isAuthenticated, messageSendLimiter, async (req: any, res) => {
     try {
       const senderId = req.auth.userId;
       const { listingId, receiverId, content } = req.body;
       
       console.log('📨 Sending message:', { senderId, listingId, receiverId, contentLength: content?.length });
       
-      const { messages, listings } = await import("@shared/schema");
-      
-      if (!listingId || !receiverId || !content) {
-        console.error('❌ Missing required fields:', { listingId: !!listingId, receiverId: !!receiverId, content: !!content });
-        return res.status(400).json({ message: "Missing required fields" });
+      // Comprehensive validation using utility function
+      const validation = await validateMessage(senderId, receiverId, listingId, content);
+      if (!validation.valid) {
+        console.error('❌ Message validation failed:', validation.error);
+        return res.status(400).json({ message: validation.error });
       }
       
-      // Verify listing exists
-      const listing = await db.select().from(listings).where(eq(listings.id, listingId)).limit(1);
-      if (!listing.length) {
-        console.error('❌ Listing not found:', listingId);
-        return res.status(404).json({ message: "Listing not found" });
-      }
+      const { messages } = await import("@shared/schema");
       
-      console.log('✅ Listing verified, creating message...');
+      console.log('✅ Message validated, creating message...');
       
-      // Create message
+      // Create message with trimmed content
       const newMessage = await db.insert(messages).values({
         listingId,
         senderId,
         receiverId,
-        content,
+        content: content.trim(),
       }).returning();
       
       console.log('✅ Message created successfully:', newMessage[0].id);
