@@ -532,8 +532,8 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
             description: `Successfully saved ${actualCreatedCount} item${actualCreatedCount > 1 ? 's' : ''} as drafts.`,
           });
           
-          // Redirect to Dashboard with drafts tab
-          setLocation('/dashboard?tab=drafts');
+          // Redirect to Dashboard with drafts filter
+          setLocation('/dashboard?filter=draft');
         } else {
           toast({
             title: "Error",
