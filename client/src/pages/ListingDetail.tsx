@@ -19,6 +19,8 @@ import { ContactInfoDisplay } from "@/components/ContactInfoDisplay";
 import CheckoutModal from "@/components/CheckoutModal";
 import { VerificationBadges } from "@/components/VerificationBadge";
 import { MeetingPreferencesDisplay } from "@/components/SafetyPrompt";
+import { DepositSubmissionModal } from "@/components/DepositSubmissionModal";
+import { TransactionControlPanel } from "@/components/TransactionControlPanel";
 import {
   MapPin,
   Heart,
@@ -49,6 +51,7 @@ export default function ListingDetail() {
   const [isMakeOfferModalOpen, setIsMakeOfferModalOpen] = useState(false);
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
 
   // Fetch current user
   const { data: currentUser } = useQuery<User>({
@@ -534,6 +537,19 @@ export default function ListingDetail() {
                     Make Offer
                   </Button>
                 )}
+                
+                {currentUser && data?.listing.userId !== currentUser.id && data?.listing.status === 'active' && (
+                  <Button 
+                    variant="default" 
+                    className="w-full bg-green-600 hover:bg-green-700" 
+                    size="lg" 
+                    onClick={() => setIsDepositModalOpen(true)}
+                    data-testid="button-submit-deposit"
+                  >
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Submit Deposit
+                  </Button>
+                )}
 
                 <Button
                   variant="outline"
@@ -688,6 +704,16 @@ export default function ListingDetail() {
               seller={seller}
               open={isCheckoutModalOpen}
               onClose={() => setIsCheckoutModalOpen(false)}
+            />
+          )}
+          {data && currentUser && data.listing.userId !== currentUser.id && (
+            <DepositSubmissionModal
+              open={isDepositModalOpen}
+              onOpenChange={setIsDepositModalOpen}
+              listingId={id!}
+              sellerId={seller.id}
+              listingTitle={listing.title}
+              listingPrice={parseFloat(listing.price)}
             />
           )}
         </>
