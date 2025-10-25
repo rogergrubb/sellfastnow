@@ -135,14 +135,21 @@ export default function Dashboard() {
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
-  // Sync active tab with URL query parameter
+  // Sync active tab and filter with URL query parameters
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get("tab");
+    const filterParam = urlParams.get("filter");
+    
     if (tabParam === "favorites" || tabParam === "settings") {
       setActiveTab(tabParam);
     } else {
       setActiveTab("my-listings");
+    }
+    
+    // Set listing filter if provided in URL
+    if (filterParam && ["all", "active", "draft", "sold", "expired"].includes(filterParam)) {
+      setListingFilter(filterParam as "all" | "active" | "draft" | "sold" | "expired");
     }
   }, []);
 

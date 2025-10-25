@@ -559,7 +559,13 @@ export default function PostAdEnhanced() {
             ? "Your listing has been updated successfully." 
             : "Your listing has been published successfully.",
       });
-      setLocation('/dashboard');
+      
+      // Redirect to appropriate tab based on listing status
+      if (isDraft) {
+        setLocation('/dashboard?filter=draft');
+      } else {
+        setLocation('/dashboard');
+      }
     },
     onError: (error: any) => {
       toast({
