@@ -203,8 +203,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Listings Routes
   // ======================
   app.use("/api/listings", listingsRoutes);
-  app.use("/api/user", listingsRoutes); // For /user/listings
-  app.use("/api/users", listingsRoutes); // For /users/:userId/listings
 
   // ======================
   // Images & Upload Routes
@@ -1261,6 +1259,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ======================
   // Credit System Routes
   // ======================
+
+  // Get user's listings (for dashboard)
+  app.get("/api/user/listings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const listings = await storage.getUserListings(userId);
+      console.log(`📋 Fetched ${listings.length} listings for user ${userId}`);
+      res.json(listings);
+    } catch (error: any) {
+      console.error("❌ Error fetching user listings:", error);
+      res.status(500).json({ message: "Failed to fetch listings" });
+    }
+  });
+
+  // Get public listings for a specific user (for profile page)
+  app.get("/api/users/:userId/listings", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const allListings = await storage.getUserListings(userId);
+      // Only return active listings for public view
+      const activeListings = allListings.filter(l => l.status === 'active');
+      console.log(`📋 Fetched ${activeListings.length} active listings for user ${userId}`);
+      res.json(activeListings);
+    } catch (error: any) {
+      console.error("❌ Error fetching user's public listings:", error);
+      res.status(500).json({ message: "Failed to fetch listings" });
+    }
+  });
 
   // Get user credits
   app.get("/api/user/credits", isAuthenticated, async (req: any, res) => {
