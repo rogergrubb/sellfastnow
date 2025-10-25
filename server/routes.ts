@@ -2102,13 +2102,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/listings", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth.userId;
-      const { title, description, price, category, condition, location, images } = req.body;
+      const { title, description, price, category, condition, location, images, status } = req.body;
 
       if (!title || !description || !price || !category || !condition) {
         return res.status(400).json({ message: "Missing required fields" });
       }
 
-      console.log(`Creating single listing for user ${userId}: ${title}`);
+      console.log(`Creating single listing for user ${userId}: ${title} with status: ${status || 'active'}`);
 
       const listing = await storage.createListing({
         userId,
@@ -2119,7 +2119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         condition,
         location: location || "Local Area",
         images: images || [],
-        status: "active",
+        status: status || "active",  // Use provided status or default to active
       });
 
       console.log(`Listing created successfully: ${listing.id}`);
