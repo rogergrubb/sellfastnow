@@ -3094,7 +3094,7 @@ export default function PostAdEnhanced() {
                 type="button"
                 variant="outline"
                 className="w-full justify-start"
-                onClick={() => navigate('/dashboard?tab=my-listings&filter=draft')}
+                onClick={() => setLocation('/dashboard?filter=draft')}
               >
                 <Eye className="mr-2 h-4 w-4" />
                 Show Drafts

@@ -78,9 +78,9 @@ router.get("/", isAuthenticated, async (req: any, res) => {
     const conversationUsers = await db
       .select({
         id: users.id,
-        username: users.username,
+        firstName: users.firstName,
+        lastName: users.lastName,
         email: users.email,
-        fullName: users.fullName,
       })
       .from(users)
       .where(sql`${users.id} IN ${sql.raw(`(${otherUserIds.map(id => `'${id}'`).join(',')})`)}`)

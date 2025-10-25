@@ -11,7 +11,7 @@ const router = Router();
  */
 router.post("/phone/send", rateLimiters.phoneVerification, async (req, res) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.auth?.userId;
     const { phoneNumber } = req.body;
 
     if (!userId) {
@@ -47,7 +47,7 @@ router.post("/phone/send", rateLimiters.phoneVerification, async (req, res) => {
  */
 router.post("/phone/verify", rateLimiters.phoneVerification, async (req, res) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.auth?.userId;
     const { phoneNumber, code } = req.body;
 
     if (!userId) {
@@ -83,7 +83,7 @@ router.post("/phone/verify", rateLimiters.phoneVerification, async (req, res) =>
  */
 router.get("/phone/attempts", async (req, res) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.auth?.userId;
     const { phoneNumber } = req.query;
 
     if (!userId) {
