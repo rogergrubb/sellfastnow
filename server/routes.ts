@@ -1395,6 +1395,256 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // ======================
+  // Escrow Deposit Routes
+  // ======================
+
+  if (process.env.STRIPE_SECRET_KEY) {
+    const { Stripe } = await import("stripe");
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2025-09-30.clover",
+    });
+
+    /**
+     * Submit deposit - Buyer submits deposit for a listing
+     * Creates Stripe PaymentIntent with manual capture
+     * POST /api/deposits/submit
+     * Body: { listingId, amount, latitude?, longitude? }
+     */
+    app.post("/api/deposits/submit", isAuthenticated, async (req: any, res) => {
+      try {
+        const buyerId = req.auth.userId;
+        const { listingId, amount, latitude, longitude } = req.body;
+
+        if (!listingId || !amount || amount <= 0) {
+          return res.status(400).json({ message: "Invalid listing ID or amount" });
+        }
+
+        // Get listing and seller info
+        const listing = await db.query.listings.findFirst({
+          where: eq(listings.id, listingId),
+        });
+
+        if (!listing) {
+          return res.status(404).json({ message: "Listing not found" });
+        }
+
+        if (listing.userId === buyerId) {
+          return res.status(400).json({ message: "You cannot buy your own listing" });
+        }
+
+        // Get seller's Stripe account
+        const seller = await db.query.users.findFirst({
+          where: eq(users.id, listing.userId),
+        });
+
+        if (!seller || !seller.stripeAccountId) {
+          return res.status(400).json({ 
+            message: "Seller hasn't set up payment processing yet",
+            needsStripeSetup: true 
+          });
+        }
+
+        // Get buyer's Stripe customer ID or create one
+        const buyer = await db.query.users.findFirst({
+          where: eq(users.id, buyerId),
+        });
+
+        let stripeCustomerId = buyer?.stripeCustomerId;
+        if (!stripeCustomerId) {
+          const customer = await stripe.customers.create({
+            email: buyer?.email,
+            metadata: { userId: buyerId },
+          });
+          stripeCustomerId = customer.id;
+          
+          // Update user with Stripe customer ID
+          await db.update(users)
+            .set({ stripeCustomerId })
+            .where(eq(users.id, buyerId));
+        }
+
+        // Calculate platform fee (2.5%)
+        const platformFee = amount * 0.025;
+        const sellerPayout = amount - platformFee;
+
+        // Create Stripe PaymentIntent with manual capture (authorize only)
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: Math.round(amount * 100), // Convert to cents
+          currency: "usd",
+          customer: stripeCustomerId,
+          capture_method: "manual", // Don't capture yet - wait for seller acceptance
+          payment_method_types: ["card"],
+          application_fee_amount: Math.round(platformFee * 100),
+          transfer_data: {
+            destination: seller.stripeAccountId,
+          },
+          metadata: {
+            buyerId,
+            sellerId: listing.userId,
+            listingId,
+            type: "escrow_deposit",
+          },
+          description: `Deposit for ${listing.title}`,
+        });
+
+        // Create transaction record
+        const [transaction] = await db.insert(transactions).values({
+          buyerId,
+          sellerId: listing.userId,
+          listingId,
+          amount: amount.toString(),
+          depositAmount: amount.toString(),
+          platformFee: platformFee.toString(),
+          sellerPayout: sellerPayout.toString(),
+          stripePaymentIntentId: paymentIntent.id,
+          status: "deposit_submitted",
+          depositSubmittedAt: new Date(),
+          depositBuyerLatitude: latitude?.toString(),
+          depositBuyerLongitude: longitude?.toString(),
+        }).returning();
+
+        // TODO: Send notification to seller about deposit submission
+
+        res.json({
+          success: true,
+          transactionId: transaction.id,
+          clientSecret: paymentIntent.client_secret,
+          message: "Deposit submitted successfully. Waiting for seller acceptance.",
+        });
+      } catch (error: any) {
+        console.error("Error submitting deposit:", error);
+        res.status(500).json({ message: "Error submitting deposit: " + error.message });
+      }
+    });
+
+    /**
+     * Accept deposit - Seller accepts the deposit
+     * Captures the Stripe PaymentIntent (moves funds to escrow)
+     * POST /api/deposits/:transactionId/accept
+     * Body: { latitude?, longitude? }
+     */
+    app.post("/api/deposits/:transactionId/accept", isAuthenticated, async (req: any, res) => {
+      try {
+        const sellerId = req.auth.userId;
+        const { transactionId } = req.params;
+        const { latitude, longitude } = req.body;
+
+        // Get transaction
+        const transaction = await db.query.transactions.findFirst({
+          where: eq(transactions.id, transactionId),
+        });
+
+        if (!transaction) {
+          return res.status(404).json({ message: "Transaction not found" });
+        }
+
+        if (transaction.sellerId !== sellerId) {
+          return res.status(403).json({ message: "You are not the seller for this transaction" });
+        }
+
+        if (transaction.status !== "deposit_submitted") {
+          return res.status(400).json({ 
+            message: `Cannot accept deposit. Current status: ${transaction.status}` 
+          });
+        }
+
+        if (!transaction.stripePaymentIntentId) {
+          return res.status(400).json({ message: "No payment intent found" });
+        }
+
+        // Capture the payment (move funds to platform escrow)
+        const paymentIntent = await stripe.paymentIntents.capture(
+          transaction.stripePaymentIntentId
+        );
+
+        // Update transaction
+        const [updatedTransaction] = await db.update(transactions)
+          .set({
+            status: "deposit_accepted",
+            depositAcceptedAt: new Date(),
+            depositSellerLatitude: latitude?.toString(),
+            depositSellerLongitude: longitude?.toString(),
+            stripeChargeId: paymentIntent.latest_charge as string,
+          })
+          .where(eq(transactions.id, transactionId))
+          .returning();
+
+        // TODO: Send notification to buyer that deposit was accepted
+
+        res.json({
+          success: true,
+          transaction: updatedTransaction,
+          message: "Deposit accepted. Funds are now in escrow.",
+        });
+      } catch (error: any) {
+        console.error("Error accepting deposit:", error);
+        res.status(500).json({ message: "Error accepting deposit: " + error.message });
+      }
+    });
+
+    /**
+     * Reject deposit - Seller rejects the deposit
+     * Cancels the Stripe PaymentIntent (releases authorization)
+     * POST /api/deposits/:transactionId/reject
+     * Body: { reason? }
+     */
+    app.post("/api/deposits/:transactionId/reject", isAuthenticated, async (req: any, res) => {
+      try {
+        const sellerId = req.auth.userId;
+        const { transactionId } = req.params;
+        const { reason } = req.body;
+
+        // Get transaction
+        const transaction = await db.query.transactions.findFirst({
+          where: eq(transactions.id, transactionId),
+        });
+
+        if (!transaction) {
+          return res.status(404).json({ message: "Transaction not found" });
+        }
+
+        if (transaction.sellerId !== sellerId) {
+          return res.status(403).json({ message: "You are not the seller for this transaction" });
+        }
+
+        if (transaction.status !== "deposit_submitted") {
+          return res.status(400).json({ 
+            message: `Cannot reject deposit. Current status: ${transaction.status}` 
+          });
+        }
+
+        if (!transaction.stripePaymentIntentId) {
+          return res.status(400).json({ message: "No payment intent found" });
+        }
+
+        // Cancel the payment intent (release authorization)
+        await stripe.paymentIntents.cancel(transaction.stripePaymentIntentId);
+
+        // Update transaction
+        const [updatedTransaction] = await db.update(transactions)
+          .set({
+            status: "deposit_rejected",
+            depositRejectedAt: new Date(),
+            depositRejectionReason: reason,
+          })
+          .where(eq(transactions.id, transactionId))
+          .returning();
+
+        // TODO: Send notification to buyer that deposit was rejected
+
+        res.json({
+          success: true,
+          transaction: updatedTransaction,
+          message: "Deposit rejected. Authorization released.",
+        });
+      } catch (error: any) {
+        console.error("Error rejecting deposit:", error);
+        res.status(500).json({ message: "Error rejecting deposit: " + error.message });
+      }
+    });
+  }
+
+  // ======================
   // User Statistics Routes
   // ======================
 
