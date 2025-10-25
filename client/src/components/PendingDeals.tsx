@@ -18,7 +18,10 @@ interface Transaction {
 }
 
 export function PendingDeals() {
-  const { data: user } = useQuery<{ id: string }>({ queryKey: ['/api/user'] });
+  const { data: user } = useQuery<{ id: string }>({ 
+    queryKey: ['/api/auth/user'],
+    retry: false,
+  });
   
   const { data: pendingDeals = [], isLoading } = useQuery<Transaction[]>({
     queryKey: ['/api/transactions/pending'],
