@@ -22,6 +22,8 @@ import messageReadRoutes from "./routes/message-read";
 import messageSearchRoutes from "./routes/message-search";
 import emailVerificationRoutes from "./routes/email-verification";
 import phoneVerificationRoutes from "./routes/phone-verification";
+import locationRoutes from "./routes/location";
+import favoritesRoutes from "./routes/favorites";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -192,6 +194,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/messages", messageSearchRoutes);
 
   // ======================
+  // Location Routes
+  // ======================
+  app.use("/api/location", locationRoutes);
+
+  // ======================
+  // Favorites Routes
+  // ======================
+  app.use("/api/favorites", favoritesRoutes);
+
+  // ======================
   // User Routes
   // ======================
   app.get("/api/users/:id", async (req, res) => {
@@ -246,56 +258,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching top-rated users:", error);
       res.status(500).json({ message: "Failed to fetch top-rated users" });
-    }
-  });
-
-  // ======================
-  // Location Routes
-  // ======================
-  
-  // Auto-detect location from IP
-  app.get("/api/location/detect", async (req, res) => {
-    try {
-      const { detectLocationWithFallback, getClientIP } = await import("./geolocation");
-      const clientIP = getClientIP(req);
-      console.log(`🌍 Location detection requested from IP: ${clientIP}`);
-      
-      const location = await detectLocationWithFallback(clientIP);
-      res.json(location);
-    } catch (error) {
-      console.error("Error detecting location:", error);
-      res.status(500).json({ message: "Failed to detect location" });
-    }
-  });
-  
-  // Update user location
-  app.put("/api/user/location", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.auth.userId;
-      const { city, region, country, postalCode, latitude, longitude, displayPrecision } = req.body;
-      
-      if (!city || !country) {
-        return res.status(400).json({ message: "City and country are required" });
-      }
-      
-      const updateData: any = {
-        locationCity: city,
-        locationRegion: region || null,
-        locationCountry: country,
-        locationPostalCode: postalCode || null,
-        locationLatitude: latitude ? latitude.toString() : null,
-        locationLongitude: longitude ? longitude.toString() : null,
-        locationDisplayPrecision: displayPrecision || 'city',
-        // Also update legacy location field for compatibility
-        location: `${city}, ${region ? region + ', ' : ''}${country}`,
-      };
-      
-      const updated = await storage.updateUserProfile(userId, updateData);
-      console.log(`✅ Location updated for user ${userId}: ${city}, ${country}`);
-      res.json(updated);
-    } catch (error) {
-      console.error("Error updating location:", error);
-      res.status(500).json({ message: "Failed to update location" });
     }
   });
 
@@ -2495,103 +2457,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to seed database",
         error: error.message 
       });
-    }
-  });
-
-  // ======================
-  // Favorites Routes
-  // ======================
-
-  // Check if a listing is favorited by the current user
-  app.get("/api/favorites/:listingId", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.auth.userId;
-      const { listingId } = req.params;
-      const { favorites } = await import("@shared/schema");
-      const { and } = await import("drizzle-orm");
-
-      const favorite = await db.select()
-        .from(favorites)
-        .where(
-          and(
-            eq(favorites.userId, userId),
-            eq(favorites.listingId, listingId)
-          )
-        )
-        .limit(1);
-
-      res.json({ isFavorited: favorite.length > 0 });
-    } catch (error) {
-      console.error("Error checking favorite status:", error);
-      res.status(500).json({ message: "Failed to check favorite status" });
-    }
-  });
-
-  // Toggle favorite status for a listing
-  app.post("/api/favorites/toggle", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.auth.userId;
-      const { listingId } = req.body;
-      const { favorites } = await import("@shared/schema");
-      const { and } = await import("drizzle-orm");
-
-      if (!listingId) {
-        return res.status(400).json({ message: "Listing ID is required" });
-      }
-
-      // Check if already favorited
-      const existingFavorite = await db.select()
-        .from(favorites)
-        .where(
-          and(
-            eq(favorites.userId, userId),
-            eq(favorites.listingId, listingId)
-          )
-        )
-        .limit(1);
-
-      if (existingFavorite.length > 0) {
-        // Remove from favorites
-        await db.delete(favorites)
-          .where(
-            and(
-              eq(favorites.userId, userId),
-              eq(favorites.listingId, listingId)
-            )
-          );
-        console.log(`💔 User ${userId} unfavorited listing ${listingId}`);
-        res.json({ isFavorited: false });
-      } else {
-        // Add to favorites
-        await db.insert(favorites).values({
-          userId,
-          listingId,
-        });
-        console.log(`❤️ User ${userId} favorited listing ${listingId}`);
-        res.json({ isFavorited: true });
-      }
-    } catch (error: any) {
-      console.error("Error toggling favorite:", error);
-      res.status(500).json({ message: "Failed to toggle favorite" });
-    }
-  });
-
-  // Get all favorites for the current user
-  app.get("/api/favorites", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.auth.userId;
-      const { favorites } = await import("@shared/schema");
-      const { desc } = await import("drizzle-orm");
-
-      const userFavorites = await db.select()
-        .from(favorites)
-        .where(eq(favorites.userId, userId))
-        .orderBy(desc(favorites.createdAt));
-
-      res.json(userFavorites);
-    } catch (error) {
-      console.error("Error fetching favorites:", error);
-      res.status(500).json({ message: "Failed to fetch favorites" });
     }
   });
 
