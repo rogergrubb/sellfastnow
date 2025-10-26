@@ -347,7 +347,8 @@ export type ReviewWithMetadata = Review & {
 };
 
 // Cancellation Comments table
-export const cancellationComments = pgTable("cancellation_comments", {
+// MOVED AFTER TRANSACTIONS IMPORT
+/*export const cancellationComments = pgTable("cancellation_comments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   listingId: varchar("listing_id")
     .notNull()
@@ -396,7 +397,7 @@ export const insertCancellationCommentSchema = createInsertSchema(cancellationCo
 });
 
 export type InsertCancellationComment = z.infer<typeof insertCancellationCommentSchema>;
-export type CancellationComment = typeof cancellationComments.$inferSelect;
+export type CancellationComment = typeof cancellationComments.$inferSelect;*/
 
 // User Statistics table
 export const userStatistics = pgTable("user_statistics", {
