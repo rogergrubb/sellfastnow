@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/AuthContext";
 import { useLocation } from "wouter";
-import heroImage from "@assets/generated_images/Marketplace_hero_collage_image_05e817b0.png";
+import heroImage from "/community-garden-hero.jpg";
 
 const categories = ["Electronics", "Furniture", "Clothing", "Vehicles", "Services", "More"];
 
