@@ -279,8 +279,7 @@ export const reviews = pgTable("reviews", {
   listingId: varchar("listing_id")
     .notNull()
     .references(() => listings.id, { onDelete: "cascade" }),
-  transactionId: varchar("transaction_id")
-    .references(() => transactions.id, { onDelete: "set null" }),
+  transactionId: varchar("transaction_id"),
   reviewerId: varchar("reviewer_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -347,14 +346,12 @@ export type ReviewWithMetadata = Review & {
 };
 
 // Cancellation Comments table
-// MOVED AFTER TRANSACTIONS IMPORT
-/*export const cancellationComments = pgTable("cancellation_comments", {
+export const cancellationComments = pgTable("cancellation_comments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   listingId: varchar("listing_id")
     .notNull()
     .references(() => listings.id, { onDelete: "cascade" }),
-  transactionId: varchar("transaction_id")
-    .references(() => transactions.id, { onDelete: "set null" }),
+  transactionId: varchar("transaction_id"),
   cancelledByUserId: varchar("cancelled_by_user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -397,7 +394,7 @@ export const insertCancellationCommentSchema = createInsertSchema(cancellationCo
 });
 
 export type InsertCancellationComment = z.infer<typeof insertCancellationCommentSchema>;
-export type CancellationComment = typeof cancellationComments.$inferSelect;*/
+export type CancellationComment = typeof cancellationComments.$inferSelect;
 
 // User Statistics table
 export const userStatistics = pgTable("user_statistics", {
