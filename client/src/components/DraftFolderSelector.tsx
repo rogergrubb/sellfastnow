@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,18 +31,12 @@ export function DraftFolderSelector({
   className = "",
 }: DraftFolderSelectorProps) {
   const { getToken } = useAuth();
-  const [folders, setFolders] = useState<DraftFolder[]>([]);
-  const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Fetch available draft folders
-  useEffect(() => {
-    fetchDraftFolders();
-  }, []);
-
-  const fetchDraftFolders = async () => {
-    setLoading(true);
-    try {
+  // Fetch available draft folders using React Query
+  const { data: foldersData, isLoading: loading, refetch } = useQuery({
+    queryKey: ["/api/listings/draft-folders"],
+    queryFn: async () => {
       const token = await getToken();
       const response = await fetch("/api/listings/draft-folders", {
         headers: {
@@ -50,16 +45,18 @@ export function DraftFolderSelector({
         credentials: "include",
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setFolders(data.folders || []);
+      if (!response.ok) {
+        throw new Error("Failed to fetch draft folders");
       }
-    } catch (error) {
-      console.error("Error fetching draft folders:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+
+      const data = await response.json();
+      return data.folders || [];
+    },
+    staleTime: 0, // Always refetch when query is invalidated
+    refetchOnMount: true, // Refetch when component mounts
+  });
+
+  const folders = foldersData || [];
 
   // Get display label for button
   const getButtonLabel = () => {
@@ -158,7 +155,7 @@ export function DraftFolderSelector({
         onOpenChange={setShowCreateModal}
         onFolderCreated={(batchId, batchTitle) => {
           // Refresh folder list
-          fetchDraftFolders();
+          refetch();
           // Select the newly created folder
           onFolderSelect(batchId);
         }}

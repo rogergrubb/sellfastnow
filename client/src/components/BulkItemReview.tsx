@@ -369,6 +369,7 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
       
       await queryClient.invalidateQueries({ queryKey: ['/api/listings'] });
       await queryClient.invalidateQueries({ queryKey: ['/api/listings/mine'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/listings/draft-folders'] });
       
       // Update all to completed
       setPublishingProgress(prev => prev ? {
@@ -520,6 +521,7 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
       
       await queryClient.invalidateQueries({ queryKey: ['/api/listings'] });
       await queryClient.invalidateQueries({ queryKey: ['/api/listings/mine'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/listings/draft-folders'] });
       
       // Update all to completed
       setPublishingProgress(prev => prev ? {
