@@ -21,6 +21,7 @@ import { VerificationBadges } from "@/components/VerificationBadge";
 import { MeetupInitiationModal } from "@/components/MeetupInitiationModal";
 import { LiveMeetupMap } from "@/components/LiveMeetupMap";
 import { ReliabilityBadge } from "@/components/ReliabilityBadge";
+import { MeetupNotification } from "@/components/MeetupNotification";
 
 interface Transaction {
   id: string;
@@ -288,6 +289,15 @@ export default function Transactions() {
 
   return (
     <div className="container max-w-6xl mx-auto py-8 px-4">
+      {/* Meetup Notifications */}
+      {user && (
+        <MeetupNotification
+          userId={user.id}
+          onAccept={(sessionId) => {
+            setActiveMeetupSession(sessionId);
+          }}
+        />
+      )}
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Link href="/dashboard">

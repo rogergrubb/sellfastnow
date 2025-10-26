@@ -11,7 +11,9 @@ import {
   X, 
   Share2,
   AlertCircle,
-  CheckCircle 
+  CheckCircle,
+  Compass,
+  MapPinned
 } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { Input } from "@/components/ui/input";
@@ -27,6 +29,37 @@ L.Icon.Default.mergeOptions({
   iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
+
+// Custom marker icons
+const createCustomIcon = (color: string, label: string) => {
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `
+      <div style="
+        background-color: ${color};
+        width: 40px;
+        height: 40px;
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <span style="
+          transform: rotate(45deg);
+          color: white;
+          font-weight: bold;
+          font-size: 16px;
+        ">${label}</span>
+      </div>
+    `,
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40],
+  });
+};
 
 interface LiveMeetupMapProps {
   sessionId: string;
@@ -60,6 +93,10 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
   const [shareContactModal, setShareContactModal] = useState(false);
   const [trustedContactEmail, setTrustedContactEmail] = useState("");
   const [proximityAlert, setProximityAlert] = useState<string | null>(null);
+  const [showMeetInMiddle, setShowMeetInMiddle] = useState(false);
+  const [middlePoint, setMiddlePoint] = useState<{ lat: number; lng: number } | null>(null);
+  const [showSafeSpots, setShowSafeSpots] = useState(false);
+  const [safeSpots, setSafeSpots] = useState<Array<{name: string; address: string; lat: number; lng: number; type: string}>>([]);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const { socket } = useWebSocket();
   const previousDistanceRef = useRef<number | null>(null);
@@ -227,6 +264,110 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
     }
   }, [currentDistance]);
 
+  // Calculate middle point between buyer and seller
+  useEffect(() => {
+    if (sessionData && sessionData.buyerLatitude && sessionData.buyerLongitude && 
+        sessionData.sellerLatitude && sessionData.sellerLongitude) {
+      const buyerLat = parseFloat(sessionData.buyerLatitude);
+      const buyerLng = parseFloat(sessionData.buyerLongitude);
+      const sellerLat = parseFloat(sessionData.sellerLatitude);
+      const sellerLng = parseFloat(sessionData.sellerLongitude);
+      
+      const midLat = (buyerLat + sellerLat) / 2;
+      const midLng = (buyerLng + sellerLng) / 2;
+      
+      setMiddlePoint({ lat: midLat, lng: midLng });
+    }
+  }, [sessionData]);
+
+  // Fetch nearby safe meetup spots
+  const fetchSafeSpots = async () => {
+    if (!middlePoint) return;
+    
+    try {
+      // Use Overpass API (OpenStreetMap) to find nearby public places
+      const query = `
+        [out:json];
+        (
+          node["amenity"="police"](around:2000,${middlePoint.lat},${middlePoint.lng});
+          node["amenity"="library"](around:2000,${middlePoint.lat},${middlePoint.lng});
+          node["amenity"="cafe"](around:2000,${middlePoint.lat},${middlePoint.lng});
+          node["amenity"="restaurant"](around:2000,${middlePoint.lat},${middlePoint.lng});
+          node["shop"="convenience"](around:2000,${middlePoint.lat},${middlePoint.lng});
+        );
+        out body;
+      `;
+      
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: query,
+      });
+      
+      const data = await response.json();
+      
+      const spots = data.elements
+        .filter((el: any) => el.tags?.name)
+        .slice(0, 5)
+        .map((el: any) => ({
+          name: el.tags.name,
+          address: el.tags['addr:street'] ? `${el.tags['addr:street']}` : 'Address not available',
+          lat: el.lat,
+          lng: el.lon,
+          type: el.tags.amenity || el.tags.shop || 'location',
+        }));
+      
+      setSafeSpots(spots);
+      setShowSafeSpots(true);
+    } catch (error) {
+      console.error('Error fetching safe spots:', error);
+      // Fallback to basic suggestions
+      setSafeSpots([
+        {
+          name: 'Midpoint Location',
+          address: 'Meet halfway between both locations',
+          lat: middlePoint.lat,
+          lng: middlePoint.lng,
+          type: 'midpoint',
+        },
+      ]);
+      setShowSafeSpots(true);
+    }
+  };
+
+  // Open directions in user's preferred navigation app
+  const openDirections = () => {
+    if (!userLocation) return;
+    
+    let targetLat: number;
+    let targetLng: number;
+    
+    // Use suggested meetup point if available, otherwise use other party's location
+    if (sessionData.suggestedMeetupLat && sessionData.suggestedMeetupLng) {
+      targetLat = parseFloat(sessionData.suggestedMeetupLat);
+      targetLng = parseFloat(sessionData.suggestedMeetupLng);
+    } else if (otherPartyLocation.lat && otherPartyLocation.lng) {
+      targetLat = parseFloat(otherPartyLocation.lat);
+      targetLng = parseFloat(otherPartyLocation.lng);
+    } else {
+      return;
+    }
+    
+    // Detect platform and open appropriate maps app
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    
+    if (isIOS) {
+      // Apple Maps
+      window.open(`maps://maps.apple.com/?daddr=${targetLat},${targetLng}`, '_blank');
+    } else if (isAndroid) {
+      // Google Maps
+      window.open(`google.navigation:q=${targetLat},${targetLng}`, '_blank');
+    } else {
+      // Desktop - Google Maps web
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${targetLat},${targetLng}`, '_blank');
+    }
+  };
+
   // Share with trusted contact
   const shareMutation = useMutation({
     mutationFn: async () => {
@@ -308,8 +449,14 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
             />
             
             {/* User's location */}
-            <Marker position={[userLocation.lat, userLocation.lng]}>
-              <Popup>Your Location</Popup>
+            <Marker 
+              position={[userLocation.lat, userLocation.lng]}
+              icon={createCustomIcon('#3b82f6', isBuyer ? 'B' : 'S')}
+            >
+              <Popup>
+                <div className="font-semibold">{isBuyer ? 'Buyer (You)' : 'Seller (You)'}</div>
+                <div className="text-xs text-gray-600">Your current location</div>
+              </Popup>
             </Marker>
             <Circle
               center={[userLocation.lat, userLocation.lng]}
@@ -320,8 +467,19 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
             {/* Other party's location */}
             {otherPartyLocation.lat && otherPartyLocation.lng && (
               <>
-                <Marker position={[parseFloat(otherPartyLocation.lat), parseFloat(otherPartyLocation.lng)]}>
-                  <Popup>Other Party</Popup>
+                <Marker 
+                  position={[parseFloat(otherPartyLocation.lat), parseFloat(otherPartyLocation.lng)]}
+                  icon={createCustomIcon('#ef4444', isBuyer ? 'S' : 'B')}
+                >
+                  <Popup>
+                    <div className="font-semibold">{isBuyer ? 'Seller' : 'Buyer'}</div>
+                    <div className="text-xs text-gray-600">Other party's location</div>
+                    {sessionData.currentDistance && (
+                      <div className="text-xs font-medium text-blue-600 mt-1">
+                        {parseFloat(sessionData.currentDistance).toFixed(0)}m away
+                      </div>
+                    )}
+                  </Popup>
                 </Marker>
                 <Circle
                   center={[parseFloat(otherPartyLocation.lat), parseFloat(otherPartyLocation.lng)]}
@@ -387,7 +545,120 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
             <Clock className="w-4 h-4 mr-2" />
             Running Late
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => sendMessageMutation.mutate("cant_find")}
+            disabled={sendMessageMutation.isPending}
+            className="col-span-2"
+          >
+            <AlertCircle className="w-4 h-4 mr-2" />
+            Can't Find It
+          </Button>
         </div>
+        
+        {/* Navigation Actions */}
+        <div className="grid grid-cols-2 gap-2 pt-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={openDirections}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Navigation className="w-4 h-4 mr-2" />
+            Directions
+          </Button>
+          {middlePoint && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowMeetInMiddle(!showMeetInMiddle)}
+            >
+              <MapPinned className="w-4 h-4 mr-2" />
+              Meet in Middle
+            </Button>
+          )}
+        </div>
+        
+        {/* Safe Spots Button */}
+        <div className="pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchSafeSpots}
+            className="w-full border-green-200 hover:bg-green-50"
+          >
+            <MapPin className="w-4 h-4 mr-2 text-green-600" />
+            Suggest Safe Meetup Spots
+          </Button>
+        </div>
+        
+        {/* Safe Spots List */}
+        {showSafeSpots && safeSpots.length > 0 && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-2 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-green-900">Nearby Safe Locations</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0 text-green-700"
+                onClick={() => setShowSafeSpots(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {safeSpots.map((spot, idx) => (
+                <div key={idx} className="bg-white rounded p-2 border border-green-100">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">{spot.name}</p>
+                      <p className="text-xs text-gray-600 mt-0.5">{spot.address}</p>
+                      <Badge variant="secondary" className="mt-1 text-xs">
+                        {spot.type}
+                      </Badge>
+                    </div>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0 text-blue-600 text-xs ml-2"
+                      onClick={() => {
+                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}`, '_blank');
+                      }}
+                    >
+                      Navigate
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Meet in Middle Info */}
+        {showMeetInMiddle && middlePoint && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
+            <div className="flex items-start gap-2">
+              <Compass className="w-4 h-4 text-blue-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-900">Suggested Midpoint</p>
+                <p className="text-xs text-blue-700 mt-1">
+                  {middlePoint.lat.toFixed(6)}, {middlePoint.lng.toFixed(6)}
+                </p>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 text-blue-600 text-xs mt-1"
+                  onClick={() => {
+                    window.open(`https://www.google.com/maps/search/?api=1&query=${middlePoint.lat},${middlePoint.lng}`, '_blank');
+                  }}
+                >
+                  View on Map →
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer Actions */}
