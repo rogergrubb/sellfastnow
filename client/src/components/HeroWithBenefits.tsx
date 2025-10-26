@@ -265,7 +265,7 @@ export default function HeroWithBenefits({ onSearch, onCategorySelect, recentLis
                 <div 
                   key={listing.id} 
                   className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => setLocation(`/listing/${listing.id}`)}
+                  onClick={() => setLocation(`/listings/${listing.id}`)}
                 >
                   <div className="aspect-square bg-gray-200 overflow-hidden">
                     {listing.images && listing.images.length > 0 ? (
