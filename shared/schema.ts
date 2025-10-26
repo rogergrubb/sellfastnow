@@ -9,6 +9,7 @@ import {
   boolean,
   jsonb,
   index,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -643,4 +644,12 @@ export * from './transactions-schema';
 // DRAFT COLLECTIONS SYSTEM
 // ============================================
 export * from './draft-collections-schema';
+
+
+
+
+// ============================================
+// PROMOTED LISTINGS SYSTEM
+// ============================================
+export * from './schema/promoted_listings';
 

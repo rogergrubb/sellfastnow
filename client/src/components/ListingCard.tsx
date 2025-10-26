@@ -1,4 +1,4 @@
-import { Heart, MapPin, Clock } from "lucide-react";
+import { Heart, MapPin, Clock, Zap } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -14,6 +14,7 @@ interface ListingCardProps {
   location: string;
   timePosted: string;
   isFavorite?: boolean;
+  isPromoted?: boolean;
   seller?: {
     id: string;
     firstName?: string;
@@ -39,6 +40,7 @@ export default function ListingCard({
   location,
   timePosted,
   isFavorite = false,
+  isPromoted = false,
   seller,
   sellerStats,
 }: ListingCardProps) {
@@ -63,6 +65,12 @@ export default function ListingCard({
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
             No image
+          </div>
+        )}
+        {isPromoted && (
+          <div className="absolute top-2 left-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+            <Zap className="h-3 w-3" />
+            PROMOTED
           </div>
         )}
         <Button

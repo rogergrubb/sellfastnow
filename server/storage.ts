@@ -474,6 +474,21 @@ export class DatabaseStorage implements IStorage {
         break;
     }
 
+    // Get promoted listings first
+    const { promotedListings: promotedListingsTable } = await import("@shared/schema");
+    
+    const promotedListingIds = await db
+      .select({ listingId: promotedListingsTable.listingId })
+      .from(promotedListingsTable)
+      .where(
+        and(
+          eq(promotedListingsTable.status, "active"),
+          sql`${promotedListingsTable.expiresAt} > NOW()`
+        )
+      );
+
+    const promotedIds = promotedListingIds.map(p => p.listingId);
+
     // Get listings
     const listingResults = await db
       .select()
@@ -481,8 +496,15 @@ export class DatabaseStorage implements IStorage {
       .where(and(...conditions))
       .orderBy(orderByClause);
 
+    // Separate promoted and organic listings
+    const promotedResults = listingResults.filter(l => promotedIds.includes(l.id));
+    const organicResults = listingResults.filter(l => !promotedIds.includes(l.id));
+
+    // Combine: promoted first, then organic
+    const combinedResults = [...promotedResults, ...organicResults];
+
     // Get unique user IDs
-    const userIds = [...new Set(listingResults.map(l => l.userId))];
+    const userIds = [...new Set(combinedResults.map(l => l.userId))];
 
     // Fetch seller information for all unique users
     const sellersData = await db
@@ -520,8 +542,9 @@ export class DatabaseStorage implements IStorage {
     );
 
     // Combine listings with seller data and calculate distances
-    let resultsWithSellers = listingResults.map(listing => ({
+    let resultsWithSellers = combinedResults.map(listing => ({
       ...listing,
+      isPromoted: promotedIds.includes(listing.id),
       ...(sellersMap.get(listing.userId) || {}),
     }));
 

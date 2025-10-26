@@ -32,6 +32,7 @@ import draftFoldersRoutes from "./routes/draft-folders";
 import meetupRoutes from "./routes/meetups";
 import reliabilityRoutes from "./routes/reliability";
 import notificationsRoutes from "./routes/notifications";
+import boostsRoutes from "./routes/boosts";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -223,6 +224,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Notifications Routes
   // ======================
   app.use("/api/notifications", notificationsRoutes);
+
+  // ======================
+  // Boosts Routes
+  // ======================
+  app.use("/api/boosts", boostsRoutes);
 
   // ======================
   // Listings Routes
@@ -674,7 +680,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Handle Payment Intent success (legacy)
       if (event.type === 'payment_intent.succeeded') {
         const paymentIntent = event.data.object;
-        const { userId, type, credits } = paymentIntent.metadata;
+        const { userId, type, credits, listingId, boostType } = paymentIntent.metadata;
 
         if (type === 'ai_credits' && userId && credits) {
           try {
@@ -682,6 +688,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`Added ${credits} AI credits to user ${userId}`);
           } catch (error) {
             console.error("Error adding AI credits:", error);
+          }
+        }
+
+        // Handle boost payment
+        if (listingId && boostType && userId) {
+          try {
+            const { promotedListings } = await import("@shared/schema");
+            
+            // Find the pending boost
+            const [boost] = await db
+              .select()
+              .from(promotedListings)
+              .where(eq(promotedListings.stripePaymentIntentId, paymentIntent.id))
+              .limit(1);
+
+            if (boost) {
+              // Activate the boost
+              await db
+                .update(promotedListings)
+                .set({
+                  status: "active",
+                  startedAt: new Date(),
+                  updatedAt: new Date(),
+                })
+                .where(eq(promotedListings.id, boost.id));
+
+              console.log(`✅ Activated boost ${boost.id} for listing ${listingId}`);
+            }
+          } catch (error) {
+            console.error("Error activating boost:", error);
           }
         }
       }
