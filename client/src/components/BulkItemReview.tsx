@@ -710,16 +710,29 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
                     />
                   </div>
                 </div>
-                <Button
-                  onClick={handlePublishAll}
-                  disabled={isPublishing}
-                  size="lg"
-                  className="flex-shrink-0"
-                  data-testid="button-publish-all-header"
-                >
-                  Publish All {totalCount} Item{totalCount > 1 ? 's' : ''}
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={handleSaveDrafts}
+                    disabled={isPublishing || products.length === 0}
+                    size="lg"
+                    className="flex-shrink-0"
+                    data-testid="button-save-drafts-header"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Drafts
+                  </Button>
+                  <Button
+                    onClick={handlePublishAll}
+                    disabled={isPublishing}
+                    size="lg"
+                    className="flex-shrink-0"
+                    data-testid="button-publish-all-header"
+                  >
+                    Publish All {totalCount} Item{totalCount > 1 ? 's' : ''}
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
