@@ -115,16 +115,16 @@ export default function HeroWithBenefits({ onSearch, onCategorySelect }: HeroPro
   return (
     <div className="relative">
       {/* Hero Section with Circular Benefit Cards */}
-      <div className="relative min-h-[700px] lg:min-h-[800px] flex items-center justify-center overflow-hidden">
+      <div className="relative min-h-[500px] lg:min-h-[600px] flex items-center justify-center overflow-hidden">
         {/* Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${heroImage})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/25 to-black/15" />
         
-        {/* Benefit Cards - Glass Morphism Banner - Hidden on mobile, visible on tablet+ */}
-        <div className="hidden lg:block absolute top-4 left-0 right-0 z-20">
+        {/* Benefit Cards - Glass Morphism Banner - Hidden for cleaner design */}
+        <div className="hidden absolute top-4 left-0 right-0 z-20">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex justify-center gap-3 xl:gap-4">
               {benefitCards.map((benefit, index) => {
@@ -191,10 +191,10 @@ export default function HeroWithBenefits({ onSearch, onCategorySelect }: HeroPro
 
         {/* Center Content - Search Area */}
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-2xl">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
             Buy & Sell Anything Locally
           </h1>
-          <p className="text-lg sm:text-xl text-white/90 mb-8 drop-shadow-lg">
+          <p className="text-lg sm:text-xl text-white mb-8" style={{ textShadow: '1px 1px 6px rgba(0,0,0,0.7)' }}>
             Your trusted marketplace for finding great deals and selling items fast
           </p>
 
