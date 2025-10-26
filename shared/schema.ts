@@ -126,9 +126,12 @@ export const listings = pgTable("listings", {
   images: text("images").array().notNull().default(sql`'{}'::text[]`),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   
-  // Draft folder organization
+  // Draft folder organization (legacy - kept for backward compatibility)
   batchId: varchar("batch_id", { length: 100 }), // Unique ID for draft folder/batch
   batchTitle: varchar("batch_title", { length: 200 }), // Human-readable folder name
+  
+  // New folder system
+  folderId: varchar("folder_id").references(() => draftFolders.id, { onDelete: "set null" }),
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -142,6 +145,26 @@ export const insertListingSchema = createInsertSchema(listings).omit({
 
 export type InsertListing = z.infer<typeof insertListingSchema>;
 export type Listing = typeof listings.$inferSelect;
+
+// Draft Folders table
+export const draftFolders = pgTable("draft_folders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 200 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertDraftFolderSchema = createInsertSchema(draftFolders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertDraftFolder = z.infer<typeof insertDraftFolderSchema>;
+export type DraftFolder = typeof draftFolders.$inferSelect;
 
 // Messages table
 export const messages = pgTable("messages", {

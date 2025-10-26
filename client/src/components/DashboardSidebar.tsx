@@ -17,9 +17,11 @@ import { CreateFolderModal } from "@/components/CreateFolderModal";
 import { cn } from "@/lib/utils";
 
 interface DraftFolder {
-  batchId: string;
-  batchTitle: string;
-  count: number;
+  id: string;
+  name: string;
+  listingsCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface DashboardSidebarProps {
@@ -45,10 +47,10 @@ export function DashboardSidebar({
 
   // Fetch available draft folders using React Query
   const { data: foldersData, isLoading: foldersLoading } = useQuery({
-    queryKey: ["/api/listings/draft-folders"],
+    queryKey: ["/api/draft-folders"],
     queryFn: async () => {
       const token = await getToken();
-      const response = await fetch("/api/listings/draft-folders", {
+      const response = await fetch("/api/draft-folders", {
         headers: {
           "Authorization": `Bearer ${token}`,
         },
@@ -70,7 +72,7 @@ export function DashboardSidebar({
   
   // Sort folders alphabetically
   const sortedFolders = [...folders].sort((a, b) => 
-    a.batchTitle.localeCompare(b.batchTitle)
+    a.name.localeCompare(b.name)
   );
 
   // Icon mapping for folder names (can be customized)
@@ -81,6 +83,9 @@ export function DashboardSidebar({
     if (lowerName.includes('furniture')) return '🪑';
     if (lowerName.includes('electronics')) return '📱';
     if (lowerName.includes('clothes') || lowerName.includes('clothing')) return '👕';
+    if (lowerName.includes('book')) return '📚';
+    if (lowerName.includes('toy')) return '🧸';
+    if (lowerName.includes('tool')) return '🔧';
     return '📁';
   };
 
@@ -180,21 +185,24 @@ export function DashboardSidebar({
             ) : (
               sortedFolders.map((folder) => (
                 <button
-                  key={folder.batchId}
+                  key={folder.id}
                   onClick={() => {
                     onFilterChange("draft");
-                    onFolderSelect(folder.batchId);
+                    onFolderSelect(folder.id);
                   }}
                   className={cn(
                     "w-full flex items-center gap-3 px-4 py-2 rounded-lg text-left transition-colors",
-                    listingFilter === "draft" && selectedFolder === folder.batchId
+                    listingFilter === "draft" && selectedFolder === folder.id
                       ? "bg-gray-100 font-medium" 
                       : "hover:bg-gray-50"
                   )}
-                  data-testid={`sidebar-button-folder-${folder.batchId}`}
+                  data-testid={`sidebar-button-folder-${folder.id}`}
                 >
-                  <span className="text-xl">{getFolderIcon(folder.batchTitle)}</span>
-                  <span className="flex-1 truncate">{folder.batchTitle}</span>
+                  <span className="text-xl">{getFolderIcon(folder.name)}</span>
+                  <span className="flex-1 truncate">{folder.name}</span>
+                  {folder.listingsCount > 0 && (
+                    <span className="text-xs text-gray-500">{folder.listingsCount}</span>
+                  )}
                 </button>
               ))
             )}

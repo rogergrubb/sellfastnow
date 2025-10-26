@@ -179,6 +179,31 @@ export async function runMigrations() {
     `);
     
     console.log("✅ Draft folder columns added to listings table");
+    
+    // Create draft_folders table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS draft_folders (
+        id varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        user_id varchar NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name varchar(200) NOT NULL,
+        created_at timestamp DEFAULT now(),
+        updated_at timestamp DEFAULT now()
+      );
+    `);
+    
+    console.log("✅ Draft folders table created/verified");
+    
+    // Add folder_id to listings table
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS folder_id varchar REFERENCES draft_folders(id) ON DELETE SET NULL;
+    `);
+    
+    // Add index for faster folder queries
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_listings_folder_id ON listings(folder_id) WHERE folder_id IS NOT NULL;
+    `);
+    
+    console.log("✅ Folder ID column added to listings table");
 
     console.log("✅ Database migrations completed successfully");
   } catch (error) {

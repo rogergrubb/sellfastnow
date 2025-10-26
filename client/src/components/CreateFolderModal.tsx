@@ -18,7 +18,7 @@ import { queryClient } from "@/lib/queryClient";
 interface CreateFolderModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onFolderCreated: (batchId: string, batchTitle: string) => void;
+  onFolderCreated: (folderId: string, folderName: string) => void;
 }
 
 export function CreateFolderModal({
@@ -39,18 +39,8 @@ export function CreateFolderModal({
     setIsCreating(true);
 
     try {
-      // Generate unique batch_id
-      const timestamp = Date.now();
-      const sanitized = folderName
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "_")
-        .replace(/^_+|_+$/g, "");
-      const batchId = `${sanitized}_${timestamp}`;
-      const batchTitle = folderName.trim();
-
-      // Create a placeholder draft listing to establish the folder
       const token = await getToken();
-      const response = await fetch("/api/listings", {
+      const response = await fetch("/api/draft-folders", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -58,34 +48,28 @@ export function CreateFolderModal({
         },
         credentials: "include",
         body: JSON.stringify({
-          title: `${batchTitle} - Folder Placeholder`,
-          description: "This is a placeholder listing for the folder. You can delete it or add your items.",
-          price: "0",
-          category: "Other",
-          condition: "good",
-          location: "Local Area",
-          images: [],
-          status: "draft",
-          batchId: batchId,
-          batchTitle: batchTitle,
+          name: folderName.trim(),
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create folder");
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create folder");
       }
 
+      const data = await response.json();
+      const newFolder = data.folder;
+
       // Invalidate queries to refresh the folder list
-      await queryClient.invalidateQueries({ queryKey: ["/api/listings"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/listings/mine"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/draft-folders"] });
       await queryClient.invalidateQueries({ queryKey: ["/api/listings/draft-folders"] });
 
       // Call the callback with the new folder info
-      onFolderCreated(batchId, batchTitle);
+      onFolderCreated(newFolder.id, newFolder.name);
 
       toast({
         title: "Folder Created",
-        description: `"${batchTitle}" folder has been created successfully.`,
+        description: `"${newFolder.name}" folder has been created successfully.`,
       });
 
       // Reset and close
@@ -95,7 +79,7 @@ export function CreateFolderModal({
       console.error("Error creating folder:", error);
       toast({
         title: "Error",
-        description: "Failed to create folder. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create folder. Please try again.",
         variant: "destructive",
       });
     } finally {

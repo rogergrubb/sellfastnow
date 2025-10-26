@@ -496,7 +496,7 @@ export default function Dashboard() {
         return false;
       // Filter by selected folder (only for drafts)
       if (listingFilter === "draft" && selectedFolder !== null) {
-        if (listing.batchId !== selectedFolder) return false;
+        if (listing.folderId !== selectedFolder) return false;
       }
       return true;
     })
