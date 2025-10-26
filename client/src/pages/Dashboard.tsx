@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
-import { DraftFolderSelector } from "@/components/DraftFolderSelector";
+import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -703,97 +703,43 @@ export default function Dashboard() {
                 </Card>
               </div>
 
-              {/* Listing Management Section */}
-              <Card>
-                <CardHeader className="space-y-3 py-3 px-4">
-                  {/* Compact Top Row: Filters and Actions */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Button
-                        variant={listingFilter === "active" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setListingFilter("active")}
-                        data-testid="button-filter-active"
-                        className="h-8"
-                      >
-                        Active
-                      </Button>
-                      <DraftFolderSelector
-                        selectedFolder={selectedFolder}
-                        onFolderSelect={(folderId) => {
-                          setSelectedFolder(folderId);
-                          setListingFilter("draft"); // Automatically switch to draft filter
-                        }}
-                        className={listingFilter === "draft" ? "" : "bg-white text-red-600 border-red-500 hover:bg-red-50"}
-                      />
-                      <Button
-                        variant={listingFilter === "sold" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setListingFilter("sold")}
-                        data-testid="button-filter-sold"
-                        className="h-8"
-                      >
-                        Sold
-                      </Button>
-                      <Button
-                        variant={listingFilter === "expired" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setListingFilter("expired")}
-                        data-testid="button-filter-expired"
-                        className="h-8"
-                      >
-                        Expired
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Link href="/post-ad">
-                        <Button size="sm" className="h-8" data-testid="button-create-listing">
-                          <Plus className="h-3 w-3 mr-1" />
-                          Create New
-                        </Button>
-                      </Link>
-                      {!isSelectMode && (
-                        <Button
-                          size="sm"
-                          onClick={() => setShowShareModal(true)}
-                          variant="outline"
-                          className="h-8"
-                          data-testid="button-share-listings"
-                        >
-                          <Share2 className="h-3 w-3 mr-1" />
-                          Share
-                        </Button>
-                      )}
+              {/* Listing Management Section with Sidebar */}
+              <div className="flex gap-0">
+                {/* Left Sidebar */}
+                <DashboardSidebar
+                  listingFilter={listingFilter}
+                  selectedFolder={selectedFolder}
+                  onFilterChange={setListingFilter}
+                  onFolderSelect={setSelectedFolder}
+                  onShareClick={() => setShowShareModal(true)}
+                  onDeleteMultipleClick={() => setIsSelectMode(true)}
+                  isSelectMode={isSelectMode}
+                />
+
+                {/* Main Content Area */}
+                <div className="flex-1">
+                  <Card>
+                    <CardHeader className="space-y-3 py-3 px-4">
+                      {/* Publish All Button (only for drafts) */}
                       {!isSelectMode && listingFilter === "draft" && filteredListings.filter(l => l.status === 'draft').length > 0 && (
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            const draftCount = filteredListings.filter(l => l.status === 'draft').length;
-                            if (confirm(`Publish all ${draftCount} draft listing(s)? They will become visible to buyers.`)) {
-                              bulkPublishMutation.mutate();
-                            }
-                          }}
-                          disabled={bulkPublishMutation.isPending}
-                          data-testid="button-publish-all"
-                          className="h-8 bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          <Upload className="h-3 w-3 mr-1" />
-                          {bulkPublishMutation.isPending ? 'Publishing...' : 'Publish All'}
-                        </Button>
+                        <div className="flex justify-end">
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              const draftCount = filteredListings.filter(l => l.status === 'draft').length;
+                              if (confirm(`Publish all ${draftCount} draft listing(s)? They will become visible to buyers.`)) {
+                                bulkPublishMutation.mutate();
+                              }
+                            }}
+                            disabled={bulkPublishMutation.isPending}
+                            data-testid="button-publish-all"
+                            className="h-8 bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            <Upload className="h-3 w-3 mr-1" />
+                            {bulkPublishMutation.isPending ? 'Publishing...' : 'Publish All'}
+                          </Button>
+                        </div>
                       )}
-                      {!isSelectMode && (
-                        <Button
-                          size="sm"
-                          onClick={() => setIsSelectMode(true)}
-                          data-testid="button-select-mode"
-                          className="h-8 bg-red-600 hover:bg-red-700 text-white"
-                        >
-                          <Trash2 className="h-3 w-3 mr-1" />
-                          Delete Multiple
-                        </Button>
-                      )}
-                    </div>
-                  </div>
 
                   {/* Bulk Actions Bar */}
                   {isSelectMode && (
@@ -1055,6 +1001,8 @@ export default function Dashboard() {
                   )}
                 </CardContent>
               </Card>
+                </div>
+              </div>
             </TabsContent>
 
             {/* Favorites Tab */}
