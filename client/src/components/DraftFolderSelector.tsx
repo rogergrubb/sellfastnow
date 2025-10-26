@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronDown, FolderOpen, FolderPlus, Folders } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
+import { CreateFolderModal } from "@/components/CreateFolderModal";
 
 interface DraftFolder {
   batchId: string;
@@ -31,6 +32,7 @@ export function DraftFolderSelector({
   const { getToken } = useAuth();
   const [folders, setFolders] = useState<DraftFolder[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Fetch available draft folders
   useEffect(() => {
@@ -138,7 +140,29 @@ export function DraftFolderSelector({
             Loading...
           </div>
         )}
+
+        {/* Create New Folder option */}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => setShowCreateModal(true)}
+          className="text-red-600 font-medium"
+        >
+          <FolderPlus className="h-4 w-4 mr-2" />
+          Create New Folder
+        </DropdownMenuItem>
       </DropdownMenuContent>
+
+      {/* Create Folder Modal */}
+      <CreateFolderModal
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onFolderCreated={(batchId, batchTitle) => {
+          // Refresh folder list
+          fetchDraftFolders();
+          // Select the newly created folder
+          onFolderSelect(batchId);
+        }}
+      />
     </DropdownMenu>
   );
 }

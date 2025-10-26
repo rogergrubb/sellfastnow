@@ -720,11 +720,11 @@ export default function Dashboard() {
                       </Button>
                       <DraftFolderSelector
                         selectedFolder={selectedFolder}
-                        onFolderChange={(folderId) => {
+                        onFolderSelect={(folderId) => {
                           setSelectedFolder(folderId);
                           setListingFilter("draft"); // Automatically switch to draft filter
                         }}
-                        isActive={listingFilter === "draft"}
+                        className={listingFilter === "draft" ? "" : "bg-white text-red-600 border-red-500 hover:bg-red-50"}
                       />
                       <Button
                         variant={listingFilter === "sold" ? "default" : "outline"}
