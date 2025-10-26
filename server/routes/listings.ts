@@ -109,15 +109,15 @@ const router = Router();
 
       const isDraft = status === 'draft';
       
-      // Strict validation for active listings, lenient for drafts
+      // Strict validation for active listings, minimal for drafts
       if (!isDraft) {
         if (!title || !description || !price || !category || !condition) {
           return res.status(400).json({ message: "Missing required fields" });
         }
       } else {
-        // For drafts, only require at least a title or description
-        if (!title && !description) {
-          return res.status(400).json({ message: "At least title or description is required" });
+        // For drafts, only require at least one image
+        if (!images || images.length === 0) {
+          return res.status(400).json({ message: "At least one image is required for drafts" });
         }
       }
 
