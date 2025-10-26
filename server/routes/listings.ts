@@ -105,7 +105,7 @@ const router = Router();
   router.post("/", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth.userId;
-      const { title, description, price, category, condition, location, images, status } = req.body;
+      const { title, description, price, category, condition, location, images, status, folderId } = req.body;
 
       if (!title || !description || !price || !category || !condition) {
         return res.status(400).json({ message: "Missing required fields" });
@@ -123,6 +123,7 @@ const router = Router();
         location: location || "Local Area",
         images: images || [],
         status: status || "active",  // Use provided status or default to active
+        folderId: folderId || null,
       });
 
       console.log(`Listing created successfully: ${listing.id}`);
@@ -222,7 +223,7 @@ const router = Router();
   router.post("/batch", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth.userId;
-      const { listings: listingsData, status: batchStatus, batchId, batchTitle } = req.body;
+      const { listings: listingsData, status: batchStatus, batchId, batchTitle, folderId } = req.body;
 
       if (!listingsData || !Array.isArray(listingsData)) {
         return res.status(400).json({ message: "listings array is required" });
@@ -269,6 +270,7 @@ const router = Router();
             status: targetStatus,
             batchId: batchId || null,
             batchTitle: batchTitle || null,
+            folderId: folderId || null,
           });
 
           createdListings.push(listing);

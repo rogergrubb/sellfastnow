@@ -444,7 +444,7 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
     setShowFolderModal(true);
   };
 
-  const handleSaveDraftsToFolder = async (batchId: string, batchTitle: string) => {
+  const handleSaveDraftsToFolder = async (folderId: string, folderName: string) => {
     // No validation needed for drafts - save as-is
     setIsPublishing(true);
     setPublishingProgress({
@@ -496,8 +496,7 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
         body: JSON.stringify({ 
           listings,
           status: 'draft', // Save as drafts
-          batchId, // Add to folder
-          batchTitle // Folder name
+          folderId, // Link to folder
         }),
       });
 
@@ -517,7 +516,7 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
       
       const actualCreatedCount = result.created ?? result.listings?.length ?? products.length;
       
-      console.log(`✅ Saved ${actualCreatedCount} drafts to folder "${batchTitle}" (${batchId})`);
+      console.log(`✅ Saved ${actualCreatedCount} drafts to folder "${folderName}" (${folderId})`);
       
       await queryClient.invalidateQueries({ queryKey: ['/api/listings'] });
       await queryClient.invalidateQueries({ queryKey: ['/api/listings/mine'] });
@@ -542,7 +541,7 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
           
           toast({
             title: "Drafts Saved!",
-            description: `Successfully saved ${actualCreatedCount} item${actualCreatedCount > 1 ? 's' : ''} to "${batchTitle}" folder.`,
+            description: `Successfully saved ${actualCreatedCount} item${actualCreatedCount > 1 ? 's' : ''} to "${folderName}" folder.`,
           });
           
           // Redirect to Dashboard with drafts filter
