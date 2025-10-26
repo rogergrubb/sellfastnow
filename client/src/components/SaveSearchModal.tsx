@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/AuthContext";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ export default function SaveSearchModal({ isOpen, onClose, editingSearch }: Save
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (editingSearch) {
@@ -224,11 +226,27 @@ export default function SaveSearchModal({ isOpen, onClose, editingSearch }: Save
             </div>
 
             <div className="flex items-center justify-between">
-              <Label htmlFor="smsNotifications">SMS Notifications</Label>
+              <div className="flex flex-col">
+                <Label htmlFor="smsNotifications">SMS Notifications</Label>
+                {!user?.phoneVerified && (
+                  <span className="text-xs text-muted-foreground">Phone verification required</span>
+                )}
+              </div>
               <Switch
                 id="smsNotifications"
                 checked={formData.smsNotifications}
-                onCheckedChange={(checked) => setFormData({ ...formData, smsNotifications: checked })}
+                disabled={!user?.phoneVerified}
+                onCheckedChange={(checked) => {
+                  if (checked && !user?.phoneVerified) {
+                    toast({
+                      title: "Phone Verification Required",
+                      description: "Please verify your phone number in settings to enable SMS alerts.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  setFormData({ ...formData, smsNotifications: checked });
+                }}
               />
             </div>
 
