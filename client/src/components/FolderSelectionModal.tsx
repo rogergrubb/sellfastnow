@@ -144,34 +144,38 @@ export function FolderSelectionModal({
           ) : (
             <RadioGroup value={mode} onValueChange={(v) => setMode(v as "existing" | "new")}>
               {/* Add to Existing Folder */}
-              {folders.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="existing" id="existing" />
-                    <Label htmlFor="existing" className="flex items-center cursor-pointer">
-                      <FolderOpen className="h-4 w-4 mr-2" />
-                      Add to Existing Folder
-                    </Label>
-                  </div>
-
-                  {mode === "existing" && (
-                    <div className="ml-6 space-y-2">
-                      <Select value={selectedFolder} onValueChange={setSelectedFolder}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a folder" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {folders.map((folder) => (
-                            <SelectItem key={folder.batchId} value={folder.batchId}>
-                              {folder.batchTitle} ({folder.count} items)
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="existing" id="existing" disabled={folders.length === 0} />
+                  <Label htmlFor="existing" className={`flex items-center cursor-pointer ${folders.length === 0 ? 'opacity-50' : ''}`}>
+                    <FolderOpen className="h-4 w-4 mr-2" />
+                    Add to Existing Folder
+                  </Label>
                 </div>
-              )}
+
+                {mode === "existing" && folders.length > 0 && (
+                  <div className="ml-6 space-y-2">
+                    <Select value={selectedFolder} onValueChange={setSelectedFolder}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a folder" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {folders.map((folder) => (
+                          <SelectItem key={folder.batchId} value={folder.batchId}>
+                            {folder.batchTitle} ({folder.count} items)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                
+                {mode === "existing" && folders.length === 0 && (
+                  <div className="ml-6 text-sm text-muted-foreground">
+                    No existing folders. Create a new one below.
+                  </div>
+                )}
+              </div>
 
               {/* Create New Folder */}
               <div className="space-y-3">
