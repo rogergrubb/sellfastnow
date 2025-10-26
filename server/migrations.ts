@@ -163,6 +163,22 @@ export async function runMigrations() {
     await db.execute(sql`
       ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_longitude numeric(10, 7);
     `);
+    
+    // Add draft folder organization fields to listings table
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS batch_id varchar(100);
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS batch_title varchar(200);
+    `);
+    
+    // Add index for faster folder queries
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_listings_batch_id ON listings(batch_id) WHERE batch_id IS NOT NULL;
+    `);
+    
+    console.log("✅ Draft folder columns added to listings table");
 
     console.log("✅ Database migrations completed successfully");
   } catch (error) {
