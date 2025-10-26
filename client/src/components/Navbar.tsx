@@ -109,6 +109,16 @@ export default function Navbar() {
               SellFast.Now
             </button>
             
+            <div className="hidden md:flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={() => window.location.href = '/how-it-works'}
+                data-testid="button-how-it-works"
+              >
+                How It Works
+              </Button>
+            </div>
+            
             <div className="hidden md:flex items-center flex-1 max-w-md">
               <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
