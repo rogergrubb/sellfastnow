@@ -47,6 +47,15 @@ import {
   type InsertUserCredits,
   type CreditTransaction,
   type InsertCreditTransaction,
+  draftCollections,
+  userSegments,
+  monetizationEvents,
+  type DraftCollection,
+  type InsertDraftCollection,
+  type UserSegment,
+  type InsertUserSegment,
+  type MonetizationEvent,
+  type InsertMonetizationEvent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
@@ -1976,7 +1985,131 @@ export class DatabaseStorage implements IStorage {
     
     return transactions;
   }
-}
 
-export const storage = new DatabaseStorage();
+  // ============================================
+  // DRAFT COLLECTIONS METHODS
+  // ============================================
+
+  async createDraftCollection(data: InsertDraftCollection): Promise<DraftCollection> {
+    const [collection] = await db.insert(draftCollections).values(data).returning();
+    return collection;
+  }
+
+  async getUserCollections(userId: string): Promise<DraftCollection[]> {
+    return await db
+      .select()
+      .from(draftCollections)
+      .where(eq(draftCollections.userId, userId))
+      .orderBy(desc(draftCollections.createdAt));
+  }
+
+  async getCollectionById(id: string): Promise<DraftCollection | null> {
+    const [collection] = await db
+      .select()
+      .from(draftCollections)
+      .where(eq(draftCollections.id, id))
+      .limit(1);
+    return collection || null;
+  }
+
+  async updateDraftCollection(id: string, data: Partial<InsertDraftCollection>): Promise<DraftCollection> {
+    const [updated] = await db
+      .update(draftCollections)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(draftCollections.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteDraftCollection(id: string): Promise<void> {
+    await db.delete(draftCollections).where(eq(draftCollections.id, id));
+  }
+
+  async getCollectionsByName(userId: string, collectionName: string): Promise<DraftCollection[]> {
+    return await db
+      .select()
+      .from(draftCollections)
+      .where(
+        and(
+          eq(draftCollections.userId, userId),
+          eq(draftCollections.collectionName, collectionName)
+        )
+      )
+      .orderBy(desc(draftCollections.createdAt));
+  }
+
+  // ============================================
+  // USER SEGMENTS METHODS
+  // ============================================
+
+  async upsertUserSegment(data: InsertUserSegment): Promise<UserSegment> {
+    // Check if segment already exists for this user
+    const [existing] = await db
+      .select()
+      .from(userSegments)
+      .where(
+        and(
+          eq(userSegments.userId, data.userId),
+          eq(userSegments.segment, data.segment)
+        )
+      )
+      .limit(1);
+
+    if (existing) {
+      // Update existing segment
+      const [updated] = await db
+        .update(userSegments)
+        .set({
+          confidence: data.confidence,
+          detectionSignals: data.detectionSignals,
+          lastDetectedAt: new Date(),
+          detectionCount: sql`${userSegments.detectionCount}::int + 1`,
+        })
+        .where(eq(userSegments.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Create new segment
+      const [created] = await db.insert(userSegments).values(data).returning();
+      return created;
+    }
+  }
+
+  async getUserSegments(userId: string): Promise<UserSegment[]> {
+    return await db
+      .select()
+      .from(userSegments)
+      .where(eq(userSegments.userId, userId))
+      .orderBy(desc(userSegments.lastDetectedAt));
+  }
+
+  async getPrimaryUserSegment(userId: string): Promise<UserSegment | null> {
+    const [segment] = await db
+      .select()
+      .from(userSegments)
+      .where(eq(userSegments.userId, userId))
+      .orderBy(desc(userSegments.lastDetectedAt))
+      .limit(1);
+    return segment || null;
+  }
+
+  // ============================================
+  // MONETIZATION EVENTS METHODS
+  // ============================================
+
+  async logMonetizationEvent(data: InsertMonetizationEvent): Promise<MonetizationEvent> {
+    const [event] = await db.insert(monetizationEvents).values(data).returning();
+    return event;
+  }
+
+  async getMonetizationEvents(userId: string, limit: number = 50): Promise<MonetizationEvent[]> {
+    return await db
+      .select()
+      .from(monetizationEvents)
+      .where(eq(monetizationEvents.userId, userId))
+      .orderBy(desc(monetizationEvents.createdAt))
+      .limit(limit);
+  }
+}
+export const storage = new DatabaseStorage();;
 export { db };

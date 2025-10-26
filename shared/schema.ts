@@ -609,3 +609,10 @@ export * from './trust-schema';
 // TRANSACTION SYSTEM TABLES (ESCROW)
 // ============================================
 export * from './transactions-schema';
+
+
+// ============================================
+// DRAFT COLLECTIONS SYSTEM
+// ============================================
+export * from './draft-collections-schema';
+
