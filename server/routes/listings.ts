@@ -107,19 +107,29 @@ const router = Router();
       const userId = req.auth.userId;
       const { title, description, price, category, condition, location, images, status, folderId } = req.body;
 
-      if (!title || !description || !price || !category || !condition) {
-        return res.status(400).json({ message: "Missing required fields" });
+      const isDraft = status === 'draft';
+      
+      // Strict validation for active listings, lenient for drafts
+      if (!isDraft) {
+        if (!title || !description || !price || !category || !condition) {
+          return res.status(400).json({ message: "Missing required fields" });
+        }
+      } else {
+        // For drafts, only require at least a title or description
+        if (!title && !description) {
+          return res.status(400).json({ message: "At least title or description is required" });
+        }
       }
 
-      console.log(`Creating single listing for user ${userId}: ${title} with status: ${status || 'active'}`);
+      console.log(`Creating single listing for user ${userId}: ${title || 'Untitled'} with status: ${status || 'active'}`);
 
       const listing = await storage.createListing({
         userId,
-        title,
-        description,
-        price: String(price),
-        category,
-        condition,
+        title: title || "Untitled",
+        description: description || "",
+        price: String(price || 0),
+        category: category || "Other",
+        condition: condition || "good",
         location: location || "Local Area",
         images: images || [],
         status: status || "active",  // Use provided status or default to active
