@@ -63,7 +63,7 @@ function Router() {
   );
 }
 
-function App() {
+function AppContent() {
   // Get current user for notifications
   const { data: user } = useQuery({
     queryKey: ["user"],
@@ -78,15 +78,21 @@ function App() {
   });
 
   return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <Router />
+      {user && <NotificationManager userId={user.id} />}
+    </div>
+  );
+}
+
+function App() {
+  return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-        <div className="min-h-screen bg-background">
-          <Navbar />
-          <Router />
-          {user && <NotificationManager userId={user.id} />}
-        </div>
-        <Toaster />
+          <AppContent />
+          <Toaster />
         </TooltipProvider>
       </QueryClientProvider>
     </HelmetProvider>
