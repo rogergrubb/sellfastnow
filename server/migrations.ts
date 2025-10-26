@@ -205,6 +205,83 @@ export async function runMigrations() {
     
     console.log("✅ Folder ID column added to listings table");
 
+    // Create meetup sessions table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS meetup_sessions (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        transaction_id VARCHAR NOT NULL,
+        listing_id VARCHAR NOT NULL,
+        buyer_id VARCHAR NOT NULL,
+        seller_id VARCHAR NOT NULL,
+        status VARCHAR(50) NOT NULL DEFAULT 'pending',
+        initiated_by VARCHAR NOT NULL,
+        buyer_shared_location BOOLEAN DEFAULT FALSE,
+        seller_shared_location BOOLEAN DEFAULT FALSE,
+        buyer_latitude DECIMAL(10, 7),
+        buyer_longitude DECIMAL(10, 7),
+        buyer_last_update TIMESTAMP,
+        seller_latitude DECIMAL(10, 7),
+        seller_longitude DECIMAL(10, 7),
+        seller_last_update TIMESTAMP,
+        current_distance DECIMAL(10, 2),
+        expires_at TIMESTAMP NOT NULL,
+        shared_with_contacts TEXT,
+        suggested_meetup_lat DECIMAL(10, 7),
+        suggested_meetup_lng DECIMAL(10, 7),
+        suggested_meetup_name VARCHAR(200),
+        completed_at TIMESTAMP,
+        completed_by VARCHAR,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    console.log("✅ Meetup sessions table created");
+
+    // Create location history table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS location_history (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        session_id VARCHAR NOT NULL REFERENCES meetup_sessions(id) ON DELETE CASCADE,
+        user_id VARCHAR NOT NULL,
+        latitude DECIMAL(10, 7) NOT NULL,
+        longitude DECIMAL(10, 7) NOT NULL,
+        accuracy DECIMAL(10, 2),
+        timestamp TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    console.log("✅ Location history table created");
+
+    // Create meetup messages table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS meetup_messages (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        session_id VARCHAR NOT NULL REFERENCES meetup_sessions(id) ON DELETE CASCADE,
+        sender_id VARCHAR NOT NULL,
+        message_type VARCHAR(50) NOT NULL,
+        message_text TEXT,
+        timestamp TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    console.log("✅ Meetup messages table created");
+
+    // Create reliability scores table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS reliability_scores (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id VARCHAR NOT NULL UNIQUE,
+        total_meetups INTEGER DEFAULT 0,
+        completed_meetups INTEGER DEFAULT 0,
+        cancelled_meetups INTEGER DEFAULT 0,
+        average_punctuality DECIMAL(5, 2),
+        on_time_count INTEGER DEFAULT 0,
+        late_count INTEGER DEFAULT 0,
+        no_show_count INTEGER DEFAULT 0,
+        reliability_score DECIMAL(5, 2),
+        last_updated TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    console.log("✅ Reliability scores table created");
+
     console.log("✅ Database migrations completed successfully");
   } catch (error) {
     console.error("❌ Migration error:", error);

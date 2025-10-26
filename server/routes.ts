@@ -29,6 +29,7 @@ import listingsRoutes from "./routes/listings";
 import imagesRoutes from "./routes/images";
 import collectionsRoutes from "./routes/collections";
 import draftFoldersRoutes from "./routes/draft-folders";
+import meetupRoutes from "./routes/meetups";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -205,6 +206,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Draft Folders Routes
   // ======================
   app.use("/api/draft-folders", draftFoldersRoutes);
+
+  // ======================
+  // Meetup Routes
+  // ======================
+  app.use("/api/meetups", meetupRoutes);
 
   // ======================
   // Listings Routes

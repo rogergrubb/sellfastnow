@@ -105,6 +105,73 @@ export class WebSocketService {
         console.log(`📭 User ${socket.username} left conversation room: ${roomName}`);
       });
 
+      // Handle joining meetup session rooms
+      socket.on("join_meetup", (data: { sessionId: string }) => {
+        if (!socket.userId) {
+          socket.emit("error", { message: "Not authenticated" });
+          return;
+        }
+
+        const { sessionId } = data;
+        const roomName = `meetup:${sessionId}`;
+        
+        socket.join(roomName);
+        console.log(`📍 User ${socket.username} joined meetup room: ${roomName}`);
+      });
+
+      // Handle leaving meetup session rooms
+      socket.on("leave_meetup", (data: { sessionId: string }) => {
+        if (!socket.userId) return;
+
+        const { sessionId } = data;
+        const roomName = `meetup:${sessionId}`;
+        
+        socket.leave(roomName);
+        console.log(`📍 User ${socket.username} left meetup room: ${roomName}`);
+      });
+
+      // Handle location updates in meetup sessions
+      socket.on("meetup_location_update", (data: { 
+        sessionId: string; 
+        latitude: number; 
+        longitude: number; 
+        accuracy?: number;
+      }) => {
+        if (!socket.userId) return;
+
+        const { sessionId, latitude, longitude, accuracy } = data;
+        const roomName = `meetup:${sessionId}`;
+        
+        // Broadcast location update to all participants in the room
+        this.io.to(roomName).emit("location_updated", {
+          sessionId,
+          userId: socket.userId,
+          latitude,
+          longitude,
+          accuracy,
+          timestamp: new Date(),
+        });
+      });
+
+      // Handle meetup status updates
+      socket.on("meetup_status_update", (data: { 
+        sessionId: string; 
+        status: string;
+      }) => {
+        if (!socket.userId) return;
+
+        const { sessionId, status } = data;
+        const roomName = `meetup:${sessionId}`;
+        
+        // Broadcast status update to all participants
+        this.io.to(roomName).emit("status_updated", {
+          sessionId,
+          userId: socket.userId,
+          status,
+          timestamp: new Date(),
+        });
+      });
+
       // Handle typing indicators
       socket.on("typing", (data: { listingId: string; receiverId: string; isTyping: boolean }) => {
         if (!socket.userId) return;
@@ -196,6 +263,34 @@ export class WebSocketService {
   // Get Socket.IO instance (for external use if needed)
   public getIO(): SocketIOServer {
     return this.io;
+  }
+
+  // Broadcast meetup session update to participants
+  public broadcastMeetupUpdate(sessionId: string, data: any) {
+    const roomName = `meetup:${sessionId}`;
+    console.log(`📍 Broadcasting meetup update to room: ${roomName}`);
+    this.io.to(roomName).emit("meetup_updated", data);
+  }
+
+  // Broadcast location update to meetup participants
+  public broadcastLocationUpdate(sessionId: string, userId: string, location: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+  }) {
+    const roomName = `meetup:${sessionId}`;
+    this.io.to(roomName).emit("location_updated", {
+      sessionId,
+      userId,
+      ...location,
+      timestamp: new Date(),
+    });
+  }
+
+  // Broadcast meetup message to participants
+  public broadcastMeetupMessage(sessionId: string, message: any) {
+    const roomName = `meetup:${sessionId}`;
+    this.io.to(roomName).emit("meetup_message", message);
   }
 }
 
