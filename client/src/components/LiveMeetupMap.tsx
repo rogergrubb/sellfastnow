@@ -14,6 +14,8 @@ import {
   CheckCircle 
 } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -55,8 +57,12 @@ interface MeetupSession {
 export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps) {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [watchId, setWatchId] = useState<number | null>(null);
+  const [shareContactModal, setShareContactModal] = useState(false);
+  const [trustedContactEmail, setTrustedContactEmail] = useState("");
+  const [proximityAlert, setProximityAlert] = useState<string | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const { socket } = useWebSocket();
+  const previousDistanceRef = useRef<number | null>(null);
 
   // Fetch meetup session details
   const { data: sessionData, refetch } = useQuery({
@@ -195,6 +201,49 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
 
   const timeRemaining = new Date(sessionData.expiresAt).getTime() - Date.now();
   const minutesRemaining = Math.floor(timeRemaining / 60000);
+  const secondsRemaining = Math.floor((timeRemaining % 60000) / 1000);
+
+  // Calculate distance and show proximity alerts
+  const currentDistance = sessionData.currentDistance ? parseFloat(sessionData.currentDistance) : null;
+  
+  useEffect(() => {
+    if (currentDistance !== null) {
+      const prevDistance = previousDistanceRef.current;
+      
+      // First time or distance changed significantly
+      if (prevDistance === null || Math.abs(currentDistance - prevDistance) > 10) {
+        if (currentDistance < 50) {
+          setProximityAlert("🎯 You're very close! Less than 50 meters away.");
+        } else if (currentDistance < 100) {
+          setProximityAlert("📍 Getting close! Less than 100 meters away.");
+        } else if (currentDistance < 200) {
+          setProximityAlert("🚶 Approaching meetup point. About 200 meters away.");
+        } else {
+          setProximityAlert(null);
+        }
+        
+        previousDistanceRef.current = currentDistance;
+      }
+    }
+  }, [currentDistance]);
+
+  // Share with trusted contact
+  const shareMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`/api/meetups/${sessionId}/share-contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: trustedContactEmail }),
+      });
+      if (!response.ok) throw new Error("Failed to share");
+      return response.json();
+    },
+    onSuccess: () => {
+      setShareContactModal(false);
+      setTrustedContactEmail("");
+    },
+  });
 
   return (
     <Card className="overflow-hidden">
@@ -207,7 +256,9 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
               <h3 className="font-semibold text-lg">Live Meetup</h3>
               <div className="flex items-center gap-2 text-sm text-blue-100">
                 <Clock className="w-4 h-4" />
-                <span>{minutesRemaining} minutes remaining</span>
+                <span className="font-mono">
+                  {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')} remaining
+                </span>
               </div>
             </div>
           </div>
@@ -228,6 +279,16 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
           <div className="flex items-center gap-2 text-amber-800 text-sm">
             <AlertCircle className="w-4 h-4" />
             <span>Waiting for the other party to accept location sharing...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Proximity Alert Banner */}
+      {proximityAlert && (
+        <div className="bg-green-50 border-b border-green-200 p-3 animate-pulse">
+          <div className="flex items-center gap-2 text-green-800 text-sm font-medium">
+            <Navigation className="w-4 h-4" />
+            <span>{proximityAlert}</span>
           </div>
         </div>
       )}
@@ -335,6 +396,7 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
           variant="outline"
           size="sm"
           className="flex-1"
+          onClick={() => setShareContactModal(true)}
         >
           <Share2 className="w-4 h-4 mr-2" />
           Share with Contact
@@ -348,6 +410,48 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
           Complete Meetup
         </Button>
       </div>
+
+      {/* Share with Trusted Contact Dialog */}
+      <Dialog open={shareContactModal} onOpenChange={setShareContactModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share Live Location</DialogTitle>
+            <DialogDescription>
+              Send your live meetup tracking link to a trusted contact for safety.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Email Address</label>
+              <Input
+                type="email"
+                placeholder="friend@example.com"
+                value={trustedContactEmail}
+                onChange={(e) => setTrustedContactEmail(e.target.value)}
+              />
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-xs text-amber-800">
+                Your trusted contact will receive a link to view your live location during this meetup session only.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShareContactModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => shareMutation.mutate()}
+              disabled={!trustedContactEmail || shareMutation.isPending}
+            >
+              {shareMutation.isPending ? "Sending..." : "Send Link"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

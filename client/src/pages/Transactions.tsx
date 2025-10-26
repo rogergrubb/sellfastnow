@@ -14,9 +14,13 @@ import {
   CheckCircle, 
   XCircle,
   AlertTriangle,
-  ArrowLeft
+  ArrowLeft,
+  MapPin
 } from "lucide-react";
 import { VerificationBadges } from "@/components/VerificationBadge";
+import { MeetupInitiationModal } from "@/components/MeetupInitiationModal";
+import { LiveMeetupMap } from "@/components/LiveMeetupMap";
+import { ReliabilityBadge } from "@/components/ReliabilityBadge";
 
 interface Transaction {
   id: string;
@@ -56,6 +60,9 @@ export default function Transactions() {
   const { user, getToken } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("buying");
+  const [meetupModalOpen, setMeetupModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [activeMeetupSession, setActiveMeetupSession] = useState<string | null>(null);
 
   // Fetch transactions where user is buyer
   const { data: buyingTransactions = [], isLoading: buyingLoading } = useQuery<Transaction[]>({
@@ -164,16 +171,21 @@ export default function Transactions() {
                       {transaction.listing?.title || "Item"}
                     </h3>
                   </Link>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm text-muted-foreground">
                       {isBuyer ? "Purchased from" : "Sold to"} {otherPartyName}
                     </p>
                     {otherParty && (
-                      <VerificationBadges
-                        user={otherParty}
-                        size="sm"
-                        showLabels={false}
-                      />
+                      <>
+                        <VerificationBadges
+                          user={otherParty}
+                          size="sm"
+                          showLabels={false}
+                        />
+                        <ReliabilityBadge 
+                          userId={isBuyer ? transaction.sellerId : transaction.buyerId}
+                        />
+                      </>
                     )}
                   </div>
                 </div>
@@ -211,6 +223,21 @@ export default function Transactions() {
 
               {/* Action Buttons */}
               <div className="flex gap-2 pt-2">
+                {/* Drop My Pin Button - Show for payment_captured status */}
+                {transaction.status === "payment_captured" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                    onClick={() => {
+                      setSelectedTransaction(transaction);
+                      setMeetupModalOpen(true);
+                    }}
+                  >
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Drop My Pin
+                  </Button>
+                )}
                 {isBuyer && transaction.status === "payment_captured" && (
                   <Button
                     size="sm"
@@ -329,6 +356,39 @@ export default function Transactions() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Meetup Initiation Modal */}
+      {selectedTransaction && (
+        <MeetupInitiationModal
+          isOpen={meetupModalOpen}
+          onClose={() => {
+            setMeetupModalOpen(false);
+            setSelectedTransaction(null);
+          }}
+          transactionId={selectedTransaction.id}
+          listingId={selectedTransaction.listingId}
+          onSuccess={(sessionId) => {
+            setActiveMeetupSession(sessionId);
+            toast({
+              title: "Meetup session started!",
+              description: "The other party has been notified.",
+            });
+          }}
+        />
+      )}
+
+      {/* Live Meetup Map */}
+      {activeMeetupSession && user && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="w-full max-w-4xl">
+            <LiveMeetupMap
+              sessionId={activeMeetupSession}
+              userId={user.id}
+              onClose={() => setActiveMeetupSession(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
