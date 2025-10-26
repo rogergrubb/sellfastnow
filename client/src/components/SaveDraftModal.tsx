@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Sparkles, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/AuthContext";
 
 interface SaveDraftModalProps {
   open: boolean;
@@ -27,6 +28,7 @@ export function SaveDraftModal({
   onSave,
 }: SaveDraftModalProps) {
   const { toast } = useToast();
+  const { getToken } = useAuth();
   const [collectionName, setCollectionName] = useState("");
   const [subsetName, setSubsetName] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -46,9 +48,13 @@ export function SaveDraftModal({
   const fetchSuggestions = async () => {
     setLoadingSuggestions(true);
     try {
+      const token = await getToken();
       const response = await fetch("/api/ai/suggestCollections", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         credentials: "include",
         body: JSON.stringify({
           objectTypes: metadata?.objectTypes || [],
@@ -82,7 +88,11 @@ export function SaveDraftModal({
 
   const fetchMonetizationOffer = async (segmentType: string) => {
     try {
+      const token = await getToken();
       const response = await fetch(`/api/monetization/offer/${segmentType}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
         credentials: "include",
       });
 
@@ -94,7 +104,10 @@ export function SaveDraftModal({
         // Log view event
         await fetch("/api/monetization/trigger", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
           credentials: "include",
           body: JSON.stringify({
             eventType: "view",
@@ -173,6 +186,9 @@ export function SaveDraftModal({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Save Draft</DialogTitle>
+          <DialogDescription>
+            Organize your drafts into collections for easy management
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
