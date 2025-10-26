@@ -124,8 +124,8 @@ export default function HeroWithBenefits({ onSearch, onCategorySelect, recentLis
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/25 to-black/15" />
         
-        {/* Benefit Cards - Glass Morphism Banner - Hidden for cleaner design */}
-        <div className="hidden absolute top-4 left-0 right-0 z-20">
+        {/* Benefit Cards - Glass Morphism Banner - Visible on desktop */}
+        <div className="hidden lg:block absolute top-4 left-0 right-0 z-20">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex justify-center gap-3 xl:gap-4">
               {benefitCards.map((benefit, index) => {
