@@ -22,15 +22,15 @@ import { Loader2, FolderPlus, FolderOpen } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 
 interface DraftFolder {
-  batchId: string;
-  batchTitle: string;
-  count: number;
+  id: string;
+  name: string;
+  listingsCount: number;
 }
 
 interface FolderSelectionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (batchId: string, batchTitle: string) => Promise<void>;
+  onSave: (folderId: string, folderName: string) => Promise<void>;
 }
 
 export function FolderSelectionModal({
@@ -57,7 +57,7 @@ export function FolderSelectionModal({
     setLoading(true);
     try {
       const token = await getToken();
-      const response = await fetch("/api/listings/draft-folders", {
+      const response = await fetch("/api/draft-folders", {
         headers: {
           "Authorization": `Bearer ${token}`,
         },
@@ -71,7 +71,7 @@ export function FolderSelectionModal({
         // Default to "new" if no folders exist, otherwise "existing"
         if (data.folders && data.folders.length > 0) {
           setMode("existing");
-          setSelectedFolder(data.folders[0].batchId);
+          setSelectedFolder(data.folders[0].id);
         } else {
           setMode("new");
         }
@@ -94,22 +94,40 @@ export function FolderSelectionModal({
 
     setSaving(true);
     try {
-      let batchId: string;
-      let batchTitle: string;
+      let folderId: string;
+      let folderName: string;
 
       if (mode === "existing") {
-        const folder = folders.find(f => f.batchId === selectedFolder);
+        const folder = folders.find(f => f.id === selectedFolder);
         if (!folder) return;
         
-        batchId = folder.batchId;
-        batchTitle = folder.batchTitle;
+        folderId = folder.id;
+        folderName = folder.name;
       } else {
-        // Create new folder with timestamp-based ID
-        batchTitle = newFolderName.trim();
-        batchId = `${batchTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${Date.now()}`;
+        // Create new folder via API
+        const token = await getToken();
+        const response = await fetch("/api/draft-folders", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            name: newFolderName.trim(),
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create folder");
+        }
+
+        const data = await response.json();
+        folderId = data.folder.id;
+        folderName = data.folder.name;
       }
 
-      await onSave(batchId, batchTitle);
+      await onSave(folderId, folderName);
       onOpenChange(false);
       
       // Reset form
@@ -130,9 +148,9 @@ export function FolderSelectionModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Save Drafts to Folder</DialogTitle>
+          <DialogTitle>Save Draft to Folder</DialogTitle>
           <DialogDescription>
-            Choose an existing folder or create a new one to organize your drafts
+            Choose an existing folder or create a new one to organize your draft
           </DialogDescription>
         </DialogHeader>
 
@@ -161,8 +179,8 @@ export function FolderSelectionModal({
                       </SelectTrigger>
                       <SelectContent>
                         {folders.map((folder) => (
-                          <SelectItem key={folder.batchId} value={folder.batchId}>
-                            {folder.batchTitle} ({folder.count} items)
+                          <SelectItem key={folder.id} value={folder.id}>
+                            {folder.name} ({folder.listingsCount} items)
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -216,6 +234,7 @@ export function FolderSelectionModal({
           <Button
             onClick={handleSave}
             disabled={!canSave || saving}
+            className="bg-red-600 hover:bg-red-700"
           >
             {saving ? (
               <>

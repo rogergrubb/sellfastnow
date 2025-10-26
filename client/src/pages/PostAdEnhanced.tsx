@@ -69,6 +69,7 @@ import { PaymentModal } from "@/components/PaymentModal";
 import { MultiItemGroupingModal } from "@/components/MultiItemGroupingModal";
 import { PhotoProcessingChoiceModal } from "@/components/PhotoProcessingChoiceModal";
 import { PhotoReviewModal } from "@/components/PhotoReviewModal";
+import { FolderSelectionModal } from "@/components/FolderSelectionModal";
 
 const formSchema = insertListingSchema.omit({ userId: true });
 
@@ -242,6 +243,10 @@ export default function PostAdEnhanced() {
   const [showPhotoReviewModal, setShowPhotoReviewModal] = useState(false);
   const [showPhotoProcessingModal, setShowPhotoProcessingModal] = useState(false);
   const [isMultipleAngles, setIsMultipleAngles] = useState<boolean | null>(null);
+  
+  // Folder selection modal state
+  const [showFolderModal, setShowFolderModal] = useState(false);
+  const [pendingDraftData, setPendingDraftData] = useState<z.infer<typeof formSchema> | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -1969,9 +1974,25 @@ export default function PostAdEnhanced() {
   };
 
   const saveDraft = () => {
-    // Get current form values and save as draft
+    // Get current form values and show folder selection modal
     const data = form.getValues();
-    createListingMutation.mutate({ ...data, status: 'draft' });
+    setPendingDraftData(data);
+    setShowFolderModal(true);
+  };
+  
+  const handleSaveDraftToFolder = async (folderId: string, folderName: string) => {
+    if (!pendingDraftData) return;
+    
+    // Save the draft with the selected folder
+    createListingMutation.mutate({ 
+      ...pendingDraftData, 
+      status: 'draft',
+      folderId: folderId,
+    });
+    
+    // Close modal and clear pending data
+    setShowFolderModal(false);
+    setPendingDraftData(null);
   };
 
   // Redirect to sign-in if not authenticated
@@ -3433,6 +3454,13 @@ export default function PostAdEnhanced() {
         </DialogContent>
       </Dialog>
 
+      {/* Folder Selection Modal */}
+      <FolderSelectionModal
+        open={showFolderModal}
+        onOpenChange={setShowFolderModal}
+        onSave={handleSaveDraftToFolder}
+      />
+      
       {/* Success Modal - After AI completes */}
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
         <DialogContent className="sm:max-w-md" data-testid="dialog-success-ai">
