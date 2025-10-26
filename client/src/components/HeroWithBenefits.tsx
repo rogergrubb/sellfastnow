@@ -50,18 +50,10 @@ const benefitCards = [
   {
     icon: CreditCard,
     title: "Secure Payments",
-    description: "No cash needed - pay safely online",
-    detailedDescription: "Buyers place funds into secure escrow as a deposit, showing sellers they're serious and will actually show up. When you meet to inspect the item, if it's not as described, you can immediately cancel and get your money back. Funds are only released to the seller once you confirm everything is good. No cash, no counterfeits, full protection.",
+    description: "Optional deposit shows you're serious",
+    detailedDescription: "Buyers may choose to place a fully-refundable deposit on an item to show a seller they are serious, and to show a seller that they will most likely show up when they say they will, weeding out flakes. If buyer and seller cannot agree on price or condition, the buyer can cancel the deposit and funds will be returned to them (banks normally return in 2-7 days, we do not control this).",
     position: "bottom-left",
     color: "blue",
-  },
-  {
-    icon: Lock,
-    title: "Escrow Protection",
-    description: "Funds held until you confirm receipt",
-    detailedDescription: "Your payment is held in secure escrow until you inspect the item in person. If it's not as described, you can immediately cancel and get your full refund—no waiting, no disputes, no hassle. Sellers are protected too: once you confirm the item is good, they get paid right away. Everyone wins.",
-    position: "bottom-right",
-    color: "green",
   },
 ];
 
