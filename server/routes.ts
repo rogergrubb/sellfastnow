@@ -33,6 +33,7 @@ import meetupRoutes from "./routes/meetups";
 import reliabilityRoutes from "./routes/reliability";
 import notificationsRoutes from "./routes/notifications";
 import boostsRoutes from "./routes/boosts";
+import savedSearchesRoutes from "./routes/savedSearches";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -229,6 +230,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Boosts Routes
   // ======================
   app.use("/api/boosts", boostsRoutes);
+
+  // ======================
+  // Saved Searches Routes
+  // ======================
+  app.use("/api/saved-searches", savedSearchesRoutes);
 
   // ======================
   // Listings Routes

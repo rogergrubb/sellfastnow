@@ -265,6 +265,16 @@ export class DatabaseStorage implements IStorage {
       .insert(listings)
       .values(listingData)
       .returning();
+    
+    // Trigger search alerts for the new listing
+    try {
+      const { checkAndNotifyNewListings } = await import("./services/searchAlertService");
+      await checkAndNotifyNewListings(listing.id);
+    } catch (error) {
+      console.error("Error triggering search alerts:", error);
+      // Don't fail listing creation if alerts fail
+    }
+    
     return listing;
   }
 

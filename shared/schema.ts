@@ -653,3 +653,10 @@ export * from './draft-collections-schema';
 // ============================================
 export * from './schema/promoted_listings';
 
+
+
+// ============================================
+// SAVED SEARCH ALERTS SYSTEM
+// ============================================
+export * from './schema/saved_searches';
+

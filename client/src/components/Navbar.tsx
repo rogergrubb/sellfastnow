@@ -1,4 +1,4 @@
-import { Search, Moon, Sun, Plus, ListChecks, Sparkles, User, LogOut, Settings, MessageCircle } from "lucide-react";
+import { Search, Moon, Sun, Plus, ListChecks, Sparkles, User, LogOut, Settings, MessageCircle, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
@@ -211,6 +211,11 @@ export default function Navbar() {
                     <DropdownMenuItem onClick={() => window.location.href = '/settings'}>
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => window.location.href = 
+'/saved-searches'}>
+                      <Bell className="mr-2 h-4 w-4" />
+                      Saved Searches
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>

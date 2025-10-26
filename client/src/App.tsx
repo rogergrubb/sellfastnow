@@ -28,6 +28,7 @@ import Credits from "./pages/Credits";
 import PaymentPage from "./pages/PaymentPage";
 import SellerMeetupPage from "./pages/SellerMeetupPage";
 import UserReviews from "./pages/UserReviews";
+import SavedSearches from "./pages/SavedSearches";
 import VerificationSettings from "./pages/VerificationSettings";
 import Navbar from "@/components/Navbar";
 import { NotificationManager } from "@/components/NotificationManager";
@@ -60,6 +61,7 @@ function Router() {
       <Route path="/messages" component={Messages} /> {/* Using MessagesNew with WebSocket and conversation grouping */}
       <Route path="/pay/:sessionId" component={PaymentPage} />
       <Route path="/meetup/:id" component={SellerMeetupPage} />
+      <Route path="/saved-searches" component={SavedSearches} />
       <Route component={NotFound} />
     </Switch>
   );
