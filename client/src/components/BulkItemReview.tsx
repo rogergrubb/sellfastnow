@@ -31,6 +31,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { ListingSuccessModal } from "@/components/ListingSuccessModal";
+import { SaveDraftModal } from "@/components/SaveDraftModal";
 
 interface DetectedProduct {
   title: string;
@@ -161,6 +162,7 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successListingIds, setSuccessListingIds] = useState<string[]>([]);
   const [successListingTitles, setSuccessListingTitles] = useState<string[]>([]);
+  const [showSaveDraftModal, setShowSaveDraftModal] = useState(false);
   
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const { toast } = useToast();
@@ -436,7 +438,12 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
     }
   };
 
-  const handleSaveDrafts = async () => {
+  const handleSaveDrafts = () => {
+    // Open the Save Draft Modal to collect collection name
+    setShowSaveDraftModal(true);
+  };
+
+  const handleSaveDraftsToCollection = async (collectionName: string, subsetName?: string) => {
     // No validation needed for drafts - save as-is
     setIsPublishing(true);
     setPublishingProgress({
@@ -506,6 +513,36 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
       });
       
       const actualCreatedCount = result.created ?? result.listings?.length ?? products.length;
+      const savedListings = result.listings || [];
+      
+      // Save each draft to the collection
+      console.log(`📂 Saving ${savedListings.length} drafts to collection "${collectionName}"`);
+      for (const listing of savedListings) {
+        try {
+          const collectionResponse = await fetch('/api/drafts/save', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              draftId: listing.id,
+              collectionName,
+              subsetName: subsetName || null,
+              metadata: {
+                title: listing.title,
+                timestamp: new Date().toISOString(),
+              },
+            }),
+          });
+          
+          if (!collectionResponse.ok) {
+            console.error(`❌ Failed to save listing ${listing.id} to collection`);
+          }
+        } catch (error) {
+          console.error(`❌ Error saving listing ${listing.id} to collection:`, error);
+        }
+      }
       
       await queryClient.invalidateQueries({ queryKey: ['/api/listings'] });
       await queryClient.invalidateQueries({ queryKey: ['/api/listings/mine'] });
@@ -529,7 +566,7 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
           
           toast({
             title: "Drafts Saved!",
-            description: `Successfully saved ${actualCreatedCount} item${actualCreatedCount > 1 ? 's' : ''} as drafts.`,
+            description: `Successfully saved ${actualCreatedCount} item${actualCreatedCount > 1 ? 's' : ''} to "${collectionName}"${subsetName ? ` → ${subsetName}` : ''}.`,
           });
           
           // Redirect to Dashboard with drafts filter
@@ -1281,6 +1318,19 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
         }}
         listingIds={successListingIds}
         listingTitles={successListingTitles}
+      />
+
+      {/* Save Draft Modal with AI Suggestions */}
+      <SaveDraftModal
+        open={showSaveDraftModal}
+        onOpenChange={setShowSaveDraftModal}
+        draftId="bulk-drafts"
+        metadata={{
+          title: products[0]?.title,
+          objectTypes: products.map(p => p.category).filter(Boolean),
+          timestamp: new Date().toISOString(),
+        }}
+        onSave={handleSaveDraftsToCollection}
       />
     </div>
   );
