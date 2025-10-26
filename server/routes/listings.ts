@@ -302,6 +302,13 @@ const router = Router();
       res.json({ folders });
     } catch (error: any) {
       console.error("❌ Error fetching draft folders:", error);
+      
+      // If columns don't exist yet (during migration), return empty array
+      if (error.message?.includes('column') || error.message?.includes('does not exist')) {
+        console.log("⚠️ Draft folder columns not yet migrated, returning empty array");
+        return res.json({ folders: [] });
+      }
+      
       res.status(500).json({ message: "Failed to fetch draft folders" });
     }
   });
