@@ -1,4 +1,5 @@
 import { runDraftCollectionsMigration } from "./001_draft_collections";
+import { runDraftFoldersMigration } from "./002_draft_folders";
 
 /**
  * Run all pending migrations
@@ -9,6 +10,7 @@ export async function runMigrations() {
 
   try {
     await runDraftCollectionsMigration();
+    await runDraftFoldersMigration();
     console.log("✅ All migrations completed successfully");
   } catch (error) {
     console.error("❌ Migration error:", error);

@@ -125,6 +125,11 @@ export const listings = pgTable("listings", {
   
   images: text("images").array().notNull().default(sql`'{}'::text[]`),
   status: varchar("status", { length: 20 }).notNull().default("active"),
+  
+  // Draft folder organization
+  batchId: varchar("batch_id", { length: 100 }), // Unique ID for draft folder/batch
+  batchTitle: varchar("batch_title", { length: 200 }), // Human-readable folder name
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
