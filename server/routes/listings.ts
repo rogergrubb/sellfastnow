@@ -222,7 +222,7 @@ const router = Router();
   router.post("/batch", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth.userId;
-      const { listings: listingsData, status: batchStatus } = req.body;
+      const { listings: listingsData, status: batchStatus, batchId, batchTitle } = req.body;
 
       if (!listingsData || !Array.isArray(listingsData)) {
         return res.status(400).json({ message: "listings array is required" });
@@ -267,6 +267,8 @@ const router = Router();
             location: listingData.location || "Local Area",
             images: listingData.images || [],
             status: targetStatus,
+            batchId: batchId || null,
+            batchTitle: batchTitle || null,
           });
 
           createdListings.push(listing);

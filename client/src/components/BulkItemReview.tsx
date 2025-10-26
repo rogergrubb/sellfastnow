@@ -31,7 +31,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { ListingSuccessModal } from "@/components/ListingSuccessModal";
-import { SaveDraftModal } from "@/components/SaveDraftModal";
+import { FolderSelectionModal } from "@/components/FolderSelectionModal";
 
 interface DetectedProduct {
   title: string;
@@ -162,7 +162,7 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successListingIds, setSuccessListingIds] = useState<string[]>([]);
   const [successListingTitles, setSuccessListingTitles] = useState<string[]>([]);
-  const [showSaveDraftModal, setShowSaveDraftModal] = useState(false);
+  const [showFolderModal, setShowFolderModal] = useState(false);
   
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const { toast } = useToast();
@@ -439,11 +439,11 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
   };
 
   const handleSaveDrafts = () => {
-    // Open the Save Draft Modal to collect collection name
-    setShowSaveDraftModal(true);
+    // Open the Folder Selection Modal
+    setShowFolderModal(true);
   };
 
-  const handleSaveDraftsToCollection = async (collectionName: string, subsetName?: string) => {
+  const handleSaveDraftsToFolder = async (batchId: string, batchTitle: string) => {
     // No validation needed for drafts - save as-is
     setIsPublishing(true);
     setPublishingProgress({
@@ -494,7 +494,9 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
         },
         body: JSON.stringify({ 
           listings,
-          status: 'draft' // Save as drafts
+          status: 'draft', // Save as drafts
+          batchId, // Add to folder
+          batchTitle // Folder name
         }),
       });
 
@@ -513,36 +515,8 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
       });
       
       const actualCreatedCount = result.created ?? result.listings?.length ?? products.length;
-      const savedListings = result.listings || [];
       
-      // Save each draft to the collection
-      console.log(`📂 Saving ${savedListings.length} drafts to collection "${collectionName}"`);
-      for (const listing of savedListings) {
-        try {
-          const collectionResponse = await fetch('/api/drafts/save', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              draftId: listing.id,
-              collectionName,
-              subsetName: subsetName || null,
-              metadata: {
-                title: listing.title,
-                timestamp: new Date().toISOString(),
-              },
-            }),
-          });
-          
-          if (!collectionResponse.ok) {
-            console.error(`❌ Failed to save listing ${listing.id} to collection`);
-          }
-        } catch (error) {
-          console.error(`❌ Error saving listing ${listing.id} to collection:`, error);
-        }
-      }
+      console.log(`✅ Saved ${actualCreatedCount} drafts to folder "${batchTitle}" (${batchId})`);
       
       await queryClient.invalidateQueries({ queryKey: ['/api/listings'] });
       await queryClient.invalidateQueries({ queryKey: ['/api/listings/mine'] });
@@ -566,7 +540,7 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
           
           toast({
             title: "Drafts Saved!",
-            description: `Successfully saved ${actualCreatedCount} item${actualCreatedCount > 1 ? 's' : ''} to "${collectionName}"${subsetName ? ` → ${subsetName}` : ''}.`,
+            description: `Successfully saved ${actualCreatedCount} item${actualCreatedCount > 1 ? 's' : ''} to "${batchTitle}" folder.`,
           });
           
           // Redirect to Dashboard with drafts filter
@@ -1333,17 +1307,11 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
         listingTitles={successListingTitles}
       />
 
-      {/* Save Draft Modal with AI Suggestions */}
-      <SaveDraftModal
-        open={showSaveDraftModal}
-        onOpenChange={setShowSaveDraftModal}
-        draftId="bulk-drafts"
-        metadata={{
-          title: products[0]?.title,
-          objectTypes: products.map(p => p.category).filter(Boolean),
-          timestamp: new Date().toISOString(),
-        }}
-        onSave={handleSaveDraftsToCollection}
+      {/* Folder Selection Modal */}
+      <FolderSelectionModal
+        open={showFolderModal}
+        onOpenChange={setShowFolderModal}
+        onSave={handleSaveDraftsToFolder}
       />
     </div>
   );
