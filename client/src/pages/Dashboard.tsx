@@ -2,6 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
+import { DraftFolderSelector } from "@/components/DraftFolderSelector";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -129,6 +130,7 @@ export default function Dashboard() {
   
   const [activeTab, setActiveTab] = useState("my-listings");
   const [listingFilter, setListingFilter] = useState("active");
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null); // null = All Draft Folders
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -492,6 +494,10 @@ export default function Dashboard() {
       if (listingFilter !== "all" && listing.status !== listingFilter) return false;
       if (searchQuery && !listing.title.toLowerCase().includes(searchQuery.toLowerCase()))
         return false;
+      // Filter by selected folder (only for drafts)
+      if (listingFilter === "draft" && selectedFolder !== null) {
+        if (listing.batchId !== selectedFolder) return false;
+      }
       return true;
     })
     .sort((a, b) => {
@@ -712,15 +718,14 @@ export default function Dashboard() {
                       >
                         Active
                       </Button>
-                      <Button
-                        variant={listingFilter === "draft" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setListingFilter("draft")}
-                        data-testid="button-filter-draft"
-                        className={`h-8 ${listingFilter === "draft" ? "bg-red-600 hover:bg-red-700" : "border-red-500 text-red-700 hover:bg-red-50"}`}
-                      >
-                        Drafts
-                      </Button>
+                      <DraftFolderSelector
+                        selectedFolder={selectedFolder}
+                        onFolderChange={(folderId) => {
+                          setSelectedFolder(folderId);
+                          setListingFilter("draft"); // Automatically switch to draft filter
+                        }}
+                        isActive={listingFilter === "draft"}
+                      />
                       <Button
                         variant={listingFilter === "sold" ? "default" : "outline"}
                         size="sm"
