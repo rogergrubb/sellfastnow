@@ -3,14 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { 
-  CheckCircle, 
-  FolderOpen, 
   Package, 
   Clock, 
+  FolderOpen, 
+  ChevronRight,
+  ChevronDown,
   Plus, 
-  Share2, 
   Trash2,
-  Folders
+  Home as HomeIcon,
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { CreateFolderModal } from "@/components/CreateFolderModal";
@@ -27,7 +27,6 @@ interface DashboardSidebarProps {
   selectedFolder: string | null;
   onFilterChange: (filter: string) => void;
   onFolderSelect: (batchId: string | null) => void;
-  onShareClick: () => void;
   onDeleteMultipleClick: () => void;
   isSelectMode: boolean;
 }
@@ -37,12 +36,12 @@ export function DashboardSidebar({
   selectedFolder,
   onFilterChange,
   onFolderSelect,
-  onShareClick,
   onDeleteMultipleClick,
   isSelectMode,
 }: DashboardSidebarProps) {
   const { getToken } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [draftsExpanded, setDraftsExpanded] = useState(true);
 
   // Fetch available draft folders using React Query
   const { data: foldersData, isLoading: foldersLoading } = useQuery({
@@ -74,144 +73,168 @@ export function DashboardSidebar({
     a.batchTitle.localeCompare(b.batchTitle)
   );
 
+  // Icon mapping for folder names (can be customized)
+  const getFolderIcon = (folderName: string) => {
+    const lowerName = folderName.toLowerCase();
+    if (lowerName.includes('coin')) return '🪙';
+    if (lowerName.includes('garage') || lowerName.includes('sale')) return '🏠';
+    if (lowerName.includes('furniture')) return '🪑';
+    if (lowerName.includes('electronics')) return '📱';
+    if (lowerName.includes('clothes') || lowerName.includes('clothing')) return '👕';
+    return '📁';
+  };
+
   return (
-    <div className="w-64 bg-gray-50 border-r border-gray-200 p-4 space-y-2 sticky top-0 h-screen overflow-y-auto">
+    <div className="w-64 bg-white border-r border-gray-200 p-6 space-y-1 sticky top-0 h-screen overflow-y-auto">
+      {/* SellFast Logo */}
+      <div className="flex items-center gap-2 mb-8">
+        <HomeIcon className="h-8 w-8 text-teal-600" />
+        <span className="text-2xl font-bold">SellFast</span>
+      </div>
+
+      {/* My Listings Header */}
+      <div className="text-2xl font-bold mb-6">My Listings</div>
+
       {/* Active Button */}
-      <Button
-        variant={listingFilter === "active" ? "default" : "outline"}
-        className={cn(
-          "w-full justify-start text-left",
-          listingFilter === "active" && "bg-red-500 hover:bg-red-600 text-white"
-        )}
+      <button
         onClick={() => {
           onFilterChange("active");
           onFolderSelect(null);
         }}
+        className={cn(
+          "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors",
+          listingFilter === "active" 
+            ? "bg-gray-100 font-medium" 
+            : "hover:bg-gray-50"
+        )}
         data-testid="sidebar-button-active"
       >
-        <CheckCircle className="h-4 w-4 mr-2" />
-        Active
-      </Button>
-
-      {/* Draft Folders Section */}
-      <div className="pt-4">
-        <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          Draft Folders
-        </div>
-        
-        {foldersLoading ? (
-          <div className="px-3 py-2 text-sm text-gray-500">Loading...</div>
-        ) : sortedFolders.length === 0 ? (
-          <div className="px-3 py-2 text-sm text-gray-500">No folders yet</div>
-        ) : (
-          <div className="space-y-1">
-            {sortedFolders.map((folder) => (
-              <Button
-                key={folder.batchId}
-                variant={listingFilter === "draft" && selectedFolder === folder.batchId ? "default" : "outline"}
-                className={cn(
-                  "w-full justify-start text-left",
-                  listingFilter === "draft" && selectedFolder === folder.batchId 
-                    ? "bg-red-500 hover:bg-red-600 text-white" 
-                    : "bg-white hover:bg-gray-100"
-                )}
-                onClick={() => {
-                  onFilterChange("draft");
-                  onFolderSelect(folder.batchId);
-                }}
-                data-testid={`sidebar-button-folder-${folder.batchId}`}
-              >
-                <FolderOpen className="h-4 w-4 mr-2 flex-shrink-0" />
-                <span className="flex-1 truncate">{folder.batchTitle}</span>
-                <span className="text-xs ml-2 opacity-70">{folder.count}</span>
-              </Button>
-            ))}
-          </div>
-        )}
-      </div>
+        <HomeIcon className="h-5 w-5 text-gray-600" />
+        <span className="text-lg">Active</span>
+      </button>
 
       {/* Sold Button */}
-      <Button
-        variant={listingFilter === "sold" ? "default" : "outline"}
-        className={cn(
-          "w-full justify-start text-left",
-          listingFilter === "sold" && "bg-red-500 hover:bg-red-600 text-white"
-        )}
+      <button
         onClick={() => {
           onFilterChange("sold");
           onFolderSelect(null);
         }}
+        className={cn(
+          "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors",
+          listingFilter === "sold" 
+            ? "bg-gray-100 font-medium" 
+            : "hover:bg-gray-50"
+        )}
         data-testid="sidebar-button-sold"
       >
-        <Package className="h-4 w-4 mr-2" />
-        Sold
-      </Button>
+        <Package className="h-5 w-5 text-gray-600" />
+        <span className="text-lg">Sold</span>
+      </button>
 
       {/* Expired Button */}
-      <Button
-        variant={listingFilter === "expired" ? "default" : "outline"}
-        className={cn(
-          "w-full justify-start text-left",
-          listingFilter === "expired" && "bg-red-500 hover:bg-red-600 text-white"
-        )}
+      <button
         onClick={() => {
           onFilterChange("expired");
           onFolderSelect(null);
         }}
+        className={cn(
+          "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors",
+          listingFilter === "expired" 
+            ? "bg-gray-100 font-medium" 
+            : "hover:bg-gray-50"
+        )}
         data-testid="sidebar-button-expired"
       >
-        <Clock className="h-4 w-4 mr-2" />
-        Expired
-      </Button>
+        <Clock className="h-5 w-5 text-gray-600" />
+        <span className="text-lg">Expired</span>
+      </button>
 
-      {/* Divider */}
-      <div className="border-t border-gray-300 my-4"></div>
+      {/* Drafts Section */}
+      <div className="py-2">
+        <button
+          onClick={() => setDraftsExpanded(!draftsExpanded)}
+          className={cn(
+            "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors",
+            listingFilter === "draft" && selectedFolder === null
+              ? "bg-gray-100 font-medium" 
+              : "hover:bg-gray-50"
+          )}
+          data-testid="sidebar-button-drafts"
+        >
+          <FolderOpen className="h-5 w-5 text-gray-600" />
+          <span className="text-lg flex-1">Drafts</span>
+          {draftsExpanded ? (
+            <ChevronDown className="h-5 w-5 text-gray-400" />
+          ) : (
+            <ChevronRight className="h-5 w-5 text-gray-400" />
+          )}
+        </button>
 
-      {/* Create New Button */}
+        {/* Draft Folders List */}
+        {draftsExpanded && (
+          <div className="ml-6 mt-1 space-y-1">
+            {foldersLoading ? (
+              <div className="px-4 py-2 text-sm text-gray-500">Loading...</div>
+            ) : sortedFolders.length === 0 ? (
+              <div className="px-4 py-2 text-sm text-gray-500">No folders yet</div>
+            ) : (
+              sortedFolders.map((folder) => (
+                <button
+                  key={folder.batchId}
+                  onClick={() => {
+                    onFilterChange("draft");
+                    onFolderSelect(folder.batchId);
+                  }}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-4 py-2 rounded-lg text-left transition-colors",
+                    listingFilter === "draft" && selectedFolder === folder.batchId
+                      ? "bg-gray-100 font-medium" 
+                      : "hover:bg-gray-50"
+                  )}
+                  data-testid={`sidebar-button-folder-${folder.batchId}`}
+                >
+                  <span className="text-xl">{getFolderIcon(folder.batchTitle)}</span>
+                  <span className="flex-1 truncate">{folder.batchTitle}</span>
+                </button>
+              ))
+            )}
+
+            {/* Create New Folder */}
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="w-full flex items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-gray-50 rounded-lg"
+              data-testid="sidebar-button-create-folder"
+            >
+              <span className="text-base text-gray-700">Create New Folder</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Spacer */}
+      <div className="py-4"></div>
+
+      {/* Create New Listing */}
       <Link href="/post-ad">
-        <Button
-          className="w-full justify-start text-left bg-blue-600 hover:bg-blue-700 text-white"
+        <button
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors hover:bg-gray-50"
           data-testid="sidebar-button-create-new"
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Create New
-        </Button>
+          <Plus className="h-5 w-5 text-gray-600" />
+          <span className="text-lg">Create New Listing</span>
+        </button>
       </Link>
 
-      {/* Create New Folder Button */}
-      <Button
-        variant="outline"
-        className="w-full justify-start text-left bg-white hover:bg-gray-100"
-        onClick={() => setShowCreateModal(true)}
-        data-testid="sidebar-button-create-folder"
-      >
-        <Folders className="h-4 w-4 mr-2" />
-        Create New Folder
-      </Button>
-
-      {/* Share Button */}
+      {/* Delete Multiple Items */}
       {!isSelectMode && (
-        <Button
-          variant="outline"
-          className="w-full justify-start text-left bg-white hover:bg-gray-100"
-          onClick={onShareClick}
-          data-testid="sidebar-button-share"
-        >
-          <Share2 className="h-4 w-4 mr-2" />
-          Share
-        </Button>
-      )}
-
-      {/* Delete Multiple Button */}
-      {!isSelectMode && (
-        <Button
-          className="w-full justify-start text-left bg-red-600 hover:bg-red-700 text-white"
+        <button
           onClick={onDeleteMultipleClick}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors hover:bg-gray-50"
           data-testid="sidebar-button-delete-multiple"
         >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete Multiple
-        </Button>
+          <Trash2 className="h-5 w-5 text-gray-600" />
+          <span className="text-lg">Delete Multiple Items</span>
+        </button>
       )}
 
       {/* Create Folder Modal */}
@@ -222,6 +245,7 @@ export function DashboardSidebar({
           // Select the newly created folder
           onFilterChange("draft");
           onFolderSelect(batchId);
+          setDraftsExpanded(true); // Ensure drafts section is expanded
         }}
       />
     </div>

@@ -711,7 +711,6 @@ export default function Dashboard() {
                   selectedFolder={selectedFolder}
                   onFilterChange={setListingFilter}
                   onFolderSelect={setSelectedFolder}
-                  onShareClick={() => setShowShareModal(true)}
                   onDeleteMultipleClick={() => setIsSelectMode(true)}
                   isSelectMode={isSelectMode}
                 />
