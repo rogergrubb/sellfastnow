@@ -290,4 +290,18 @@ const router = Router();
     }
   });
 
+  // Get draft folders for current user
+  router.get("/draft-folders", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const folders = await storage.getDraftFolders(userId);
+      
+      console.log(`📁 Fetched ${folders.length} draft folders for user ${userId}`);
+      res.json({ folders });
+    } catch (error: any) {
+      console.error("❌ Error fetching draft folders:", error);
+      res.status(500).json({ message: "Failed to fetch draft folders" });
+    }
+  });
+
 export default router;

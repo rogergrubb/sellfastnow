@@ -2110,6 +2110,36 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(monetizationEvents.createdAt))
       .limit(limit);
   }
+
+  // ============================================
+  // DRAFT FOLDERS METHODS
+  // ============================================
+
+  async getDraftFolders(userId: string): Promise<{ batchId: string; batchTitle: string; count: number }[]> {
+    // Get all unique batch_id/batch_title combinations for draft listings
+    const result = await db
+      .select({
+        batchId: listings.batchId,
+        batchTitle: listings.batchTitle,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(listings)
+      .where(
+        and(
+          eq(listings.userId, userId),
+          eq(listings.status, "draft"),
+          sql`${listings.batchId} IS NOT NULL`
+        )
+      )
+      .groupBy(listings.batchId, listings.batchTitle)
+      .orderBy(desc(sql`max(${listings.createdAt})`)); // Most recent first
+
+    return result.map(row => ({
+      batchId: row.batchId!,
+      batchTitle: row.batchTitle!,
+      count: row.count,
+    }));
+  }
 }
 export const storage = new DatabaseStorage();;
 export { db };
