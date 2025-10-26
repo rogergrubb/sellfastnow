@@ -11,6 +11,7 @@ const categories = ["Electronics", "Furniture", "Clothing", "Vehicles", "Service
 interface HeroProps {
   onSearch: (query: string) => void;
   onCategorySelect: (category: string) => void;
+  recentListings?: any[];
 }
 
 const benefitCards = [
@@ -104,7 +105,7 @@ const colorThemes = {
   },
 };
 
-export default function HeroWithBenefits({ onSearch, onCategorySelect }: HeroProps) {
+export default function HeroWithBenefits({ onSearch, onCategorySelect, recentListings = [] }: HeroProps) {
   const [searchInput, setSearchInput] = useState("");
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const { isSignedIn } = useAuth();
@@ -252,6 +253,47 @@ export default function HeroWithBenefits({ onSearch, onCategorySelect }: HeroPro
         </div>
       </div>
 
+      {/* Freshly Posted in Your Town Section */}
+      <div className="bg-gray-50 py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-6">
+            Freshly Posted in Your Town
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {recentListings.length > 0 ? (
+              recentListings.slice(0, 6).map((listing: any) => (
+                <div 
+                  key={listing.id} 
+                  className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => setLocation(`/listing/${listing.id}`)}
+                >
+                  <div className="aspect-square bg-gray-200 overflow-hidden">
+                    {listing.images && listing.images.length > 0 ? (
+                      <img 
+                        src={listing.images[0]} 
+                        alt={listing.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-gray-400 text-sm">No image</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-semibold text-sm text-gray-900 truncate mb-1">{listing.title}</h3>
+                    <p className="text-xs text-gray-500 mb-1">{listing.location || 'Local area'}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-8 text-gray-500">
+                No recent listings in your area yet. Be the first to post!
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
     </div>
   );

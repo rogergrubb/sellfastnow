@@ -75,6 +75,16 @@ export default function Home() {
 
   const queryParams = buildQueryParams();
 
+  // Fetch recent listings for "Freshly Posted" section
+  const { data: recentListings = [] } = useQuery<Listing[]>({
+    queryKey: ['/api/listings/recent'],
+    queryFn: async () => {
+      const response = await fetch('/api/listings?sortBy=newest&limit=6');
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
   // Fetch listings with filters
   const { data: listings = [], isLoading } = useQuery<Listing[]>({
     queryKey: ['/api/listings/search', queryParams],
@@ -129,7 +139,11 @@ export default function Home() {
 
   return (
     <div>
-      <HeroWithBenefits onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
+      <HeroWithBenefits 
+        onSearch={handleSearch} 
+        onCategorySelect={handleCategorySelect}
+        recentListings={recentListings}
+      />
       <CategoryFilters 
         selectedCategory={selectedCategory}
         onCategorySelect={handleCategorySelect}
