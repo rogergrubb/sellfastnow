@@ -31,6 +31,7 @@ import collectionsRoutes from "./routes/collections";
 import draftFoldersRoutes from "./routes/draft-folders";
 import meetupRoutes from "./routes/meetups";
 import reliabilityRoutes from "./routes/reliability";
+import notificationsRoutes from "./routes/notifications";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -217,6 +218,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reliability Routes
   // ======================
   app.use("/api/reliability", reliabilityRoutes);
+
+  // ======================
+  // Notifications Routes
+  // ======================
+  app.use("/api/notifications", notificationsRoutes);
 
   // ======================
   // Listings Routes
@@ -1499,6 +1505,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (wsService) {
         wsService.broadcastMessage(newMessage[0]);
         console.log('📡 Message broadcasted via WebSocket');
+        
+        // Emit notification popup to receiver
+        const listing = await db.query.listings.findFirst({
+          where: eq(listings.id, listingId),
+        });
+        
+        const sender = await db.query.users.findFirst({
+          where: eq(users.id, senderId),
+        });
+        
+        if (listing && sender) {
+          wsService.emitToUser(receiverId, 'new_message', {
+            id: newMessage[0].id,
+            listingId,
+            listingTitle: listing.title,
+            listingImage: listing.images ? JSON.parse(listing.images)[0] : undefined,
+            senderName: `${sender.firstName} ${sender.lastName}`,
+            message: content.trim(),
+            timestamp: newMessage[0].createdAt,
+          });
+          console.log('🔔 Notification sent to receiver');
+        }
       }
       
       res.json(newMessage[0]);

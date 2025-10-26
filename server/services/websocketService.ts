@@ -292,6 +292,13 @@ export class WebSocketService {
     const roomName = `meetup:${sessionId}`;
     this.io.to(roomName).emit("meetup_message", message);
   }
+
+  // Emit event to specific user (all their connected sockets)
+  public emitToUser(userId: string, event: string, data: any) {
+    const roomName = `user:${userId}`;
+    console.log(`🔔 Emitting ${event} to user ${userId}`);
+    this.io.to(roomName).emit(event, data);
+  }
 }
 
 // Singleton instance

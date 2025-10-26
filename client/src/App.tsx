@@ -29,6 +29,8 @@ import SellerMeetupPage from "./pages/SellerMeetupPage";
 import UserReviews from "./pages/UserReviews";
 import VerificationSettings from "./pages/VerificationSettings";
 import Navbar from "@/components/Navbar";
+import { NotificationManager } from "@/components/NotificationManager";
+import { useQuery } from "@tanstack/react-query";
 
 function Router() {
   return (
@@ -62,6 +64,19 @@ function Router() {
 }
 
 function App() {
+  // Get current user for notifications
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const response = await fetch("/api/auth/user", {
+        credentials: "include",
+      });
+      if (!response.ok) return null;
+      return response.json();
+    },
+    retry: false,
+  });
+
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
@@ -69,6 +84,7 @@ function App() {
         <div className="min-h-screen bg-background">
           <Navbar />
           <Router />
+          {user && <NotificationManager userId={user.id} />}
         </div>
         <Toaster />
         </TooltipProvider>
