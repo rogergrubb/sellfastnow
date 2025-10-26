@@ -1,6 +1,5 @@
 import { serial, integer, varchar, boolean, timestamp, pgTable, decimal } from "drizzle-orm/pg-core";
-import { users } from "./users";
-import { listings } from "./listings";
+import { users, listings } from "../schema";
 
 export const upcycleListings = pgTable("upcycle_listings", {
   id: serial("id").primaryKey(),
