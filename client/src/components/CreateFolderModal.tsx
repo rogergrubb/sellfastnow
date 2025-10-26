@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FolderPlus } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 interface CreateFolderModalProps {
   open: boolean;
@@ -23,31 +26,81 @@ export function CreateFolderModal({
   onOpenChange,
   onFolderCreated,
 }: CreateFolderModalProps) {
+  const { getToken } = useAuth();
+  const { toast } = useToast();
   const [folderName, setFolderName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!folderName.trim()) {
       return;
     }
 
     setIsCreating(true);
 
-    // Generate unique batch_id
-    const timestamp = Date.now();
-    const sanitized = folderName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "_")
-      .replace(/^_+|_+$/g, "");
-    const batchId = `${sanitized}_${timestamp}`;
+    try {
+      // Generate unique batch_id
+      const timestamp = Date.now();
+      const sanitized = folderName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+      const batchId = `${sanitized}_${timestamp}`;
+      const batchTitle = folderName.trim();
 
-    // Call the callback with the new folder info
-    onFolderCreated(batchId, folderName.trim());
+      // Create a placeholder draft listing to establish the folder
+      const token = await getToken();
+      const response = await fetch("/api/listings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          title: `${batchTitle} - Folder Placeholder`,
+          description: "This is a placeholder listing for the folder. You can delete it or add your items.",
+          price: "0",
+          category: "Other",
+          condition: "good",
+          location: "Local Area",
+          images: [],
+          status: "draft",
+          batchId: batchId,
+          batchTitle: batchTitle,
+        }),
+      });
 
-    // Reset and close
-    setFolderName("");
-    setIsCreating(false);
-    onOpenChange(false);
+      if (!response.ok) {
+        throw new Error("Failed to create folder");
+      }
+
+      // Invalidate queries to refresh the folder list
+      await queryClient.invalidateQueries({ queryKey: ["/api/listings"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/listings/mine"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/listings/draft-folders"] });
+
+      // Call the callback with the new folder info
+      onFolderCreated(batchId, batchTitle);
+
+      toast({
+        title: "Folder Created",
+        description: `"${batchTitle}" folder has been created successfully.`,
+      });
+
+      // Reset and close
+      setFolderName("");
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error creating folder:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create folder. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleCancel = () => {
