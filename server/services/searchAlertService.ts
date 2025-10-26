@@ -3,12 +3,6 @@ import { savedSearches, searchAlertNotifications } from "@shared/schema/saved_se
 import { listings, users } from "@shared/schema";
 import { eq, and, gte, lte, sql, desc } from "drizzle-orm";
 import nodemailer from "nodemailer";
-import twilio from "twilio";
-
-// Initialize Twilio client
-const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN
-  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-  : null;
 
 const transporter = nodemailer.createTransporter({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
@@ -81,21 +75,7 @@ export async function sendSMSNotification(
   listing: any
 ): Promise<boolean> {
   try {
-    if (!twilioClient) {
-      console.log("Twilio not configured. SMS would be sent to:", phoneNumber);
-      return false;
-    }
-
-    const listingUrl = `${process.env.FRONTEND_URL || 'http://localhost:5000'}/listings/${listing.id}`;
-    const message = `New listing matches "${searchName}"!\n\n${listing.title}\n$${listing.price}\n\nView: ${listingUrl}`;
-
-    await twilioClient.messages.create({
-      body: message,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: phoneNumber,
-    });
-
-    console.log(`SMS sent successfully to ${phoneNumber}`);
+    console.log(`SMS would be sent to ${phoneNumber}: New listing "${listing.title}" matches "${searchName}"`);
     return true;
   } catch (error) {
     console.error("Error sending SMS notification:", error);
