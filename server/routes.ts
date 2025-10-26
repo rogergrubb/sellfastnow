@@ -27,6 +27,7 @@ import favoritesRoutes from "./routes/favorites";
 import aiRoutes from "./routes/ai";
 import listingsRoutes from "./routes/listings";
 import imagesRoutes from "./routes/images";
+import collectionsRoutes from "./routes/collections";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -209,6 +210,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ======================
   app.use("/api/images", imagesRoutes);
   app.use("/api", imagesRoutes); // For /upload-session routes
+
+  // ======================
+  // Collections & AI Suggestions Routes
+  // ======================
+  app.use("/api/collections", collectionsRoutes);
+  app.use("/api", collectionsRoutes); // For /drafts/save, /ai/suggestCollections, /monetization routes
 
   // ======================
   // User Routes
