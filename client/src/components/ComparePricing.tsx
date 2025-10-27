@@ -1,4 +1,4 @@
-import { Check, X, TrendingDown, DollarSign } from "lucide-react";
+import { Check, X, TrendingDown, CircleDollarSign } from "lucide-react";
 import SectionNav from "./SectionNav";
 
 export default function ComparePricing() {
@@ -35,7 +35,7 @@ export default function ComparePricing() {
         <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl p-8 mb-8 border-2 border-green-500 dark:border-green-600 shadow-xl">
           <div className="flex items-start gap-4 mb-6">
             <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-              <DollarSign className="h-6 w-6 text-white" />
+              <CircleDollarSign className="h-6 w-6 text-white" />
             </div>
             <div>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
