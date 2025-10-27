@@ -11,7 +11,7 @@ export default function RealtorTestimonial() {
             <p className="text-xl sm:text-2xl text-gray-800 dark:text-gray-200 leading-relaxed mb-6 italic">
               "I listed <span className="font-bold text-green-600 dark:text-green-400">1,100 items</span> from an estate liquidation using just my cell phone. 
               I walked through the house and garage taking photos, uploaded them all at once, and AI generated titles, descriptions, 
-              valuations, and meta tags. It saved me hours of work.
+              valuations, and meta tags. It saved me <span className="font-bold text-green-600 dark:text-green-400">days of work</span> and did a better job with meta-tagging each item for better search results.
             </p>
             <p className="text-xl sm:text-2xl text-gray-800 dark:text-gray-200 leading-relaxed mb-6 italic">
               Everything is branded under my name, and I got auto-generated links I could share on Facebook, Instagram, TikTok, X, 
