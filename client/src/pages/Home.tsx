@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import EstateHero from "@/components/EstateHero";
 import RealtorTestimonial from "@/components/RealtorTestimonial";
+import ComparePricing from "@/components/ComparePricing";
 import EstateKeyFeatures from "@/components/EstateKeyFeatures";
 import PricingCalculatorEstate from "@/components/PricingCalculatorEstate";
 import TargetAudiences from "@/components/TargetAudiences";
@@ -147,8 +148,16 @@ export default function Home() {
     <div>
       {/* Estate Sale Focus Section */}
       <EstateHero />
-      <RealtorTestimonial />
-      <EstateKeyFeatures />
+      <div id="how-it-works" className="scroll-mt-20">
+        {/* How It Works is in EstateHero */}
+      </div>
+      <div id="testimonial" className="scroll-mt-20">
+        <RealtorTestimonial />
+      </div>
+      <ComparePricing />
+      <div id="features" className="scroll-mt-20">
+        <EstateKeyFeatures />
+      </div>
       <PricingCalculatorEstate />
       <TargetAudiences />
       <SocialMediaDemo />

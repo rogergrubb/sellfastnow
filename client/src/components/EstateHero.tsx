@@ -5,9 +5,43 @@ import { Camera, Brain, CheckCircle, Share2 } from "lucide-react";
 export default function EstateHero() {
   const [, setLocation] = useLocation();
 
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <div className="relative bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="max-w-7xl mx-auto px-4 py-16 sm:py-24">
+        {/* Quick Navigation Links */}
+        <div className="flex flex-wrap justify-center gap-4 mb-8">
+          <button
+            onClick={() => scrollToSection('how-it-works')}
+            className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors underline"
+          >
+            How It Works
+          </button>
+          <button
+            onClick={() => scrollToSection('pricing')}
+            className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors underline"
+          >
+            Pricing
+          </button>
+          <button
+            onClick={() => scrollToSection('features')}
+            className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors underline"
+          >
+            Features
+          </button>
+          <button
+            onClick={() => scrollToSection('testimonial')}
+            className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors underline"
+          >
+            Testimonial
+          </button>
+        </div>
         {/* Main Content */}
         <div className="text-center mb-12">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6">
@@ -64,7 +98,7 @@ export default function EstateHero() {
         </div>
 
         {/* 4-Step Process */}
-        <div id="how-it-works" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
             <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
               <Camera className="h-6 w-6 text-green-600 dark:text-green-400" />
