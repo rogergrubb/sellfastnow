@@ -4,13 +4,28 @@ export default function ComparePricing() {
   return (
     <div id="pricing" className="bg-white dark:bg-gray-900 py-16 scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             Compare Our Pricing
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-400">
             See why we're the most affordable option for estate sales
           </p>
+        </div>
+
+        {/* Example Scenario Callout */}
+        <div className="bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-xl p-6 mb-8 border-2 border-blue-300 dark:border-blue-700">
+          <div className="text-center">
+            <div className="text-sm font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-2">
+              Example Scenario
+            </div>
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              100 Items × $100 Each = $10,000 Total Sale
+            </div>
+            <div className="text-base text-gray-700 dark:text-gray-300">
+              Typical estate sale with average item value of $100
+            </div>
+          </div>
         </div>
 
         {/* Comparison Table */}
@@ -28,7 +43,8 @@ export default function ComparePricing() {
                   Transaction Fee
                 </th>
                 <th className="p-4 text-left font-semibold text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700">
-                  100 Items @ $100 Each
+                  <div>Total Fees</div>
+                  <div className="text-sm font-normal text-gray-600 dark:text-gray-400">(on $10,000 sale)</div>
                 </th>
                 <th className="p-4 text-left font-semibold text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700">
                   You Keep
