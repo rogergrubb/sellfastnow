@@ -1,4 +1,4 @@
-import { Check, X, TrendingDown } from "lucide-react";
+import { Check, X, TrendingDown, DollarSign } from "lucide-react";
 
 export default function ComparePricing() {
   return (
@@ -9,7 +9,7 @@ export default function ComparePricing() {
             Compare Our Pricing
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-400">
-            See why we're the most affordable option for estate sales
+            Fair, progressive pricing that's 70% cheaper than competitors
           </p>
         </div>
 
@@ -28,6 +28,72 @@ export default function ComparePricing() {
           </div>
         </div>
 
+        {/* Progressive Fee Structure Explanation */}
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl p-8 mb-8 border-2 border-green-500 dark:border-green-600 shadow-xl">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <DollarSign className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Our Fair, Progressive Pricing
+              </h3>
+              <p className="text-gray-700 dark:text-gray-300">
+                Pay based on item value - lower prices for everyday items, fair rates for premium goods. 
+                Includes AI-generated titles, descriptions, valuations, and SEO meta tags.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-2 border-green-200 dark:border-green-700">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Low-Value Items</div>
+              <div className="text-lg font-bold text-gray-900 dark:text-white mb-1">$0 - $50</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">$1/item</div>
+              <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                Example: $20 book = $1 fee (5%)
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-2 border-green-200 dark:border-green-700">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Medium-Value Items</div>
+              <div className="text-lg font-bold text-gray-900 dark:text-white mb-1">$51 - $200</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">$3/item</div>
+              <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                Example: $100 chair = $3 fee (3%)
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-2 border-green-200 dark:border-green-700">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">High-Value Items</div>
+              <div className="text-lg font-bold text-gray-900 dark:text-white mb-1">$201 - $500</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">$8/item</div>
+              <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                Example: $300 desk = $8 fee (2.7%)
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-2 border-green-200 dark:border-green-700">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Premium Items</div>
+              <div className="text-lg font-bold text-gray-900 dark:text-white mb-1">$501+</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">$15/item</div>
+              <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                Example: $1,000 antique = $15 fee (1.5%)
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 bg-green-100 dark:bg-green-900/30 rounded-lg p-4 border border-green-300 dark:border-green-700">
+            <div className="flex items-center gap-2 mb-2">
+              <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <span className="font-semibold text-gray-900 dark:text-white">First 5 items always FREE</span>
+            </div>
+            <div className="text-sm text-gray-700 dark:text-gray-300">
+              Try the system risk-free with 5 free AI-generated listings before committing to bulk uploads
+            </div>
+          </div>
+        </div>
+
         {/* Comparison Table */}
         <div className="overflow-x-auto mb-12">
           <table className="w-full border-collapse">
@@ -37,14 +103,14 @@ export default function ComparePricing() {
                   Service
                 </th>
                 <th className="p-4 text-left font-semibold text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700">
-                  AI Listing Fee
+                  Listing Fee
                 </th>
                 <th className="p-4 text-left font-semibold text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700">
-                  Transaction Fee
+                  AI Features
                 </th>
                 <th className="p-4 text-left font-semibold text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700">
-                  <div>Total Fees</div>
-                  <div className="text-sm font-normal text-gray-600 dark:text-gray-400">(on $10,000 sale)</div>
+                  <div>Total Cost</div>
+                  <div className="text-sm font-normal text-gray-600 dark:text-gray-400">(100 items @ $100)</div>
                 </th>
                 <th className="p-4 text-left font-semibold text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700">
                   You Keep
@@ -63,44 +129,46 @@ export default function ComparePricing() {
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
                   <div className="space-y-2">
                     <div className="font-bold text-green-600 dark:text-green-400 text-lg">First 5 FREE</div>
-                    <div className="font-semibold text-gray-900 dark:text-white">Then $0.20/item includes:</div>
+                    <div className="font-semibold text-gray-900 dark:text-white">Progressive pricing:</div>
                     <div className="space-y-1 text-sm">
-                      <div className="flex items-center gap-1">
-                        <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
-                        <span className="text-gray-700 dark:text-gray-300">AI-generated title</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
-                        <span className="text-gray-700 dark:text-gray-300">AI-generated description</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
-                        <span className="text-gray-700 dark:text-gray-300">Retail & used valuations</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
-                        <span className="text-gray-700 dark:text-gray-300 font-semibold">Meta tags for SEO</span>
-                      </div>
-                    </div>
-                    <div className="text-xs text-green-600 dark:text-green-400 font-semibold pt-1">
-                      12% bulk discount @ 75+ items
+                      <div className="text-gray-700 dark:text-gray-300">• $0-$50: $1/item</div>
+                      <div className="text-gray-700 dark:text-gray-300">• $51-$200: $3/item</div>
+                      <div className="text-gray-700 dark:text-gray-300">• $201-$500: $8/item</div>
+                      <div className="text-gray-700 dark:text-gray-300">• $501+: $15/item</div>
                     </div>
                   </div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="font-semibold text-gray-900 dark:text-white">5%</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Only when sold</div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex items-center gap-1">
+                      <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+                      <span className="text-gray-700 dark:text-gray-300">AI-generated titles</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+                      <span className="text-gray-700 dark:text-gray-300">AI-generated descriptions</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+                      <span className="text-gray-700 dark:text-gray-300">Retail & used valuations</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+                      <span className="text-gray-700 dark:text-gray-300 font-semibold">SEO meta tags</span>
+                    </div>
+                  </div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
                   <div className="space-y-1">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">AI: $16.72</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Transaction: $500</div>
-                    <div className="font-bold text-lg text-green-600 dark:text-green-400">Total: $516.72</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">100 items @ $100 each:</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">100 × $3 = $300</div>
+                    <div className="font-bold text-2xl text-green-600 dark:text-green-400">$300</div>
+                    <div className="text-xs text-green-600 dark:text-green-400 font-semibold">Charged upfront</div>
                   </div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="font-bold text-2xl text-green-600 dark:text-green-400">$9,483</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">(94.8%)</div>
+                  <div className="font-bold text-2xl text-green-600 dark:text-green-400">$9,700</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">(97%)</div>
                 </td>
               </tr>
 
@@ -110,22 +178,22 @@ export default function ComparePricing() {
                   <span className="font-semibold text-gray-900 dark:text-white">Traditional Estate Sale Co.</span>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
+                  <div className="font-semibold text-red-600 dark:text-red-400">30-40% Commission</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">When items sell</div>
+                </td>
+                <td className="p-4 border border-gray-300 dark:border-gray-700">
                   <div className="space-y-1">
                     <div className="flex items-center gap-1 text-red-600 dark:text-red-400 font-semibold">
                       <X className="h-4 w-4" />
                       <span>No AI - Manual Only</span>
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-500">
-                      You write titles, descriptions, research prices, add keywords yourself
+                      They write titles, descriptions, research prices, add keywords
                     </div>
                   </div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="font-semibold text-red-600 dark:text-red-400">30-40%</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Commission</div>
-                </td>
-                <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="font-bold text-lg text-red-600 dark:text-red-400">$3,500</div>
+                  <div className="font-bold text-xl text-red-600 dark:text-red-400">$3,500</div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">(35% avg)</div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
@@ -140,6 +208,10 @@ export default function ComparePricing() {
                   <span className="font-semibold text-gray-900 dark:text-white">eBay</span>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
+                  <div className="font-semibold text-gray-900 dark:text-white">~13% per sale</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">10% + 3% payment</div>
+                </td>
+                <td className="p-4 border border-gray-300 dark:border-gray-700">
                   <div className="space-y-1">
                     <div className="flex items-center gap-1 text-red-600 dark:text-red-400 font-semibold">
                       <X className="h-4 w-4" />
@@ -151,11 +223,7 @@ export default function ComparePricing() {
                   </div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="font-semibold text-gray-900 dark:text-white">~13%</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">10% + 3% payment</div>
-                </td>
-                <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="font-bold text-lg text-gray-900 dark:text-white">$1,300</div>
+                  <div className="font-bold text-xl text-gray-900 dark:text-white">$1,300</div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
                   <div className="font-bold text-xl text-gray-900 dark:text-white">$8,700</div>
@@ -169,6 +237,10 @@ export default function ComparePricing() {
                   <span className="font-semibold text-gray-900 dark:text-white">Mercari</span>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
+                  <div className="font-semibold text-gray-900 dark:text-white">10% per sale</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">When items sell</div>
+                </td>
+                <td className="p-4 border border-gray-300 dark:border-gray-700">
                   <div className="space-y-1">
                     <div className="flex items-center gap-1 text-red-600 dark:text-red-400 font-semibold">
                       <X className="h-4 w-4" />
@@ -180,10 +252,7 @@ export default function ComparePricing() {
                   </div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="font-semibold text-gray-900 dark:text-white">10%</div>
-                </td>
-                <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="font-bold text-lg text-gray-900 dark:text-white">$1,000</div>
+                  <div className="font-bold text-xl text-gray-900 dark:text-white">$1,000</div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
                   <div className="font-bold text-xl text-gray-900 dark:text-white">$9,000</div>
@@ -197,6 +266,10 @@ export default function ComparePricing() {
                   <span className="font-semibold text-gray-900 dark:text-white">OfferUp</span>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
+                  <div className="font-semibold text-gray-900 dark:text-white">12.9% per sale</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Shipped items</div>
+                </td>
+                <td className="p-4 border border-gray-300 dark:border-gray-700">
                   <div className="space-y-1">
                     <div className="flex items-center gap-1 text-red-600 dark:text-red-400 font-semibold">
                       <X className="h-4 w-4" />
@@ -208,11 +281,7 @@ export default function ComparePricing() {
                   </div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="font-semibold text-gray-900 dark:text-white">12.9%</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Shipped items</div>
-                </td>
-                <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="font-bold text-lg text-gray-900 dark:text-white">$1,290</div>
+                  <div className="font-bold text-xl text-gray-900 dark:text-white">$1,290</div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
                   <div className="font-bold text-xl text-gray-900 dark:text-white">$8,710</div>
@@ -231,7 +300,7 @@ export default function ComparePricing() {
             </h3>
             <p className="text-lg text-gray-700 dark:text-gray-300 mb-6 max-w-3xl mx-auto">
               Every other platform makes you manually write titles, descriptions, research prices, and add keywords for EVERY SINGLE ITEM. 
-              We do it all automatically with AI for just <span className="font-bold text-purple-600 dark:text-purple-400">$0.20 per item</span>.
+              We do it all automatically with AI - included in your listing fee.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
               <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
@@ -253,7 +322,7 @@ export default function ComparePricing() {
             </div>
             <div className="mt-6 text-lg font-semibold text-gray-900 dark:text-white">
               Competitors: <span className="text-red-600 dark:text-red-400">❌ None of this</span> • 
-              SellFast.Now: <span className="text-green-600 dark:text-green-400">✅ All of this for $0.20</span>
+              SellFast.Now: <span className="text-green-600 dark:text-green-400">✅ All included</span>
             </div>
           </div>
         </div>
@@ -271,18 +340,18 @@ export default function ComparePricing() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">vs Traditional Estate Sale</div>
-                  <div className="text-3xl font-bold text-green-600 dark:text-green-400">$2,983</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">saved on $10K sale</div>
+                  <div className="text-3xl font-bold text-green-600 dark:text-green-400">$3,200</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">saved on $10K sale (91% cheaper)</div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">vs eBay</div>
-                  <div className="text-3xl font-bold text-green-600 dark:text-green-400">$783</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">saved on $10K sale</div>
+                  <div className="text-3xl font-bold text-green-600 dark:text-green-400">$1,000</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">saved on $10K sale (77% cheaper)</div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">vs Mercari</div>
-                  <div className="text-3xl font-bold text-green-600 dark:text-green-400">$483</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">saved on $10K sale</div>
+                  <div className="text-3xl font-bold text-green-600 dark:text-green-400">$700</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">saved on $10K sale (70% cheaper)</div>
                 </div>
               </div>
             </div>
@@ -294,30 +363,30 @@ export default function ComparePricing() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
             <div className="flex items-center gap-2 mb-3">
               <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <h4 className="font-semibold text-gray-900 dark:text-white">Fair Progressive Pricing</h4>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Pay based on item value. Lower-priced items cost less to list, making it fair for all sellers.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
               <h4 className="font-semibold text-gray-900 dark:text-white">AI Does the Work</h4>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Unlike other platforms, we generate titles, descriptions, and prices automatically. No manual work required.
+              Unlike other platforms, we generate titles, descriptions, prices, and SEO tags automatically. No manual work required.
             </p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
             <div className="flex items-center gap-2 mb-3">
               <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
-              <h4 className="font-semibold text-gray-900 dark:text-white">Lowest Fees</h4>
+              <h4 className="font-semibold text-gray-900 dark:text-white">Predictable Costs</h4>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              5% transaction fee vs 10-40% elsewhere. Keep more of your money with transparent, fair pricing.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
-            <div className="flex items-center gap-2 mb-3">
-              <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
-              <h4 className="font-semibold text-gray-900 dark:text-white">No Hidden Costs</h4>
-            </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              First 5 items free, then $0.20/item with volume discounts. No listing fees, no subscriptions, no surprises.
+              Know exactly what you'll pay upfront. No hidden fees, no surprises, no percentage-based commissions.
             </p>
           </div>
         </div>
