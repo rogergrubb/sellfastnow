@@ -1,12 +1,14 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Check, X, ArrowRightLeft } from "lucide-react";
+import { DollarSign, Check, X, ArrowRightLeft, Star } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { LeaveReviewModal } from "@/components/LeaveReviewModal";
+import { useUser } from "@/hooks/use-user";
 
 interface OfferMessageCardProps {
   messageType: string;
@@ -21,6 +23,8 @@ interface OfferMessageCardProps {
     amount?: number | string;
     platformFee?: number | string;
     sellerPayout?: number | string;
+    buyerId?: string;
+    sellerId?: string;
   };
   content: string;
   isOwnMessage: boolean;
@@ -34,6 +38,7 @@ export function OfferMessageCard({
   isOwnMessage,
   listingId,
 }: OfferMessageCardProps) {
+  const { user } = useUser();
   const [showCounterForm, setShowCounterForm] = useState(false);
   const [showAcceptForm, setShowAcceptForm] = useState(false);
   const [showRejectForm, setShowRejectForm] = useState(false);
@@ -351,20 +356,47 @@ export function OfferMessageCard({
   };
 
   const renderOfferAccepted = () => {
+    const [showReviewModal, setShowReviewModal] = useState(false);
+
     return (
-      <Card className="p-4 border-2 bg-green-50 border-green-300">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-full bg-green-100">
-            <Check className="h-4 w-4 text-green-600" />
+      <>
+        <Card className="p-4 border-2 bg-green-50 border-green-300">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-full bg-green-100">
+              <Check className="h-4 w-4 text-green-600" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-sm text-green-800">
+                Offer Accepted! 🎉
+              </h4>
+              <p className="text-sm text-green-700 mb-3">{content}</p>
+              
+              {/* Leave Review Button */}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowReviewModal(true)}
+                className="text-green-700 border-green-300 hover:bg-green-100"
+              >
+                <Star className="h-4 w-4 mr-1" />
+                Leave Review
+              </Button>
+            </div>
           </div>
-          <div>
-            <h4 className="font-semibold text-sm text-green-800">
-              Offer Accepted! 🎉
-            </h4>
-            <p className="text-sm text-green-700">{content}</p>
-          </div>
-        </div>
-      </Card>
+        </Card>
+
+        {/* Review Modal */}
+        {showReviewModal && user && metadata.buyerId && metadata.sellerId && (
+          <LeaveReviewModal
+            open={showReviewModal}
+            onOpenChange={setShowReviewModal}
+            listingId={listingId}
+            reviewedUserId={user.id === metadata.buyerId ? metadata.sellerId : metadata.buyerId}
+            reviewerRole={user.id === metadata.buyerId ? "buyer" : "seller"}
+            currentUserId={user.id}
+          />
+        )}
+      </>
     );
   };
 

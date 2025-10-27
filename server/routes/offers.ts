@@ -246,6 +246,8 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
           originalAmount: offer.offerAmount,
           counterAmount: counterOfferAmount,
           status,
+          buyerId: offer.buyerId,
+          sellerId: offer.sellerId,
         },
       };
       

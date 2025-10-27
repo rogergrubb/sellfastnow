@@ -61,7 +61,7 @@ router.post("/", isAuthenticated, async (req: any, res) => {
       }
     }
 
-    // Check if transaction exists and is completed
+    // Check if transaction exists (no longer require completion)
     if (transactionId) {
       const transaction = await db.query.transactions.findFirst({
         where: eq(transactions.id, transactionId),
@@ -70,12 +70,6 @@ router.post("/", isAuthenticated, async (req: any, res) => {
       if (!transaction) {
         return res.status(404).json({
           error: "Transaction not found"
-        });
-      }
-
-      if (transaction.status !== "completed") {
-        return res.status(400).json({
-          error: "Can only review completed transactions"
         });
       }
 
