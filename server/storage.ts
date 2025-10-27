@@ -1504,25 +1504,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOffer(offerId: string): Promise<any> {
+    const { alias } = await import("drizzle-orm/pg-core");
+    const buyerUser = alias(users, "buyer_user");
+    const sellerUser = alias(users, "seller_user");
+    
     const [offer] = await db
       .select({
         offer: offers,
         buyer: {
-          id: users.id,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          profileImageUrl: users.profileImageUrl,
+          id: buyerUser.id,
+          firstName: buyerUser.firstName,
+          lastName: buyerUser.lastName,
+          profileImageUrl: buyerUser.profileImageUrl,
         },
         seller: {
-          id: users.id,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          profileImageUrl: users.profileImageUrl,
+          id: sellerUser.id,
+          firstName: sellerUser.firstName,
+          lastName: sellerUser.lastName,
+          profileImageUrl: sellerUser.profileImageUrl,
         },
       })
       .from(offers)
-      .innerJoin(users as any, eq(offers.buyerId, users.id))
-      .innerJoin(users as any, eq(offers.sellerId, users.id))
+      .innerJoin(buyerUser, eq(offers.buyerId, buyerUser.id))
+      .innerJoin(sellerUser, eq(offers.sellerId, sellerUser.id))
       .where(eq(offers.id, offerId));
 
     return offer;
