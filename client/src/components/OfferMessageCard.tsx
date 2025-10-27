@@ -42,6 +42,7 @@ export function OfferMessageCard({
   const [showCounterForm, setShowCounterForm] = useState(false);
   const [showAcceptForm, setShowAcceptForm] = useState(false);
   const [showRejectForm, setShowRejectForm] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const [counterAmount, setCounterAmount] = useState("");
   const [counterMessage, setCounterMessage] = useState("");
   const [acceptMessage, setAcceptMessage] = useState("");
@@ -356,8 +357,6 @@ export function OfferMessageCard({
   };
 
   const renderOfferAccepted = () => {
-    const [showReviewModal, setShowReviewModal] = useState(false);
-
     return (
       <>
         <Card className="p-4 border-2 bg-green-50 border-green-300">
