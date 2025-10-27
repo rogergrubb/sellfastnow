@@ -168,7 +168,7 @@ router.get("/:offerId", isAuthenticated, async (req: any, res) => {
 router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
   try {
     const { offerId } = req.params;
-    const { status, counterOfferAmount, counterOfferMessage } = req.body;
+    const { status, counterOfferAmount, counterOfferMessage, responseMessage } = req.body;
     const userId = req.auth.userId;
 
     // Get the offer
@@ -179,8 +179,13 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
 
     const offer = offerData.offer;
 
-    // Only the seller can update offer status
-    if (offer.sellerId !== userId) {
+    // Both buyer and seller can update offer status
+    // Seller can respond to initial offers or buyer's counter offers
+    // Buyer can respond to seller's counter offers
+    const isSeller = offer.sellerId === userId;
+    const isBuyer = offer.buyerId === userId;
+    
+    if (!isSeller && !isBuyer) {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
@@ -213,11 +218,17 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
       let messageContent = "";
       let messageType = "";
       
+      // Determine the receiver (opposite of sender)
+      const receiverId = isSeller ? offer.buyerId : offer.sellerId;
+      
       if (status === "accepted") {
-        messageContent = `Accepted your offer of $${offer.offerAmount}`;
+        const acceptMessage = responseMessage || `Accepted your offer`;
+        const amount = offer.counterOfferAmount || offer.offerAmount;
+        messageContent = `${acceptMessage} - $${amount}`;
         messageType = "offer_accepted";
       } else if (status === "rejected") {
-        messageContent = `Declined your offer of $${offer.offerAmount}`;
+        const rejectMessage = responseMessage || `Declined your offer`;
+        messageContent = rejectMessage;
         messageType = "offer_rejected";
       } else if (status === "countered") {
         messageContent = counterOfferMessage || `Countered with $${counterOfferAmount}`;
@@ -227,7 +238,7 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
       const statusMessage = {
         listingId: offer.listingId,
         senderId: userId,
-        receiverId: offer.buyerId,
+        receiverId,
         content: messageContent,
         messageType,
         metadata: {

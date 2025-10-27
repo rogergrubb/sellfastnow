@@ -31,22 +31,29 @@ export function OfferMessageCard({
   listingId,
 }: OfferMessageCardProps) {
   const [showCounterForm, setShowCounterForm] = useState(false);
+  const [showAcceptForm, setShowAcceptForm] = useState(false);
+  const [showRejectForm, setShowRejectForm] = useState(false);
   const [counterAmount, setCounterAmount] = useState("");
   const [counterMessage, setCounterMessage] = useState("");
+  const [acceptMessage, setAcceptMessage] = useState("");
+  const [rejectMessage, setRejectMessage] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const acceptOfferMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (message?: string) => {
       return await apiRequest("PATCH", `/api/offers/${metadata.offerId}`, {
         status: "accepted",
+        responseMessage: message,
       });
     },
     onSuccess: () => {
       toast({
         title: "Offer accepted",
-        description: "The buyer will be notified",
+        description: "The other party will be notified",
       });
+      setShowAcceptForm(false);
+      setAcceptMessage("");
       queryClient.invalidateQueries({ queryKey: [`/api/messages/listing/${listingId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
     },
@@ -60,16 +67,19 @@ export function OfferMessageCard({
   });
 
   const rejectOfferMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (message?: string) => {
       return await apiRequest("PATCH", `/api/offers/${metadata.offerId}`, {
         status: "rejected",
+        responseMessage: message,
       });
     },
     onSuccess: () => {
       toast({
         title: "Offer declined",
-        description: "The buyer will be notified",
+        description: "The other party will be notified",
       });
+      setShowRejectForm(false);
+      setRejectMessage("");
       queryClient.invalidateQueries({ queryKey: [`/api/messages/listing/${listingId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
     },
@@ -187,14 +197,13 @@ export function OfferMessageCard({
               </p>
             )}
 
-            {/* Action buttons for seller when offer is pending */}
-            {!isOwnMessage && metadata.status === "pending" && !showCounterForm && (
+            {/* Action buttons when offer is pending */}
+            {!isOwnMessage && metadata.status === "pending" && !showCounterForm && !showAcceptForm && !showRejectForm && (
               <div className="flex gap-2 mt-3">
                 <Button
                   size="sm"
                   variant="default"
-                  onClick={() => acceptOfferMutation.mutate()}
-                  disabled={acceptOfferMutation.isPending}
+                  onClick={() => setShowAcceptForm(true)}
                 >
                   <Check className="h-4 w-4 mr-1" />
                   Accept
@@ -210,12 +219,82 @@ export function OfferMessageCard({
                 <Button
                   size="sm"
                   variant="destructive"
-                  onClick={() => rejectOfferMutation.mutate()}
-                  disabled={rejectOfferMutation.isPending}
+                  onClick={() => setShowRejectForm(true)}
                 >
                   <X className="h-4 w-4 mr-1" />
                   Decline
                 </Button>
+              </div>
+            )}
+
+            {/* Accept form */}
+            {showAcceptForm && (
+              <div className="mt-3 space-y-2 p-3 bg-white rounded-lg">
+                <div>
+                  <label className="text-xs text-muted-foreground">Message (optional)</label>
+                  <Textarea
+                    placeholder="Add a message..."
+                    value={acceptMessage}
+                    onChange={(e) => setAcceptMessage(e.target.value)}
+                    className="mt-1"
+                    rows={2}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => acceptOfferMutation.mutate(acceptMessage)}
+                    disabled={acceptOfferMutation.isPending}
+                  >
+                    Confirm Accept
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setShowAcceptForm(false);
+                      setAcceptMessage("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Reject form */}
+            {showRejectForm && (
+              <div className="mt-3 space-y-2 p-3 bg-white rounded-lg">
+                <div>
+                  <label className="text-xs text-muted-foreground">Message (optional)</label>
+                  <Textarea
+                    placeholder="Add a reason for declining..."
+                    value={rejectMessage}
+                    onChange={(e) => setRejectMessage(e.target.value)}
+                    className="mt-1"
+                    rows={2}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => rejectOfferMutation.mutate(rejectMessage)}
+                    disabled={rejectOfferMutation.isPending}
+                  >
+                    Confirm Decline
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setShowRejectForm(false);
+                      setRejectMessage("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -338,6 +417,154 @@ export function OfferMessageCard({
               <p className="mt-2 text-sm text-blue-700 italic">
                 "{content}"
               </p>
+            )}
+
+            {/* Action buttons for recipient of counter offer */}
+            {!isOwnMessage && metadata.status === "countered" && !showCounterForm && !showAcceptForm && !showRejectForm && (
+              <div className="flex gap-2 mt-3">
+                <Button
+                  size="sm"
+                  variant="default"
+                  onClick={() => setShowAcceptForm(true)}
+                >
+                  <Check className="h-4 w-4 mr-1" />
+                  Accept
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowCounterForm(true)}
+                >
+                  <ArrowRightLeft className="h-4 w-4 mr-1" />
+                  Counter Again
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => setShowRejectForm(true)}
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Decline
+                </Button>
+              </div>
+            )}
+
+            {/* Accept form */}
+            {showAcceptForm && (
+              <div className="mt-3 space-y-2 p-3 bg-white rounded-lg">
+                <div>
+                  <label className="text-xs text-muted-foreground">Message (optional)</label>
+                  <Textarea
+                    placeholder="Add a message..."
+                    value={acceptMessage}
+                    onChange={(e) => setAcceptMessage(e.target.value)}
+                    className="mt-1"
+                    rows={2}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => acceptOfferMutation.mutate(acceptMessage)}
+                    disabled={acceptOfferMutation.isPending}
+                  >
+                    Confirm Accept
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setShowAcceptForm(false);
+                      setAcceptMessage("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Reject form */}
+            {showRejectForm && (
+              <div className="mt-3 space-y-2 p-3 bg-white rounded-lg">
+                <div>
+                  <label className="text-xs text-muted-foreground">Message (optional)</label>
+                  <Textarea
+                    placeholder="Add a reason for declining..."
+                    value={rejectMessage}
+                    onChange={(e) => setRejectMessage(e.target.value)}
+                    className="mt-1"
+                    rows={2}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => rejectOfferMutation.mutate(rejectMessage)}
+                    disabled={rejectOfferMutation.isPending}
+                  >
+                    Confirm Decline
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setShowRejectForm(false);
+                      setRejectMessage("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Counter form */}
+            {showCounterForm && (
+              <div className="mt-3 space-y-2 p-3 bg-white rounded-lg">
+                <div>
+                  <label className="text-xs text-muted-foreground">Counter Offer Amount</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="Enter amount"
+                    value={counterAmount}
+                    onChange={(e) => setCounterAmount(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Message (optional)</label>
+                  <Textarea
+                    placeholder="Add a message..."
+                    value={counterMessage}
+                    onChange={(e) => setCounterMessage(e.target.value)}
+                    className="mt-1"
+                    rows={2}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => counterOfferMutation.mutate()}
+                    disabled={counterOfferMutation.isPending}
+                  >
+                    Send Counter Offer
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setShowCounterForm(false);
+                      setCounterAmount("");
+                      setCounterMessage("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
         </div>
