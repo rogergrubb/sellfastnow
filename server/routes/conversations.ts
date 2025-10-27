@@ -26,6 +26,8 @@ router.get("/", isAuthenticated, async (req: any, res) => {
         senderId: messages.senderId,
         receiverId: messages.receiverId,
         content: messages.content,
+        messageType: messages.messageType,
+        metadata: messages.metadata,
         isRead: messages.isRead,
         createdAt: messages.createdAt,
       })
@@ -53,6 +55,8 @@ router.get("/", isAuthenticated, async (req: any, res) => {
             content: message.content,
             senderId: message.senderId,
             receiverId: message.receiverId,
+            messageType: message.messageType,
+            metadata: message.metadata,
             isRead: message.isRead,
             createdAt: message.createdAt,
           },
