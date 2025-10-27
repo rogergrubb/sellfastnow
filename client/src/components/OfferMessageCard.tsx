@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LeaveReviewModal } from "@/components/LeaveReviewModal";
-import { useUser } from "@/hooks/use-user";
+import { useAuth } from "@/lib/AuthContext";
 
 interface OfferMessageCardProps {
   messageType: string;
