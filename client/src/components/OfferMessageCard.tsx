@@ -38,7 +38,7 @@ export function OfferMessageCard({
   isOwnMessage,
   listingId,
 }: OfferMessageCardProps) {
-  const { user } = useUser();
+  const { user } = useAuth();
   const [showCounterForm, setShowCounterForm] = useState(false);
   const [showAcceptForm, setShowAcceptForm] = useState(false);
   const [showRejectForm, setShowRejectForm] = useState(false);
