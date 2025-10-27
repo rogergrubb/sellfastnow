@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { stripe } from "../stripe";
 import { storage } from "../storage";
-import { isAuthenticated } from "../middleware/auth";
+import { isAuthenticated } from "../supabaseAuth";
 import { calculatePlatformFee, getBaseUrl } from "../config/stripe.config";
 import QRCode from "qrcode";
 
