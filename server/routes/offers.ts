@@ -269,7 +269,7 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
       try {
         const finalAmount = offer.counterOfferAmount || offer.offerAmount;
         const amount = parseFloat(finalAmount.toString());
-        const platformFeeRate = 0.025; // 2.5% platform fee
+        const platformFeeRate = 0.05; // 5% platform fee (5 pennies per dollar)
         const platformFee = amount * platformFeeRate;
         const sellerPayout = amount - platformFee;
 

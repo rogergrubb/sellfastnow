@@ -607,7 +607,7 @@ export function OfferMessageCard({
                 <span className="font-semibold">${amount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Platform Fee (2.5%):</span>
+                <span className="text-gray-600">Platform Fee (5¢ per dollar):</span>
                 <span className="font-semibold">${platformFee.toFixed(2)}</span>
               </div>
               <div className="flex justify-between border-t pt-2">
