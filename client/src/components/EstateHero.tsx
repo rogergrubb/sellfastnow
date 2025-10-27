@@ -11,13 +11,13 @@ export default function EstateHero() {
         {/* Main Content */}
         <div className="text-center mb-12">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            List 1,100 Items in Hours, Not Weeks
+            List Over 1,000 Items in Less Than One Hour. Not Days.
           </h1>
           <p className="text-xl sm:text-2xl text-gray-700 dark:text-gray-300 mb-4 max-w-4xl mx-auto">
-            AI-powered estate liquidation for realtors, liquidators, and bulk sellers.
+            Use AI powered item descriptions, details, retail and used values.
           </p>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-3xl mx-auto">
-            Upload photos from your phone, AI generates everything, share one link everywhere.
+          <p className="text-lg sm:text-xl font-semibold text-green-600 dark:text-green-400 mb-8 max-w-3xl mx-auto uppercase tracking-wide">
+            Automatically Meta Tagged for Superior Search Optimization.
           </p>
 
           {/* Key Features Badges */}
@@ -109,7 +109,7 @@ export default function EstateHero() {
         {/* Real Example Callout */}
         <div className="mt-12 text-center">
           <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-            Real example: <span className="text-green-600 dark:text-green-400">1,100 items</span> listed in hours by a realtor
+            Real example: <span className="text-green-600 dark:text-green-400">1,100 items</span> listed in less than one hour by a realtor
           </p>
         </div>
       </div>
