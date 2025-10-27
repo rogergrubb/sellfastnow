@@ -1,4 +1,4 @@
-import { Camera, Brain, Search, Tag, Share2, TrendingDown } from "lucide-react";
+import { Camera, Brain, Search, Tag, Share2, TrendingDown, DollarSign } from "lucide-react";
 import SectionNav from "./SectionNav";
 
 const features = [
