@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,14 +12,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import type { UserCredits, Message } from "@shared/schema";
 
 export default function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { user, session, loading, signOut, getToken } = useAuth();
-  const isSignedIn = !!user;
+  const queryClient = useQueryClient();
+  const { socket } = useWebSocket();
+  const isSignedIn = !!user && !!session;
   const isLoaded = !loading;
 
   // Fetch messages for unread count
@@ -27,6 +30,23 @@ export default function Navbar() {
     enabled: isSignedIn && isLoaded,
     retry: false,
   });
+
+  // Listen for new messages via WebSocket and refresh unread count
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewMessage = (data: any) => {
+      console.log('📨 New message received in Navbar, refreshing unread count');
+      // Invalidate messages query to refresh unread count
+      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+    };
+
+    socket.on('new_message', handleNewMessage);
+
+    return () => {
+      socket.off('new_message', handleNewMessage);
+    };
+  }, [socket, queryClient]);
 
   // Safely calculate unread count with proper type checking
   const unreadCount = Array.isArray(messages) 

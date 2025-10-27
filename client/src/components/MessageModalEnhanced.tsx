@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { OfferMessageCard } from "@/components/OfferMessageCard";
 import {
   Dialog,
   DialogContent,
@@ -274,45 +275,66 @@ export function MessageModalEnhanced({
               </p>
             </div>
           ) : (
-            messages.map((message) => {
+            messages.map((message: any) => {
               const isOwnMessage = message.senderId === user.id;
+              const isOfferMessage = message.messageType && message.messageType !== "text";
+              
               return (
                 <div
                   key={message.id}
                   className={`flex gap-3 ${isOwnMessage ? "flex-row-reverse" : "flex-row"}`}
                 >
-                  <Avatar className="h-8 w-8 flex-shrink-0">
-                    <AvatarFallback>
-                      {getUserInitials(isOwnMessage ? "You" : "User")}
-                    </AvatarFallback>
-                  </Avatar>
+                  {!isOfferMessage && (
+                    <Avatar className="h-8 w-8 flex-shrink-0">
+                      <AvatarFallback>
+                        {getUserInitials(isOwnMessage ? "You" : "User")}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
 
-                  <div className={`flex flex-col ${isOwnMessage ? "items-end" : "items-start"} max-w-[70%]`}>
-                    <div
-                      className={`rounded-lg px-4 py-2 ${
-                        isOwnMessage
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap break-words">
-                        {message.content}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 mt-1">
-                      <span className="text-xs text-muted-foreground">
-                        {formatTime(message.createdAt || new Date())}
-                      </span>
-                      {isOwnMessage && (
-                        <span className="text-xs text-muted-foreground">
-                          {message.isRead ? (
-                            <CheckCheck className="h-3 w-3 text-blue-500" />
-                          ) : (
-                            <Check className="h-3 w-3" />
-                          )}
+                  <div className={`flex flex-col ${isOwnMessage ? "items-end" : "items-start"} ${isOfferMessage ? "w-full" : "max-w-[70%]"}`}>
+                    {isOfferMessage ? (
+                      <>
+                        <OfferMessageCard
+                          messageType={message.messageType}
+                          metadata={message.metadata}
+                          content={message.content}
+                          isOwnMessage={isOwnMessage}
+                          listingId={listingId}
+                        />
+                        <span className="text-xs text-muted-foreground mt-1">
+                          {formatTime(message.createdAt || new Date())}
                         </span>
-                      )}
-                    </div>
+                      </>
+                    ) : (
+                      <>
+                        <div
+                          className={`rounded-lg px-4 py-2 ${
+                            isOwnMessage
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted"
+                          }`}
+                        >
+                          <p className="text-sm whitespace-pre-wrap break-words">
+                            {message.content}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="text-xs text-muted-foreground">
+                            {formatTime(message.createdAt || new Date())}
+                          </span>
+                          {isOwnMessage && (
+                            <span className="text-xs text-muted-foreground">
+                              {message.isRead ? (
+                                <CheckCheck className="h-3 w-3 text-blue-500" />
+                              ) : (
+                                <Check className="h-3 w-3" />
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               );
