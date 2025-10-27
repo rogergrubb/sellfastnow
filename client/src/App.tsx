@@ -26,6 +26,7 @@ import PaymentCancel from "./pages/PaymentCancel";
 import Admin from "./pages/Admin";
 import Credits from "./pages/Credits";
 import PaymentPage from "./pages/PaymentPage";
+import Payment from "./pages/Payment";
 import SellerMeetupPage from "./pages/SellerMeetupPage";
 import UserReviews from "./pages/UserReviews";
 import SavedSearches from "./pages/SavedSearches";
@@ -60,6 +61,7 @@ function Router() {
       <Route path="/settings" component={Settings} />
       <Route path="/messages" component={Messages} /> {/* Using MessagesNew with WebSocket and conversation grouping */}
       <Route path="/pay/:sessionId" component={PaymentPage} />
+      <Route path="/payment/:transactionId" component={Payment} />
       <Route path="/meetup/:id" component={SellerMeetupPage} />
       <Route path="/saved-searches" component={SavedSearches} />
       <Route component={NotFound} />
