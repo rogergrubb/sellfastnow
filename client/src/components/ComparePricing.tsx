@@ -45,10 +45,30 @@ export default function ComparePricing() {
                   </div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="space-y-1">
-                    <div className="font-semibold text-green-600 dark:text-green-400">First 5 FREE</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Then $0.20/item</div>
-                    <div className="text-xs text-green-600 dark:text-green-400">(12% bulk discount @ 75+)</div>
+                  <div className="space-y-2">
+                    <div className="font-bold text-green-600 dark:text-green-400 text-lg">First 5 FREE</div>
+                    <div className="font-semibold text-gray-900 dark:text-white">Then $0.20/item includes:</div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex items-center gap-1">
+                        <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+                        <span className="text-gray-700 dark:text-gray-300">AI-generated title</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+                        <span className="text-gray-700 dark:text-gray-300">AI-generated description</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+                        <span className="text-gray-700 dark:text-gray-300">Retail & used valuations</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+                        <span className="text-gray-700 dark:text-gray-300 font-semibold">Meta tags for SEO</span>
+                      </div>
+                    </div>
+                    <div className="text-xs text-green-600 dark:text-green-400 font-semibold pt-1">
+                      12% bulk discount @ 75+ items
+                    </div>
                   </div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
@@ -74,9 +94,14 @@ export default function ComparePricing() {
                   <span className="font-semibold text-gray-900 dark:text-white">Traditional Estate Sale Co.</span>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                    <X className="h-4 w-4 text-red-500" />
-                    <span>None</span>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-red-600 dark:text-red-400 font-semibold">
+                      <X className="h-4 w-4" />
+                      <span>No AI - Manual Only</span>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-500">
+                      You write titles, descriptions, research prices, add keywords yourself
+                    </div>
                   </div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
@@ -99,9 +124,14 @@ export default function ComparePricing() {
                   <span className="font-semibold text-gray-900 dark:text-white">eBay</span>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                    <X className="h-4 w-4 text-red-500" />
-                    <span>None (manual)</span>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-red-600 dark:text-red-400 font-semibold">
+                      <X className="h-4 w-4" />
+                      <span>No AI - Manual Only</span>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-500">
+                      You write everything yourself
+                    </div>
                   </div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
@@ -123,9 +153,14 @@ export default function ComparePricing() {
                   <span className="font-semibold text-gray-900 dark:text-white">Mercari</span>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                    <X className="h-4 w-4 text-red-500" />
-                    <span>None (manual)</span>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-red-600 dark:text-red-400 font-semibold">
+                      <X className="h-4 w-4" />
+                      <span>No AI - Manual Only</span>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-500">
+                      You write everything yourself
+                    </div>
                   </div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
@@ -146,9 +181,14 @@ export default function ComparePricing() {
                   <span className="font-semibold text-gray-900 dark:text-white">OfferUp</span>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                    <X className="h-4 w-4 text-red-500" />
-                    <span>None (manual)</span>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-red-600 dark:text-red-400 font-semibold">
+                      <X className="h-4 w-4" />
+                      <span>No AI - Manual Only</span>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-500">
+                      You write everything yourself
+                    </div>
                   </div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
@@ -165,6 +205,41 @@ export default function ComparePricing() {
               </tr>
             </tbody>
           </table>
+        </div>
+
+        {/* AI Advantage Callout */}
+        <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl p-8 border-2 border-purple-500 dark:border-purple-600 shadow-xl mb-8">
+          <div className="text-center">
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4">
+              🤖 Only SellFast.Now Offers AI Automation
+            </h3>
+            <p className="text-lg text-gray-700 dark:text-gray-300 mb-6 max-w-3xl mx-auto">
+              Every other platform makes you manually write titles, descriptions, research prices, and add keywords for EVERY SINGLE ITEM. 
+              We do it all automatically with AI for just <span className="font-bold text-purple-600 dark:text-purple-400">$0.20 per item</span>.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                <div className="font-bold text-purple-600 dark:text-purple-400 mb-1">AI-Generated Titles</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Professional, SEO-optimized product titles</div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                <div className="font-bold text-purple-600 dark:text-purple-400 mb-1">AI-Generated Descriptions</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Detailed 2-3 sentence descriptions</div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                <div className="font-bold text-purple-600 dark:text-purple-400 mb-1">Retail & Used Values</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">AI researches market prices for you</div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                <div className="font-bold text-purple-600 dark:text-purple-400 mb-1">Meta Tags for SEO</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Automatic keywords for better search results</div>
+              </div>
+            </div>
+            <div className="mt-6 text-lg font-semibold text-gray-900 dark:text-white">
+              Competitors: <span className="text-red-600 dark:text-red-400">❌ None of this</span> • 
+              SellFast.Now: <span className="text-green-600 dark:text-green-400">✅ All of this for $0.20</span>
+            </div>
+          </div>
         </div>
 
         {/* Savings Callout */}
