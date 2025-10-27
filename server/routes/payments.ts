@@ -49,19 +49,22 @@ router.post("/transactions/:transactionId/payment-intent", isAuthenticated, asyn
       description: `SellFast.Now Transaction - ${transactionId.slice(0, 8)}`,
     });
 
-    // Update transaction with payment intent ID
+    // Update transaction with payment intent ID and expiration
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
     await storage.updateTransaction(transactionId, {
       stripePaymentIntentId: paymentIntent.id,
       status: "payment_pending",
+      paymentExpiresAt: expiresAt,
     });
 
     // Generate payment URL
     const paymentUrl = `${getBaseUrl()}/payment/${transactionId}?client_secret=${paymentIntent.client_secret}`;
 
-    // Generate QR code
+    // Generate QR code with high error correction for better scanning
     const qrCodeDataUrl = await QRCode.toDataURL(paymentUrl, {
-      width: 300,
-      margin: 2,
+      width: 400,  // Larger for better scanning across devices
+      margin: 4,   // More white space for edge detection
+      errorCorrectionLevel: 'H',  // Highest error correction (30% recovery)
       color: {
         dark: "#000000",
         light: "#FFFFFF",
@@ -76,6 +79,7 @@ router.post("/transactions/:transactionId/payment-intent", isAuthenticated, asyn
       sellerPayout: sellerPayout,
       paymentUrl,
       qrCode: qrCodeDataUrl,
+      expiresAt: expiresAt.toISOString(),
     });
   } catch (error: any) {
     console.error("Error creating payment intent:", error);
@@ -102,6 +106,16 @@ router.post("/transactions/:transactionId/confirm-payment", isAuthenticated, asy
 
     if (!transaction.stripePaymentIntentId) {
       return res.status(400).json({ error: "No payment intent found" });
+    }
+
+    // Check if payment expired
+    if (transaction.paymentExpiresAt && new Date(transaction.paymentExpiresAt) < new Date()) {
+      return res.status(400).json({ error: "Payment link has expired" });
+    }
+
+    // Validate transaction status
+    if (transaction.status !== 'payment_pending') {
+      return res.status(400).json({ error: "Payment cannot be confirmed in current state" });
     }
 
     // Capture the payment (release from escrow)

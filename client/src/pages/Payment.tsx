@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, Loader2, QrCode as QrCodeIcon } from "lucide-react";
+import { Check, X, Loader2, QrCode as QrCodeIcon, Copy, ExternalLink, Clock } from "lucide-react";
 
 export default function Payment() {
   const { transactionId } = useParams<{ transactionId: string }>();
@@ -12,6 +12,8 @@ export default function Payment() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [paymentData, setPaymentData] = useState<any>(null);
+  const [timeRemaining, setTimeRemaining] = useState<string>("");
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Create payment intent and get QR code
   const createPaymentMutation = useMutation({
@@ -107,6 +109,40 @@ export default function Payment() {
     }
   }, [transactionId]);
 
+  // Update countdown timer
+  useEffect(() => {
+    if (!paymentData?.expiresAt) return;
+
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const expiry = new Date(paymentData.expiresAt).getTime();
+      const distance = expiry - now;
+
+      if (distance < 0) {
+        setTimeRemaining("Expired");
+        return;
+      }
+
+      const hours = Math.floor(distance / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      setTimeRemaining(`${hours}h ${minutes}m remaining`);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, [paymentData]);
+
+  // Copy link to clipboard
+  const copyLink = () => {
+    if (paymentData?.paymentUrl) {
+      navigator.clipboard.writeText(paymentData.paymentUrl);
+      setLinkCopied(true);
+      toast({ title: "Link copied!", description: "Payment link copied to clipboard" });
+      setTimeout(() => setLinkCopied(false), 3000);
+    }
+  };
+
   if (createPaymentMutation.isPending) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -141,17 +177,47 @@ export default function Payment() {
               <QrCodeIcon className="h-8 w-8 text-blue-600" />
             </div>
             <h1 className="text-2xl font-bold mb-2">Show QR Code to Seller</h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-2">
               The seller will scan this code to receive payment
             </p>
+            {timeRemaining && (
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-6">
+                <Clock className="h-4 w-4" />
+                <span>{timeRemaining}</span>
+              </div>
+            )}
 
             {/* QR Code */}
-            <div className="bg-white p-6 rounded-lg inline-block mb-6 border-4 border-gray-200">
+            <div className="bg-white p-6 rounded-lg inline-block mb-4 border-4 border-gray-200">
               <img 
                 src={paymentData.qrCode} 
                 alt="Payment QR Code" 
-                className="w-64 h-64"
+                className="w-80 h-80"
               />
+            </div>
+
+            {/* Fallback Options */}
+            <div className="flex gap-2 justify-center mb-6">
+              <Button
+                onClick={copyLink}
+                variant="outline"
+                size="sm"
+                className="text-xs"
+              >
+                {linkCopied ? (
+                  <><Check className="h-3 w-3 mr-1" /> Copied!</>
+                ) : (
+                  <><Copy className="h-3 w-3 mr-1" /> Copy Link</>
+                )}
+              </Button>
+              <Button
+                onClick={() => window.open(paymentData.paymentUrl, '_blank')}
+                variant="outline"
+                size="sm"
+                className="text-xs"
+              >
+                <ExternalLink className="h-3 w-3 mr-1" /> Open Link
+              </Button>
             </div>
 
             {/* Payment Details */}
