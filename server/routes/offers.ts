@@ -3,6 +3,7 @@ import { storage, db } from "../storage";
 import { isAuthenticated } from "../supabaseAuth";
 import { offers } from "../../shared/schema";
 import { eq } from "drizzle-orm";
+import { getWebSocketService } from "../services/websocketService";
 
 const router = Router();
 
@@ -50,8 +51,39 @@ router.post("/:listingId/offers", isAuthenticated, async (req: any, res) => {
 
     const newOffer = await storage.createOffer(offerData);
 
+    // Create a message in the thread for the offer
+    try {
+      const offerMessage = {
+        listingId,
+        senderId: buyerId,
+        receiverId: listing.userId,
+        content: message || `Made an offer of $${offerAmount}${depositAmount > 0 ? ` with $${depositAmount} deposit` : ''}`,
+        messageType: "offer_made",
+        metadata: {
+          offerId: newOffer.id,
+          offerAmount,
+          depositAmount,
+          status: "pending",
+        },
+      };
+      
+      await storage.createMessage(offerMessage);
+      
+      // Emit WebSocket event to notify seller in real-time
+      const wsService = getWebSocketService();
+      if (wsService) {
+        wsService.emitToUser(listing.userId, "new_message", {
+          listingId,
+          senderId: buyerId,
+          messageType: "offer_made",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating offer message:", error);
+      // Don't fail the offer creation if message creation fails
+    }
+
     // TODO: Send notification to seller (email/push notification)
-    // TODO: Emit WebSocket event to notify seller in real-time
 
     res.status(201).json({ offer: newOffer });
   } catch (error) {
@@ -174,8 +206,50 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
 
     const updatedOffer = await storage.updateOfferStatus(offerId, status, updates);
 
-    // TODO: Send notification to buyer
-    // TODO: Emit WebSocket event to notify buyer
+    // Create a message in the thread for the status update
+    try {
+      let messageContent = "";
+      let messageType = "";
+      
+      if (status === "accepted") {
+        messageContent = `Accepted your offer of $${offer.offerAmount}`;
+        messageType = "offer_accepted";
+      } else if (status === "rejected") {
+        messageContent = `Declined your offer of $${offer.offerAmount}`;
+        messageType = "offer_rejected";
+      } else if (status === "countered") {
+        messageContent = counterOfferMessage || `Countered with $${counterOfferAmount}`;
+        messageType = "offer_countered";
+      }
+      
+      const statusMessage = {
+        listingId: offer.listingId,
+        senderId: userId,
+        receiverId: offer.buyerId,
+        content: messageContent,
+        messageType,
+        metadata: {
+          offerId,
+          originalAmount: offer.offerAmount,
+          counterAmount: counterOfferAmount,
+          status,
+        },
+      };
+      
+      await storage.createMessage(statusMessage);
+      
+      // Emit WebSocket event to notify buyer
+      const wsService = getWebSocketService();
+      if (wsService) {
+        wsService.emitToUser(offer.buyerId, "new_message", {
+          listingId: offer.listingId,
+          senderId: userId,
+          messageType,
+        });
+      }
+    } catch (error) {
+      console.error("Error creating status message:", error);
+    }
 
     // If accepted, create a transaction
     if (status === "accepted") {

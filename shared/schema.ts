@@ -180,6 +180,8 @@ export const messages = pgTable("messages", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
+  messageType: varchar("message_type", { length: 50 }).notNull().default("text"), // text, offer_made, offer_accepted, offer_rejected, offer_countered, deposit_submitted
+  metadata: jsonb("metadata"), // Store offer details, deposit info, etc.
   isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
