@@ -204,7 +204,9 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
       updates.counterOfferMessage = counterOfferMessage || "";
     }
 
+    console.log("Updating offer with:", { offerId, status, updates });
     const updatedOffer = await storage.updateOfferStatus(offerId, status, updates);
+    console.log("Updated offer result:", updatedOffer);
 
     // Create a message in the thread for the status update
     try {
@@ -258,9 +260,20 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
     }
 
     res.json({ offer: updatedOffer });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating offer:", error);
-    res.status(500).json({ error: "Failed to update offer" });
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      offerId,
+      status,
+      counterOfferAmount,
+      counterOfferMessage
+    });
+    res.status(500).json({ 
+      error: "Failed to update offer",
+      details: error.message 
+    });
   }
 });
 
