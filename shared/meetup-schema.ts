@@ -15,7 +15,13 @@ export const meetupSessions = pgTable("meetup_sessions", {
   sellerId: varchar("seller_id").notNull(),
   
   // Session status
-  status: varchar("status", { length: 50 }).notNull().default("pending"), // pending, active, completed, expired, cancelled
+  status: varchar("status", { length: 50 }).notNull().default("pending"), // pending, active, waiting, en_route, arrived, completed, expired, cancelled
+  
+  // En route tracking
+  enRouteStartedAt: timestamp("en_route_started_at"),
+  enRouteUserId: varchar("en_route_user_id"), // User who is en route
+  estimatedArrivalTime: timestamp("estimated_arrival_time"),
+  estimatedArrivalMinutes: integer("estimated_arrival_minutes"), // ETA in minutes
   
   // Who initiated the session
   initiatedBy: varchar("initiated_by").notNull(), // buyer or seller user ID

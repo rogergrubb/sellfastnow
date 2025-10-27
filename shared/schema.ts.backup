@@ -279,7 +279,8 @@ export const reviews = pgTable("reviews", {
   listingId: varchar("listing_id")
     .notNull()
     .references(() => listings.id, { onDelete: "cascade" }),
-  transactionId: varchar("transaction_id"),
+  transactionId: varchar("transaction_id")
+    .references(() => transactions.id, { onDelete: "set null" }),
   reviewerId: varchar("reviewer_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -351,7 +352,8 @@ export const cancellationComments = pgTable("cancellation_comments", {
   listingId: varchar("listing_id")
     .notNull()
     .references(() => listings.id, { onDelete: "cascade" }),
-  transactionId: varchar("transaction_id"),
+  transactionId: varchar("transaction_id")
+    .references(() => transactions.id, { onDelete: "set null" }),
   cancelledByUserId: varchar("cancelled_by_user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -661,9 +663,3 @@ export * from './schema/saved_searches';
 
 
 export * from "./schema/upcycle";
-
-// ============================================
-// MEETUP TRACKING SYSTEM
-// ============================================
-export * from "./schema/meetup";
-// Cache bust 1761523424

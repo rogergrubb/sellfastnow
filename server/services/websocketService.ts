@@ -130,7 +130,7 @@ export class WebSocketService {
         console.log(`📍 User ${socket.username} left meetup room: ${roomName}`);
       });
 
-      // Handle location updates in meetup sessions
+            // Handle meetup location updates
       socket.on("meetup_location_update", (data: { 
         sessionId: string; 
         latitude: number; 
@@ -153,14 +153,16 @@ export class WebSocketService {
         });
       });
 
-      // Handle meetup status updates
-      socket.on("meetup_status_update", (data: { 
-        sessionId: string; 
+      // Handle meetup status updates (including en_route)
+      socket.on("meetup_status_update", (data: {
+        sessionId: string;
         status: string;
+        estimatedArrivalMinutes?: number;
+        estimatedArrivalTime?: Date;
       }) => {
         if (!socket.userId) return;
 
-        const { sessionId, status } = data;
+        const { sessionId, status, estimatedArrivalMinutes, estimatedArrivalTime } = data;
         const roomName = `meetup:${sessionId}`;
         
         // Broadcast status update to all participants
@@ -168,6 +170,31 @@ export class WebSocketService {
           sessionId,
           userId: socket.userId,
           status,
+          estimatedArrivalMinutes,
+          estimatedArrivalTime,
+          timestamp: new Date(),
+        });
+      });
+
+      // Handle ETA updates (recalculated as user moves)
+      socket.on("meetup_eta_update", (data: {
+        sessionId: string;
+        estimatedArrivalMinutes: number;
+        estimatedArrivalTime: Date;
+        distance: number;
+      }) => {
+        if (!socket.userId) return;
+
+        const { sessionId, estimatedArrivalMinutes, estimatedArrivalTime, distance } = data;
+        const roomName = `meetup:${sessionId}`;
+        
+        // Broadcast ETA update to all participants
+        this.io.to(roomName).emit("eta_updated", {
+          sessionId,
+          userId: socket.userId,
+          estimatedArrivalMinutes,
+          estimatedArrivalTime,
+          distance,
           timestamp: new Date(),
         });
       });
@@ -297,6 +324,12 @@ export class WebSocketService {
   public emitToUser(userId: string, event: string, data: any) {
     const roomName = `user:${userId}`;
     console.log(`🔔 Emitting ${event} to user ${userId}`);
+    this.io.to(roomName).emit(event, data);
+  }
+  
+  // Emit event to a specific room
+  public emitToRoom(roomName: string, event: string, data: any) {
+    console.log(`🔔 Emitting ${event} to room ${roomName}`);
     this.io.to(roomName).emit(event, data);
   }
 }

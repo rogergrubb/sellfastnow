@@ -29,7 +29,7 @@ import listingsRoutes from "./routes/listings";
 import imagesRoutes from "./routes/images";
 import collectionsRoutes from "./routes/collections";
 import draftFoldersRoutes from "./routes/draft-folders";
-import meetupRoutes from "./routes/meetups";
+import meetupRoutes from "./routes/meetup";
 import reliabilityRoutes from "./routes/reliability";
 import notificationsRoutes from "./routes/notifications";
 import boostsRoutes from "./routes/boosts";

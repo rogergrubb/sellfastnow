@@ -85,6 +85,39 @@ interface MeetupSession {
   suggestedMeetupLng: string | null;
   suggestedMeetupName: string | null;
   expiresAt: string;
+  enRouteStartedAt: string | null;
+  enRouteStartedBy: string | null;
+  enRouteUserId: string | null;
+  estimatedArrivalMinutes: number | null;
+  estimatedArrivalTime: string | null;
+}
+
+// ETA Countdown Component
+function ETACountdown({ estimatedArrivalTime }: { estimatedArrivalTime: string }) {
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const eta = new Date(estimatedArrivalTime).getTime();
+      const remaining = Math.max(0, Math.floor((eta - now) / 60000)); // Convert to minutes
+      setTimeRemaining(remaining);
+    };
+    
+    updateCountdown();
+    const intervalId = setInterval(updateCountdown, 10000); // Update every 10 seconds
+    
+    return () => clearInterval(intervalId);
+  }, [estimatedArrivalTime]);
+  
+  return (
+    <div className="text-right">
+      <div className="text-2xl font-bold text-green-600">
+        {timeRemaining}
+      </div>
+      <div className="text-xs text-gray-500">minutes</div>
+    </div>
+  );
 }
 
 export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps) {
@@ -195,6 +228,35 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
     };
   }, [sessionId, socket]);
 
+  // Automatic ETA recalculation when buyer is en route
+  useEffect(() => {
+    if (sessionData?.status === "en_route" && sessionData?.enRouteUserId === userId && userLocation) {
+      const intervalId = setInterval(async () => {
+        try {
+          // Recalculate ETA based on current location
+          const response = await fetch(`/api/meetups/${sessionId}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              status: "en_route",
+              currentLat: userLocation.lat.toString(),
+              currentLng: userLocation.lng.toString(),
+            }),
+          });
+          
+          if (response.ok) {
+            console.log("ETA recalculated successfully");
+          }
+        } catch (error) {
+          console.error("Error recalculating ETA:", error);
+        }
+      }, 45000); // Recalculate every 45 seconds
+      
+      return () => clearInterval(intervalId);
+    }
+  }, [sessionData?.status, sessionData?.enRouteUserId, userId, userLocation, sessionId]);
+
   // Join meetup room via WebSocket
   useEffect(() => {
     if (socket) {
@@ -211,11 +273,18 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
         console.log("Status updated:", data);
         refetch();
       });
+      
+      // Listen for ETA updates
+      socket.on("eta_updated", (data: any) => {
+        console.log("ETA updated:", data);
+        refetch();
+      });
 
       return () => {
         socket.emit("leave_meetup", { sessionId });
         socket.off("location_updated");
         socket.off("status_updated");
+        socket.off("eta_updated");
       };
     }
   }, [socket, sessionId, refetch]);
@@ -515,6 +584,92 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
           </div>
         )}
       </div>
+
+      {/* On My Way Button (Buyer Only) */}
+      {isBuyer && sessionData.status === "active" && (
+        <div className="p-4 border-t bg-gradient-to-r from-blue-50 to-indigo-50">
+          <Button
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-6 text-lg shadow-lg"
+            onClick={async () => {
+              try {
+                if (!userLocation) {
+                  console.error("User location not available");
+                  return;
+                }
+                
+                // Update status to en_route with current location
+                const response = await fetch(`/api/meetups/${sessionId}/status`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "include",
+                  body: JSON.stringify({
+                    status: "en_route",
+                    currentLat: userLocation.lat.toString(),
+                    currentLng: userLocation.lng.toString(),
+                  }),
+                });
+                
+                if (!response.ok) {
+                  throw new Error("Failed to update status");
+                }
+                
+                refetch();
+              } catch (error) {
+                console.error("Error starting journey:", error);
+              }
+            }}
+            disabled={!userLocation}
+          >
+            <Navigation className="w-6 h-6 mr-3" />
+            On My Way
+          </Button>
+          <p className="text-xs text-gray-600 text-center mt-2">
+            Notify the seller that you're heading to the meetup point
+          </p>
+        </div>
+      )}
+
+      {/* ETA Display for Buyer (when they are en route) */}
+      {isBuyer && sessionData.status === "en_route" && sessionData.enRouteUserId === userId && sessionData.estimatedArrivalTime && (
+        <div className="p-4 border-t bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="bg-blue-600 rounded-full p-3 animate-pulse">
+                <Navigation className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">You're on your way!</p>
+                <p className="text-sm text-gray-600">
+                  Your estimated arrival time
+                </p>
+              </div>
+            </div>
+            <ETACountdown estimatedArrivalTime={sessionData.estimatedArrivalTime} />
+          </div>
+        </div>
+      )}
+
+      {/* ETA Display (Seller sees this when buyer is en route) */}
+      {!isBuyer && sessionData.status === "en_route" && sessionData.estimatedArrivalMinutes && (
+        <div className="p-4 border-t bg-gradient-to-r from-green-50 to-emerald-50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="bg-green-600 rounded-full p-3">
+                <Navigation className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">Buyer is on their way!</p>
+                <p className="text-sm text-gray-600">
+                  Estimated arrival time
+                </p>
+              </div>
+            </div>
+            {sessionData.estimatedArrivalTime && (
+              <ETACountdown estimatedArrivalTime={sessionData.estimatedArrivalTime} />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="p-4 border-t bg-white space-y-3">

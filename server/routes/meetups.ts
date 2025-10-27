@@ -91,9 +91,9 @@ router.patch("/:id/status", requireAuth, async (req, res) => {
   try {
     const sessionId = req.params.id;
     const userId = req.user.id;
-    const { status } = req.body;
+    const { status, currentLat, currentLng } = req.body;
 
-    if (!["active", "cancelled", "completed", "expired"].includes(status)) {
+    if (!["active", "waiting", "en_route", "arrived", "cancelled", "completed", "expired"].includes(status)) {
       return res.status(400).json({ error: "Invalid status" });
     }
 
@@ -115,6 +115,33 @@ router.patch("/:id/status", requireAuth, async (req, res) => {
     // Update the session
     const updateData: any = { status, updatedAt: new Date() };
     
+    // Handle en_route status - calculate ETA
+    if (status === "en_route") {
+      if (!currentLat || !currentLng) {
+        return res.status(400).json({ error: "Current location required for en_route status" });
+      }
+      
+      if (!session.suggestedMeetupLat || !session.suggestedMeetupLng) {
+        return res.status(400).json({ error: "Meetup location not set" });
+      }
+      
+      // Import ETA service
+      const { calculateETA } = await import("../services/etaService");
+      
+      // Calculate ETA
+      const etaResult = await calculateETA(
+        parseFloat(currentLat),
+        parseFloat(currentLng),
+        parseFloat(session.suggestedMeetupLat),
+        parseFloat(session.suggestedMeetupLng)
+      );
+      
+      updateData.enRouteStartedAt = new Date();
+      updateData.enRouteUserId = userId;
+      updateData.estimatedArrivalTime = etaResult.estimatedArrivalTime;
+      updateData.estimatedArrivalMinutes = etaResult.durationInTraffic || etaResult.duration;
+    }
+    
     if (status === "completed") {
       updateData.completedAt = new Date();
       updateData.completedBy = userId;
@@ -129,6 +156,20 @@ router.patch("/:id/status", requireAuth, async (req, res) => {
     // If completed, update reliability scores
     if (status === "completed") {
       await updateReliabilityScores(session.buyerId, session.sellerId);
+    }
+    
+    // Broadcast status update via WebSocket
+    const { getWebSocketService } = await import("../services/websocketService");
+    const wsService = getWebSocketService();
+    if (wsService) {
+      wsService.emitToRoom(`meetup:${sessionId}`, "status_updated", {
+        sessionId,
+        userId,
+        status,
+        estimatedArrivalMinutes: updateData.estimatedArrivalMinutes,
+        estimatedArrivalTime: updateData.estimatedArrivalTime,
+        timestamp: new Date(),
+      });
     }
 
     res.json({ meetupSession: updatedSession });
