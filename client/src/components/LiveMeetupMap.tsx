@@ -130,6 +130,55 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
   const [middlePoint, setMiddlePoint] = useState<{ lat: number; lng: number } | null>(null);
   const [showSafeSpots, setShowSafeSpots] = useState(false);
   const [safeSpots, setSafeSpots] = useState<Array<{name: string; address: string; lat: number; lng: number; type: string}>>([]);
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const [showOnMyWayConfirm, setShowOnMyWayConfirm] = useState(false);
+  const [estimatedTravelTime, setEstimatedTravelTime] = useState<number | null>(null);
+
+  // Calculate ETA when On My Way dialog opens
+  useEffect(() => {
+    if (showOnMyWayConfirm && userLocation && sessionData?.suggestedMeetupLat && sessionData?.suggestedMeetupLng) {
+      // Calculate estimated travel time
+      const calculateETA = async () => {
+        try {
+          const response = await fetch(`/api/meetups/${sessionId}/calculate-eta`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              currentLat: userLocation.lat,
+              currentLng: userLocation.lng,
+              destinationLat: sessionData.suggestedMeetupLat,
+              destinationLng: sessionData.suggestedMeetupLng,
+            }),
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            setEstimatedTravelTime(data.estimatedMinutes);
+          }
+        } catch (error) {
+          console.error("Error calculating ETA:", error);
+          // Fallback to simple distance-based estimate
+          const R = 6371e3; // Earth radius in meters
+          const φ1 = userLocation.lat * Math.PI / 180;
+          const φ2 = parseFloat(sessionData.suggestedMeetupLat) * Math.PI / 180;
+          const Δφ = (parseFloat(sessionData.suggestedMeetupLat) - userLocation.lat) * Math.PI / 180;
+          const Δλ = (parseFloat(sessionData.suggestedMeetupLng) - userLocation.lng) * Math.PI / 180;
+          const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                    Math.cos(φ1) * Math.cos(φ2) *
+                    Math.sin(Δλ/2) * Math.sin(Δλ/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          const distance = R * c; // Distance in meters
+          
+          // Assume average speed of 30 km/h in city
+          const estimatedMinutes = Math.round((distance / 1000) / 30 * 60);
+          setEstimatedTravelTime(Math.max(1, estimatedMinutes));
+        }
+      };
+      
+      calculateETA();
+    }
+  }, [showOnMyWayConfirm, userLocation, sessionData, sessionId]);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const { socket } = useWebSocket();
   const previousDistanceRef = useRef<number | null>(null);
@@ -179,8 +228,19 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
     },
   });
 
-  // Start tracking user's location
+  // Show location sharing prompt on mount
   useEffect(() => {
+    if (sessionData && !userLocation) {
+      // Show prompt after a brief delay to let UI load
+      const timer = setTimeout(() => {
+        setShowLocationPrompt(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [sessionData, userLocation]);
+
+  // Start tracking user's location
+  const startLocationTracking = () => {
     if (!navigator.geolocation) {
       console.error("Geolocation not supported");
       return;
@@ -220,10 +280,24 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
     );
 
     setWatchId(id);
+  };
+
+  // Auto-start tracking if user already has location
+  useEffect(() => {
+    if (userLocation) return; // Already tracking
+    
+    // Check if user previously granted permission
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+        if (result.state === 'granted') {
+          startLocationTracking();
+        }
+      });
+    }
 
     return () => {
-      if (id !== null) {
-        navigator.geolocation.clearWatch(id);
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
       }
     };
   }, [sessionId, socket]);
@@ -481,6 +555,46 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
             <X className="w-5 h-5" />
           </Button>
         </div>
+        
+        {/* Location Sharing Status */}
+        <div className="mt-3 pt-3 border-t border-blue-500/30">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              {userLocation ? (
+                <>
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-blue-100">Your location: <strong className="text-white">Sharing</strong></span>
+                </>
+              ) : (
+                <>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                  <span className="text-blue-100">Your location: <strong className="text-white">Not shared</strong></span>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => setShowLocationPrompt(true)}
+                    className="text-white underline h-auto p-0 ml-1"
+                  >
+                    Share now
+                  </Button>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {(isBuyer ? sessionData.sellerLatitude : sessionData.buyerLatitude) ? (
+                <>
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-blue-100">{isBuyer ? 'Seller' : 'Buyer'}: <strong className="text-white">Sharing</strong></span>
+                </>
+              ) : (
+                <>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                  <span className="text-blue-100">{isBuyer ? 'Seller' : 'Buyer'}: <strong className="text-white">Waiting...</strong></span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Status Banner */}
@@ -590,34 +704,7 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
         <div className="p-4 border-t bg-gradient-to-r from-blue-50 to-indigo-50">
           <Button
             className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-6 text-lg shadow-lg"
-            onClick={async () => {
-              try {
-                if (!userLocation) {
-                  console.error("User location not available");
-                  return;
-                }
-                
-                // Update status to en_route with current location
-                const response = await fetch(`/api/meetups/${sessionId}/status`, {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  credentials: "include",
-                  body: JSON.stringify({
-                    status: "en_route",
-                    currentLat: userLocation.lat.toString(),
-                    currentLng: userLocation.lng.toString(),
-                  }),
-                });
-                
-                if (!response.ok) {
-                  throw new Error("Failed to update status");
-                }
-                
-                refetch();
-              } catch (error) {
-                console.error("Error starting journey:", error);
-              }
-            }}
+            onClick={() => setShowOnMyWayConfirm(true)}
             disabled={!userLocation}
           >
             <Navigation className="w-6 h-6 mr-3" />
@@ -836,6 +923,169 @@ export function LiveMeetupMap({ sessionId, userId, onClose }: LiveMeetupMapProps
           Complete Meetup
         </Button>
       </div>
+
+      {/* Location Sharing Permission Dialog */}
+      <Dialog open={showLocationPrompt} onOpenChange={setShowLocationPrompt}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mx-auto mb-4">
+              <MapPin className="w-8 h-8 text-blue-600" />
+            </div>
+            <DialogTitle className="text-center text-xl">
+              Share your location with {isBuyer ? 'the seller' : 'the buyer'}?
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              This allows both parties to see each other's live location during the meetup for safety and coordination.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900">See real-time distance</p>
+                  <p className="text-xs text-blue-700">Know exactly how far apart you are</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900">Get arrival notifications</p>
+                  <p className="text-xs text-blue-700">Receive alerts when the other person is close</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900">Safer meetups</p>
+                  <p className="text-xs text-blue-700">Both parties can verify locations</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <p className="text-xs text-gray-600">
+                <strong>Privacy:</strong> Your location is only shared during this meetup session and is automatically deleted after completion.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="flex-col sm:flex-col gap-2">
+            <Button
+              onClick={() => {
+                startLocationTracking();
+                setShowLocationPrompt(false);
+              }}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              <MapPin className="w-4 h-4 mr-2" />
+              Share My Location
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowLocationPrompt(false)}
+              className="w-full"
+            >
+              Maybe Later
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* On My Way Confirmation Dialog */}
+      <Dialog open={showOnMyWayConfirm} onOpenChange={setShowOnMyWayConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mx-auto mb-4">
+              <Navigation className="w-8 h-8 text-white" />
+            </div>
+            <DialogTitle className="text-center text-xl">
+              Ready to head to the meetup?
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              The seller will be notified that you're on your way with an estimated arrival time.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {sessionData.suggestedMeetupName && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-gray-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Meeting at</p>
+                    <p className="text-sm text-gray-700">{sessionData.suggestedMeetupName}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Clock className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">Estimated travel time</p>
+                    <p className="text-xs text-blue-700">Based on current traffic</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-blue-600">
+                    {estimatedTravelTime || '...'}
+                  </p>
+                  <p className="text-xs text-blue-700">minutes</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <p className="text-xs text-green-800">
+                <strong>What happens next:</strong> The seller will see your live ETA with a countdown timer. Your location will update automatically as you travel.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="flex-col sm:flex-col gap-2">
+            <Button
+              onClick={async () => {
+                try {
+                  if (!userLocation) {
+                    console.error("User location not available");
+                    return;
+                  }
+                  
+                  // Update status to en_route with current location
+                  const response = await fetch(`/api/meetups/${sessionId}/status`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({
+                      status: "en_route",
+                      currentLat: userLocation.lat.toString(),
+                      currentLng: userLocation.lng.toString(),
+                    }),
+                  });
+                  
+                  if (!response.ok) {
+                    throw new Error("Failed to update status");
+                  }
+                  
+                  setShowOnMyWayConfirm(false);
+                  refetch();
+                } catch (error) {
+                  console.error("Error starting journey:", error);
+                }
+              }}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              disabled={!userLocation}
+            >
+              <Navigation className="w-4 h-4 mr-2" />
+              Yes, I'm On My Way!
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowOnMyWayConfirm(false)}
+              className="w-full"
+            >
+              Not Yet
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Share with Trusted Contact Dialog */}
       <Dialog open={shareContactModal} onOpenChange={setShareContactModal}>
