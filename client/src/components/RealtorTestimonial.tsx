@@ -1,8 +1,11 @@
 import { Quote } from "lucide-react";
+import SectionNav from "./SectionNav";
 
 export default function RealtorTestimonial() {
   return (
-    <div className="bg-white dark:bg-gray-900 py-16">
+    <div id="testimonial" className="bg-white dark:bg-gray-900 scroll-mt-20">
+      <SectionNav currentSection="testimonial" />
+      <div className="py-16">
       <div className="max-w-5xl mx-auto px-4">
         <div className="relative bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-8 sm:p-12 border-2 border-blue-200 dark:border-blue-800 shadow-2xl">
           <Quote className="absolute top-6 left-6 h-12 w-12 text-blue-300 dark:text-blue-700 opacity-50" />
@@ -36,6 +39,7 @@ export default function RealtorTestimonial() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -148,16 +148,9 @@ export default function Home() {
     <div>
       {/* Estate Sale Focus Section */}
       <EstateHero />
-      <div id="how-it-works" className="scroll-mt-20">
-        {/* How It Works is in EstateHero */}
-      </div>
-      <div id="testimonial" className="scroll-mt-20">
-        <RealtorTestimonial />
-      </div>
+      <RealtorTestimonial />
       <ComparePricing />
-      <div id="features" className="scroll-mt-20">
-        <EstateKeyFeatures />
-      </div>
+      <EstateKeyFeatures />
       <PricingCalculatorEstate />
       <TargetAudiences />
       <SocialMediaDemo />

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { Camera, Brain, CheckCircle, Share2 } from "lucide-react";
+import SectionNav from "./SectionNav";
 
 export default function EstateHero() {
   const [, setLocation] = useLocation();
@@ -13,35 +14,9 @@ export default function EstateHero() {
   };
 
   return (
-    <div className="relative bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div id="how-it-works" className="relative bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 scroll-mt-20">
+      <SectionNav currentSection="how-it-works" />
       <div className="max-w-7xl mx-auto px-4 py-16 sm:py-24">
-        {/* Quick Navigation Links */}
-        <div className="flex flex-wrap justify-center gap-4 mb-8">
-          <button
-            onClick={() => scrollToSection('how-it-works')}
-            className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors underline"
-          >
-            How It Works
-          </button>
-          <button
-            onClick={() => scrollToSection('pricing')}
-            className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors underline"
-          >
-            Pricing
-          </button>
-          <button
-            onClick={() => scrollToSection('features')}
-            className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors underline"
-          >
-            Features
-          </button>
-          <button
-            onClick={() => scrollToSection('testimonial')}
-            className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors underline"
-          >
-            Testimonial
-          </button>
-        </div>
         {/* Main Content */}
         <div className="text-center mb-12">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6">

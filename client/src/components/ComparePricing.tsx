@@ -1,8 +1,11 @@
 import { Check, X, TrendingDown, DollarSign } from "lucide-react";
+import SectionNav from "./SectionNav";
 
 export default function ComparePricing() {
   return (
-    <div id="pricing" className="bg-white dark:bg-gray-900 py-16 scroll-mt-20">
+    <div id="pricing" className="bg-white dark:bg-gray-900 scroll-mt-20">
+      <SectionNav currentSection="pricing" />
+      <div className="py-16">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-8">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -390,6 +393,7 @@ export default function ComparePricing() {
             </p>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
