@@ -198,7 +198,7 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
     }
 
     // Update the offer
-    const updates: any = { status, respondedAt: new Date() };
+    const updates: any = {};
     if (status === "countered") {
       updates.counterOfferAmount = counterOfferAmount.toString();
       updates.counterOfferMessage = counterOfferMessage || "";
