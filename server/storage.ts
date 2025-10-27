@@ -50,12 +50,15 @@ import {
   draftCollections,
   userSegments,
   monetizationEvents,
+  transactions,
   type DraftCollection,
   type InsertDraftCollection,
   type UserSegment,
   type InsertUserSegment,
   type MonetizationEvent,
   type InsertMonetizationEvent,
+  type Transaction,
+  type InsertTransaction,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
@@ -2146,6 +2149,46 @@ export class DatabaseStorage implements IStorage {
       .where(eq(monetizationEvents.userId, userId))
       .orderBy(desc(monetizationEvents.createdAt))
       .limit(limit);
+  }
+
+  // ============================================
+  // TRANSACTIONS METHODS
+  // ============================================
+
+  async createTransaction(data: any): Promise<any> {
+    const [transaction] = await db
+      .insert(transactions)
+      .values(data)
+      .returning();
+    return transaction;
+  }
+
+  async getTransaction(transactionId: string): Promise<any> {
+    const [transaction] = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.id, transactionId));
+    return transaction;
+  }
+
+  async updateTransaction(transactionId: string, updates: any): Promise<any> {
+    const [transaction] = await db
+      .update(transactions)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(transactions.id, transactionId))
+      .returning();
+    return transaction;
+  }
+
+  async getTransactionByOfferId(offerId: string): Promise<any> {
+    const [transaction] = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.offerId, offerId));
+    return transaction;
   }
 
   // ============================================

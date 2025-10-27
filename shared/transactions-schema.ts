@@ -35,6 +35,7 @@ export const transactions = pgTable("transactions", {
   buyerId: text("buyer_id").notNull(),
   sellerId: text("seller_id").notNull(),
   listingId: text("listing_id").notNull(),
+  offerId: text("offer_id"), // Link to accepted offer
   
   // Payment Details
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Total transaction amount (deposit amount)

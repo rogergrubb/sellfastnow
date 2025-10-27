@@ -17,6 +17,10 @@ interface OfferMessageCardProps {
     status: string;
     originalAmount?: number | string;
     counterAmount?: number | string;
+    transactionId?: string;
+    amount?: number | string;
+    platformFee?: number | string;
+    sellerPayout?: number | string;
   };
   content: string;
   isOwnMessage: boolean;
@@ -572,6 +576,80 @@ export function OfferMessageCard({
     );
   };
 
+  const renderPaymentRequired = () => {
+    const amount = metadata.amount 
+      ? (typeof metadata.amount === "string" 
+          ? parseFloat(metadata.amount) 
+          : metadata.amount)
+      : 0;
+    const platformFee = metadata.platformFee
+      ? (typeof metadata.platformFee === "string"
+          ? parseFloat(metadata.platformFee)
+          : metadata.platformFee)
+      : 0;
+
+    return (
+      <Card className="p-4 border-2 bg-gradient-to-r from-green-50 to-blue-50 border-green-300">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-full bg-green-100">
+            <DollarSign className="h-5 w-5 text-green-600" />
+          </div>
+          <div className="flex-1">
+            <h4 className="font-semibold text-lg text-green-800 mb-2">
+              ✅ Offer Accepted!
+            </h4>
+            <p className="text-sm text-gray-700 mb-3">
+              {content}
+            </p>
+            <div className="space-y-2 text-sm mb-4">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Item Price:</span>
+                <span className="font-semibold">${amount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Platform Fee (2.5%):</span>
+                <span className="font-semibold">${platformFee.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between border-t pt-2">
+                <span className="font-semibold text-gray-800">Total to Pay:</span>
+                <span className="font-bold text-green-700">${amount.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Proceed to Payment button - only show to buyer */}
+            {!isOwnMessage && (
+              <div className="space-y-2">
+                <Button
+                  className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                  size="lg"
+                  onClick={() => {
+                    // TODO: Implement Stripe payment flow
+                    window.location.href = `/payment/${metadata.transactionId}`;
+                  }}
+                >
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Proceed to Payment
+                </Button>
+                <p className="text-xs text-center text-gray-500">
+                  Your payment will be held securely until you confirm receipt of the item
+                </p>
+              </div>
+            )}
+
+            {/* For seller - just show waiting message */}
+            {isOwnMessage && (
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  ⏳ Waiting for buyer to complete payment...
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  };
+
   // Render based on message type
   switch (messageType) {
     case "offer_made":
@@ -582,6 +660,8 @@ export function OfferMessageCard({
       return renderOfferRejected();
     case "offer_countered":
       return renderOfferCountered();
+    case "payment_required":
+      return renderPaymentRequired();
     default:
       return null;
   }

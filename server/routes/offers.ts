@@ -266,8 +266,55 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
 
     // If accepted, create a transaction
     if (status === "accepted") {
-      // TODO: Create transaction from accepted offer
-      // This should be implemented based on your transaction flow
+      try {
+        const finalAmount = offer.counterOfferAmount || offer.offerAmount;
+        const amount = parseFloat(finalAmount.toString());
+        const platformFeeRate = 0.025; // 2.5% platform fee
+        const platformFee = amount * platformFeeRate;
+        const sellerPayout = amount - platformFee;
+
+        const transaction = await storage.createTransaction({
+          buyerId: offer.buyerId,
+          sellerId: offer.sellerId,
+          listingId: offer.listingId,
+          offerId: offerId,
+          amount: amount.toFixed(2),
+          platformFee: platformFee.toFixed(2),
+          sellerPayout: sellerPayout.toFixed(2),
+          depositAmount: (offer.depositAmount || 0).toString(),
+          status: "pending", // Waiting for buyer to pay
+        });
+
+        console.log("Transaction created:", transaction.id);
+
+        // Send a "proceed to payment" message
+        const paymentMessage = {
+          listingId: offer.listingId,
+          senderId: "system",
+          receiverId: offer.buyerId,
+          content: `Offer accepted! Proceed to payment to secure this item.`,
+          messageType: "payment_required",
+          metadata: {
+            transactionId: transaction.id,
+            offerId: offerId,
+            amount: amount,
+            platformFee: platformFee,
+            sellerPayout: sellerPayout,
+          },
+        };
+
+        await storage.createMessage(paymentMessage);
+
+        // Notify buyer via WebSocket
+        if (wsService) {
+          wsService.emitToUser(offer.buyerId, "payment_required", {
+            transactionId: transaction.id,
+            amount: amount,
+          });
+        }
+      } catch (error) {
+        console.error("Error creating transaction:", error);
+      }
     }
 
     res.json({ offer: updatedOffer });
