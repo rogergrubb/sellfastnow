@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import EstateHero from "@/components/EstateHero";
+import RealtorTestimonial from "@/components/RealtorTestimonial";
+import EstateKeyFeatures from "@/components/EstateKeyFeatures";
+import PricingCalculatorEstate from "@/components/PricingCalculatorEstate";
+import TargetAudiences from "@/components/TargetAudiences";
+import SocialMediaDemo from "@/components/SocialMediaDemo";
 import HeroWithBenefits from "@/components/HeroWithBenefits";
 import CategoryFilters from "@/components/CategoryFilters";
 import FilterSidebar from "@/components/FilterSidebar";
@@ -139,6 +145,27 @@ export default function Home() {
 
   return (
     <div>
+      {/* Estate Sale Focus Section */}
+      <EstateHero />
+      <RealtorTestimonial />
+      <EstateKeyFeatures />
+      <PricingCalculatorEstate />
+      <TargetAudiences />
+      <SocialMediaDemo />
+      
+      {/* Divider */}
+      <div className="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 py-12">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            Or Browse Items for Sale
+          </h2>
+          <p className="text-xl text-gray-600 dark:text-gray-400">
+            Looking to buy? Search our marketplace below
+          </p>
+        </div>
+      </div>
+
+      {/* Traditional Marketplace Section */}
       <HeroWithBenefits 
         onSearch={handleSearch} 
         onCategorySelect={handleCategorySelect}
