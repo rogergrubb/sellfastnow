@@ -34,6 +34,7 @@ import reliabilityRoutes from "./routes/reliability";
 import notificationsRoutes from "./routes/notifications";
 import boostsRoutes from "./routes/boosts";
 import savedSearchesRoutes from "./routes/savedSearches";
+import offersRoutes from "./routes/offers";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -240,6 +241,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Listings Routes
   // ======================
   app.use("/api/listings", listingsRoutes);
+  
+  // ======================
+  // Offers Routes
+  // ======================
+  app.use("/api/listings", offersRoutes); // For /listings/:id/offers
+  app.use("/api/offers", offersRoutes); // For /offers/made, /offers/received, /offers/:id
 
   // ======================
   // Images & Upload Routes
