@@ -43,6 +43,7 @@ export function OfferMessageCard({
   const [showAcceptForm, setShowAcceptForm] = useState(false);
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [offerData, setOfferData] = useState<any>(null);
   const [counterAmount, setCounterAmount] = useState("");
   const [counterMessage, setCounterMessage] = useState("");
   const [acceptMessage, setAcceptMessage] = useState("");
@@ -356,7 +357,34 @@ export function OfferMessageCard({
     );
   };
 
+  const handleOpenReviewModal = async () => {
+    // If we already have buyer/seller IDs in metadata, use them
+    if (metadata.buyerId && metadata.sellerId) {
+      setShowReviewModal(true);
+      return;
+    }
+
+    // Otherwise, fetch the offer data
+    try {
+      const response = await fetch(`/api/offers/${metadata.offerId}`);
+      if (!response.ok) throw new Error("Failed to fetch offer");
+      const offer = await response.json();
+      setOfferData(offer);
+      setShowReviewModal(true);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load offer details. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const renderOfferAccepted = () => {
+    // Get buyer/seller IDs from metadata or fetched offer data
+    const buyerId = metadata.buyerId || offerData?.buyerId;
+    const sellerId = metadata.sellerId || offerData?.sellerId;
+
     return (
       <>
         <Card className="p-4 border-2 bg-green-50 border-green-300">
@@ -374,7 +402,7 @@ export function OfferMessageCard({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setShowReviewModal(true)}
+                onClick={handleOpenReviewModal}
                 className="text-green-700 border-green-300 hover:bg-green-100"
               >
                 <Star className="h-4 w-4 mr-1" />
@@ -385,13 +413,13 @@ export function OfferMessageCard({
         </Card>
 
         {/* Review Modal */}
-        {showReviewModal && user && metadata.buyerId && metadata.sellerId && (
+        {showReviewModal && user && buyerId && sellerId && (
           <LeaveReviewModal
             open={showReviewModal}
             onOpenChange={setShowReviewModal}
             listingId={listingId}
-            reviewedUserId={user.id === metadata.buyerId ? metadata.sellerId : metadata.buyerId}
-            reviewerRole={user.id === metadata.buyerId ? "buyer" : "seller"}
+            reviewedUserId={user.id === buyerId ? sellerId : buyerId}
+            reviewerRole={user.id === buyerId ? "buyer" : "seller"}
             currentUserId={user.id}
           />
         )}
