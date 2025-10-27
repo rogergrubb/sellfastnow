@@ -1,0 +1,13 @@
+[build]
+builder = "nixpacks"
+
+[build.nixpacksPlan.phases.install]
+cmds = ["pnpm i --no-frozen-lockfile"]
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+
