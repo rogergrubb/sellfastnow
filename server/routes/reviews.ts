@@ -32,6 +32,7 @@ router.post("/", isAuthenticated, async (req: any, res) => {
       professionalismRating,
       reviewTitle,
       reviewText,
+      reviewPhotos,
       reviewerRole,
       wouldTransactAgain,
     } = req.body;
@@ -115,6 +116,7 @@ router.post("/", isAuthenticated, async (req: any, res) => {
         professionalismRating: professionalismRating || null,
         reviewTitle: reviewTitle || null,
         reviewText,
+        reviewPhotos: reviewPhotos || [],
         reviewerRole,
         verifiedTransaction: !!transactionId,
         wouldTransactAgain: wouldTransactAgain || null,
