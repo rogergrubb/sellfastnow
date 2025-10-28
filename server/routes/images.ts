@@ -100,7 +100,7 @@ router.post("/upload-session/create", isAuthenticated, async (req: any, res) => 
  * POST /api/upload-session/:id/upload
  * Upload images to a session (called from mobile)
  */
-router.post("/upload-session/:id/upload", upload.array("images", 24), async (req: any, res) => {
+router.post("/upload-session/:id/upload", upload.array("images", 100), async (req: any, res) => {
   try {
     const { id } = req.params;
     
