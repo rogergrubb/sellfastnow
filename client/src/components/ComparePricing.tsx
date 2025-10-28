@@ -83,7 +83,7 @@ export default function ComparePricing() {
               <span className="font-semibold text-gray-900 dark:text-white">Your first five items per month are always free under $50</span>
             </div>
             <div className="text-sm text-gray-700 dark:text-gray-300">
-              Try the system risk-free with 5 free AI-generated listings every month before committing to bulk uploads
+              Try our system risk-free with 5 free AI-generated listings every month. If you want to post many items, use our amazing AI powered image identification and valuation tool for a very modest fee.
             </div>
           </div>
         </div>
