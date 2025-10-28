@@ -80,10 +80,10 @@ export default function ComparePricing() {
           <div className="mt-6 bg-green-100 dark:bg-green-900/30 rounded-lg p-4 border border-green-300 dark:border-green-700">
             <div className="flex items-center gap-2 mb-2">
               <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
-              <span className="font-semibold text-gray-900 dark:text-white">First 5 items always FREE</span>
+              <span className="font-semibold text-gray-900 dark:text-white">Your first five items per month are always free under $50</span>
             </div>
             <div className="text-sm text-gray-700 dark:text-gray-300">
-              Try the system risk-free with 5 free AI-generated listings before committing to bulk uploads
+              Try the system risk-free with 5 free AI-generated listings every month before committing to bulk uploads
             </div>
           </div>
         </div>
@@ -122,7 +122,7 @@ export default function ComparePricing() {
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
                   <div className="space-y-2">
-                    <div className="font-bold text-green-600 dark:text-green-400 text-lg">First 5 FREE</div>
+                    <div className="font-bold text-green-600 dark:text-green-400 text-lg">First 5 FREE/month (under $50)</div>
                     <div className="font-semibold text-gray-900 dark:text-white">Progressive pricing:</div>
                     <div className="space-y-1 text-sm">
                       <div className="text-gray-700 dark:text-gray-300">• $0-$50: 5¢ per dollar</div>
