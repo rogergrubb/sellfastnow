@@ -1,5 +1,5 @@
 interface SectionNavProps {
-  currentSection: 'how-it-works' | 'pricing' | 'features' | 'testimonial';
+  currentSection: 'how-it-works' | 'pricing' | 'features' | 'testimonial' | 'calculator';
 }
 
 export default function SectionNav({ currentSection }: SectionNavProps) {
@@ -8,6 +8,7 @@ export default function SectionNav({ currentSection }: SectionNavProps) {
     { id: 'pricing', label: 'Pricing' },
     { id: 'features', label: 'Features' },
     { id: 'testimonial', label: 'Testimonial' },
+    { id: 'savings-calculator', label: 'Cost Calculator' },
   ];
 
   const scrollToSection = (sectionId: string) => {

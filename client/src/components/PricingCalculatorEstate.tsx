@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useLocation } from "wouter";
 import { Calculator, TrendingDown } from "lucide-react";
+import SectionNav from "./SectionNav";
 
 export default function PricingCalculatorEstate() {
   const [itemCount, setItemCount] = useState([100]);
@@ -42,7 +43,9 @@ export default function PricingCalculatorEstate() {
   const savings = traditionalFee - totalCost;
 
   return (
-    <div id="savings-calculator" className="bg-white dark:bg-gray-900 py-16 scroll-mt-20">
+    <div id="savings-calculator" className="bg-white dark:bg-gray-900 scroll-mt-20">
+      <SectionNav currentSection="calculator" />
+      <div className="py-16">
       <div className="max-w-4xl mx-auto px-4">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -174,6 +177,7 @@ export default function PricingCalculatorEstate() {
             </Button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
