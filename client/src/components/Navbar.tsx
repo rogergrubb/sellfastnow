@@ -206,6 +206,16 @@ export default function Navbar() {
                 </Button>
                 <Button 
                   variant="default" 
+                  size="icon"
+                  className="sm:hidden bg-secondary hover:bg-secondary"
+                  data-testid="button-post-ad-mobile"
+                  onClick={() => window.location.href = '/post-ad'}
+                  title="Post Ad"
+                >
+                  <Plus className="h-5 w-5" />
+                </Button>
+                <Button 
+                  variant="default" 
                   className="hidden sm:flex bg-secondary hover:bg-secondary"
                   data-testid="button-post-ad"
                   onClick={() => window.location.href = '/post-ad'}

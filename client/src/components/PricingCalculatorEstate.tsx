@@ -42,7 +42,7 @@ export default function PricingCalculatorEstate() {
   const savings = traditionalFee - totalCost;
 
   return (
-    <div className="bg-white dark:bg-gray-900 py-16">
+    <div id="savings-calculator" className="bg-white dark:bg-gray-900 py-16 scroll-mt-20">
       <div className="max-w-4xl mx-auto px-4">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
