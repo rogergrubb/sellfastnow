@@ -436,12 +436,13 @@ export class DatabaseStorage implements IStorage {
   async advancedSearch(filters: SearchFilters): Promise<any[]> {
     const conditions = [eq(listings.status, "active")];
 
-    // Text search in title and description
+    // Text search in title, description, and meta tags
     if (filters.query) {
       conditions.push(
         or(
           sql`${listings.title} ILIKE ${`%${filters.query}%`}`,
-          sql`${listings.description} ILIKE ${`%${filters.query}%`}`
+          sql`${listings.description} ILIKE ${`%${filters.query}%`}`,
+          sql`${listings.metaTags} ILIKE ${`%${filters.query}%`}`
         )!
       );
     }
