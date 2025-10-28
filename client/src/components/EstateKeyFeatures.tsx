@@ -34,8 +34,8 @@ const features = [
   },
   {
     icon: DollarSign,
-    title: "Volume Discounts",
-    description: "First 5 free. Then $0.20/item with discounts up to 12% off for 75+ items.",
+    title: "Fair Progressive Pricing",
+    description: "First 5 free. Then 3-5 pennies per dollar based on item value. Lower fees for higher-value items.",
     color: "green",
   },
 ];
