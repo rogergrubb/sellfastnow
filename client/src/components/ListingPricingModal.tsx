@@ -109,12 +109,12 @@ export function ListingPricingModal({
             <div className="bg-green-100 dark:bg-green-900/30 rounded-lg p-4 border border-green-300 dark:border-green-700">
               <div className="flex items-center gap-2 mb-1">
                 <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  First {freeItemsRemaining} items under $50 this month are FREE
+                <span className="font-semibold text-gray-900 dark:text-white text-lg">
+                  The First 5 Under 50 Are FREE
                 </span>
               </div>
               <p className="text-sm text-gray-700 dark:text-gray-300 ml-7">
-                Includes AI-generated titles, descriptions, valuations, and SEO meta tags
+                You have {freeItemsRemaining} free {freeItemsRemaining === 1 ? 'listing' : 'listings'} remaining this month • Includes AI-generated titles, descriptions, valuations, and SEO meta tags
               </p>
             </div>
           )}
