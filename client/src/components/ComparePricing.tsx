@@ -88,6 +88,61 @@ export default function ComparePricing() {
           </div>
         </div>
 
+        {/* Transaction Fee Section */}
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-8 mb-8 border-2 border-blue-500 dark:border-blue-600 shadow-xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Listing Fee Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border-2 border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Listing</h3>
+              <div className="text-4xl font-bold text-green-600 dark:text-green-400 mb-3">FREE</div>
+              <p className="text-gray-700 dark:text-gray-300 mb-4">List unlimited items at no cost</p>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Only pay our modest AI listing fee when using our AI-powered bulk upload feature
+              </div>
+            </div>
+
+            {/* Transaction Fee Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border-2 border-blue-500 dark:border-blue-600">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Transaction Fee</h3>
+              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-3">5%</div>
+              <p className="text-gray-700 dark:text-gray-300 mb-4 font-semibold">Only when using our integrated Stripe payment system</p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-gray-700 dark:text-gray-300">Secure payments</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-gray-700 dark:text-gray-300">Buyer protection</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-gray-700 dark:text-gray-300">Seller protection</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-gray-700 dark:text-gray-300">Dispute resolution</span>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 text-sm font-semibold text-green-600 dark:text-green-400">
+                  <Check className="h-4 w-4" />
+                  <span>Cash/In-Person Sales: 0% Transaction Fee</span>
+                </div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 ml-6">
+                  Meet locally and handle payment yourself - no fees!
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 bg-blue-100 dark:bg-blue-900/30 rounded-lg p-4 border border-blue-300 dark:border-blue-700">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              <strong>Your choice:</strong> Use our secure Stripe integration for cashless convenience (5% fee), or arrange cash/in-person payment with no transaction fees at all. The 5% fee only applies when buyers pay through our integrated payment system.
+            </p>
+          </div>
+        </div>
+
         {/* Comparison Table */}
         <div className="overflow-x-auto mb-12">
           <table className="w-full border-collapse">
