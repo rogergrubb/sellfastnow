@@ -122,32 +122,67 @@ export default function EstateHero() {
           </p>
         </div>
 
-        {/* Testimonial Section */}
-        <div className="mt-16 max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl border-2 border-green-200 dark:border-green-800">
-            <div className="flex items-start gap-4">
-              <div className="text-6xl text-green-600 dark:text-green-400 leading-none">"</div>
-              <div className="flex-1">
-                <p className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 italic mb-6">
-                  My old estate sale website only let me upload a picture — no titles, no descriptions, no meta tags. Just one simple photo. When I saw what SellFast.Now offers, my mind was blown... and for <span className="font-bold text-green-600 dark:text-green-400">less than half the cost!</span>
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
-                    S
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-900 dark:text-white">Sarah M.</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Estate Sale Professional, 15+ years</div>
-                  </div>
+        {/* Testimonials Section */}
+        <div className="mt-16 max-w-7xl mx-auto">
+          <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-2">
+            What Professionals Are Saying
+          </h2>
+          <p className="text-center text-gray-600 dark:text-gray-400 mb-10 text-lg">
+            Real stories from <span className="font-semibold text-gray-900 dark:text-white">Residential & Commercial Liquidators</span>, <span className="font-semibold text-gray-900 dark:text-white">Real Estate Professionals</span>, and bulk sellers
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Estate Sale Professional */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border-2 border-green-200 dark:border-green-800">
+              <div className="text-5xl text-green-600 dark:text-green-400 leading-none mb-4">"</div>
+              <p className="text-base text-gray-700 dark:text-gray-300 italic mb-6">
+                My old estate sale website only let me upload a picture — no titles, no descriptions, no meta tags. Just one simple photo. When I saw what SellFast.Now offers, my mind was blown... and for <span className="font-bold text-green-600 dark:text-green-400">less than half the cost!</span>
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                  S
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900 dark:text-white">Sarah M.</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Estate Sale Professional, 15+ years</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Realtor */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border-2 border-blue-200 dark:border-blue-800">
+              <div className="text-5xl text-blue-600 dark:text-blue-400 leading-none mb-4">"</div>
+              <p className="text-base text-gray-700 dark:text-gray-300 italic mb-6">
+                I used to spend <span className="font-bold text-red-600 dark:text-red-400">3 days</span> manually listing estate contents. With SellFast.Now, I listed <span className="font-bold text-green-600 dark:text-green-400">1,100 items in under an hour.</span> This has completely changed my business.
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                  M
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900 dark:text-white">Michael R.</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Real Estate Broker, 20+ years</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Commercial Liquidator */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border-2 border-purple-200 dark:border-purple-800">
+              <div className="text-5xl text-purple-600 dark:text-purple-400 leading-none mb-4">"</div>
+              <p className="text-base text-gray-700 dark:text-gray-300 italic mb-6">
+                Other platforms charge me <span className="font-bold text-red-600 dark:text-red-400">13% fees.</span> SellFast.Now charges <span className="font-bold text-green-600 dark:text-green-400">4%</span> AND gives me AI-powered descriptions. I'm <span className="font-bold text-green-600 dark:text-green-400">saving thousands</span> per estate.
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                  J
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900 dark:text-white">Jennifer L.</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Commercial Liquidator</div>
                 </div>
               </div>
             </div>
           </div>
-          
-          {/* Target Audience Subtitle */}
-          <p className="text-center text-gray-600 dark:text-gray-400 mt-8 text-lg">
-            Perfect for <span className="font-semibold text-gray-900 dark:text-white">Residential & Commercial Liquidators</span>, <span className="font-semibold text-gray-900 dark:text-white">Real Estate Professionals</span>, and anyone selling <span className="font-semibold text-green-600 dark:text-green-400">20+ items quickly and efficiently</span>
-          </p>
         </div>
       </div>
     </div>
