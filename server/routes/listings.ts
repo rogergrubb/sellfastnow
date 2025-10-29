@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { isAuthenticated } from "../supabaseAuth";
 import { storage } from "../storage";
+import { processNewListingForNotifications } from "../services/savedSearchNotifications";
 
 const router = Router();
 
@@ -138,6 +139,13 @@ const router = Router();
       });
 
       console.log(`Listing created successfully: ${listing.id}`);
+      
+      // Trigger saved search notifications (don't await - run in background)
+      if (status === 'active' || !status) {
+        processNewListingForNotifications(listing as any).catch(err => {
+          console.error('Error processing notifications:', err);
+        });
+      }
 
       res.status(201).json(listing);
     } catch (error: any) {
@@ -286,6 +294,13 @@ const router = Router();
 
           createdListings.push(listing);
           console.log(`✅ Created listing ${i + 1}/${listingsData.length}: ${listing.title}`);
+          
+          // Trigger saved search notifications for active listings
+          if (targetStatus === 'active') {
+            processNewListingForNotifications(listing as any).catch(err => {
+              console.error('Error processing notifications:', err);
+            });
+          }
         } catch (error: any) {
           console.error(`❌ Error creating listing ${i + 1}:`, error);
           errors.push({ index: i, error: error.message });
