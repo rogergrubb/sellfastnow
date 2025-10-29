@@ -57,7 +57,8 @@ import {
   Camera,
   FileText,
   SkipForward,
-  Package
+  Package,
+  RotateCw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -146,6 +147,7 @@ export default function PostAdEnhanced() {
   
   const [mode, setMode] = useState<"coached" | "simple">("coached");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [imageRotations, setImageRotations] = useState<number[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [productIdentifications, setProductIdentifications] = useState<ProductIdentification[]>([]);
   const [analyzingPhotos, setAnalyzingPhotos] = useState<boolean[]>([]);
@@ -1945,7 +1947,37 @@ export default function PostAdEnhanced() {
     
     const newIdentifications = productIdentifications.filter((_, i) => i !== index);
     setProductIdentifications(newIdentifications);
+    
+    // Also remove rotation for this image
+    const newRotations = imageRotations.filter((_, i) => i !== index);
+    setImageRotations(newRotations);
   };
+
+  const rotateImage = (index: number) => {
+    setImageRotations(prev => {
+      const newRotations = [...prev];
+      // Ensure array is long enough
+      while (newRotations.length <= index) {
+        newRotations.push(0);
+      }
+      // Rotate 90 degrees clockwise
+      newRotations[index] = ((newRotations[index] || 0) + 90) % 360;
+      return newRotations;
+    });
+  };
+
+  // Sync imageRotations array length with uploadedImages
+  useEffect(() => {
+    setImageRotations(prev => {
+      const newRotations = [...prev];
+      // Pad with 0s if needed
+      while (newRotations.length < uploadedImages.length) {
+        newRotations.push(0);
+      }
+      // Trim if too long
+      return newRotations.slice(0, uploadedImages.length);
+    });
+  }, [uploadedImages.length]);
 
   const useAIDescription = () => {
     if (descriptionAnalysis?.aiGeneratedDescription) {
@@ -2228,12 +2260,23 @@ export default function PostAdEnhanced() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex gap-6">
-                    <div className="w-32 h-32 flex-shrink-0">
+                    <div className="w-32 h-32 flex-shrink-0 relative">
                       <img 
                         src={imageUrl} 
                         alt={`Photo ${photoIndex + 1}`} 
-                        className="w-full h-full object-cover rounded-lg"
+                        className="w-full h-full object-cover rounded-lg transition-transform duration-200"
+                        style={{ transform: `rotate(${imageRotations[photoIndex] || 0}deg)` }}
                       />
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="secondary"
+                        className="absolute bottom-2 right-2 h-8 w-8 bg-white/90 hover:bg-white shadow-md"
+                        onClick={() => rotateImage(photoIndex)}
+                        title="Rotate 90°"
+                      >
+                        <RotateCw className="h-4 w-4" />
+                      </Button>
                     </div>
                     
                     <div className="flex-1 space-y-4">
@@ -2703,7 +2746,12 @@ export default function PostAdEnhanced() {
                         {uploadedImages.map((img, index) => (
                           <div key={index} className="flex gap-3 p-3 border rounded-lg">
                             <div className="relative w-24 h-24 rounded overflow-hidden flex-shrink-0">
-                              <img src={img} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
+                              <img 
+                                src={img} 
+                                alt={`Photo ${index + 1}`} 
+                                className="w-full h-full object-cover transition-transform duration-200" 
+                                style={{ transform: `rotate(${imageRotations[index] || 0}deg)` }}
+                              />
                               <Button
                                 type="button"
                                 size="icon"
@@ -2713,6 +2761,16 @@ export default function PostAdEnhanced() {
                                 data-testid={`button-remove-image-${index}`}
                               >
                                 <X className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="secondary"
+                                className="absolute bottom-1 right-1 h-6 w-6 bg-white/90 hover:bg-white"
+                                onClick={() => rotateImage(index)}
+                                title="Rotate 90°"
+                              >
+                                <RotateCw className="h-3 w-3" />
                               </Button>
                             </div>
                             
