@@ -17,6 +17,7 @@ interface ListingSuccessModalProps {
   onClose: () => void;
   listingIds: string[];
   listingTitles: string[];
+  batchId?: string; // Optional batch ID for collection link
 }
 
 export function ListingSuccessModal({
@@ -24,9 +25,11 @@ export function ListingSuccessModal({
   onClose,
   listingIds,
   listingTitles,
+  batchId,
 }: ListingSuccessModalProps) {
   const { toast } = useToast();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [copiedBatch, setCopiedBatch] = useState(false);
 
   const baseUrl = window.location.origin;
   const listings = listingIds.map((id, index) => ({
@@ -34,6 +37,9 @@ export function ListingSuccessModal({
     title: listingTitles[index] || "My Item",
     url: `${baseUrl}/listings/${id}`,
   }));
+  
+  const collectionUrl = batchId ? `${baseUrl}/collections/${batchId}` : null;
+  const showCollectionLink = listings.length > 1 && collectionUrl;
 
   const copyToClipboard = async (url: string, index: number) => {
     try {
@@ -44,6 +50,25 @@ export function ListingSuccessModal({
         description: "Share this link on your favorite social media platform",
       });
       setTimeout(() => setCopiedIndex(null), 2000);
+    } catch (error) {
+      toast({
+        title: "Failed to copy",
+        description: "Please try copying manually",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const copyBatchLink = async () => {
+    if (!collectionUrl) return;
+    try {
+      await navigator.clipboard.writeText(collectionUrl);
+      setCopiedBatch(true);
+      toast({
+        title: "Collection link copied!",
+        description: "Share this link to show all your items at once",
+      });
+      setTimeout(() => setCopiedBatch(false), 2000);
     } catch (error) {
       toast({
         title: "Failed to copy",
@@ -79,6 +104,78 @@ export function ListingSuccessModal({
               Share {listings.length === 1 ? "this link" : "these links"} on social media to reach more potential buyers!
             </p>
           </div>
+          
+          {/* Batch Collection Link (for multiple items) */}
+          {showCollectionLink && (
+            <div className="border-2 border-primary rounded-lg p-4 space-y-3 bg-primary/5">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <span className="text-primary">⭐</span>
+                    Share All {listings.length} Items in One Link!
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Perfect for social media - shows all your items in a beautiful gallery
+                  </p>
+                </div>
+              </div>
+
+              {/* Collection Link */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={collectionUrl}
+                  readOnly
+                  className="flex-1 px-3 py-2 border-2 border-primary rounded-md bg-white text-sm font-mono"
+                  onClick={(e) => e.currentTarget.select()}
+                />
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={copyBatchLink}
+                  className="shrink-0"
+                >
+                  {copiedBatch ? (
+                    <>
+                      <Check className="w-4 h-4 mr-1" />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 mr-1" />
+                      Copy
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Social Media Share Buttons for Collection */}
+              <div className="flex items-center gap-3 pt-2">
+                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Share2 className="w-4 h-4" />
+                  Share collection:
+                </span>
+                <FacebookShareButton
+                  url={collectionUrl}
+                  quote={`Check out my ${listings.length} items on SellFast.Now!`}
+                >
+                  <FacebookIcon size={32} round />
+                </FacebookShareButton>
+                <TwitterShareButton
+                  url={collectionUrl}
+                  title={`Check out my ${listings.length} items on SellFast.Now!`}
+                >
+                  <TwitterIcon size={32} round />
+                </TwitterShareButton>
+                <WhatsappShareButton
+                  url={collectionUrl}
+                  title={`Check out my ${listings.length} items on SellFast.Now!`}
+                >
+                  <WhatsappIcon size={32} round />
+                </WhatsappShareButton>
+              </div>
+            </div>
+          )}
 
           {/* Listings */}
           {listings.map((listing, index) => (

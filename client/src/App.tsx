@@ -1,5 +1,6 @@
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
+import Collection from "@/pages/Collection";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
@@ -64,6 +65,7 @@ function Router() {
       <Route path="/payment/:transactionId" component={Payment} />
       <Route path="/meetup/:id" component={SellerMeetupPage} />
       <Route path="/saved-searches" component={SavedSearches} />
+      <Route path="/collections/:batchId" component={Collection} />
       <Route component={NotFound} />
     </Switch>
   );

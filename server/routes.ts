@@ -392,6 +392,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/listings", listingsRoutes);
   
   // ======================
+  // Collection Routes
+  // ======================
+  // Get all listings in a batch/collection
+  app.get("/api/collections/:batchId", async (req, res) => {
+    try {
+      const { batchId } = req.params;
+      
+      const collectionListings = await db
+        .select({
+          id: listings.id,
+          title: listings.title,
+          description: listings.description,
+          price: listings.price,
+          images: listings.images,
+          category: listings.category,
+          condition: listings.condition,
+          location: listings.location,
+          createdAt: listings.createdAt,
+        })
+        .from(listings)
+        .where(and(
+          eq(listings.batchId, batchId),
+          eq(listings.status, 'active')
+        ))
+        .orderBy(desc(listings.createdAt));
+      
+      if (collectionListings.length === 0) {
+        return res.status(404).json({ message: "Collection not found" });
+      }
+      
+      res.json(collectionListings);
+    } catch (error) {
+      console.error("Error fetching collection:", error);
+      res.status(500).json({ message: "Failed to fetch collection" });
+    }
+  });
+  
+  // ======================
   // Offers Routes
   // ======================
   app.use("/api/listings", offersRoutes); // For /listings/:id/offers
