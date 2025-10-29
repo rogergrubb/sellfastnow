@@ -60,6 +60,43 @@ export default function PricingCalculatorEstate() {
           <p className="text-2xl font-bold text-green-600 dark:text-green-400">
             Example: 100 items @ $50 each = only $200 in fees (4% total)
           </p>
+          
+          {/* Competitor Comparison */}
+          <div className="mt-6 bg-white/90 dark:bg-gray-800/90 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+              Compare: Same 100 Items @ $50 Each ($5,000 Total)
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
+              <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 border border-red-200 dark:border-red-800">
+                <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">eBay</div>
+                <div className="text-lg font-bold text-red-600 dark:text-red-400">$650</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">13% fees</div>
+              </div>
+              <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 border border-orange-200 dark:border-orange-800">
+                <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Mercari</div>
+                <div className="text-lg font-bold text-orange-600 dark:text-orange-400">$500</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">10% fees</div>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+                <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Facebook</div>
+                <div className="text-lg font-bold text-blue-600 dark:text-blue-400">$250</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">5% fees</div>
+              </div>
+              <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 border border-red-200 dark:border-red-800">
+                <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Traditional</div>
+                <div className="text-lg font-bold text-red-600 dark:text-red-400">$1,750</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">35% commission</div>
+              </div>
+              <div className="bg-green-100 dark:bg-green-900/30 rounded-lg p-3 border-2 border-green-500 dark:border-green-600">
+                <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">SellFast.Now</div>
+                <div className="text-xl font-bold text-green-600 dark:text-green-400">$200</div>
+                <div className="text-xs font-semibold text-green-600 dark:text-green-400">4% total ✓</div>
+              </div>
+            </div>
+            <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
+              💰 <span className="font-semibold">Save $450-$1,550</span> compared to competitors!
+            </p>
+          </div>
         </div>
 
         <div className="bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-8 border-2 border-green-200 dark:border-green-800 shadow-xl">
