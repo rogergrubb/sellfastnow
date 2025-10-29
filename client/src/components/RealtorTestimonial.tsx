@@ -12,7 +12,7 @@ export default function RealtorTestimonial() {
           
           <div className="relative">
             <p className="text-xl sm:text-2xl text-gray-800 dark:text-gray-200 leading-relaxed mb-6 italic">
-              "I listed <span className="font-bold text-green-600 dark:text-green-400">1,100 items</span> from an estate liquidation using just my cell phone. 
+              "I listed <span className="font-bold text-green-600 dark:text-green-400">over 300 items</span> from an estate liquidation using just my cell phone. 
               I walked through the house and garage taking photos, uploaded them all at once, and AI generated titles, descriptions, 
               valuations, and meta tags. It saved me <span className="font-bold text-green-600 dark:text-green-400">days of work</span> and did a better job with meta-tagging each item for better search results.
             </p>
@@ -33,7 +33,7 @@ export default function RealtorTestimonial() {
                   Real Estate Professional
                 </div>
                 <div className="text-gray-600 dark:text-gray-400">
-                  Liquidated 1,100+ items successfully
+                  Liquidated 300+ items successfully
                 </div>
               </div>
             </div>
