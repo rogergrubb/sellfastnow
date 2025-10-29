@@ -59,6 +59,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ======================
+  // TEMPORARY: Manual Migration Endpoint
+  // ======================
+  app.get('/api/run-migrations-now', async (req, res) => {
+    try {
+      console.log('🔧 Running manual migrations...');
+      
+      // Add image_rotations column to listings
+      await db.execute(sql`
+        ALTER TABLE listings 
+        ADD COLUMN IF NOT EXISTS image_rotations JSONB DEFAULT '[]'::jsonb;
+      `);
+      console.log('✅ Added image_rotations column');
+      
+      // Add free_listings_used_this_month column to users
+      await db.execute(sql`
+        ALTER TABLE users 
+        ADD COLUMN IF NOT EXISTS free_listings_used_this_month INTEGER NOT NULL DEFAULT 0;
+      `);
+      console.log('✅ Added free_listings_used_this_month column');
+      
+      // Add free_listings_reset_date column to users
+      await db.execute(sql`
+        ALTER TABLE users 
+        ADD COLUMN IF NOT EXISTS free_listings_reset_date TIMESTAMP NOT NULL DEFAULT NOW();
+      `);
+      console.log('✅ Added free_listings_reset_date column');
+      
+      res.json({ 
+        success: true, 
+        message: 'Migrations completed successfully!',
+        columns_added: [
+          'listings.image_rotations',
+          'users.free_listings_used_this_month',
+          'users.free_listings_reset_date'
+        ]
+      });
+    } catch (error) {
+      console.error('❌ Migration failed:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Migration failed', 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // ======================
   // Authentication Routes
   // ======================
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
