@@ -82,23 +82,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Check if we need to reset the monthly counter
+      // Check if columns exist (migration may not have run yet)
       const now = new Date();
-      const resetDate = new Date(user.freeListingsResetDate);
+      const resetDate = user.freeListingsResetDate ? new Date(user.freeListingsResetDate) : now;
       const daysSinceReset = (now.getTime() - resetDate.getTime()) / (1000 * 60 * 60 * 24);
       
       let freeListingsUsed = user.freeListingsUsedThisMonth || 0;
       
       // Reset counter if it's been more than 30 days
-      if (daysSinceReset >= 30) {
+      if (daysSinceReset >= 30 && user.freeListingsResetDate) {
         freeListingsUsed = 0;
-        // Update user record
-        await db.update(users)
-          .set({ 
-            freeListingsUsedThisMonth: 0,
-            freeListingsResetDate: now
-          })
-          .where(eq(users.id, userId));
+        // Only update if columns exist
+        try {
+          await db.update(users)
+            .set({ 
+              freeListingsUsedThisMonth: 0,
+              freeListingsResetDate: now
+            })
+            .where(eq(users.id, userId));
+        } catch (error) {
+          console.error("Error updating free listings counter:", error);
+          // Continue anyway - columns may not exist yet
+        }
       }
       
       const freeListingsRemaining = Math.max(0, 5 - freeListingsUsed);
