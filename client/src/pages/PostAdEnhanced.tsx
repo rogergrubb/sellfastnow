@@ -75,6 +75,7 @@ import { MultiItemGroupingModal } from "@/components/MultiItemGroupingModal";
 import { PhotoProcessingChoiceModal } from "@/components/PhotoProcessingChoiceModal";
 import { PhotoReviewModal } from "@/components/PhotoReviewModal";
 import { FolderSelectionModal } from "@/components/FolderSelectionModal";
+import { ListingPricingModal } from "@/components/ListingPricingModal";
 
 const formSchema = insertListingSchema.omit({ userId: true });
 
@@ -171,6 +172,19 @@ export default function PostAdEnhanced() {
   const [showMultiProductModal, setShowMultiProductModal] = useState(false);
   const [detectionMessage, setDetectionMessage] = useState<string | null>(null);
   const [isGeneratingBundle, setIsGeneratingBundle] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [pendingPublishData, setPendingPublishData] = useState<any>(null);
+
+  // Fetch free listings remaining
+  const { data: freeListingsData } = useQuery<{
+    freeListingsRemaining: number;
+    freeListingsUsed: number;
+    resetDate: string;
+    nextResetDate: string;
+  }>({
+    queryKey: ['/api/auth/free-listings-remaining'],
+    enabled: isSignedIn,
+  });
   
   // Bulk upload states
   const [showBulkReview, setShowBulkReview] = useState(false);
@@ -2069,13 +2083,22 @@ export default function PostAdEnhanced() {
   };
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-    // Ensure status is 'active' for publish button
-    // Include image rotations data
-    createListingMutation.mutate({ 
-      ...data, 
+    // Show pricing modal before publishing
+    setPendingPublishData({
+      ...data,
       status: 'active',
-      imageRotations: imageRotations 
+      imageRotations: imageRotations
     });
+    setShowPricingModal(true);
+  };
+
+  const handleConfirmPublish = () => {
+    if (!pendingPublishData) return;
+    
+    // Actually publish the listing
+    createListingMutation.mutate(pendingPublishData);
+    setShowPricingModal(false);
+    setPendingPublishData(null);
   };
 
   const saveDraft = () => {
@@ -3670,6 +3693,24 @@ export default function PostAdEnhanced() {
         open={showFolderModal}
         onOpenChange={setShowFolderModal}
         onSave={handleSaveDraftToFolder}
+      />
+
+      {/* Listing Pricing Modal */}
+      <ListingPricingModal
+        isOpen={showPricingModal}
+        onClose={() => {
+          setShowPricingModal(false);
+          setPendingPublishData(null);
+        }}
+        onConfirm={handleConfirmPublish}
+        items={[
+          {
+            title: pendingPublishData?.title || 'Untitled Item',
+            price: parseFloat(pendingPublishData?.price || '0')
+          }
+        ]}
+        freeItemsRemaining={freeListingsData?.freeListingsRemaining || 0}
+        isProcessing={createListingMutation.isPending}
       />
       
       {/* Success Modal - After AI completes */}

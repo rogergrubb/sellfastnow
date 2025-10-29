@@ -60,6 +60,10 @@ export const users = pgTable("users", {
   aiCreditsPurchased: integer("ai_credits_purchased").notNull().default(0),
   subscriptionTier: varchar("subscription_tier", { length: 20 }).notNull().default("free"),
   
+  // Free listing tracking (5 free items under $50 per month)
+  freeListingsUsedThisMonth: integer("free_listings_used_this_month").notNull().default(0),
+  freeListingsResetDate: timestamp("free_listings_reset_date").notNull().defaultNow(),
+  
   // Contact preferences for messaging
   contactEmail: varchar("contact_email"), // Optional: different from account email
   contactPreference: varchar("contact_preference", { length: 20 }).notNull().default("in_app"), // email, in_app, both

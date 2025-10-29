@@ -72,6 +72,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get free listings remaining for current user
+  app.get('/api/auth/free-listings-remaining', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check if we need to reset the monthly counter
+      const now = new Date();
+      const resetDate = new Date(user.freeListingsResetDate);
+      const daysSinceReset = (now.getTime() - resetDate.getTime()) / (1000 * 60 * 60 * 24);
+      
+      let freeListingsUsed = user.freeListingsUsedThisMonth || 0;
+      
+      // Reset counter if it's been more than 30 days
+      if (daysSinceReset >= 30) {
+        freeListingsUsed = 0;
+        // Update user record
+        await db.update(users)
+          .set({ 
+            freeListingsUsedThisMonth: 0,
+            freeListingsResetDate: now
+          })
+          .where(eq(users.id, userId));
+      }
+      
+      const freeListingsRemaining = Math.max(0, 5 - freeListingsUsed);
+      
+      res.json({
+        freeListingsRemaining,
+        freeListingsUsed,
+        resetDate: resetDate.toISOString(),
+        nextResetDate: new Date(resetDate.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      });
+    } catch (error) {
+      console.error("Error fetching free listings:", error);
+      res.status(500).json({ message: "Failed to fetch free listings data" });
+    }
+  });
+
   // ======================
   // Transaction Routes (NEW - ENABLED)
   // ======================
