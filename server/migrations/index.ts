@@ -12,15 +12,27 @@ export async function runMigrations() {
   console.log("🚀 Starting database migrations...");
 
   try {
+    console.log("Running migration 001: draft_collections...");
     await runDraftCollectionsMigration();
+    
+    console.log("Running migration 002: draft_folders...");
     await runDraftFoldersMigration();
+    
+    console.log("Running migration 003: welcome_signups...");
     await runWelcomeSignupsMigration();
+    
+    console.log("Running migration 004: image_rotations...");
     await runImageRotationsMigration();
+    
+    console.log("Running migration 005: free_listings_tracking...");
     await runFreeListingsTrackingMigration();
+    
     console.log("✅ All migrations completed successfully");
   } catch (error) {
     console.error("❌ Migration error:", error);
+    console.error("Error details:", JSON.stringify(error, null, 2));
     // Don't crash the app - log and continue
+    // The app will still start but may have issues if migrations failed
   }
 }
 
