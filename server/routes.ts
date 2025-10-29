@@ -170,14 +170,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ======================
   // Transaction Routes (NEW - ENABLED)
   // ======================
-  app.use("/api/transactions", transactionRoutes);
-  
-  // ======================
-  // Social Shares Routes
-  // ======================
-  registerSharesRoutes(app);
   
   // Get pending transactions for current user
+  // MUST be defined BEFORE transactionRoutes to avoid 404
   app.get("/api/transactions/pending", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth.userId;
@@ -247,6 +242,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch pending transactions" });
     }
   });
+  
+  // Transaction routes (other endpoints)
+  app.use("/api/transactions", transactionRoutes);
+  
+  // ======================
+  // Social Shares Routes
+  // ======================
+  registerSharesRoutes(app);
 
   // ======================
   // Stripe Connect Routes
@@ -280,13 +283,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/conversations", conversationRoutes);
 
   // ======================
-  // Message Read Routes
+  // Messages Routes
   // ======================
+  
+  // Get messages for current user (conversation threads) with pagination
+  // MUST be defined BEFORE the route handlers to avoid conflicts
+  app.get("/api/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      
+      // Pagination parameters
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = (page - 1) * limit;
+      
+      const { messages } = await import("@shared/schema");
+      const { desc, or, count } = await import("drizzle-orm");
+      
+      // Get total count
+      const [totalResult] = await db.select({ count: count() })
+        .from(messages)
+        .where(or(eq(messages.senderId, userId), eq(messages.receiverId, userId)));
+      
+      const total = totalResult.count;
+      
+      // Get paginated messages
+      const userMessages = await db.select()
+        .from(messages)
+        .where(or(eq(messages.senderId, userId), eq(messages.receiverId, userId)))
+        .orderBy(desc(messages.createdAt))
+        .limit(limit)
+        .offset(offset);
+      
+      res.json({
+        messages: userMessages,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+  
+  // Message Read Routes
   app.use("/api/messages", messageReadRoutes);
 
-  // ======================
   // Message Search Routes
-  // ======================
   app.use("/api/messages", messageSearchRoutes);
 
   // ======================
@@ -1553,49 +1600,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ======================
   // Messaging Routes
   // ======================
-
-  // Get messages for current user (conversation threads) with pagination
-  app.get("/api/messages", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.auth.userId;
-      
-      // Pagination parameters
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 50;
-      const offset = (page - 1) * limit;
-      
-      const { messages } = await import("@shared/schema");
-      const { desc, or, count } = await import("drizzle-orm");
-      
-      // Get total count
-      const [totalResult] = await db.select({ count: count() })
-        .from(messages)
-        .where(or(eq(messages.senderId, userId), eq(messages.receiverId, userId)));
-      
-      const total = totalResult.count;
-      
-      // Get paginated messages
-      const userMessages = await db.select()
-        .from(messages)
-        .where(or(eq(messages.senderId, userId), eq(messages.receiverId, userId)))
-        .orderBy(desc(messages.createdAt))
-        .limit(limit)
-        .offset(offset);
-      
-      res.json({
-        messages: userMessages,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      });
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-      res.status(500).json({ message: "Failed to fetch messages" });
-    }
-  });
+  // Note: Main GET /api/messages endpoint is defined earlier to avoid route conflicts
 
   // Get messages for a specific listing conversation
   app.get("/api/messages/listing/:listingId", isAuthenticated, async (req: any, res) => {
