@@ -6,9 +6,10 @@ import { Card } from "@/components/ui/card";
 interface ImageGalleryProps {
   images: string[];
   title: string;
+  imageRotations?: number[];
 }
 
-export default function ImageGallery({ images, title }: ImageGalleryProps) {
+export default function ImageGallery({ images, title, imageRotations = [] }: ImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   if (!images || images.length === 0) {
@@ -38,7 +39,8 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
           <img
             src={images[currentIndex]}
             alt={`${title} - Image ${currentIndex + 1}`}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain transition-transform duration-200"
+            style={{ transform: `rotate(${imageRotations[currentIndex] || 0}deg)` }}
             data-testid={`image-main-${currentIndex}`}
           />
         </div>
@@ -100,7 +102,8 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
               <img
                 src={image}
                 alt={`${title} thumbnail ${index + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-200"
+                style={{ transform: `rotate(${imageRotations[index] || 0}deg)` }}
               />
             </button>
           ))}

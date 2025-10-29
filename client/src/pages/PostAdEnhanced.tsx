@@ -318,6 +318,15 @@ export default function PostAdEnhanced() {
       form.reset(formData);
       setUploadedImages(existingListing.images || []);
       
+      // Load image rotations if available
+      if (existingListing.imageRotations && Array.isArray(existingListing.imageRotations)) {
+        setImageRotations(existingListing.imageRotations);
+        console.log('✅ Image rotations loaded:', existingListing.imageRotations);
+      } else {
+        // Initialize with zeros if no rotations saved
+        setImageRotations(new Array(existingListing.images?.length || 0).fill(0));
+      }
+      
       console.log('✅ Form.reset() called successfully');
       console.log('✅ Images state updated');
       console.log('═══════════════════════════════════════════════════════');
@@ -2002,7 +2011,12 @@ export default function PostAdEnhanced() {
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     // Ensure status is 'active' for publish button
-    createListingMutation.mutate({ ...data, status: 'active' });
+    // Include image rotations data
+    createListingMutation.mutate({ 
+      ...data, 
+      status: 'active',
+      imageRotations: imageRotations 
+    });
   };
 
   const saveDraft = () => {
@@ -2020,6 +2034,7 @@ export default function PostAdEnhanced() {
       ...pendingDraftData, 
       status: 'draft',
       folderId: folderId,
+      imageRotations: imageRotations
     });
     
     // Close modal and clear pending data

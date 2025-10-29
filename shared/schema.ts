@@ -125,6 +125,7 @@ export const listings = pgTable("listings", {
   locationLongitude: decimal("location_longitude", { precision: 10, scale: 7 }),
   
   images: text("images").array().notNull().default(sql`'{}'::text[]`),
+  imageRotations: jsonb("image_rotations").default(sql`'[]'::jsonb`), // Array of rotation angles [0, 90, 180, 270]
   status: varchar("status", { length: 20 }).notNull().default("active"),
   
   // Draft folder organization (legacy - kept for backward compatibility)

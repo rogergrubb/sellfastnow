@@ -286,7 +286,11 @@ export default function ListingDetail() {
           {/* LEFT SECTION - Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Image Gallery */}
-            <ImageGallery images={listing.images} title={listing.title} />
+            <ImageGallery 
+              images={listing.images} 
+              title={listing.title} 
+              imageRotations={listing.imageRotations as number[] | undefined}
+            />
 
             {/* Listing Details Card */}
             <Card className="p-6">

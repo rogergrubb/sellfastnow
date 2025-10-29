@@ -105,7 +105,7 @@ const router = Router();
   router.post("/", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth.userId;
-      const { title, description, price, category, condition, location, images, status, folderId } = req.body;
+      const { title, description, price, category, condition, location, images, status, folderId, imageRotations } = req.body;
 
       const isDraft = status === 'draft';
       
@@ -132,6 +132,7 @@ const router = Router();
         condition: condition || "good",
         location: location || "Local Area",
         images: images || [],
+        imageRotations: imageRotations || [],
         status: status || "active",  // Use provided status or default to active
         folderId: folderId || null,
       });
