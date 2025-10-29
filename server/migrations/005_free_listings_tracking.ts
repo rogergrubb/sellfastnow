@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
-import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import { db } from "../db";
 
-export async function up(db: PostgresJsDatabase) {
+export async function up() {
   console.log("Running migration: 005_free_listings_tracking");
   
   await db.execute(sql`
@@ -13,7 +13,7 @@ export async function up(db: PostgresJsDatabase) {
   console.log("✅ Added free_listings_used_this_month and free_listings_reset_date columns to users table");
 }
 
-export async function down(db: PostgresJsDatabase) {
+export async function down() {
   await db.execute(sql`
     ALTER TABLE users 
     DROP COLUMN IF EXISTS free_listings_used_this_month,
