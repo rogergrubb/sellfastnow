@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -58,7 +59,10 @@ import {
   FileText,
   SkipForward,
   Package,
-  RotateCw
+  RotateCw,
+  RotateCcw,
+  CheckSquare,
+  Square
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -148,6 +152,7 @@ export default function PostAdEnhanced() {
   const [mode, setMode] = useState<"coached" | "simple">("coached");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [imageRotations, setImageRotations] = useState<number[]>([]);
+  const [selectedImages, setSelectedImages] = useState<Set<number>>(new Set());
   const [isUploading, setIsUploading] = useState(false);
   const [productIdentifications, setProductIdentifications] = useState<ProductIdentification[]>([]);
   const [analyzingPhotos, setAnalyzingPhotos] = useState<boolean[]>([]);
@@ -1975,6 +1980,60 @@ export default function PostAdEnhanced() {
     });
   };
 
+  // Bulk rotation functions
+  const toggleImageSelection = (index: number) => {
+    setSelectedImages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedImages.size === uploadedImages.length) {
+      setSelectedImages(new Set());
+    } else {
+      setSelectedImages(new Set(uploadedImages.map((_, i) => i)));
+    }
+  };
+
+  const rotateSelected = (degrees: number) => {
+    if (selectedImages.size === 0) return;
+    
+    setImageRotations(prev => {
+      const newRotations = [...prev];
+      selectedImages.forEach(index => {
+        while (newRotations.length <= index) {
+          newRotations.push(0);
+        }
+        newRotations[index] = ((newRotations[index] || 0) + degrees) % 360;
+        // Handle negative rotations
+        if (newRotations[index] < 0) {
+          newRotations[index] += 360;
+        }
+      });
+      return newRotations;
+    });
+  };
+
+  const resetSelectedRotations = () => {
+    if (selectedImages.size === 0) return;
+    
+    setImageRotations(prev => {
+      const newRotations = [...prev];
+      selectedImages.forEach(index => {
+        if (index < newRotations.length) {
+          newRotations[index] = 0;
+        }
+      });
+      return newRotations;
+    });
+  };
+
   // Sync imageRotations array length with uploadedImages
   useEffect(() => {
     setImageRotations(prev => {
@@ -2758,8 +2817,87 @@ export default function PostAdEnhanced() {
 
                     {uploadedImages.length > 0 && (
                       <div className="space-y-3 mt-4">
+                        {/* Bulk Rotation Controls */}
+                        {uploadedImages.length > 1 && (
+                          <Card className="p-4 bg-muted/30">
+                            <div className="flex items-center justify-between gap-4 flex-wrap">
+                              <div className="flex items-center gap-3">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={toggleSelectAll}
+                                  className="gap-2"
+                                >
+                                  {selectedImages.size === uploadedImages.length ? (
+                                    <><CheckSquare className="h-4 w-4" /> Deselect All</>
+                                  ) : (
+                                    <><Square className="h-4 w-4" /> Select All</>
+                                  )}
+                                </Button>
+                                {selectedImages.size > 0 && (
+                                  <Badge variant="secondary">
+                                    {selectedImages.size} selected
+                                  </Badge>
+                                )}
+                              </div>
+                              
+                              {selectedImages.size > 0 && (
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => rotateSelected(90)}
+                                    className="gap-2"
+                                    title="Rotate selected images 90° clockwise"
+                                  >
+                                    <RotateCw className="h-4 w-4" />
+                                    Rotate CW
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => rotateSelected(-90)}
+                                    className="gap-2"
+                                    title="Rotate selected images 90° counter-clockwise"
+                                  >
+                                    <RotateCcw className="h-4 w-4" />
+                                    Rotate CCW
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={resetSelectedRotations}
+                                    className="gap-2"
+                                    title="Reset selected images to 0°"
+                                  >
+                                    <X className="h-4 w-4" />
+                                    Reset
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          </Card>
+                        )}
+                        
                         {uploadedImages.map((img, index) => (
-                          <div key={index} className="flex gap-3 p-3 border rounded-lg">
+                          <div key={index} className={`flex gap-3 p-3 border rounded-lg transition-colors ${
+                            selectedImages.has(index) ? 'border-primary bg-primary/5' : ''
+                          }`}>
+                            {/* Selection Checkbox */}
+                            {uploadedImages.length > 1 && (
+                              <div className="flex items-start pt-1">
+                                <Checkbox
+                                  checked={selectedImages.has(index)}
+                                  onCheckedChange={() => toggleImageSelection(index)}
+                                  className="mt-1"
+                                />
+                              </div>
+                            )}
+                            
                             <div className="relative w-24 h-24 rounded overflow-hidden flex-shrink-0">
                               <img 
                                 src={img} 
