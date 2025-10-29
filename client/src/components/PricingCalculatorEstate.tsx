@@ -29,8 +29,8 @@ export default function PricingCalculatorEstate() {
   
   const aiCost = paidItems * pricePerItem;
   
-  // Assume average sale price of $100 per item
-  const avgItemPrice = 100;
+  // Assume average sale price of $50 per item (better for bulk estate sales)
+  const avgItemPrice = 50;
   const totalSaleValue = count * avgItemPrice;
   const transactionFee = totalSaleValue * 0.05; // 5%
   
@@ -54,8 +54,11 @@ export default function PricingCalculatorEstate() {
               Calculate Your Costs
             </h2>
           </div>
-          <p className="text-xl text-gray-600 dark:text-gray-400">
-            See exactly how much you'll pay to list your estate
+          <p className="text-xl text-gray-600 dark:text-gray-400 mb-2">
+            Perfect for Realtors, Liquidators & Estate Sale Professionals
+          </p>
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+            Example: 100 items @ $50 each = only $200 in fees (4% total)
           </p>
         </div>
 
@@ -120,8 +123,8 @@ export default function PricingCalculatorEstate() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">5% of sale price</span>
-                  <span className="text-gray-600 dark:text-gray-400">
-                    (assuming ${avgItemPrice} avg per item)
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    (${avgItemPrice} avg per item)
                   </span>
                 </div>
                 <div className="flex justify-between">
