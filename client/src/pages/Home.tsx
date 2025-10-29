@@ -7,6 +7,7 @@ import EstateKeyFeatures from "@/components/EstateKeyFeatures";
 import PricingCalculatorEstate from "@/components/PricingCalculatorEstate";
 import TargetAudiences from "@/components/TargetAudiences";
 import SocialMediaDemo from "@/components/SocialMediaDemo";
+import WelcomeModal from "@/components/WelcomeModal";
 import HeroWithBenefits from "@/components/HeroWithBenefits";
 import CategoryFilters from "@/components/CategoryFilters";
 import FilterSidebar from "@/components/FilterSidebar";
@@ -34,6 +35,7 @@ import {
 import type { Listing } from "@shared/schema";
 
 export default function Home() {
+  // Welcome modal will auto-show for first-time visitors
   const [, navigate] = useLocation();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
@@ -146,6 +148,9 @@ export default function Home() {
 
   return (
     <div>
+      {/* Welcome Modal for first-time visitors */}
+      <WelcomeModal />
+      
       {/* Estate Sale Focus Section */}
       <EstateHero />
       <RealtorTestimonial />

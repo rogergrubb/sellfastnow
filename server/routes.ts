@@ -36,6 +36,7 @@ import boostsRoutes from "./routes/boosts";
 import savedSearchesRoutes from "./routes/savedSearches";
 import offersRoutes from "./routes/offers";
 import paymentRoutes from "./routes/payments";
+import welcomeRoutes from "./routes/welcome";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -237,6 +238,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Saved Searches Routes
   // ======================
   app.use("/api/saved-searches", savedSearchesRoutes);
+
+  // ======================
+  // Welcome Modal Routes
+  // ======================
+  app.use("/api", welcomeRoutes);
 
   // ======================
   // Listings Routes

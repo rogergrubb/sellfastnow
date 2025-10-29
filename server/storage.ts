@@ -59,6 +59,12 @@ import {
   type InsertMonetizationEvent,
   type Transaction,
   type InsertTransaction,
+  welcomeSignups,
+  giveawayEntries,
+  type WelcomeSignup,
+  type InsertWelcomeSignup,
+  type GiveawayEntry,
+  type InsertGiveawayEntry,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
@@ -209,6 +215,10 @@ export interface IStorage {
   purchaseCredits(userId: string, amount: number, cost: number, stripePaymentId?: string): Promise<UserCredits>;
   useCredits(userId: string, amount: number, description?: string): Promise<UserCredits>;
   getCreditTransactions(userId: string, limit?: number): Promise<CreditTransaction[]>;
+
+  // Welcome signup operations
+  createWelcomeSignup(signup: any): Promise<any>;
+  createGiveawayEntry(entry: any): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2220,6 +2230,26 @@ export class DatabaseStorage implements IStorage {
       batchTitle: row.batchTitle!,
       count: row.count,
     }));
+  }
+
+  // ============================================
+  // WELCOME SIGNUP METHODS
+  // ============================================
+
+  async createWelcomeSignup(signup: InsertWelcomeSignup): Promise<WelcomeSignup> {
+    const [newSignup] = await db
+      .insert(welcomeSignups)
+      .values(signup)
+      .returning();
+    return newSignup;
+  }
+
+  async createGiveawayEntry(entry: InsertGiveawayEntry): Promise<GiveawayEntry> {
+    const [newEntry] = await db
+      .insert(giveawayEntries)
+      .values(entry)
+      .returning();
+    return newEntry;
   }
 }
 export const storage = new DatabaseStorage();;

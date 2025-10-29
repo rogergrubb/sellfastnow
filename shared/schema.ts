@@ -668,4 +668,10 @@ export * from "./schema/upcycle";
 // MEETUP TRACKING SYSTEM
 // ============================================
 export * from "./schema/meetup";
+
+// ============================================
+// WELCOME MODAL SIGNUPS & GIVEAWAY
+// ============================================
+export * from "./schema/welcome_signups";
+
 // Cache bust 1761523424
