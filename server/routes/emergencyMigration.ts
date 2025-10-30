@@ -43,22 +43,28 @@ router.post("/run", async (req, res) => {
 
     console.log("Added analytics columns to listings table");
 
-    // Add SMS tracking to search_alert_notifications table
-    await db.execute(sql`
-      ALTER TABLE search_alert_notifications
-      ADD COLUMN IF NOT EXISTS sms_sent BOOLEAN DEFAULT false,
-      ADD COLUMN IF NOT EXISTS sms_sent_at TIMESTAMP
-    `);
+    // Add SMS tracking to search_alert_notifications table (if it exists)
+    try {
+      await db.execute(sql`
+        ALTER TABLE search_alert_notifications
+        ADD COLUMN IF NOT EXISTS sms_sent BOOLEAN DEFAULT false,
+        ADD COLUMN IF NOT EXISTS sms_sent_at TIMESTAMP
+      `);
+      console.log("Added SMS tracking to search_alert_notifications table");
+    } catch (error: any) {
+      console.log("Skipping search_alert_notifications (table may not exist):", error.message);
+    }
 
-    console.log("Added SMS tracking to search_alert_notifications table");
-
-    // Add SMS notifications to saved_searches table
-    await db.execute(sql`
-      ALTER TABLE saved_searches
-      ADD COLUMN IF NOT EXISTS sms_notifications BOOLEAN DEFAULT false
-    `);
-
-    console.log("Added SMS notifications to saved_searches table");
+    // Add SMS notifications to saved_searches table (if it exists)
+    try {
+      await db.execute(sql`
+        ALTER TABLE saved_searches
+        ADD COLUMN IF NOT EXISTS sms_notifications BOOLEAN DEFAULT false
+      `);
+      console.log("Added SMS notifications to saved_searches table");
+    } catch (error: any) {
+      console.log("Skipping saved_searches (table may not exist):", error.message);
+    }
 
     // Create indexes
     await db.execute(sql`
