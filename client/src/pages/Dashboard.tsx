@@ -38,6 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { User, Listing, Message } from "@shared/schema";
 import ListingCard from "@/components/ListingCard";
 import { DashboardShareModal } from "@/components/DashboardShareModal";
+import InlineListingEditor from "@/components/InlineListingEditor";
 
 type DashboardStats = {
   totalActive: number;
@@ -136,7 +137,9 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedListings, setSelectedListings] = useState<string[]>([]);
   const [isSelectMode, setIsSelectMode] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [editingListing, setEditingListing] = useState<Listing | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   // Sync active tab and filter with URL query parameters
   useEffect(() => {
@@ -960,15 +963,17 @@ export default function Dashboard() {
 
                               {/* Action Buttons */}
                               <div className="flex sm:flex-col gap-2 justify-end">
-                                <Link href={`/post-ad?edit=${listing.id}`}>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    data-testid={`button-edit-${listing.id}`}
-                                  >
-                                    <Edit2 className="h-4 w-4" />
-                                  </Button>
-                                </Link>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setEditingListing(listing);
+                                    setEditorOpen(true);
+                                  }}
+                                  data-testid={`button-edit-${listing.id}`}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
                                 {listing.status === "draft" && (
                                   <Button
                                     variant="default"
@@ -1125,6 +1130,19 @@ export default function Dashboard() {
         }))}
         userId={currentUser?.id}
       />
+
+      {/* Inline Listing Editor Modal */}
+      {editingListing && (
+        <InlineListingEditor
+          listing={editingListing}
+          open={editorOpen}
+          onOpenChange={setEditorOpen}
+          onSave={() => {
+            // Refresh listings after save
+            queryClient.invalidateQueries({ queryKey: ['/api/listings/my-listings'] });
+          }}
+        />
+      )}
     </div>
   );
 }
