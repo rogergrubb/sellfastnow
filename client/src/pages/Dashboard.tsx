@@ -1122,8 +1122,8 @@ export default function Dashboard() {
 
       {/* Share Modal */}
       <DashboardShareModal
-        isOpen={showShareModal}
-        onClose={() => setShowShareModal(false)}
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
         listings={(userListings || []).map(listing => ({
           id: listing.id,
           title: listing.title,
