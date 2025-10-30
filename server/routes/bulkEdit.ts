@@ -28,14 +28,8 @@ router.patch("/listings/:id", isAuthenticated, async (req: any, res) => {
       return res.status(404).json({ message: "Listing not found or unauthorized" });
     }
 
-    // Handle image rotation metadata
-    if (updates.imageRotations) {
-      // Store rotation angles in the listing metadata
-      const metadata = listing.metadata || {};
-      metadata.imageRotations = updates.imageRotations;
-      updates.metadata = metadata;
-      delete updates.imageRotations;
-    }
+    // Image rotations are stored directly in the imageRotations field
+    // No special handling needed
 
     // Update listing
     const [updatedListing] = await db
