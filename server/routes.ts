@@ -44,6 +44,7 @@ import realtimeRoutes from "./routes/realtime";
 import bulkEditRoutes from "./routes/bulkEdit";
 import emergencyMigrationRoutes from "./routes/emergencyMigration";
 import markMigrationsCompleteRoutes from "./routes/markMigrationsComplete";
+import deleteUserListingsRoutes from "./routes/deleteUserListings";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -445,6 +446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ======================
   app.use("/api/emergency-migration", emergencyMigrationRoutes);
   app.use("/api/mark-migrations-complete", markMigrationsCompleteRoutes);
+  app.use("/api/admin", deleteUserListingsRoutes);
 
   // ======================
   // Listings Routes
