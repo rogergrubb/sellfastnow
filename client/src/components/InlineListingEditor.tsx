@@ -58,12 +58,17 @@ export default function InlineListingEditor({
 
     setRotating(true);
     try {
-      const response = await fetch(`/api/bulk-edit/${listing.id}/rotate-image`, {
-        method: "POST",
+      // Calculate new rotation
+      const currentRotation = listing.imageRotations?.[0] || 0;
+      const newRotation = (currentRotation + 90) % 360;
+      const newRotations = [newRotation, ...(listing.imageRotations?.slice(1) || [])];
+
+      // Update listing with new rotation
+      const response = await fetch(`/api/bulk-edit/listings/${listing.id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          imageUrl: listing.images[0],
-          degrees: 90,
+          imageRotations: newRotations,
         }),
       });
 

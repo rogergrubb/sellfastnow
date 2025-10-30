@@ -23,7 +23,8 @@ import {
   ZoomIn,
   X,
   Plus,
-  AlertCircle
+  AlertCircle,
+  RotateCw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/AuthContext";
@@ -1252,6 +1253,9 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
                 src={enlargedImage} 
                 alt="Enlarged preview" 
                 className="w-full h-full object-contain"
+                style={{
+                  transform: `rotate(${(products[enlargedProductIndex]?.imageRotations?.[enlargedImageIndex] || 0)}deg)`
+                }}
               />
               
               {/* Navigation Arrows for Fullscreen */}
@@ -1290,8 +1294,30 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
                 </>
               )}
             </div>
-          )}
-          <DialogFooter>
+          )}  
+          <DialogFooter className="flex justify-between items-center">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const product = products[enlargedProductIndex];
+                const currentRotations = product.imageRotations || [];
+                const currentRotation = currentRotations[enlargedImageIndex] || 0;
+                const newRotation = (currentRotation + 90) % 360;
+                const newRotations = [...currentRotations];
+                newRotations[enlargedImageIndex] = newRotation;
+                
+                // Update the product's rotation data
+                const updatedProducts = [...products];
+                updatedProducts[enlargedProductIndex] = {
+                  ...product,
+                  imageRotations: newRotations,
+                };
+                setProducts(updatedProducts);
+              }}
+            >
+              <RotateCw className="h-4 w-4 mr-2" />
+              Rotate 90°
+            </Button>
             <Button onClick={() => setEnlargedImage(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
