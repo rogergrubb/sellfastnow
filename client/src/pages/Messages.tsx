@@ -6,6 +6,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Inbox } from "lucide-react";
 import { MessageModal } from "@/components/MessageModal";
+import OnlineStatusIndicator from "@/components/OnlineStatusIndicator";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import type { Message, Listing, User } from "@shared/schema";
 
 interface EnrichedThread {
@@ -23,6 +25,9 @@ export default function Messages() {
   const { user } = useAuth();
   const [selectedThread, setSelectedThread] = useState<EnrichedThread | null>(null);
   const [threads, setThreads] = useState<EnrichedThread[]>([]);
+
+  // Track user's online status
+  useOnlineStatus();
 
   // Fetch all messages for current user
   const { data: messages = [], isLoading: messagesLoading } = useQuery<Message[]>({
@@ -142,19 +147,24 @@ export default function Messages() {
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
-                  {thread.listingImage ? (
-                    <img 
-                      src={thread.listingImage} 
-                      alt={thread.listingTitle}
-                      className="h-16 w-16 object-cover rounded flex-shrink-0"
-                    />
-                  ) : (
-                    <Avatar className="h-16 w-16 flex-shrink-0">
-                      <AvatarFallback>
-                        <MessageCircle className="h-8 w-8" />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
+                  <div className="relative">
+                    {thread.listingImage ? (
+                      <img 
+                        src={thread.listingImage} 
+                        alt={thread.listingTitle}
+                        className="h-16 w-16 object-cover rounded flex-shrink-0"
+                      />
+                    ) : (
+                      <Avatar className="h-16 w-16 flex-shrink-0">
+                        <AvatarFallback>
+                          <MessageCircle className="h-8 w-8" />
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div className="absolute bottom-0 right-0">
+                      <OnlineStatusIndicator userId={thread.otherUserId} size="md" />
+                    </div>
+                  </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1">

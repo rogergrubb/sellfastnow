@@ -188,6 +188,43 @@ router.delete("/:id", isAuthenticated, async (req, res) => {
   }
 });
 
+// Partial update (PATCH)
+router.patch("/:id", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user!.id;
+    const searchId = parseInt(req.params.id);
+    
+    // Verify ownership
+    const [existing] = await db
+      .select()
+      .from(savedSearches)
+      .where(and(
+        eq(savedSearches.id, searchId),
+        eq(savedSearches.userId, userId)
+      ));
+    
+    if (!existing) {
+      return res.status(404).json({ message: "Saved search not found" });
+    }
+    
+    const updates = req.body;
+    
+    const [updated] = await db
+      .update(savedSearches)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(savedSearches.id, searchId))
+      .returning();
+    
+    res.json(updated);
+  } catch (error) {
+    console.error("Error updating saved search:", error);
+    res.status(500).json({ message: "Failed to update saved search" });
+  }
+});
+
 // Toggle active status
 router.patch("/:id/toggle", isAuthenticated, async (req, res) => {
   try {

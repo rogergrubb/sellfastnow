@@ -74,6 +74,31 @@ router.post("/toggle", isAuthenticated, async (req: any, res) => {
         listingId,
       });
       console.log(`❤️ User ${userId} favorited listing ${listingId}`);
+      
+      // Send SMS notification to seller
+      (async () => {
+        try {
+          const { sendItemFavoritedSMS } = await import("../services/smsNotifications");
+          const { listings, users } = await import("@shared/schema");
+          
+          const listing = await db.query.listings.findFirst({
+            where: eq(listings.id, listingId),
+          });
+          
+          const buyer = await db.query.users.findFirst({
+            where: eq(users.id, userId),
+          });
+          
+          if (listing && buyer) {
+            const buyerName = `${buyer.firstName} ${buyer.lastName}`;
+            const listingUrl = `https://sellfast.now/listings/${listingId}`;
+            await sendItemFavoritedSMS(listing.userId, buyerName, listing.title, listingUrl);
+          }
+        } catch (error) {
+          console.error('Error sending favorite SMS:', error);
+        }
+      })();
+      
       res.json({ isFavorited: true });
     }
   } catch (error: any) {

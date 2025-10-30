@@ -92,6 +92,16 @@ const router = Router();
         return res.status(404).json({ message: "Listing not found" });
       }
       
+      // Track view (async, don't wait)
+      (async () => {
+        try {
+          const { trackListingView } = await import("../services/listingAnalytics");
+          await trackListingView(id);
+        } catch (error) {
+          console.error('Error tracking listing view:', error);
+        }
+      })();
+      
       res.json(result);
     } catch (error: any) {
       console.error("❌ Error fetching listing:", error);
@@ -145,6 +155,17 @@ const router = Router();
         processNewListingForNotifications(listing as any).catch(err => {
           console.error('Error processing notifications:', err);
         });
+        
+        // Send SMS notification to seller that listing is published
+        (async () => {
+          try {
+            const { sendListingPublishedSMS } = await import("../services/smsNotifications");
+            const listingUrl = `https://sellfast.now/listings/${listing.id}`;
+            await sendListingPublishedSMS(userId, listing.title, listingUrl);
+          } catch (error) {
+            console.error('Error sending listing published SMS:', error);
+          }
+        })();
       }
 
       res.status(201).json(listing);

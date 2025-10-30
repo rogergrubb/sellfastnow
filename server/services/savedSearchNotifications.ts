@@ -3,6 +3,7 @@ import { savedSearches, searchAlertNotifications } from "@shared/schema/saved_se
 import { listings } from "@shared/schema";
 import { eq, and, gte, lte, like, sql } from "drizzle-orm";
 import { getUncachableResendClient } from "../email";
+import { sendSavedSearchSMS } from "./sms";
 
 interface Listing {
   id: string;
@@ -99,15 +100,43 @@ export async function processNewListingForNotifications(listing: Listing) {
       // Send notification based on frequency
       const shouldSendNow = search.notificationFrequency === "instant";
       
-      if (shouldSendNow && search.emailNotifications) {
-        await sendSearchAlertEmail(search, listing);
+      if (shouldSendNow) {
+        let emailSent = false;
+        let smsSent = false;
+        
+        // Send email notification if enabled
+        if (search.emailNotifications) {
+          await sendSearchAlertEmail(search, listing);
+          emailSent = true;
+        }
+        
+        // Send SMS notification if enabled
+        if (search.smsNotifications) {
+          // Get user phone number
+          const [user] = await db.execute(sql`
+            SELECT phone_number FROM users WHERE id = ${search.userId}
+          `);
+          
+          if (user && user.phone_number) {
+            const listingUrl = `https://sellfast.now/listings/${listing.id}`;
+            smsSent = await sendSavedSearchSMS(
+              user.phone_number,
+              search.name,
+              listing.title,
+              listing.price,
+              listingUrl
+            );
+          }
+        }
         
         // Record that we sent the notification
         await db.insert(searchAlertNotifications).values({
           savedSearchId: search.id,
           listingId: listing.id,
-          emailSent: true,
-          emailSentAt: new Date(),
+          emailSent,
+          emailSentAt: emailSent ? new Date() : null,
+          smsSent,
+          smsSentAt: smsSent ? new Date() : null,
         });
         
         // Update last notified timestamp

@@ -4,6 +4,7 @@ import { up as runWelcomeSignupsMigration } from "./003_welcome_signups";
 import { up as runImageRotationsMigration } from "./004_image_rotations";
 import { up as runFreeListingsTrackingMigration } from "./005_free_listings_tracking";
 import { up as runSavedSearchesMigration } from "./006_saved_searches";
+import { up as runSmsPreferencesMigration } from "./007_sms_preferences";
 
 /**
  * Run all pending migrations
@@ -30,6 +31,9 @@ export async function runMigrations() {
     
     console.log("Running migration 006: saved_searches...");
     await runSavedSearchesMigration();
+    
+    console.log("Running migration 007: sms_preferences...");
+    await runSmsPreferencesMigration();
     
     console.log("✅ All migrations completed successfully");
   } catch (error) {

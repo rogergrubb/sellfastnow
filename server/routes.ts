@@ -34,9 +34,14 @@ import reliabilityRoutes from "./routes/reliability";
 import notificationsRoutes from "./routes/notifications";
 import boostsRoutes from "./routes/boosts";
 import savedSearchesRoutes from "./routes/savedSearches";
+import smsCampaignsRoutes from "./routes/smsCampaigns";
 import offersRoutes from "./routes/offers";
 import paymentRoutes from "./routes/payments";
 import welcomeRoutes from "./routes/welcome";
+import sitemapRoutes from "./routes/sitemap";
+import analyticsRoutes from "./routes/analytics";
+import realtimeRoutes from "./routes/realtime";
+import bulkEditRoutes from "./routes/bulkEdit";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -116,6 +121,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Update user profile (including SMS preferences)
+  app.patch('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.auth.userId;
+      const updates = req.body;
+      
+      // Validate phone number format if provided
+      if (updates.phoneNumber) {
+        const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+        const cleanPhone = updates.phoneNumber.replace(/\D/g, '');
+        if (cleanPhone.length < 10) {
+          return res.status(400).json({ message: "Invalid phone number format" });
+        }
+      }
+      
+      // Update user profile
+      const updatedUser = await storage.updateUserProfile(userId, updates);
+      
+      console.log(`✅ Updated user profile for ${userId}`);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update user profile" });
     }
   });
 
@@ -380,11 +411,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Saved Searches Routes
   // ======================
   app.use("/api/saved-searches", savedSearchesRoutes);
+  app.use("/api/sms-campaigns", smsCampaignsRoutes);
 
   // ======================
   // Welcome Modal Routes
   // ======================
   app.use("/api", welcomeRoutes);
+
+  // ======================
+  // SEO Routes
+  // ======================
+  app.use("/", sitemapRoutes); // For /sitemap.xml
+
+  // ======================
+  // Analytics Routes
+  // ======================
+  app.use("/api/analytics", analyticsRoutes);
+
+  // ======================
+  // Real-time Routes
+  // ======================
+  app.use("/api/realtime", realtimeRoutes);
+
+  // ======================
+  // Bulk Edit Routes
+  // ======================
+  app.use("/api/bulk-edit", bulkEditRoutes);
 
   // ======================
   // Listings Routes
@@ -1722,6 +1774,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           console.log('🔔 Notification sent to receiver');
         }
+      }
+      
+      // Send SMS notification for new message
+      try {
+        const { sendNewMessageSMS } = await import("./services/smsNotifications");
+        const listing = await db.query.listings.findFirst({
+          where: eq(listings.id, listingId),
+        });
+        const sender = await db.query.users.findFirst({
+          where: eq(users.id, senderId),
+        });
+        
+        if (listing && sender) {
+          const senderName = `${sender.firstName} ${sender.lastName}`;
+          const conversationUrl = `https://sellfast.now/messages?listing=${listingId}`;
+          
+          await sendNewMessageSMS(
+            receiverId,
+            senderName,
+            listing.title,
+            content.trim(),
+            conversationUrl
+          );
+        }
+      } catch (error) {
+        console.error("Error sending message SMS:", error);
       }
       
       res.json(newMessage[0]);

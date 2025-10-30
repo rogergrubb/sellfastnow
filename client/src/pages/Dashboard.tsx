@@ -704,7 +704,7 @@ export default function Dashboard() {
               </div>
 
               {/* Listing Management Section with Sidebar */}
-              <div className="flex gap-0">
+              <div className="flex gap-0 overflow-x-auto">
                 {/* Left Sidebar */}
                 <DashboardSidebar
                   listingFilter={listingFilter}
@@ -719,24 +719,39 @@ export default function Dashboard() {
                 <div className="flex-1">
                   <Card>
                     <CardHeader className="space-y-3 py-3 px-4">
-                      {/* Publish All Button (only for drafts) */}
-                      {!isSelectMode && listingFilter === "draft" && filteredListings.filter(l => l.status === 'draft').length > 0 && (
-                        <div className="flex justify-end">
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              const draftCount = filteredListings.filter(l => l.status === 'draft').length;
-                              if (confirm(`Publish all ${draftCount} draft listing(s)? They will become visible to buyers.`)) {
-                                bulkPublishMutation.mutate();
-                              }
-                            }}
-                            disabled={bulkPublishMutation.isPending}
-                            data-testid="button-publish-all"
-                            className="h-8 bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            <Upload className="h-3 w-3 mr-1" />
-                            {bulkPublishMutation.isPending ? 'Publishing...' : 'Publish All'}
-                          </Button>
+                      {/* Action Buttons */}
+                      {!isSelectMode && (
+                        <div className="flex justify-end gap-2">
+                          {/* Bulk Edit Button */}
+                          <Link href="/bulk-edit">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8"
+                            >
+                              <Edit2 className="h-3 w-3 mr-1" />
+                              Bulk Edit
+                            </Button>
+                          </Link>
+                          
+                          {/* Publish All Button (only for drafts) */}
+                          {listingFilter === "draft" && filteredListings.filter(l => l.status === 'draft').length > 0 && (
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                const draftCount = filteredListings.filter(l => l.status === 'draft').length;
+                                if (confirm(`Publish all ${draftCount} draft listing(s)? They will become visible to buyers.`)) {
+                                  bulkPublishMutation.mutate();
+                                }
+                              }}
+                              disabled={bulkPublishMutation.isPending}
+                              data-testid="button-publish-all"
+                              className="h-8 bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              <Upload className="h-3 w-3 mr-1" />
+                              {bulkPublishMutation.isPending ? 'Publishing...' : 'Publish All'}
+                            </Button>
+                          )}
                         </div>
                       )}
 

@@ -17,6 +17,7 @@ import MapView from "@/components/MapView";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal, Loader2, Map, List, Shield, Star, TrendingUp, Award, CreditCard, Lock } from "lucide-react";
 import { useLocation } from "wouter";
+import { Helmet } from "react-helmet-async";
 import { useQuery as useAuthQuery } from "@tanstack/react-query";
 import {
   Select,
@@ -147,7 +148,63 @@ export default function Home() {
   };
 
   return (
-    <div>
+    <>
+      <Helmet>
+        {/* Primary Meta Tags */}
+        <title>SellFast.Now - Buy & Sell Anything Locally | Free Classifieds Marketplace</title>
+        <meta name="description" content="Buy and sell items locally on SellFast.Now. Browse thousands of listings for electronics, furniture, vehicles, and more. Post your ad for free today! Join our trusted community of local buyers and sellers." />
+        <meta name="keywords" content="buy sell locally, classified ads, marketplace, free listings, local deals, buy electronics, sell furniture, local classifieds, online marketplace, buy used items" />
+        <link rel="canonical" href="https://sellfast.now/" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://sellfast.now/" />
+        <meta property="og:title" content="SellFast.Now - Buy & Sell Anything Locally" />
+        <meta property="og:description" content="Your local classified ads marketplace. Buy and sell electronics, furniture, vehicles, and more. Post your ad for free!" />
+        <meta property="og:image" content="https://sellfast.now/og-image.jpg" />
+        <meta property="og:site_name" content="SellFast.Now" />
+        
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://sellfast.now/" />
+        <meta property="twitter:title" content="SellFast.Now - Buy & Sell Anything Locally" />
+        <meta property="twitter:description" content="Your local classified ads marketplace. Buy and sell electronics, furniture, vehicles, and more. Post your ad for free!" />
+        <meta property="twitter:image" content="https://sellfast.now/og-image.jpg" />
+        
+        {/* Structured Data - WebSite */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "SellFast.Now",
+            "url": "https://sellfast.now",
+            "description": "Buy and sell items locally. Free classified ads marketplace.",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://sellfast.now/?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          })}
+        </script>
+        
+        {/* Structured Data - Organization */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "SellFast.Now",
+            "url": "https://sellfast.now",
+            "logo": "https://sellfast.now/logo.png",
+            "sameAs": [
+              "https://facebook.com/sellfastnow",
+              "https://twitter.com/sellfastnow",
+              "https://instagram.com/sellfastnow"
+            ]
+          })}
+        </script>
+      </Helmet>
+      
+      <div>
       {/* Welcome Modal for first-time visitors */}
       <WelcomeModal />
       
@@ -349,5 +406,6 @@ export default function Home() {
         </div>
       </div>
     </div>
+    </>
   );
 }

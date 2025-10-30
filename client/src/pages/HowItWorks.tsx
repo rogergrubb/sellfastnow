@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import SEO from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,7 +10,45 @@ import {
 
 export default function HowItWorks() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+    <>
+      <SEO
+        title="How It Works - AI-Powered Marketplace"
+        description="Learn how SellFast.Now uses AI to help you sell faster. Post bulk listings in minutes, get AI-generated descriptions, and reach local buyers easily. Sell smarter, not harder."
+        keywords="how it works, AI marketplace, bulk listings, sell faster, AI descriptions, local selling"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "HowTo",
+          "name": "How to Sell on SellFast.Now",
+          "description": "Step-by-step guide to selling items on SellFast.Now marketplace",
+          "step": [
+            {
+              "@type": "HowToStep",
+              "position": 1,
+              "name": "Take Photos",
+              "text": "Snap photos of items you want to sell"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 2,
+              "name": "AI Generation",
+              "text": "Our AI creates titles, descriptions, and valuations"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 3,
+              "name": "Review & Post",
+              "text": "Review AI suggestions and publish your listings"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 4,
+              "name": "Connect with Buyers",
+              "text": "Receive offers and messages from local buyers"
+            }
+          ]
+        }}
+      />
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -210,5 +249,6 @@ export default function HowItWorks() {
         </Link>
       </section>
     </div>
+    </>
   );
 }

@@ -86,6 +86,32 @@ export const users = pgTable("users", {
   addressVerified: boolean("address_verified").notNull().default(false),
   verifiedAt: timestamp("verified_at"),
   
+  // SMS marketing preferences
+  smsWeeklyUpdates: boolean("sms_weekly_updates").notNull().default(false),
+  smsMonthlyUpdates: boolean("sms_monthly_updates").notNull().default(false),
+  smsCreditGiveaways: boolean("sms_credit_giveaways").notNull().default(false),
+  smsPromotional: boolean("sms_promotional").notNull().default(false),
+  smsOptInDate: timestamp("sms_opt_in_date"),
+  
+  // SMS transaction notifications
+  smsOfferReceived: boolean("sms_offer_received").notNull().default(false),
+  smsOfferResponse: boolean("sms_offer_response").notNull().default(false),
+  smsPaymentConfirmed: boolean("sms_payment_confirmed").notNull().default(false),
+  
+  // SMS message notifications
+  smsNewMessage: boolean("sms_new_message").notNull().default(false),
+  
+  // SMS listing notifications
+  smsListingPublished: boolean("sms_listing_published").notNull().default(false),
+  smsListingEngagement: boolean("sms_listing_engagement").notNull().default(false), // views, favorites
+  smsListingSold: boolean("sms_listing_sold").notNull().default(false),
+  
+  // SMS review notifications
+  smsReviewReceived: boolean("sms_review_received").notNull().default(false),
+  
+  // SMS meetup notifications
+  smsMeetupReminder: boolean("sms_meetup_reminder").notNull().default(false),
+  
   // Meeting preferences
   preferredMeetingLocations: text("preferred_meeting_locations"), // JSON array: ["public_places", "my_location", "buyer_location", "shipping_only"]
   availableTimes: text("available_times"), // JSON array: ["weekdays", "weekends", "evenings"]
@@ -131,6 +157,10 @@ export const listings = pgTable("listings", {
   images: text("images").array().notNull().default(sql`'{}'::text[]`),
   imageRotations: jsonb("image_rotations").default(sql`'[]'::jsonb`), // Array of rotation angles [0, 90, 180, 270]
   status: varchar("status", { length: 20 }).notNull().default("active"),
+  
+  // Analytics fields
+  viewCount: integer("view_count").notNull().default(0),
+  lastViewedAt: timestamp("last_viewed_at"),
   
   // Draft folder organization (legacy - kept for backward compatibility)
   batchId: varchar("batch_id", { length: 100 }), // Unique ID for draft folder/batch

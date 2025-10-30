@@ -90,7 +90,7 @@ export function DashboardSidebar({
   };
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 p-6 space-y-1 sticky top-0 h-screen overflow-y-auto">
+    <div className="w-64 flex-shrink-0 bg-white border-r border-gray-200 p-6 space-y-1 sticky top-0 h-screen overflow-y-auto">
       {/* SellFast Logo */}
       <div className="flex items-center gap-2 mb-8">
         <HomeIcon className="h-8 w-8 text-teal-600" />

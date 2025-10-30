@@ -83,7 +83,24 @@ router.post("/:listingId/offers", isAuthenticated, async (req: any, res) => {
       // Don't fail the offer creation if message creation fails
     }
 
-    // TODO: Send notification to seller (email/push notification)
+    // Send SMS notification to seller
+    try {
+      const { sendOfferReceivedSMS } = await import("../services/smsNotifications");
+      const buyer = await storage.getUser(buyerId);
+      const buyerName = buyer ? `${buyer.firstName} ${buyer.lastName}` : "Someone";
+      const listingUrl = `https://sellfast.now/listings/${listingId}`;
+      
+      await sendOfferReceivedSMS(
+        listing.userId,
+        buyerName,
+        listing.title,
+        offerAmount.toString(),
+        listingUrl
+      );
+    } catch (error) {
+      console.error("Error sending offer SMS:", error);
+      // Don't fail the offer creation if SMS fails
+    }
 
     res.status(201).json({ offer: newOffer });
   } catch (error) {
@@ -264,6 +281,50 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
       }
     } catch (error) {
       console.error("Error creating status message:", error);
+    }
+
+    // Send SMS notifications for offer status changes
+    try {
+      const { 
+        sendOfferAcceptedSMS, 
+        sendOfferRejectedSMS, 
+        sendCounterOfferSMS 
+      } = await import("../services/smsNotifications");
+      
+      const listing = await storage.getListing(offer.listingId);
+      const sender = await storage.getUser(userId);
+      const senderName = sender ? `${sender.firstName} ${sender.lastName}` : "Seller";
+      const listingUrl = `https://sellfast.now/listings/${offer.listingId}`;
+      
+      if (status === "accepted" && listing) {
+        const finalAmount = offer.counterOfferAmount || offer.offerAmount;
+        const paymentUrl = `https://sellfast.now/payment/${offer.listingId}`;
+        await sendOfferAcceptedSMS(
+          offer.buyerId,
+          senderName,
+          listing.title,
+          finalAmount.toString(),
+          paymentUrl
+        );
+      } else if (status === "rejected" && listing) {
+        await sendOfferRejectedSMS(
+          offer.buyerId,
+          senderName,
+          listing.title,
+          listingUrl
+        );
+      } else if (status === "countered" && listing) {
+        const recipientId = isSeller ? offer.buyerId : offer.sellerId;
+        await sendCounterOfferSMS(
+          recipientId,
+          senderName,
+          listing.title,
+          counterOfferAmount.toString(),
+          listingUrl
+        );
+      }
+    } catch (error) {
+      console.error("Error sending offer status SMS:", error);
     }
 
     // If accepted, create a transaction

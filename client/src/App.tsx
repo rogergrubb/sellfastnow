@@ -32,6 +32,9 @@ import SellerMeetupPage from "./pages/SellerMeetupPage";
 import UserReviews from "./pages/UserReviews";
 import SavedSearches from "./pages/SavedSearches";
 import VerificationSettings from "./pages/VerificationSettings";
+import SmsSettings from "./pages/SmsSettings";
+import SellerAnalytics from "./pages/SellerAnalytics";
+import BulkEdit from "./pages/BulkEdit";
 import Navbar from "@/components/Navbar";
 import { NotificationManager } from "@/components/NotificationManager";
 import { useQuery } from "@tanstack/react-query";
@@ -65,6 +68,9 @@ function Router() {
       <Route path="/payment/:transactionId" component={Payment} />
       <Route path="/meetup/:id" component={SellerMeetupPage} />
       <Route path="/saved-searches" component={SavedSearches} />
+      <Route path="/sms-settings" component={SmsSettings} />
+      <Route path="/seller-analytics" component={SellerAnalytics} />
+      <Route path="/bulk-edit" component={BulkEdit} />
       <Route path="/collections/:batchId" component={Collection} />
       <Route component={NotFound} />
     </Switch>

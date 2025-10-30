@@ -278,6 +278,53 @@ export default function ListingDetail() {
         {/* Additional Meta Tags */}
         <meta name="author" content={getSellerName(seller)} />
         <meta name="keywords" content={`${listing.category}, ${listing.condition}, buy ${listing.title}, sell ${listing.title}`} />
+        
+        {/* Structured Data - Product */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": listing.title,
+            "image": listing.images && listing.images.length > 0 ? listing.images : [],
+            "description": listing.description,
+            "category": listing.category,
+            "offers": {
+              "@type": "Offer",
+              "url": window.location.href,
+              "priceCurrency": "USD",
+              "price": listing.price || 0,
+              "itemCondition": `https://schema.org/${listing.condition === 'new' ? 'NewCondition' : listing.condition === 'like-new' ? 'RefurbishedCondition' : 'UsedCondition'}`,
+              "availability": listing.status === 'active' ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+              "seller": {
+                "@type": "Person",
+                "name": getSellerName(seller)
+              }
+            }
+          })}
+        </script>
+        
+        {/* Structured Data - Breadcrumb */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [{
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://sellfast.now"
+            },{
+              "@type": "ListItem",
+              "position": 2,
+              "name": listing.category,
+              "item": `https://sellfast.now/?category=${encodeURIComponent(listing.category)}`
+            },{
+              "@type": "ListItem",
+              "position": 3,
+              "name": listing.title
+            }]
+          })}
+        </script>
       </Helmet>
       
       <div className="min-h-screen bg-background">

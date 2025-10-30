@@ -15,6 +15,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Send, Loader2 } from "lucide-react";
 import type { Message, User } from "@shared/schema";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import TypingIndicator from "@/components/TypingIndicator";
+import OnlineStatusIndicator from "@/components/OnlineStatusIndicator";
+import { soundEffects } from "@/utils/soundEffects";
 
 interface MessageModalProps {
   isOpen: boolean;
@@ -42,6 +46,13 @@ export function MessageModal({
   const queryClient = useQueryClient();
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const prevMessageCountRef = useRef(0);
+
+  // Typing indicator
+  const { typingUsers, setTyping, removeTyping } = useTypingIndicator(listingId);
+
+  // Filter out current user from typing users
+  const otherUsersTyping = typingUsers.filter(userId => userId !== user?.id);
 
   // Fetch messages for this listing
   const { data: messages = [], isLoading } = useQuery<MessageWithSender[]>({
@@ -104,6 +115,7 @@ export function MessageModal({
       });
       return;
     }
+    removeTyping(); // Remove typing indicator when sending
     sendMessageMutation.mutate(messageText.trim());
   };
 
@@ -114,10 +126,33 @@ export function MessageModal({
     }
   };
 
+  // Handle typing indicator
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessageText(e.target.value);
+    if (e.target.value.trim()) {
+      setTyping(); // Set typing indicator when user types
+    } else {
+      removeTyping(); // Remove when input is empty
+    }
+  };
+
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Play sound when new message arrives
+  useEffect(() => {
+    if (messages.length > prevMessageCountRef.current && prevMessageCountRef.current > 0) {
+      // New message arrived
+      const lastMessage = messages[messages.length - 1];
+      // Only play sound if message is from other user
+      if (lastMessage.senderId !== user?.id) {
+        soundEffects.playMessageSound();
+      }
+    }
+    prevMessageCountRef.current = messages.length;
+  }, [messages, user]);
 
   const formatMessageTime = (date: Date | string | null) => {
     if (!date) return "";
@@ -200,6 +235,14 @@ export function MessageModal({
               <div ref={messagesEndRef} />
             </>
           )}
+          
+          {/* Typing Indicator */}
+          {otherUsersTyping.length > 0 && (
+            <TypingIndicator 
+              typingUsers={otherUsersTyping} 
+              userNames={{ [sellerId]: sellerName }}
+            />
+          )}
         </div>
 
         {/* Message Input */}
@@ -207,7 +250,7 @@ export function MessageModal({
           <Textarea
             placeholder="Type your message..."
             value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
+            onChange={handleTextChange}
             onKeyPress={handleKeyPress}
             className="resize-none"
             rows={3}
