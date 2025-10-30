@@ -24,6 +24,19 @@ async function runMigrations() {
   try {
     console.log("📂 Running migrations from ./migrations folder...");
     
+    // Check if migrations folder has any SQL files
+    const fs = await import('fs');
+    const path = await import('path');
+    const migrationsPath = path.resolve('./migrations');
+    const files = fs.readdirSync(migrationsPath).filter(f => f.endsWith('.sql'));
+    
+    if (files.length === 0) {
+      console.log("ℹ️  No migration files found, skipping migrations");
+      return;
+    }
+    
+    console.log(`Found ${files.length} migration file(s)`);
+    
     await migrate(db, { migrationsFolder: "./migrations" });
     
     console.log("✅ All migrations completed successfully!");
