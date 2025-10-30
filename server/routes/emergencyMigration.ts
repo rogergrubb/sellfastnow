@@ -43,6 +43,47 @@ router.post("/run", async (req, res) => {
 
     console.log("Added analytics columns to listings table");
 
+    // Create welcome_signups table if it doesn't exist
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS welcome_signups (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        email VARCHAR NOT NULL UNIQUE,
+        keyword_alerts BOOLEAN NOT NULL DEFAULT false,
+        keywords TEXT,
+        bulk_sales_alerts BOOLEAN NOT NULL DEFAULT false,
+        estate_sales_alerts BOOLEAN NOT NULL DEFAULT false,
+        giveaway_entry BOOLEAN NOT NULL DEFAULT false,
+        newsletter BOOLEAN NOT NULL DEFAULT false,
+        ip_address VARCHAR(45),
+        user_agent TEXT,
+        referrer TEXT,
+        email_verified BOOLEAN NOT NULL DEFAULT false,
+        verified_at TIMESTAMP,
+        unsubscribed_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    console.log("Created welcome_signups table");
+
+    // Create giveaway_entries table if it doesn't exist
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS giveaway_entries (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        email VARCHAR NOT NULL,
+        month VARCHAR(7) NOT NULL,
+        entry_source VARCHAR(50) NOT NULL DEFAULT 'welcome_modal',
+        is_winner BOOLEAN NOT NULL DEFAULT false,
+        won_at TIMESTAMP,
+        credits_claimed BOOLEAN NOT NULL DEFAULT false,
+        claimed_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    console.log("Created giveaway_entries table");
+
     // Add SMS tracking to search_alert_notifications table (if it exists)
     try {
       await db.execute(sql`
