@@ -33,6 +33,7 @@ import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { ListingSuccessModal } from "@/components/ListingSuccessModal";
 import { FolderSelectionModal } from "@/components/FolderSelectionModal";
+import LocationSelectionModal, { type LocationData } from "@/components/LocationSelectionModal";
 
 interface DetectedProduct {
   title: string;
@@ -164,6 +165,8 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
   const [successListingIds, setSuccessListingIds] = useState<string[]>([]);
   const [successListingTitles, setSuccessListingTitles] = useState<string[]>([]);
   const [showFolderModal, setShowFolderModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
   
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const { toast } = useToast();
@@ -297,6 +300,12 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
       return;
     }
 
+    // Show location modal first if no location selected
+    if (!selectedLocation) {
+      setShowLocationModal(true);
+      return;
+    }
+
     setIsPublishing(true);
     setPublishingProgress({
       current: 0,
@@ -311,8 +320,10 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
         price: String(product.usedPrice || 0),
         category: product.category,
         condition: product.condition,
-        location: "Local Area",
+        location: selectedLocation?.location || "Local Area",
         images: product.imageUrls,
+        // Include all location data
+        ...selectedLocation,
       }));
 
       console.log('📋 Prepared listings for batch publish:', {
@@ -461,8 +472,10 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
         price: String(product.usedPrice || 0),
         category: product.category,
         condition: product.condition,
-        location: "Local Area",
+        location: selectedLocation?.location || "Local Area",
         images: product.imageUrls,
+        // Include all location data
+        ...selectedLocation,
       }));
 
       console.log('📋 Prepared listings for batch draft save:', {
@@ -1339,6 +1352,19 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
         open={showFolderModal}
         onOpenChange={setShowFolderModal}
         onSave={handleSaveDraftsToFolder}
+      />
+
+      <LocationSelectionModal
+        open={showLocationModal}
+        onOpenChange={setShowLocationModal}
+        onSave={(locationData) => {
+          setSelectedLocation(locationData);
+          setShowLocationModal(false);
+          // Trigger publish after location is set
+          setTimeout(() => {
+            handlePublishAll();
+          }, 100);
+        }}
       />
     </div>
   );
