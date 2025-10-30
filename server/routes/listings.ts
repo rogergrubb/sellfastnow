@@ -134,6 +134,26 @@ const router = Router();
 
       console.log(`Creating single listing for user ${userId}: ${title || 'Untitled'} with status: ${status || 'active'}`);
 
+      // Geocode location to get coordinates
+      let locationData: any = {};
+      if (location && location !== "Local Area") {
+        const { geocodeLocation } = await import("../utils/geocode");
+        const geocoded = await geocodeLocation(location);
+        if (geocoded) {
+          locationData = {
+            locationLatitude: String(geocoded.latitude),
+            locationLongitude: String(geocoded.longitude),
+            locationCity: geocoded.city,
+            locationRegion: geocoded.region,
+            locationCountry: geocoded.country,
+            locationPostalCode: geocoded.postalCode,
+          };
+          console.log(`✅ Geocoded location: ${location} -> ${geocoded.latitude}, ${geocoded.longitude}`);
+        } else {
+          console.log(`⚠️ Could not geocode location: ${location}`);
+        }
+      }
+
       const listing = await storage.createListing({
         userId,
         title: title || "Untitled",
@@ -142,6 +162,7 @@ const router = Router();
         category: category || "Other",
         condition: condition || "good",
         location: location || "Local Area",
+        ...locationData, // Add geocoded coordinates
         images: images || [],
         imageRotations: imageRotations || [],
         status: status || "active",  // Use provided status or default to active

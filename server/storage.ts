@@ -589,8 +589,8 @@ export class DatabaseStorage implements IStorage {
           return { ...listing, distance };
         })
         .filter(listing => {
-          // Filter out listings beyond the distance radius
-          if (listing.distance === null) return false; // No coordinates
+          // Include listings within distance radius OR listings without coordinates
+          if (listing.distance === null) return true; // Include listings without coordinates
           return listing.distance <= filters.distance!;
         });
 

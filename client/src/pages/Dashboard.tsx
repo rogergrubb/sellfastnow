@@ -972,7 +972,8 @@ export default function Dashboard() {
                                   }}
                                   data-testid={`button-edit-${listing.id}`}
                                 >
-                                  <Edit2 className="h-4 w-4" />
+                                  <Edit2 className="h-4 w-4 mr-1" />
+                                  Edit
                                 </Button>
                                 {listing.status === "draft" && (
                                   <Button
@@ -984,7 +985,8 @@ export default function Dashboard() {
                                     className="bg-green-600 hover:bg-green-700"
                                     title="Publish this draft"
                                   >
-                                    <Rocket className="h-4 w-4" />
+                                    <Rocket className="h-4 w-4 mr-1" />
+                                    Publish
                                   </Button>
                                 )}
                                 {listing.status === "active" && (
@@ -995,7 +997,8 @@ export default function Dashboard() {
                                     disabled={markAsSoldMutation.isPending}
                                     data-testid={`button-mark-sold-${listing.id}`}
                                   >
-                                    <CheckCircle className="h-4 w-4" />
+                                    <CheckCircle className="h-4 w-4 mr-1" />
+                                    Sold
                                   </Button>
                                 )}
                                 <Button
@@ -1009,7 +1012,8 @@ export default function Dashboard() {
                                   disabled={deleteMutation.isPending}
                                   data-testid={`button-delete-${listing.id}`}
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Delete
                                 </Button>
                               </div>
                             </div>
