@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,18 @@ export default function InlineListingEditor({
   const [saving, setSaving] = useState(false);
   const [rotating, setRotating] = useState(false);
   const { toast } = useToast();
+
+  // Reset form data when listing changes
+  useEffect(() => {
+    setFormData({
+      title: listing.title,
+      description: listing.description || "",
+      price: listing.price,
+      category: listing.category,
+      condition: listing.condition,
+    });
+    setImageRotation(0);
+  }, [listing.id]);
 
   const handleRotateImage = async () => {
     if (!listing.images || listing.images.length === 0) {
@@ -108,7 +120,7 @@ export default function InlineListingEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Listing</DialogTitle>
         </DialogHeader>
