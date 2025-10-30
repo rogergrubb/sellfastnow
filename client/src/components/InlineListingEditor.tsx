@@ -67,6 +67,7 @@ export default function InlineListingEditor({
       const response = await fetch(`/api/bulk-edit/listings/${listing.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           imageRotations: newRotations,
         }),
@@ -97,9 +98,10 @@ export default function InlineListingEditor({
   const handleSave = async () => {
     setSaving(true);
     try {
-      const response = await fetch(`/api/bulk-edit/${listing.id}`, {
+      const response = await fetch(`/api/bulk-edit/listings/${listing.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(formData),
       });
 
