@@ -33,8 +33,10 @@ export default function SignInPage() {
           title: "Success",
           description: "Signed in successfully!",
         });
-        // Redirect to home page using client-side navigation
-        navigate('/');
+        // Wait a moment for auth state to update, then redirect
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 500);
       }
     } catch (error: any) {
       toast({
