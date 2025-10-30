@@ -42,6 +42,7 @@ import sitemapRoutes from "./routes/sitemap";
 import analyticsRoutes from "./routes/analytics";
 import realtimeRoutes from "./routes/realtime";
 import bulkEditRoutes from "./routes/bulkEdit";
+import emergencyMigrationRoutes from "./routes/emergencyMigration";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -437,6 +438,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Bulk Edit Routes
   // ======================
   app.use("/api/bulk-edit", bulkEditRoutes);
+
+  // ======================
+  // Emergency Migration Routes (NO AUTH REQUIRED)
+  // ======================
+  app.use("/api/emergency-migration", emergencyMigrationRoutes);
 
   // ======================
   // Listings Routes
