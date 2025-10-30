@@ -43,6 +43,7 @@ import analyticsRoutes from "./routes/analytics";
 import realtimeRoutes from "./routes/realtime";
 import bulkEditRoutes from "./routes/bulkEdit";
 import emergencyMigrationRoutes from "./routes/emergencyMigration";
+import markMigrationsCompleteRoutes from "./routes/markMigrationsComplete";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -443,6 +444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Emergency Migration Routes (NO AUTH REQUIRED)
   // ======================
   app.use("/api/emergency-migration", emergencyMigrationRoutes);
+  app.use("/api/mark-migrations-complete", markMigrationsCompleteRoutes);
 
   // ======================
   // Listings Routes
