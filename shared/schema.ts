@@ -145,7 +145,7 @@ export const listings = pgTable("listings", {
   category: varchar("category", { length: 50 }).notNull(),
   condition: varchar("condition", { length: 20 }).notNull(),
   
-  // Location fields
+  // Location fields - Core
   location: varchar("location", { length: 100 }).notNull(), // Display text
   locationCity: varchar("location_city", { length: 100 }),
   locationRegion: varchar("location_region", { length: 100 }), // State/Province
@@ -153,6 +153,30 @@ export const listings = pgTable("listings", {
   locationPostalCode: varchar("location_postal_code", { length: 20 }),
   locationLatitude: decimal("location_latitude", { precision: 10, scale: 7 }),
   locationLongitude: decimal("location_longitude", { precision: 10, scale: 7 }),
+  
+  // Location fields - Enhanced
+  locationPrecisionLevel: varchar("location_precision_level", { length: 20 }), // 'exact', 'proximity', 'city', 'region'
+  locationPrivacyRadius: integer("location_privacy_radius"), // Radius in meters for proximity mode
+  locationNeighborhood: varchar("location_neighborhood", { length: 100 }),
+  locationStreetAddress: text("location_street_address"), // Full street address (hidden until transaction)
+  locationFormattedAddress: text("location_formatted_address"), // Geocoded formatted address
+  locationPlaceId: varchar("location_place_id", { length: 255 }), // Google/OSM place ID
+  locationTimezone: varchar("location_timezone", { length: 50 }),
+  
+  // Geocoding metadata
+  locationGeocoded: boolean("location_geocoded").default(false),
+  locationGeocodedAt: timestamp("location_geocoded_at"),
+  locationGeocodingService: varchar("location_geocoding_service", { length: 50 }), // 'google', 'nominatim', 'manual'
+  locationGeocodingAccuracy: varchar("location_geocoding_accuracy", { length: 20 }), // 'rooftop', 'range_interpolated', 'geometric_center', 'approximate'
+  
+  // Pickup/Delivery options
+  pickupAvailable: boolean("pickup_available").default(true),
+  deliveryAvailable: boolean("delivery_available").default(false),
+  shippingAvailable: boolean("shipping_available").default(false),
+  meetingPointsAvailable: boolean("meeting_points_available").default(false),
+  
+  // Location metadata (JSONB for flexibility)
+  locationMetadata: jsonb("location_metadata").default(sql`'{}'::jsonb`), // Additional location data
   
   images: text("images").array().notNull().default(sql`'{}'::text[]`),
   imageRotations: jsonb("image_rotations").default(sql`'[]'::jsonb`), // Array of rotation angles [0, 90, 180, 270]
