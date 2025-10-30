@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { RotateCw, Save, X } from "lucide-react";
 import type { Listing } from "@shared/schema";
 
@@ -33,6 +34,7 @@ export default function InlineListingEditor({
   const [saving, setSaving] = useState(false);
   const [rotating, setRotating] = useState(false);
   const { toast } = useToast();
+  const { getToken } = useAuth();
 
   // Reset form data when listing changes
   useEffect(() => {
@@ -58,6 +60,12 @@ export default function InlineListingEditor({
 
     setRotating(true);
     try {
+      // Get auth token
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+
       // Calculate new rotation
       const currentRotation = listing.imageRotations?.[0] || 0;
       const newRotation = (currentRotation + 90) % 360;
@@ -66,8 +74,10 @@ export default function InlineListingEditor({
       // Update listing with new rotation
       const response = await fetch(`/api/bulk-edit/listings/${listing.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify({
           imageRotations: newRotations,
         }),
@@ -98,10 +108,18 @@ export default function InlineListingEditor({
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Get auth token
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+
       const response = await fetch(`/api/bulk-edit/listings/${listing.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify(formData),
       });
 
