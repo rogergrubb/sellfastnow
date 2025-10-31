@@ -743,4 +743,9 @@ export * from './referrals-schema';
 // ============================================
 export * from './analytics-schema';
 
+// ============================================
+// BUSINESS PARTNERS SYSTEM
+// ============================================
+export * from './partners-schema';
+
 // Cache bust 1761523424

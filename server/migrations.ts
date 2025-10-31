@@ -424,6 +424,125 @@ export async function runMigrations() {
     `);
     console.log("✅ Analytics indexes created");
 
+    // Create business_partners table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS business_partners (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id VARCHAR NOT NULL,
+        business_name VARCHAR NOT NULL,
+        business_type VARCHAR NOT NULL,
+        business_description TEXT,
+        business_email VARCHAR NOT NULL,
+        business_phone VARCHAR,
+        business_website VARCHAR,
+        logo_url VARCHAR,
+        banner_url VARCHAR,
+        primary_color VARCHAR DEFAULT '#3b82f6',
+        secondary_color VARCHAR DEFAULT '#1e40af',
+        custom_domain VARCHAR UNIQUE,
+        street_address VARCHAR,
+        city VARCHAR,
+        state VARCHAR,
+        postal_code VARCHAR,
+        country VARCHAR DEFAULT 'US',
+        stripe_account_id VARCHAR UNIQUE,
+        platform_fee_percent DECIMAL(5, 2) DEFAULT 3.00,
+        payout_schedule VARCHAR DEFAULT 'weekly',
+        status VARCHAR DEFAULT 'pending',
+        verification_status VARCHAR DEFAULT 'unverified',
+        verified_at TIMESTAMP,
+        settings JSONB DEFAULT '{}',
+        features JSONB DEFAULT '{"bulkUpload":true,"emailCampaigns":true,"smsCampaigns":false,"analytics":true,"customBranding":true}',
+        total_listings INTEGER DEFAULT 0,
+        total_sales INTEGER DEFAULT 0,
+        total_revenue DECIMAL(12, 2) DEFAULT 0.00,
+        total_commission_earned DECIMAL(12, 2) DEFAULT 0.00,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        last_active_at TIMESTAMP
+      );
+    `);
+    console.log("✅ Business partners table created");
+
+    // Create partner_clients table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS partner_clients (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        partner_id UUID NOT NULL REFERENCES business_partners(id),
+        email VARCHAR NOT NULL,
+        first_name VARCHAR,
+        last_name VARCHAR,
+        phone VARCHAR,
+        total_purchases INTEGER DEFAULT 0,
+        total_spent DECIMAL(12, 2) DEFAULT 0.00,
+        last_purchase_at TIMESTAMP,
+        email_opt_in BOOLEAN DEFAULT true,
+        sms_opt_in BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      );
+    `);
+    console.log("✅ Partner clients table created");
+
+    // Create partner_listings table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS partner_listings (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        partner_id UUID NOT NULL REFERENCES business_partners(id),
+        listing_id VARCHAR NOT NULL,
+        batch_id VARCHAR,
+        uploaded_at TIMESTAMP DEFAULT NOW(),
+        status VARCHAR DEFAULT 'active',
+        sold_at TIMESTAMP,
+        sold_price DECIMAL(10, 2),
+        platform_fee DECIMAL(10, 2),
+        partner_earnings DECIMAL(10, 2),
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      );
+    `);
+    console.log("✅ Partner listings table created");
+
+    // Create partner_campaigns table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS partner_campaigns (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        partner_id UUID NOT NULL REFERENCES business_partners(id),
+        name VARCHAR NOT NULL,
+        subject VARCHAR NOT NULL,
+        html_content TEXT NOT NULL,
+        plain_text_content TEXT,
+        target_audience VARCHAR DEFAULT 'all',
+        recipient_count INTEGER DEFAULT 0,
+        status VARCHAR DEFAULT 'draft',
+        scheduled_for TIMESTAMP,
+        sent_at TIMESTAMP,
+        opens INTEGER DEFAULT 0,
+        clicks INTEGER DEFAULT 0,
+        conversions INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      );
+    `);
+    console.log("✅ Partner campaigns table created");
+
+    // Create indexes for partner tables
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_business_partners_user_id ON business_partners(user_id);
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_business_partners_custom_domain ON business_partners(custom_domain);
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_partner_clients_partner_id ON partner_clients(partner_id);
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_partner_listings_partner_id ON partner_listings(partner_id);
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_partner_listings_listing_id ON partner_listings(listing_id);
+    `);
+    console.log("✅ Partner indexes created");
+
     console.log("✅ Database migrations completed successfully");
   } catch (error) {
     console.error("❌ Migration error:", error);
