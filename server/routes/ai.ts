@@ -113,7 +113,7 @@ router.post("/analyze-image", isAuthenticated, async (req, res) => {
     if (manualCategory) {
       console.log(`📁 Using manual category override: "${manualCategory}"`);
     }
-    const { analyzeProductImage } = await import("../aiServiceGemini");
+    const { analyzeProductImage } = await import("../aiService");
     const analysis = await analyzeProductImage(imageUrl, 1, manualCategory);
     
     console.log('✅ Gemini analysis complete:', {
@@ -171,7 +171,7 @@ router.post("/analyze-item", isAuthenticated, async (req: any, res) => {
       console.log(`📁 Using manual category override: "${manualCategory}"`);
     }
     
-    const { analyzeProductImage } = await import("../aiServiceGemini");
+    const { analyzeProductImage } = await import("../aiService");
     const analysis = await analyzeProductImage(imageUrl, itemIndex || 1, manualCategory);
     
     console.log(`✅ Item ${itemIndex || 'N/A'}: Gemini analysis complete - "${analysis.title}"`);
@@ -205,7 +205,7 @@ router.post("/analyze-multiple-images", isAuthenticated, async (req, res) => {
     if (manualCategory) {
       console.log(`📁 Using manual category override: "${manualCategory}"`);
     }
-    const { analyzeMultipleImages } = await import("../aiServiceGemini");
+    const { analyzeMultipleImages } = await import("../aiService");
     const analysis = await analyzeMultipleImages(imageUrls, manualCategory);
     
     console.log('✅ Multi-image analysis complete:', {
@@ -242,7 +242,7 @@ router.post("/analyze-bulk-images", isAuthenticated, async (req: any, res) => {
     
     // STEP 1: Detect product groupings from ALL images (always free)
     console.log(`🔍 Step 1: Detecting products from all ${totalImages} images...`);
-    const { analyzeMultipleImages } = await import("../aiServiceGemini");
+    const { analyzeMultipleImages } = await import("../aiService");
     const groupingAnalysis = await analyzeMultipleImages(imageUrls, manualCategory);
     
     console.log(`✅ Detection complete: Found ${groupingAnalysis.products.length} products`);
@@ -258,7 +258,7 @@ router.post("/analyze-bulk-images", isAuthenticated, async (req: any, res) => {
     console.log(`📝 Remaining ${itemsWithoutAI} items will be empty (manual entry required)`);
     
     // STEP 3: For first 5 items, call AI to generate full descriptions IN PARALLEL
-    const { analyzeProductImage } = await import("../aiServiceGemini");
+    const { analyzeProductImage } = await import("../aiService");
     
     console.log(`⚡ Running AI analysis in PARALLEL for ${itemsWithAI} items...`);
     const startTime = Date.now();
@@ -418,7 +418,7 @@ router.post("/identify-product", isAuthenticated, async (req: any, res) => {
     }
 
     console.log(`🔍 Analyzing single product image: ${imageUrl.substring(0, 80)}...`);
-    const { analyzeProductImage } = await import("../aiServiceGemini");
+    const { analyzeProductImage } = await import("../aiService");
     
     try {
       const analysis = await analyzeProductImage(imageUrl, 1, manualCategory);

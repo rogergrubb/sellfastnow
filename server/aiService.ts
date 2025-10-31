@@ -1,89 +1,52 @@
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Performance monitoring
 interface PerformanceMetrics {
-  functionName: string;
-  startTime: number;
-  endTime?: number;
-  duration?: number;
-  tokenUsage?: number;
+  operation: string;
+  duration: number;
+  timestamp: Date;
+  tokens?: number;
 }
 
 const performanceLog: PerformanceMetrics[] = [];
 
-function startMetric(functionName: string): number {
-  const startTime = Date.now();
-  performanceLog.push({ functionName, startTime });
-  return startTime;
+function startMetric(operation: string): number {
+  return Date.now();
 }
 
-function endMetric(startTime: number, functionName: string, tokenUsage?: number) {
-  const endTime = Date.now();
-  const duration = endTime - startTime;
-  const metric = performanceLog.find(m => m.startTime === startTime && m.functionName === functionName);
-  if (metric) {
-    metric.endTime = endTime;
-    metric.duration = duration;
-    metric.tokenUsage = tokenUsage;
-  }
-  console.log(`⚡ ${functionName} completed in ${duration}ms${tokenUsage ? ` (${tokenUsage} tokens)` : ''}`);
+function endMetric(startTime: number, operation: string, tokens?: number): number {
+  const duration = Date.now() - startTime;
+  performanceLog.push({
+    operation,
+    duration,
+    timestamp: new Date(),
+    tokens,
+  });
+  console.log(`⚡ ${operation} completed in ${duration}ms${tokens ? ` (${tokens} tokens)` : ''}`);
   return duration;
 }
 
-// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-const getOpenAI = () => {
-  const apiKey = process.env.OPENAI_API_KEY;
-  
-  // Log API key status for debugging
-  console.log('🔑 OpenAI API Key Status:', apiKey ? `Present (starts with: ${apiKey.substring(0, 7)}...)` : 'MISSING');
+const getGemini = () => {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
   
   if (!apiKey) {
-    throw new Error('OPENAI_API_KEY is not configured. Please add it to Replit Secrets.');
+    console.error("❌ GEMINI_API_KEY or GOOGLE_AI_API_KEY not found in environment variables");
+    throw new Error("Gemini API key not configured");
   }
   
-  return new OpenAI({ apiKey });
+  console.log(`🔑 Gemini API Key Status: Present (starts with: ${apiKey.substring(0, 10)}...)`);
+  return new GoogleGenerativeAI(apiKey);
 };
 
-interface PhotoAnalysis {
-  score: number;
-  lighting: { score: number; feedback: string };
-  focus: { score: number; feedback: string };
-  framing: { score: number; feedback: string };
-  background: { score: number; feedback: string };
-  overallFeedback: string;
-  improvements: string[];
-  tip: string;
-}
+// Category list
+const CATEGORY_LIST = "Electronics, Furniture, Clothing, Vehicles, Services";
 
-interface DescriptionAnalysis {
-  score: number;
-  strengths: string[];
-  missingInfo: string[];
-  wordCount: number;
-  suggestions: string[];
-  aiGeneratedDescription?: string;
-}
-
-interface PricingAnalysis {
-  recommendedPrice: number;
-  reasoning: string;
-  marketData: {
-    averagePrice: number;
-    lowestPrice: number;
-    highestPrice: number;
-  };
-  strategy: {
-    sellFast: { price: number; reasoning: string };
-    maximizeValue: { price: number; reasoning: string };
-  };
-  pricingTip: string;
-}
-
+// Type definitions
 export interface ProductAnalysis {
   title: string;
   description: string;
   category: string;
-  tags: string[];
+  tags?: string[];
   retailPrice: number;
   usedPrice: number;
   condition: string;
@@ -92,303 +55,142 @@ export interface ProductAnalysis {
 
 export interface DetectedProduct {
   imageIndices: number[];
-  title: string;
-  description: string;
-  category: string;
-  retailPrice: number;
-  usedPrice: number;
-  condition: string;
-  confidence: number;
+  title?: string;
+  description?: string;
+  category?: string;
+  retailPrice?: number;
+  usedPrice?: number;
+  condition?: string;
+  confidence?: number;
 }
 
 export interface MultiImageAnalysis {
   scenario: "same_product" | "multiple_products";
+  message: string;
   products: DetectedProduct[];
-  message?: string;
 }
 
-// OPTIMIZATION 1: Reduced token limits for faster responses
-const TOKEN_LIMITS = {
-  PRODUCT_IDENTIFICATION: 1024,  // Reduced from 2048
-  DESCRIPTION_ANALYSIS: 1536,    // Reduced from 2048
-  PRICING_ANALYSIS: 1024,        // Reduced from 2048
-  MULTI_IMAGE_ANALYSIS: 3072,    // Reduced from 4096
-  BUNDLE_SUMMARY: 1536,          // Reduced from 2048
-};
-
-// OPTIMIZATION 2: Streamlined prompts for faster processing
-const CATEGORY_LIST = "Electronics, Furniture, Clothing, Automotive, Books & Media, Sports, Home & Garden, Toys, Other";
-
-export async function identifyProductFromPhoto(
-  base64Image: string,
-  photoNumber: number,
-  manualCategory?: string
-): Promise<ProductAnalysis> {
-  const startTime = startMetric('identifyProductFromPhoto');
-  const openai = getOpenAI();
-
-  console.log(`🚀 [OPTIMIZED] Calling OpenAI API (GPT-5) to identify product from photo #${photoNumber}...`);
-  if (manualCategory) {
-    console.log(`📁 Manual category override: "${manualCategory}" - AI will skip category detection`);
-  }
-
+// Convert image URL to base64 for Gemini
+async function urlToBase64(url: string): Promise<{ data: string; mimeType: string }> {
   try {
-    const categoryInstruction = manualCategory 
-      ? `5. Category: "${manualCategory}"`
-      : `5. Category - ONE OF: ${CATEGORY_LIST}`;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-5",
-      messages: [
-        {
-          role: "system",
-          content: `Expert product analyzer. Identify products from photos quickly and accurately.`,
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Analyze this product photo. Provide:
-1. Title (concise, descriptive)
-2. Description (2-3 sentences: what it is, condition, key features)
-3. Used Price (realistic marketplace price)
-4. Retail Price (original/new estimate)
-${categoryInstruction}
-6. Condition (new, like_new, good, fair, poor)
-7. Confidence (0-100)
-
-JSON format:
-{"title": string, "description": string, "usedPrice": number, "retailPrice": number, "category": string, "condition": string, "confidence": number}`,
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:image/jpeg;base64,${base64Image}`,
-                detail: "auto" // OPTIMIZATION: Use auto instead of high for faster processing
-              },
-            },
-          ],
-        },
-      ],
-      response_format: { type: "json_object" },
-      max_completion_tokens: TOKEN_LIMITS.PRODUCT_IDENTIFICATION,
-    });
-
-    const result = JSON.parse(response.choices[0].message.content!);
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString('base64');
     
-    if (manualCategory) {
-      result.category = manualCategory;
-    }
+    // Determine MIME type from URL or response
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
     
-    const tokenUsage = response.usage?.total_tokens;
-    endMetric(startTime, 'identifyProductFromPhoto', tokenUsage);
-    
-    console.log(`✅ [OPTIMIZED] Product identified: "${result.title}"`);
-    console.log(`📁 Category: "${result.category}" ${manualCategory ? '(manual)' : '(AI)'} | Condition: ${result.condition} | Confidence: ${result.confidence}%`);
-    
-    return result;
+    return {
+      data: base64,
+      mimeType: contentType
+    };
   } catch (error: any) {
-    endMetric(startTime, 'identifyProductFromPhoto');
-    console.error("❌ ERROR calling OpenAI API:", error.message);
-    throw new Error(`Failed to identify product: ${error.message}`);
+    console.error(`❌ Error converting image to base64:`, error.message);
+    throw error;
   }
 }
 
-export async function analyzeDescription(
-  description: string,
-  title: string,
-  category: string
-): Promise<DescriptionAnalysis> {
-  const startTime = startMetric('analyzeDescription');
-  const openai = getOpenAI();
-
-  console.log(`🚀 [OPTIMIZED] Analyzing description...`);
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-5",
-      messages: [
-        {
-          role: "system",
-          content: `Expert copywriter for marketplaces. Analyze and improve descriptions efficiently.`,
-        },
-        {
-          role: "user",
-          content: `Analyze: Title: ${title}, Category: ${category}, Description: ${description}
-
-Provide: score (0-10), strengths, missing info, suggestions, improved description (150-200 words).
-
-JSON: {"score": number, "strengths": [string], "missingInfo": [string], "wordCount": number, "suggestions": [string], "aiGeneratedDescription": string}`,
-        },
-      ],
-      response_format: { type: "json_object" },
-      max_completion_tokens: TOKEN_LIMITS.DESCRIPTION_ANALYSIS,
-    });
-
-    const result = JSON.parse(response.choices[0].message.content!);
-    const tokenUsage = response.usage?.total_tokens;
-    endMetric(startTime, 'analyzeDescription', tokenUsage);
-    
-    console.log(`✅ [OPTIMIZED] Description analysis complete (score: ${result.score}/10)`);
-    
-    return result;
-  } catch (error: any) {
-    endMetric(startTime, 'analyzeDescription');
-    console.error("❌ ERROR calling OpenAI API:", error.message);
-    throw new Error(`Failed to analyze description: ${error.message}`);
-  }
-}
-
-export async function analyzePricing(
-  title: string,
-  description: string,
-  category: string,
-  condition: string,
-  userPrice?: string
-): Promise<PricingAnalysis> {
-  const startTime = startMetric('analyzePricing');
-  const openai = getOpenAI();
-
-  console.log(`🚀 [OPTIMIZED] Analyzing pricing...`);
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-5",
-      messages: [
-        {
-          role: "system",
-          content: `Marketplace pricing expert. Provide realistic pricing recommendations.`,
-        },
-        {
-          role: "user",
-          content: `Price analysis for: ${title} (${category}, ${condition})${userPrice ? ` - User price: $${userPrice}` : ""}
-
-Provide: recommended price, reasoning, market data (avg/low/high), strategies (sell fast & maximize value), tip.
-
-JSON: {"recommendedPrice": number, "reasoning": string, "marketData": {"averagePrice": number, "lowestPrice": number, "highestPrice": number}, "strategy": {"sellFast": {"price": number, "reasoning": string}, "maximizeValue": {"price": number, "reasoning": string}}, "pricingTip": string}`,
-        },
-      ],
-      response_format: { type: "json_object" },
-      max_completion_tokens: TOKEN_LIMITS.PRICING_ANALYSIS,
-    });
-
-    const result = JSON.parse(response.choices[0].message.content!);
-    const tokenUsage = response.usage?.total_tokens;
-    endMetric(startTime, 'analyzePricing', tokenUsage);
-    
-    console.log(`✅ [OPTIMIZED] Pricing analysis complete: $${result.recommendedPrice}`);
-    
-    return result;
-  } catch (error: any) {
-    endMetric(startTime, 'analyzePricing');
-    console.error("❌ ERROR calling OpenAI API:", error.message);
-    throw new Error(`Failed to analyze pricing: ${error.message}`);
-  }
-}
-
+// AI-powered product recognition from image
 export async function analyzeProductImage(
   imageUrl: string,
   photoNumber: number,
   manualCategory?: string
 ): Promise<ProductAnalysis> {
   const startTime = startMetric('analyzeProductImage');
-  const openai = getOpenAI();
+  const genAI = getGemini();
 
-  console.log(`🚀 [OPTIMIZED] Analyzing product image #${photoNumber}...`);
+  console.log(`🚀 [GEMINI] Analyzing product image #${photoNumber}...`);
   if (manualCategory) {
     console.log(`📁 Manual category: "${manualCategory}"`);
   }
 
   try {
-    const categoryInstruction = manualCategory 
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    
+    const categoryInstruction = manualCategory
       ? `Category: "${manualCategory}"`
       : `Category - ONE OF: ${CATEGORY_LIST}`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-5",
-      messages: [
-        {
-          role: "system",
-          content: `Expert product analyzer. Fast, accurate identification.`,
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Analyze product. Provide: title, description (2-3 sentences), used price, retail price, ${categoryInstruction}, condition, confidence.
+    const prompt = `Analyze this product image and provide detailed information in JSON format.
 
-JSON: {"title": string, "description": string, "usedPrice": number, "retailPrice": number, "category": string, "condition": string, "confidence": number}`,
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: imageUrl,
-                detail: "auto" // OPTIMIZATION: Use auto for faster processing
-              },
-            },
-          ],
-        },
-      ],
-      response_format: { type: "json_object" },
-      max_completion_tokens: TOKEN_LIMITS.PRODUCT_IDENTIFICATION,
-    });
+REQUIRED FIELDS:
+1. Title: Specific product name (brand, model, key features)
+2. Description: Detailed 2-3 sentence description highlighting condition, features, included items
+3. ${categoryInstruction}
+4. Tags: Array of 3-5 relevant keywords
+5. Retail Price: Estimated new/MSRP price in USD (number only, no $)
+6. Used Price: Estimated fair used market price in USD (number only, no $)
+7. Condition: One of: new, like-new, excellent, good, fair, poor
+8. Confidence: Your confidence level 0-100
 
-    const result = JSON.parse(response.choices[0].message.content!);
+PRICING GUIDELINES:
+- Research current market prices for this specific item
+- Consider condition, age, and completeness
+- Used price should be 30-70% of retail depending on condition
+- Be realistic and competitive
+
+JSON OUTPUT FORMAT:
+{
+  "title": "iPhone 13 Pro Max - 256GB Sierra Blue",
+  "description": "Flagship smartphone with 6.7-inch Super Retina XDR display, A15 Bionic chip, and pro camera system. Excellent condition with minor wear on edges.",
+  "category": "Electronics",
+  "tags": ["smartphone", "iphone", "apple", "256gb", "sierra-blue"],
+  "retailPrice": 1099,
+  "usedPrice": 749,
+  "condition": "excellent",
+  "confidence": 95
+}`;
+
+    // Convert image URL to base64
+    const imageData = await urlToBase64(imageUrl);
+
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          data: imageData.data,
+          mimeType: imageData.mimeType
+        }
+      }
+    ]);
+
+    const response = await result.response;
+    const text = response.text();
     
+    // Extract JSON from response (Gemini sometimes wraps it in markdown)
+    let jsonText = text;
+    if (text.includes('```json')) {
+      jsonText = text.split('```json')[1].split('```')[0].trim();
+    } else if (text.includes('```')) {
+      jsonText = text.split('```')[1].split('```')[0].trim();
+    }
+
+    const analysis: ProductAnalysis = JSON.parse(jsonText);
+    
+    // Override category if manual category provided
     if (manualCategory) {
-      result.category = manualCategory;
+      analysis.category = manualCategory;
     }
     
-    const tokenUsage = response.usage?.total_tokens;
-    endMetric(startTime, 'analyzeProductImage', tokenUsage);
+    endMetric(startTime, 'analyzeProductImage');
     
-    console.log(`✅ [OPTIMIZED] Product analyzed: "${result.title}"`);
-    console.log(`📁 Category: "${result.category}" | Condition: ${result.condition} | Confidence: ${result.confidence}%`);
+    console.log(`✅ [GEMINI] Analysis complete: "${analysis.title}"`);
+    console.log(`📁 Category: "${analysis.category}" | Condition: ${analysis.condition} | Confidence: ${analysis.confidence}%`);
     
-    return result;
+    return analysis;
   } catch (error: any) {
     endMetric(startTime, 'analyzeProductImage');
-    console.error("❌ ERROR calling OpenAI API:", error.message);
+    console.error("❌ ERROR calling Gemini API:", error.message);
     throw new Error(`Failed to analyze product image: ${error.message}`);
-  }
-}
-
-// OPTIMIZATION 3: Parallel batch processing for multiple products
-export async function analyzeMultipleProductsInParallel(
-  imageUrls: string[],
-  manualCategory?: string
-): Promise<ProductAnalysis[]> {
-  const startTime = startMetric('analyzeMultipleProductsInParallel');
-  
-  console.log(`🚀 [OPTIMIZED] Analyzing ${imageUrls.length} products in parallel...`);
-  
-  try {
-    // Process all images concurrently for maximum speed
-    const results = await Promise.all(
-      imageUrls.map((url, index) => 
-        analyzeProductImage(url, index + 1, manualCategory)
-      )
-    );
-    
-    endMetric(startTime, 'analyzeMultipleProductsInParallel');
-    console.log(`✅ [OPTIMIZED] All ${imageUrls.length} products analyzed in parallel`);
-    
-    return results;
-  } catch (error: any) {
-    endMetric(startTime, 'analyzeMultipleProductsInParallel');
-    console.error("❌ ERROR in parallel analysis:", error.message);
-    throw new Error(`Failed to analyze products in parallel: ${error.message}`);
   }
 }
 
 // AI-powered multi-image analysis to detect same product vs different products
 export async function analyzeMultipleImages(imageUrls: string[], manualCategory?: string): Promise<MultiImageAnalysis> {
   const startTime = startMetric('analyzeMultipleImages');
-  const openai = getOpenAI();
+  const genAI = getGemini();
 
-  console.log(`🚀 [OPTIMIZED] Multi-image analysis (${imageUrls.length} images)...`);
+  console.log(`🚀 [GEMINI] Multi-image analysis (${imageUrls.length} images)...`);
   if (manualCategory) {
     console.log(`📁 Manual category: "${manualCategory}"`);
   }
@@ -455,11 +257,9 @@ export async function analyzeMultipleImages(imageUrls: string[], manualCategory?
   }
 
   try {
-    // Build the content array with text prompt and all images
-    const content: any[] = [
-      {
-        type: "text",
-        text: `Analyze ${imageUrls.length} images. Group by product. Respond in JSON format.
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    
+    const prompt = `Analyze ${imageUrls.length} images. Group by product. Respond in JSON format.
 
 RULES:
 1. SAME ITEM: Match features (color, shape, texture, labels). Group together with all imageIndices.
@@ -467,60 +267,50 @@ RULES:
 3. 80%+ similarity = same item.
 
 JSON OUTPUT FORMAT:
-Same product: {"scenario": "same_product", "products": [{"imageIndices": [0,1,2], "title": string, "description": string, "category": string, "retailPrice": number, "usedPrice": number, "condition": string, "confidence": number}]}
+Same product: {"scenario": "same_product", "products": [{"imageIndices": [0,1,2], "title": "Product Name", "description": "...", "category": "Electronics", "retailPrice": 100, "usedPrice": 70, "condition": "good", "confidence": 90}]}
 
 Multiple products: {"scenario": "multiple_products", "products": [{"imageIndices": [0,2], ...}, {"imageIndices": [1,3], ...}]}
 
 Categories: ${CATEGORY_LIST}
 Conditions: new, like-new, good, fair, poor
-All imageIndices must cover 0-${imageUrls.length - 1}, no duplicates.`,
-      },
-    ];
+All imageIndices must cover 0-${imageUrls.length - 1}, no duplicates.`;
 
-    // Add all images with auto detail for speed
-    imageUrls.forEach((url) => {
-      content.push({
-        type: "image_url",
-        image_url: {
-          url: url,
-          detail: "auto" // OPTIMIZATION: Use auto instead of high
-        },
-      });
-    });
+    // Convert all images to base64
+    const imageParts = await Promise.all(
+      imageUrls.map(async (url) => {
+        const imageData = await urlToBase64(url);
+        return {
+          inlineData: {
+            data: imageData.data,
+            mimeType: imageData.mimeType
+          }
+        };
+      })
+    );
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-5",
-      messages: [
-        {
-          role: "system",
-          content: `Expert product analyst. Determine if photos show same product or different products.`,
-        },
-        {
-          role: "user",
-          content: content,
-        },
-      ],
-      response_format: { type: "json_object" },
-      max_completion_tokens: TOKEN_LIMITS.MULTI_IMAGE_ANALYSIS,
-    });
-
-    const rawContent = response.choices[0].message.content;
-    if (!rawContent) {
-      throw new Error("OpenAI returned empty response");
-    }
+    const result = await model.generateContent([prompt, ...imageParts]);
+    const response = await result.response;
+    const text = response.text();
     
-    // Validate JSON before parsing
-    let result;
+    // Extract JSON from response
+    let jsonText = text;
+    if (text.includes('```json')) {
+      jsonText = text.split('```json')[1].split('```')[0].trim();
+    } else if (text.includes('```')) {
+      jsonText = text.split('```')[1].split('```')[0].trim();
+    }
+
+    let analysis: MultiImageAnalysis;
     try {
-      result = JSON.parse(rawContent);
+      analysis = JSON.parse(jsonText);
     } catch (parseError: any) {
-      console.error("❌ JSON parse error. Raw content:", rawContent.substring(0, 500));
-      throw new Error(`Invalid JSON response from OpenAI: ${parseError.message}`);
+      console.error("❌ JSON parse error. Raw content:", jsonText.substring(0, 500));
+      throw new Error(`Invalid JSON response from Gemini: ${parseError.message}`);
     }
     
     // Override categories with manual category if provided
-    if (manualCategory && result.products) {
-      result.products = result.products.map((product: DetectedProduct) => ({
+    if (manualCategory && analysis.products) {
+      analysis.products = analysis.products.map((product: DetectedProduct) => ({
         ...product,
         category: manualCategory
       }));
@@ -528,115 +318,28 @@ All imageIndices must cover 0-${imageUrls.length - 1}, no duplicates.`,
     }
     
     // Add a helpful message
-    if (result.scenario === "same_product") {
-      result.message = `Detected ${imageUrls.length} photos of the same item`;
+    if (analysis.scenario === "same_product") {
+      analysis.message = `Detected ${imageUrls.length} photos of the same item`;
     } else {
-      result.message = `Detected ${result.products.length} different items`;
+      analysis.message = `Detected ${analysis.products.length} different items`;
     }
     
-    const tokenUsage = response.usage?.total_tokens;
-    endMetric(startTime, 'analyzeMultipleImages', tokenUsage);
+    endMetric(startTime, 'analyzeMultipleImages');
     
-    console.log('✅ [OPTIMIZED] Multi-image analysis complete:', {
-      scenario: result.scenario,
-      productCount: result.products.length,
+    console.log('✅ [GEMINI] Multi-image analysis complete:', {
+      scenario: analysis.scenario,
+      productCount: analysis.products.length,
     });
     
-    return result;
+    return analysis;
   } catch (error: any) {
     endMetric(startTime, 'analyzeMultipleImages');
-    console.error("❌ ERROR calling OpenAI API:", error.message);
+    console.error("❌ ERROR calling Gemini API:", error.message);
     throw new Error(`Failed to analyze multiple images: ${error.message}`);
   }
 }
 
-export interface BundleSummary {
-  title: string;
-  description: string;
-  totalRetailValue: number;
-  suggestedBundlePrice: number;
-  category: string;
-}
-
-export async function generateMultiItemBundleSummary(
-  products: DetectedProduct[]
-): Promise<BundleSummary> {
-  const startTime = startMetric('generateMultiItemBundleSummary');
-  const openai = getOpenAI();
-
-  console.log(`🎁 [OPTIMIZED] Generating bundle summary for ${products.length} products...`);
-
-  // Create a concise summary
-  const productList = products
-    .map((p, idx) => 
-      `${idx + 1}. ${p.title} - $${p.usedPrice} (retail: $${p.retailPrice})`
-    )
-    .join('\n');
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-5",
-      messages: [
-        {
-          role: "system",
-          content: `Expert at creating compelling multi-item bundle listings.`,
-        },
-        {
-          role: "user",
-          content: `Create bundle listing for ${products.length} items:
-
-${productList}
-
-Provide:
-1. Title (max 80 chars, format: "X-Item Bundle: [summary]")
-2. Description (overview, list items, total retail value, bundle savings)
-3. Category (best fit or "Other")
-4. Total retail value (sum all retail prices)
-5. Bundle price (20-40% below retail)
-
-JSON: {"title": string, "description": string, "totalRetailValue": number, "suggestedBundlePrice": number, "category": string}`,
-        },
-      ],
-      response_format: { type: "json_object" },
-      max_completion_tokens: TOKEN_LIMITS.BUNDLE_SUMMARY,
-    });
-
-    const result = JSON.parse(response.choices[0].message.content!);
-    
-    const tokenUsage = response.usage?.total_tokens;
-    endMetric(startTime, 'generateMultiItemBundleSummary', tokenUsage);
-    
-    console.log('✅ [OPTIMIZED] Bundle summary generated:', {
-      title: result.title,
-      bundlePrice: result.suggestedBundlePrice,
-      retailValue: result.totalRetailValue,
-    });
-    
-    return result;
-  } catch (error: any) {
-    endMetric(startTime, 'generateMultiItemBundleSummary');
-    console.error("❌ ERROR generating bundle summary:", error.message);
-    throw new Error(`Failed to generate bundle summary: ${error.message}`);
-  }
-}
-
-// OPTIMIZATION 4: Performance reporting
-export function getPerformanceReport(): PerformanceMetrics[] {
+export function getPerformanceMetrics(): PerformanceMetrics[] {
   return performanceLog;
 }
 
-export function clearPerformanceLog(): void {
-  performanceLog.length = 0;
-}
-
-export const aiService = {
-  identifyProductFromPhoto,
-  analyzeDescription,
-  analyzePricing,
-  analyzeProductImage,
-  analyzeMultipleImages,
-  analyzeMultipleProductsInParallel, // NEW: Parallel processing
-  generateMultiItemBundleSummary,
-  getPerformanceReport, // NEW: Performance monitoring
-  clearPerformanceLog,  // NEW: Performance monitoring
-};
