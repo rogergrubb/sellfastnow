@@ -371,6 +371,59 @@ export async function runMigrations() {
     `);
     console.log("✅ Referrals index created");
 
+    // Create analytics_events table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS analytics_events (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id VARCHAR,
+        user_email VARCHAR,
+        ip_address VARCHAR NOT NULL,
+        session_id VARCHAR NOT NULL,
+        event_type VARCHAR(50) NOT NULL,
+        event_name VARCHAR(100) NOT NULL,
+        page_path VARCHAR(500) NOT NULL,
+        page_title VARCHAR(200),
+        referrer VARCHAR(500),
+        element_id VARCHAR(100),
+        element_class VARCHAR(200),
+        element_text VARCHAR(500),
+        element_type VARCHAR(50),
+        metadata JSONB,
+        user_agent VARCHAR(500),
+        device_type VARCHAR(20),
+        browser VARCHAR(50),
+        os VARCHAR(50),
+        timestamp TIMESTAMP DEFAULT NOW() NOT NULL,
+        experiment_id VARCHAR(100),
+        variant_id VARCHAR(100)
+      );
+    `);
+    console.log("✅ Analytics events table created");
+
+    // Create analytics indexes
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_analytics_user_id ON analytics_events(user_id);
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_analytics_email ON analytics_events(user_email);
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_analytics_ip ON analytics_events(ip_address);
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_analytics_session ON analytics_events(session_id);
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_analytics_event_type ON analytics_events(event_type);
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_analytics_timestamp ON analytics_events(timestamp);
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_analytics_page_path ON analytics_events(page_path);
+    `);
+    console.log("✅ Analytics indexes created");
+
     console.log("✅ Database migrations completed successfully");
   } catch (error) {
     console.error("❌ Migration error:", error);

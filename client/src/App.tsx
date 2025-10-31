@@ -39,6 +39,8 @@ import SearchPage from "./pages/SearchPage";
 import Navbar from "@/components/Navbar";
 import { NotificationManager } from "@/components/NotificationManager";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { setAnalyticsUser, clearAnalyticsUser } from "@/lib/analytics";
 
 function Router() {
   return (
@@ -92,6 +94,15 @@ function AppContent() {
     },
     retry: false,
   });
+
+  // Update analytics when user changes
+  useEffect(() => {
+    if (user?.id) {
+      setAnalyticsUser(user.id, user.email || undefined);
+    } else {
+      clearAnalyticsUser();
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-background">

@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { db } from "../storage";
 import { sql, eq, and } from "drizzle-orm";
 import { z } from "zod";
+import { sendReferralEmail } from "../email";
 
 const referralSchema = z.object({
   friendEmail: z.string().email("Please enter a valid email address"),
@@ -69,9 +70,24 @@ export default function referralRoutes(app: Express) {
         RETURNING id, referrer_id, referred_email, status, created_at
       `);
 
-      // TODO: Send referral email to friend
-      // This would integrate with your email service (SendGrid, etc.)
-      console.log(`📧 Referral email should be sent to ${friendEmail}`);
+      // Get referrer's name for email
+      const referrerName = user.firstName || user.email?.split('@')[0] || 'A friend';
+      const baseUrl = process.env.REPLIT_DOMAINS 
+        ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` 
+        : 'http://localhost:5000';
+      
+      // Send referral email
+      try {
+        await sendReferralEmail({
+          to: friendEmail,
+          referrerName,
+          referralLink: `${baseUrl}/sign-up?ref=${referral[0].id}`,
+        });
+        console.log(`📧 Referral email sent to ${friendEmail}`);
+      } catch (emailError) {
+        console.error('Failed to send referral email:', emailError);
+        // Don't fail the request if email fails
+      }
 
       res.json({
         success: true,

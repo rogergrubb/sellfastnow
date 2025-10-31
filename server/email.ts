@@ -310,3 +310,195 @@ export async function sendReviewReminderEmail(data: ReminderEmailData) {
 
   return response;
 }
+
+
+interface ReferralEmailData {
+  to: string;
+  referrerName: string;
+  referralLink: string;
+}
+
+export async function sendReferralEmail(data: ReferralEmailData) {
+  const { client, fromEmail } = await getUncachableResendClient();
+  
+  const subject = `${data.referrerName} invited you to join SellFast.Now!`;
+  
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .logo {
+      font-size: 32px;
+      font-weight: 700;
+      color: #ea580c;
+      margin-bottom: 10px;
+    }
+    .invite-box {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      margin: 30px 0;
+    }
+    .invite-box h2 {
+      margin: 0 0 10px 0;
+      font-size: 24px;
+    }
+    .invite-box p {
+      margin: 0;
+      font-size: 16px;
+      opacity: 0.95;
+    }
+    .cta-button {
+      display: inline-block;
+      background-color: #ea580c;
+      color: #ffffff !important;
+      padding: 16px 48px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 18px;
+      margin: 30px 0;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+    }
+    .features {
+      margin: 30px 0;
+    }
+    .feature {
+      display: flex;
+      align-items: start;
+      margin: 16px 0;
+      padding: 12px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+    }
+    .feature-icon {
+      font-size: 24px;
+      margin-right: 12px;
+    }
+    .feature-text {
+      flex: 1;
+    }
+    .feature-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .bonus {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      color: #78350f;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      margin: 30px 0;
+      font-weight: 600;
+    }
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #dee2e6;
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">SellFast.Now</div>
+      <p style="font-size: 18px; color: #666;">Your friend thinks you'll love this!</p>
+    </div>
+    
+    <div class="invite-box">
+      <h2>🎉 You're Invited!</h2>
+      <p>${data.referrerName} wants you to join SellFast.Now</p>
+    </div>
+    
+    <p style="font-size: 16px;">Hi there!</p>
+    
+    <p style="font-size: 16px;">
+      <strong>${data.referrerName}</strong> thinks you'd be a great fit for SellFast.Now - 
+      the fastest way to buy and sell items locally.
+    </p>
+    
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🤖</div>
+        <div class="feature-text">
+          <div class="feature-title">AI-Powered Listings</div>
+          <div>Take a photo, AI writes the description. List items in seconds.</div>
+        </div>
+      </div>
+      
+      <div class="feature">
+        <div class="feature-icon">📍</div>
+        <div class="feature-text">
+          <div class="feature-title">Local Marketplace</div>
+          <div>Find great deals near you. Meet safely, buy locally.</div>
+        </div>
+      </div>
+      
+      <div class="feature">
+        <div class="feature-icon">💼</div>
+        <div class="feature-text">
+          <div class="feature-title">Perfect for Estate Sales</div>
+          <div>Bulk upload hundreds of items at once. Ideal for liquidations.</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bonus">
+      🎁 Sign up now and get 50 FREE AI credits to get started!
+    </div>
+    
+    <div style="text-align: center;">
+      <a href="${data.referralLink}" class="cta-button">Join SellFast.Now</a>
+    </div>
+    
+    <p style="text-align: center; color: #666; font-size: 14px;">
+      It's free to join. Start buying and selling today!
+    </p>
+    
+    <div class="footer">
+      <p>This invitation was sent by ${data.referrerName}</p>
+      <p>SellFast.Now | Safe Local Marketplace</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  const response = await client.emails.send({
+    from: fromEmail,
+    to: data.to,
+    subject,
+    html,
+  });
+
+  return response;
+}
+

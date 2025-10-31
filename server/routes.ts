@@ -48,6 +48,7 @@ import deleteUserListingsRoutes from "./routes/deleteUserListings";
 import applyLocationSchemaRoutes from "./routes/applyLocationSchema";
 import searchRoutes from "./routes/search";
 import referralRoutes from "./routes/referrals";
+import trackingRoutes from "./routes/tracking";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -450,6 +451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/admin", deleteUserListingsRoutes);
   searchRoutes(app);
   referralRoutes(app);
+  trackingRoutes(app);
   
   // ======================
   // Listings Routes
