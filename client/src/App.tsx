@@ -40,8 +40,9 @@ import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import Navbar from "@/components/Navbar";
 import { NotificationManager } from "@/components/NotificationManager";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { setAnalyticsUser, clearAnalyticsUser } from "@/lib/analytics";
+import { PostLoginReferralModal } from "@/components/PostLoginReferralModal";
 
 function Router() {
   return (
@@ -84,6 +85,9 @@ function Router() {
 }
 
 function AppContent() {
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  const [hasShownModal, setHasShownModal] = useState(false);
+  
   // Get current user for notifications
   const { data: user } = useQuery({
     queryKey: ["user"],
@@ -105,12 +109,35 @@ function AppContent() {
       clearAnalyticsUser();
     }
   }, [user]);
+  
+  // Show referral modal after login (once per session)
+  useEffect(() => {
+    if (user?.id && !hasShownModal) {
+      // Check if user has seen the modal in this session
+      const hasSeenModal = sessionStorage.getItem('referral_modal_shown');
+      
+      if (!hasSeenModal) {
+        // Delay showing modal by 1 second after login
+        const timer = setTimeout(() => {
+          setShowReferralModal(true);
+          setHasShownModal(true);
+          sessionStorage.setItem('referral_modal_shown', 'true');
+        }, 1000);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [user, hasShownModal]);
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <Router />
       {user && <NotificationManager userId={user.id} />}
+      <PostLoginReferralModal 
+        isOpen={showReferralModal} 
+        onClose={() => setShowReferralModal(false)} 
+      />
     </div>
   );
 }
