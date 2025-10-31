@@ -227,11 +227,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           sellerId: transactionsTable.sellerId,
           listingTitle: listings.title,
           listingImage: sql<string>`(
-            SELECT "imageUrl" 
-            FROM listing_images 
-            WHERE "listingId" = ${transactionsTable.listingId} 
-            ORDER BY "order" ASC 
-            LIMIT 1
+            SELECT images->0
+            FROM listings
+            WHERE id = ${transactionsTable.listingId}
           )`,
         })
         .from(transactionsTable)
