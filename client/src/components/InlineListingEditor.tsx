@@ -54,18 +54,23 @@ export default function InlineListingEditor({
     // Initialize location data if available
     if (listing.locationLatitude && listing.locationLongitude) {
       setLocationData({
-        latitude: listing.locationLatitude,
-        longitude: listing.locationLongitude,
-        address: listing.locationAddress || '',
-        city: listing.locationCity || '',
-        state: listing.locationState || '',
-        postalCode: listing.locationPostalCode || '',
-        country: listing.locationCountry || '',
-        precisionLevel: listing.locationPrecisionLevel || 'exact',
-        displayAddress: listing.locationDisplayAddress || '',
-        neighborhood: listing.locationNeighborhood || '',
-        county: listing.locationCounty || '',
-        displayRadiusKm: listing.locationDisplayRadiusKm || 0,
+        location: listing.location || '',
+        locationLatitude: Number(listing.locationLatitude),
+        locationLongitude: Number(listing.locationLongitude),
+        locationStreetAddress: listing.locationStreetAddress,
+        locationCity: listing.locationCity,
+        locationRegion: listing.locationRegion,
+        locationPostalCode: listing.locationPostalCode,
+        locationCountry: listing.locationCountry,
+        locationPrecisionLevel: (listing.locationPrecisionLevel as any) || 'exact',
+        locationFormattedAddress: listing.locationFormattedAddress,
+        locationNeighborhood: listing.locationNeighborhood,
+        locationPrivacyRadius: listing.locationPrivacyRadius ? Number(listing.locationPrivacyRadius) : undefined,
+        locationGeocoded: !!listing.locationGeocoded,
+        pickupAvailable: !!listing.pickupAvailable,
+        deliveryAvailable: !!listing.deliveryAvailable,
+        shippingAvailable: !!listing.shippingAvailable,
+        meetingPointsAvailable: !!listing.meetingPointsAvailable,
       });
     } else {
       setLocationData(null);
@@ -142,18 +147,23 @@ export default function InlineListingEditor({
       const updateData: any = { ...formData };
       
       if (locationData) {
-        updateData.locationLatitude = locationData.latitude;
-        updateData.locationLongitude = locationData.longitude;
-        updateData.locationAddress = locationData.address;
-        updateData.locationCity = locationData.city;
-        updateData.locationState = locationData.state;
-        updateData.locationPostalCode = locationData.postalCode;
-        updateData.locationCountry = locationData.country;
-        updateData.locationPrecisionLevel = locationData.precisionLevel;
-        updateData.locationDisplayAddress = locationData.displayAddress;
-        updateData.locationNeighborhood = locationData.neighborhood;
-        updateData.locationCounty = locationData.county;
-        updateData.locationDisplayRadiusKm = locationData.displayRadiusKm;
+        updateData.location = locationData.location;
+        updateData.locationLatitude = locationData.locationLatitude;
+        updateData.locationLongitude = locationData.locationLongitude;
+        updateData.locationStreetAddress = locationData.locationStreetAddress;
+        updateData.locationCity = locationData.locationCity;
+        updateData.locationRegion = locationData.locationRegion;
+        updateData.locationPostalCode = locationData.locationPostalCode;
+        updateData.locationCountry = locationData.locationCountry;
+        updateData.locationPrecisionLevel = locationData.locationPrecisionLevel;
+        updateData.locationFormattedAddress = locationData.locationFormattedAddress;
+        updateData.locationNeighborhood = locationData.locationNeighborhood;
+        updateData.locationPrivacyRadius = locationData.locationPrivacyRadius;
+        updateData.locationGeocoded = locationData.locationGeocoded;
+        updateData.pickupAvailable = locationData.pickupAvailable;
+        updateData.deliveryAvailable = locationData.deliveryAvailable;
+        updateData.shippingAvailable = locationData.shippingAvailable;
+        updateData.meetingPointsAvailable = locationData.meetingPointsAvailable;
       }
 
       const response = await fetch(`/api/bulk-edit/listings/${listing.id}`, {
@@ -309,7 +319,7 @@ export default function InlineListingEditor({
                 <MapPin className="h-4 w-4 mr-2" />
                 {locationData ? (
                   <span className="truncate">
-                    {locationData.displayAddress || locationData.city || 'Location set'}
+                    {locationData.locationFormattedAddress || locationData.locationCity || 'Location set'}
                   </span>
                 ) : (
                   'Set location'
@@ -317,7 +327,7 @@ export default function InlineListingEditor({
               </Button>
               {locationData && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  {locationData.city}, {locationData.state} {locationData.postalCode}
+                  {locationData.locationCity}, {locationData.locationRegion} {locationData.locationPostalCode}
                 </p>
               )}
             </div>
@@ -352,7 +362,7 @@ export default function InlineListingEditor({
           setLocationData(data);
           setShowLocationModal(false);
         }}
-        initialData={locationData || undefined}
+
       />
     </Dialog>
   );

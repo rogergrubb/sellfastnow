@@ -143,16 +143,26 @@ export default function trackingRoutes(app: Express) {
     try {
       const { startDate, endDate, eventType, pagePath } = req.query;
       
-      // Build WHERE clause
-      const conditions: string[] = [];
-      if (startDate) conditions.push(`timestamp >= '${startDate}'`);
-      if (endDate) conditions.push(`timestamp <= '${endDate}'`);
-      if (eventType) conditions.push(`event_type = '${eventType}'`);
-      if (pagePath) conditions.push(`page_path = '${pagePath}'`);
+      // Build WHERE clause safely
+      const conditions = [];
+      const params = [];
+      
+      if (startDate) {
+        conditions.push(sql`timestamp >= ${startDate as string}`);
+      }
+      if (endDate) {
+        conditions.push(sql`timestamp <= ${endDate as string}`);
+      }
+      if (eventType) {
+        conditions.push(sql`event_type = ${eventType as string}`);
+      }
+      if (pagePath) {
+        conditions.push(sql`page_path = ${pagePath as string}`);
+      }
       
       const whereClause = conditions.length > 0 
-        ? `WHERE ${conditions.join(' AND ')}` 
-        : '';
+        ? sql`WHERE ${sql.join(conditions, sql` AND `)}`
+        : sql``;
       
       // Get event counts by type
       const eventCounts = await db.execute(sql`
@@ -161,21 +171,24 @@ export default function trackingRoutes(app: Express) {
           event_name,
           COUNT(*) as count
         FROM analytics_events
-        ${sql.raw(whereClause)}
+        ${whereClause}
         GROUP BY event_type, event_name
         ORDER BY count DESC
         LIMIT 50
       `);
       
       // Get page views
+      const pageViewWhere = conditions.length > 0
+        ? sql`${whereClause} AND event_type = 'page_view'`
+        : sql`WHERE event_type = 'page_view'`;
+      
       const pageViews = await db.execute(sql`
         SELECT 
           page_path,
           COUNT(*) as views,
           COUNT(DISTINCT session_id) as unique_visitors
         FROM analytics_events
-        ${sql.raw(whereClause)}
-        WHERE event_type = 'page_view'
+        ${pageViewWhere}
         GROUP BY page_path
         ORDER BY views DESC
         LIMIT 20
@@ -187,7 +200,7 @@ export default function trackingRoutes(app: Express) {
           device_type,
           COUNT(*) as count
         FROM analytics_events
-        ${sql.raw(whereClause)}
+        ${whereClause}
         GROUP BY device_type
       `);
       
@@ -197,7 +210,7 @@ export default function trackingRoutes(app: Express) {
           browser,
           COUNT(*) as count
         FROM analytics_events
-        ${sql.raw(whereClause)}
+        ${whereClause}
         GROUP BY browser
         ORDER BY count DESC
       `);
@@ -208,7 +221,7 @@ export default function trackingRoutes(app: Express) {
           EXTRACT(HOUR FROM timestamp) as hour,
           COUNT(*) as count
         FROM analytics_events
-        ${sql.raw(whereClause)}
+        ${whereClause}
         GROUP BY hour
         ORDER BY hour
       `);
@@ -232,13 +245,13 @@ export default function trackingRoutes(app: Express) {
       const { identifier } = req.params;
       const { type } = req.query; // 'email', 'ip', or 'session'
       
-      let whereClause = '';
+      let whereClause;
       if (type === 'email') {
-        whereClause = `WHERE user_email = '${identifier}'`;
+        whereClause = sql`WHERE user_email = ${identifier}`;
       } else if (type === 'ip') {
-        whereClause = `WHERE ip_address = '${identifier}'`;
+        whereClause = sql`WHERE ip_address = ${identifier}`;
       } else if (type === 'session') {
-        whereClause = `WHERE session_id = '${identifier}'`;
+        whereClause = sql`WHERE session_id = ${identifier}`;
       } else {
         return res.status(400).json({ error: "Invalid type parameter" });
       }
@@ -252,7 +265,7 @@ export default function trackingRoutes(app: Express) {
           element_text,
           metadata
         FROM analytics_events
-        ${sql.raw(whereClause)}
+        ${whereClause}
         ORDER BY timestamp ASC
         LIMIT 1000
       `);
