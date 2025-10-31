@@ -4,7 +4,7 @@ import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './SearchMap.css';
-import { Link } from 'react-router-dom';
+import { Link } from 'wouter';
 import { Package } from 'lucide-react';
 
 // Fix for default marker icons in React Leaflet

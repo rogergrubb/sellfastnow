@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation } from 'wouter';
 import { MapPin, List, Map, Search, SlidersHorizontal } from 'lucide-react';
 import SearchFilters from '../components/search/SearchFilters';
 import SearchResults from '../components/search/SearchResults';
@@ -8,12 +8,24 @@ import LocationInput from '../components/search/LocationInput';
 import { useSearchListings } from '../hooks/useSearchListings';
 
 export default function SearchPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [, setLocation] = useLocation();
+  
+  // Parse URL search params manually
+  const getSearchParams = () => {
+    const params = new URLSearchParams(window.location.search);
+    return params;
+  };
+  
+  const updateURL = (params: URLSearchParams) => {
+    const newPath = `/search?${params.toString()}`;
+    window.history.pushState({}, '', newPath);
+  };
+
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [showFilters, setShowFilters] = useState(false);
 
   // Search state
-  const [location, setLocation] = useState<{
+  const [searchLocation, setSearchLocation] = useState<{
     lat: number;
     lng: number;
     address: string;
@@ -28,44 +40,45 @@ export default function SearchPage() {
 
   // Initialize from URL params
   useEffect(() => {
-    const lat = searchParams.get('lat');
-    const lng = searchParams.get('lng');
-    const address = searchParams.get('address');
+    const params = getSearchParams();
+    const lat = params.get('lat');
+    const lng = params.get('lng');
+    const address = params.get('address');
     
     if (lat && lng) {
-      setLocation({
+      setSearchLocation({
         lat: parseFloat(lat),
         lng: parseFloat(lng),
         address: address || 'Selected Location'
       });
     }
 
-    const radiusParam = searchParams.get('radius');
+    const radiusParam = params.get('radius');
     if (radiusParam) setRadius(parseInt(radiusParam));
 
-    const queryParam = searchParams.get('query');
+    const queryParam = params.get('query');
     if (queryParam) setQuery(queryParam);
 
-    const categoryParam = searchParams.get('category');
+    const categoryParam = params.get('category');
     if (categoryParam) setCategory(categoryParam);
 
-    const minPriceParam = searchParams.get('minPrice');
+    const minPriceParam = params.get('minPrice');
     if (minPriceParam) setMinPrice(parseInt(minPriceParam));
 
-    const maxPriceParam = searchParams.get('maxPrice');
+    const maxPriceParam = params.get('maxPrice');
     if (maxPriceParam) setMaxPrice(parseInt(maxPriceParam));
 
-    const sortByParam = searchParams.get('sortBy') as 'distance' | 'price' | 'date';
+    const sortByParam = params.get('sortBy') as 'distance' | 'price' | 'date';
     if (sortByParam) setSortBy(sortByParam);
 
-    const sortOrderParam = searchParams.get('order') as 'asc' | 'desc';
+    const sortOrderParam = params.get('order') as 'asc' | 'desc';
     if (sortOrderParam) setSortOrder(sortOrderParam);
-  }, [searchParams]);
+  }, []);
 
   // Fetch search results
   const { data: listings, isLoading, error } = useSearchListings({
-    lat: location?.lat,
-    lng: location?.lng,
+    lat: searchLocation?.lat,
+    lng: searchLocation?.lng,
     radius,
     query,
     category,
@@ -79,10 +92,10 @@ export default function SearchPage() {
   const updateSearchParams = () => {
     const params = new URLSearchParams();
     
-    if (location) {
-      params.set('lat', location.lat.toString());
-      params.set('lng', location.lng.toString());
-      params.set('address', location.address);
+    if (searchLocation) {
+      params.set('lat', searchLocation.lat.toString());
+      params.set('lng', searchLocation.lng.toString());
+      params.set('address', searchLocation.address);
     }
     
     params.set('radius', radius.toString());
@@ -93,7 +106,7 @@ export default function SearchPage() {
     params.set('sortBy', sortBy);
     params.set('order', sortOrder);
 
-    setSearchParams(params);
+    updateURL(params);
   };
 
   // Request user's current location
@@ -110,13 +123,13 @@ export default function SearchPage() {
             );
             const data = await response.json();
             
-            setLocation({
+            setSearchLocation({
               lat: latitude,
               lng: longitude,
               address: data.display_name || 'Current Location'
             });
           } catch (error) {
-            setLocation({
+            setSearchLocation({
               lat: latitude,
               lng: longitude,
               address: 'Current Location'
@@ -142,8 +155,8 @@ export default function SearchPage() {
           <div className="flex items-center gap-4 mb-4">
             <div className="flex-1">
               <LocationInput
-                value={location}
-                onChange={setLocation}
+                value={searchLocation}
+                onChange={setSearchLocation}
                 onUseCurrentLocation={handleUseMyLocation}
               />
             </div>
@@ -167,7 +180,7 @@ export default function SearchPage() {
             {/* Search Button */}
             <button
               onClick={updateSearchParams}
-              disabled={!location}
+              disabled={!searchLocation}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Search className="w-4 h-4" />
@@ -223,12 +236,12 @@ export default function SearchPage() {
           </div>
 
           {/* Active Location Display */}
-          {location && (
+          {searchLocation && (
             <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
               <MapPin className="w-4 h-4" />
-              <span>Searching near: {location.address}</span>
+              <span>Searching near: {searchLocation.address}</span>
               <button
-                onClick={() => setLocation(null)}
+                onClick={() => setSearchLocation(null)}
                 className="text-blue-600 hover:underline"
               >
                 Change
@@ -268,7 +281,7 @@ export default function SearchPage() {
 
       {/* Results */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {!location ? (
+        {!searchLocation ? (
           <div className="text-center py-20">
             <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h2 className="text-2xl font-semibold text-gray-700 mb-2">
@@ -307,7 +320,7 @@ export default function SearchPage() {
             ) : (
               <SearchMap
                 listings={listings || []}
-                center={location}
+                center={searchLocation}
                 radius={radius}
               />
             )}

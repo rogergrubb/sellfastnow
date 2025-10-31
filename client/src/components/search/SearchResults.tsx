@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'wouter';
 import { MapPin, Package } from 'lucide-react';
 
 interface Listing {
