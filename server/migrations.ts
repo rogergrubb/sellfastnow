@@ -349,6 +349,28 @@ export async function runMigrations() {
     `);
     console.log("✅ Reliability scores table created");
 
+    // Create referrals table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS referrals (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        referrer_id VARCHAR NOT NULL,
+        referred_email VARCHAR NOT NULL,
+        referred_user_id VARCHAR,
+        status VARCHAR(20) DEFAULT 'pending' NOT NULL,
+        credits_awarded BOOLEAN DEFAULT false NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        completed_at TIMESTAMP,
+        awarded_at TIMESTAMP
+      );
+    `);
+    console.log("✅ Referrals table created");
+
+    // Create index on referred_email for faster lookups
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_referrals_referred_email ON referrals(referred_email);
+    `);
+    console.log("✅ Referrals index created");
+
     console.log("✅ Database migrations completed successfully");
   } catch (error) {
     console.error("❌ Migration error:", error);

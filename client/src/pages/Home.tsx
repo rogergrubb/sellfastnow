@@ -8,6 +8,7 @@ import PricingCalculatorEstate from "@/components/PricingCalculatorEstate";
 import TargetAudiences from "@/components/TargetAudiences";
 import SocialMediaDemo from "@/components/SocialMediaDemo";
 import WelcomeModal from "@/components/WelcomeModal";
+import ReferralCard from "@/components/ReferralCard";
 import HeroWithBenefits from "@/components/HeroWithBenefits";
 import CategoryFilters from "@/components/CategoryFilters";
 import FilterSidebar from "@/components/FilterSidebar";
@@ -216,6 +217,11 @@ export default function Home() {
       <PricingCalculatorEstate />
       <TargetAudiences />
       <SocialMediaDemo />
+      
+      {/* Referral Section */}
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <ReferralCard />
+      </div>
       
       {/* Divider */}
       <div className="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 py-12">

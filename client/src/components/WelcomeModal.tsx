@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Bell, Gift, Mail, Search, Building2, MapPin } from "lucide-react";
+import { X, Bell, Gift, Mail, Search, Building2, MapPin, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -18,6 +18,9 @@ export default function WelcomeModal() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [friendEmail, setFriendEmail] = useState("");
+  const [referralSubmitting, setReferralSubmitting] = useState(false);
+  const [referralSuccess, setReferralSuccess] = useState(false);
 
   useEffect(() => {
     // Check if user has already seen the modal
@@ -205,6 +208,67 @@ export default function WelcomeModal() {
 
             {/* Divider */}
             <div className="border-t border-gray-200 dark:border-gray-700 my-6"></div>
+
+            {/* Referral Section */}
+            <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-2 mb-3">
+                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <h3 className="font-bold text-lg">Refer a Friend & Earn 50 AI Credits</h3>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Know someone who'd love SellFast? Invite them and you'll both benefit!
+              </p>
+              {referralSuccess ? (
+                <div className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 p-3 rounded-lg text-sm">
+                  ✅ Referral sent! You'll get 50 credits when they sign up.
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    type="email"
+                    placeholder="Friend's email address"
+                    value={friendEmail}
+                    onChange={(e) => setFriendEmail(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    onClick={async () => {
+                      if (!friendEmail) {
+                        alert("Please enter your friend's email");
+                        return;
+                      }
+                      setReferralSubmitting(true);
+                      try {
+                        const response = await fetch("/api/referrals", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                            "x-user-id": localStorage.getItem("userId") || "",
+                          },
+                          body: JSON.stringify({ friendEmail }),
+                        });
+                        if (response.ok) {
+                          setReferralSuccess(true);
+                          setFriendEmail("");
+                        } else {
+                          const data = await response.json();
+                          alert(data.message || "Failed to send referral");
+                        }
+                      } catch (error) {
+                        alert("Something went wrong. Please try again.");
+                      } finally {
+                        setReferralSubmitting(false);
+                      }
+                    }}
+                    disabled={referralSubmitting}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {referralSubmitting ? "Sending..." : "Send"}
+                  </Button>
+                </div>
+              )}
+            </div>
 
             {/* Giveaway */}
             <div className="mb-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 p-4 rounded-lg border-2 border-yellow-200 dark:border-yellow-800">
