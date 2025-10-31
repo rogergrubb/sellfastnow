@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/AuthContext";
-import { RotateCw, Save, X } from "lucide-react";
+import { RotateCw, Save, X, MapPin } from "lucide-react";
 import type { Listing } from "@shared/schema";
+import { LocationSelectionModal } from "@/components/LocationSelectionModal";
+import type { LocationData } from "@/components/LocationSelectionModal";
 
 interface InlineListingEditorProps {
   listing: Listing;
@@ -30,6 +32,8 @@ export default function InlineListingEditor({
     category: listing.category,
     condition: listing.condition,
   });
+  const [locationData, setLocationData] = useState<LocationData | null>(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
   const [imageRotation, setImageRotation] = useState(0);
   const [saving, setSaving] = useState(false);
   const [rotating, setRotating] = useState(false);
@@ -46,6 +50,26 @@ export default function InlineListingEditor({
       condition: listing.condition,
     });
     setImageRotation(0);
+    
+    // Initialize location data if available
+    if (listing.locationLatitude && listing.locationLongitude) {
+      setLocationData({
+        latitude: listing.locationLatitude,
+        longitude: listing.locationLongitude,
+        address: listing.locationAddress || '',
+        city: listing.locationCity || '',
+        state: listing.locationState || '',
+        postalCode: listing.locationPostalCode || '',
+        country: listing.locationCountry || '',
+        precisionLevel: listing.locationPrecisionLevel || 'exact',
+        displayAddress: listing.locationDisplayAddress || '',
+        neighborhood: listing.locationNeighborhood || '',
+        county: listing.locationCounty || '',
+        displayRadiusKm: listing.locationDisplayRadiusKm || 0,
+      });
+    } else {
+      setLocationData(null);
+    }
   }, [listing.id]);
 
   const handleRotateImage = async () => {
@@ -114,13 +138,31 @@ export default function InlineListingEditor({
         throw new Error("Not authenticated");
       }
 
+      // Prepare update data with location if available
+      const updateData: any = { ...formData };
+      
+      if (locationData) {
+        updateData.locationLatitude = locationData.latitude;
+        updateData.locationLongitude = locationData.longitude;
+        updateData.locationAddress = locationData.address;
+        updateData.locationCity = locationData.city;
+        updateData.locationState = locationData.state;
+        updateData.locationPostalCode = locationData.postalCode;
+        updateData.locationCountry = locationData.country;
+        updateData.locationPrecisionLevel = locationData.precisionLevel;
+        updateData.locationDisplayAddress = locationData.displayAddress;
+        updateData.locationNeighborhood = locationData.neighborhood;
+        updateData.locationCounty = locationData.county;
+        updateData.locationDisplayRadiusKm = locationData.displayRadiusKm;
+      }
+
       const response = await fetch(`/api/bulk-edit/listings/${listing.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(updateData),
       });
 
       if (!response.ok) throw new Error("Failed to save listing");
@@ -255,6 +297,30 @@ export default function InlineListingEditor({
                 rows={6}
               />
             </div>
+
+            <div>
+              <Label>Location</Label>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => setShowLocationModal(true)}
+              >
+                <MapPin className="h-4 w-4 mr-2" />
+                {locationData ? (
+                  <span className="truncate">
+                    {locationData.displayAddress || locationData.city || 'Location set'}
+                  </span>
+                ) : (
+                  'Set location'
+                )}
+              </Button>
+              {locationData && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {locationData.city}, {locationData.state} {locationData.postalCode}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -277,6 +343,17 @@ export default function InlineListingEditor({
           </Button>
         </div>
       </DialogContent>
+
+      {/* Location Selection Modal */}
+      <LocationSelectionModal
+        open={showLocationModal}
+        onOpenChange={setShowLocationModal}
+        onSave={(data) => {
+          setLocationData(data);
+          setShowLocationModal(false);
+        }}
+        initialData={locationData || undefined}
+      />
     </Dialog>
   );
 }
