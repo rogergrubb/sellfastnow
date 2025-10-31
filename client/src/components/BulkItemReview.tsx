@@ -33,7 +33,7 @@ import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { ListingSuccessModal } from "@/components/ListingSuccessModal";
 import { FolderSelectionModal } from "@/components/FolderSelectionModal";
-import LocationSelectionModal, { type LocationData } from "@/components/LocationSelectionModal";
+import { LocationSelectionModal, type LocationData } from "@/components/LocationSelectionModal";
 
 interface DetectedProduct {
   title: string;
