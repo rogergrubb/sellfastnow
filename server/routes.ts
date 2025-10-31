@@ -449,8 +449,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/emergency-migration", emergencyMigrationRoutes);
   app.use("/api/mark-migrations-complete", markMigrationsCompleteRoutes);
   app.use("/api/admin", deleteUserListingsRoutes);
-  app.use("/api/admin",applyLocationSchemaRoutes(app);
-  searchRoutes(app); // ======================
+  searchRoutes(app);
+  
+  // ======================
   // Listings Routes
   // ======================
   app.use("/api/listings", listingsRoutes);
