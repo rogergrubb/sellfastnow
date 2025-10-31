@@ -61,6 +61,59 @@ async function syncUserFromSupabase(userId: string, email: string) {
       });
       
       user = await storage.getUser(userId);
+      
+      // Check for pending referrals and award credits
+      try {
+        const referralEmail = email || supabaseUser.user?.email;
+        if (referralEmail) {
+          const [referral] = await db.execute(sql`
+            SELECT id, referrer_id 
+            FROM referrals 
+            WHERE LOWER(referred_email) = ${referralEmail.toLowerCase()}
+            AND status = 'pending'
+            LIMIT 1
+          `);
+          
+          if (referral) {
+            // Update referral status
+            await db.execute(sql`
+              UPDATE referrals
+              SET 
+                referred_user_id = ${userId},
+                status = 'completed',
+                completed_at = NOW()
+              WHERE id = ${referral.id}
+            `);
+            
+            // Award 50 credits to BOTH referrer and referee
+            await db.execute(sql`
+              UPDATE users
+              SET ai_credits_purchased = ai_credits_purchased + 50
+              WHERE id = ${referral.referrer_id}
+            `);
+            
+            await db.execute(sql`
+              UPDATE users
+              SET ai_credits_purchased = ai_credits_purchased + 50
+              WHERE id = ${userId}
+            `);
+            
+            // Mark credits as awarded
+            await db.execute(sql`
+              UPDATE referrals
+              SET 
+                credits_awarded = true,
+                awarded_at = NOW()
+              WHERE id = ${referral.id}
+            `);
+            
+            console.log(`🎉 Awarded 50 credits to BOTH referrer ${referral.referrer_id} and referee ${userId}`);
+          }
+        }
+      } catch (referralError) {
+        console.error('Error processing referral:', referralError);
+        // Don\'t fail user creation if referral fails
+      }
     }
     
     return user;

@@ -161,11 +161,17 @@ export default function referralRoutes(app: Express) {
         WHERE id = ${referral.id}
       `);
 
-      // Award 50 credits to referrer
+      // Award 50 credits to BOTH referrer and referee
       await db.execute(sql`
         UPDATE users
         SET ai_credits_purchased = ai_credits_purchased + 50
         WHERE id = ${referral.referrer_id}
+      `);
+
+      await db.execute(sql`
+        UPDATE users
+        SET ai_credits_purchased = ai_credits_purchased + 50
+        WHERE id = ${userId}
       `);
 
       // Mark credits as awarded
@@ -177,7 +183,7 @@ export default function referralRoutes(app: Express) {
         WHERE id = ${referral.id}
       `);
 
-      console.log(`🎉 Awarded 50 credits to user ${referral.referrer_id} for referring ${email}`);
+      console.log(`🎉 Awarded 50 credits to BOTH referrer ${referral.referrer_id} and referee ${userId}`);
 
       res.json({ 
         referralFound: true,
