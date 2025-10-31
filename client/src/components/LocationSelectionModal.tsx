@@ -55,7 +55,7 @@ interface LocationSelectionModalProps {
   };
 }
 
-export default function LocationSelectionModal({
+export function LocationSelectionModal({
   open,
   onOpenChange,
   onSave,
