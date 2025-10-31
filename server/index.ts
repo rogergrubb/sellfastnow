@@ -3,7 +3,6 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { runMigrations } from "./migrations";
 import { initializeWebSocketService } from "./services/websocketService";
-import { autoApplyLocationSchema } from "./autoApplySchema";
 
 const app = express();
 
@@ -47,9 +46,6 @@ app.use((req, res, next) => {
 (async () => {
   // Run database migrations on startup
   await runMigrations();
-  
-  // Auto-apply location schema
-  await autoApplyLocationSchema();
   
   const server = await registerRoutes(app);
   

@@ -164,6 +164,73 @@ export async function runMigrations() {
       ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_longitude numeric(10, 7);
     `);
     
+    // Add advanced location fields to listings table
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_precision_level varchar(20);
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_privacy_radius integer;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_neighborhood varchar(200);
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_street_address text;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_formatted_address text;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_place_id varchar(200);
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_timezone varchar(100);
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_geocoded boolean DEFAULT false;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_geocoded_at timestamp;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_geocoding_service varchar(100);
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_geocoding_accuracy varchar(50);
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS pickup_available boolean DEFAULT true;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS delivery_available boolean DEFAULT false;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS shipping_available boolean DEFAULT false;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS meeting_points_available boolean DEFAULT false;
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS location_metadata jsonb DEFAULT '{}'::jsonb;
+    `);
+    
+    console.log("✅ Advanced location columns added to listings table");
+    
     // Add draft folder organization fields to listings table
     await db.execute(sql`
       ALTER TABLE listings ADD COLUMN IF NOT EXISTS batch_id varchar(100);
