@@ -1,0 +1,57 @@
+/* Leaflet Map Styles */
+.leaflet-container {
+  font-family: inherit;
+}
+
+/* Cluster markers */
+.marker-cluster-small {
+  background-color: rgba(59, 130, 246, 0.6);
+}
+
+.marker-cluster-small div {
+  background-color: rgba(59, 130, 246, 0.8);
+  color: white;
+  font-weight: 600;
+}
+
+.marker-cluster-medium {
+  background-color: rgba(37, 99, 235, 0.6);
+}
+
+.marker-cluster-medium div {
+  background-color: rgba(37, 99, 235, 0.8);
+  color: white;
+  font-weight: 600;
+}
+
+.marker-cluster-large {
+  background-color: rgba(29, 78, 216, 0.6);
+}
+
+.marker-cluster-large div {
+  background-color: rgba(29, 78, 216, 0.8);
+  color: white;
+  font-weight: 600;
+}
+
+/* Popup styling */
+.leaflet-popup-content-wrapper {
+  border-radius: 0.5rem;
+  padding: 0;
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  min-width: 250px;
+}
+
+.leaflet-popup-tip {
+  background: white;
+}
+
+/* Fix for marker icons */
+.leaflet-marker-icon {
+  margin-left: -12px !important;
+  margin-top: -41px !important;
+}
+

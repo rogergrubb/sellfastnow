@@ -35,6 +35,7 @@ import VerificationSettings from "./pages/VerificationSettings";
 import SmsSettings from "./pages/SmsSettings";
 import SellerAnalytics from "./pages/SellerAnalytics";
 import BulkEdit from "./pages/BulkEdit";
+import SearchPage from "./pages/SearchPage";
 import Navbar from "@/components/Navbar";
 import { NotificationManager } from "@/components/NotificationManager";
 import { useQuery } from "@tanstack/react-query";
@@ -43,6 +44,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/search" component={SearchPage} />
       <Route path="/how-it-works" component={HowItWorks} />
       <Route path="/sign-in" component={SignInPage} />
       <Route path="/sign-up" component={SignUpPage} />
