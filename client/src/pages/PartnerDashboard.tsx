@@ -238,7 +238,11 @@ function OverviewTab({ stats, partner }: any) {
             <Plus className="w-4 h-4" />
             Add New Listing
           </Button>
-          <Button variant="outline" className="flex items-center justify-center gap-2">
+          <Button 
+            variant="outline" 
+            className="flex items-center justify-center gap-2"
+            onClick={() => navigate('/partner/bulk-upload')}
+          >
             <Upload className="w-4 h-4" />
             Bulk Upload CSV
           </Button>

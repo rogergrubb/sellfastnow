@@ -40,6 +40,7 @@ import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import PartnerStorefront from "./pages/PartnerStorefront";
 import PartnerOnboarding from "./pages/PartnerOnboarding";
 import PartnerDashboard from "./pages/PartnerDashboard";
+import PartnerBulkUpload from "./pages/PartnerBulkUpload";
 import Navbar from "@/components/Navbar";
 import { NotificationManager } from "@/components/NotificationManager";
 import { useQuery } from "@tanstack/react-query";
@@ -84,6 +85,7 @@ function Router() {
       <Route path="/collections/:batchId" component={Collection} />
       <Route path="/partner/onboard" component={PartnerOnboarding} />
       <Route path="/partner/dashboard" component={PartnerDashboard} />
+      <Route path="/partner/bulk-upload" component={PartnerBulkUpload} />
       <Route path="/partner/:domain" component={PartnerStorefront} />
       <Route component={NotFound} />
     </Switch>
