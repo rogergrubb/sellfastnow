@@ -354,6 +354,29 @@ export default function Navbar() {
             </DropdownMenu>
           </div>
 
+          {/* User Links - Only show when logged in */}
+          {isSignedIn && (
+            <div className="hidden lg:flex items-center gap-6">
+              <button
+                className="text-xs hover:text-gray-300 transition-colors"
+                onClick={() => window.location.href = '/dashboard'}
+              >
+                My Listings
+              </button>
+              <button
+                className="text-xs hover:text-gray-300 transition-colors relative"
+                onClick={() => window.location.href = '/messages'}
+              >
+                Messages
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
+
           {/* Right Section */}
           <div className="flex items-center gap-4">
             {/* Search Icon */}
