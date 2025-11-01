@@ -198,7 +198,7 @@ export default function Navbar() {
                         <div className="text-xs text-gray-500">Quick upload with AI</div>
                       </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => window.location.href = '/bulk-upload'}>
+                    <DropdownMenuItem onClick={() => window.location.href = '/partner/bulk-upload'}>
                       <Package className="mr-2 h-4 w-4 text-purple-600" />
                       <div>
                         <div className="font-medium">Bulk Upload</div>
@@ -288,7 +288,7 @@ export default function Navbar() {
                         <div className="text-xs text-gray-500">Quick upload with AI</div>
                       </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => window.location.href = '/bulk-upload'}>
+                    <DropdownMenuItem onClick={() => window.location.href = '/partner/bulk-upload'}>
                       <Package className="mr-2 h-4 w-4 text-purple-600" />
                       <div>
                         <div className="font-medium">Bulk Upload</div>
