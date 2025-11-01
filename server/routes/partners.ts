@@ -2,7 +2,7 @@ import { db } from "../db";
 import { businessPartners, partnerClients, partnerListings } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 import type { Express } from "express";
-import { isAuthenticated } from "../supabaseAuth";ess";
+import { isAuthenticated } from "../supabaseAuth";
 
 export default function partnerRoutes(app: Express) {
   
