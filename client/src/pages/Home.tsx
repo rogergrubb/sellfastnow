@@ -318,7 +318,7 @@ export default function HomeNew() {
                   price={parseFloat(listing.price)}
                   location={listing.location || 'Unknown'}
                   timePosted={new Date(listing.createdAt).toISOString()}
-                  image={listing.imageUrl}
+                  image={listing.images?.[0]}
                   seller={listing.seller}
                   sellerStats={listing.sellerStats}
                 />
