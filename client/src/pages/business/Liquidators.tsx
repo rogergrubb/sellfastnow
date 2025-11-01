@@ -327,8 +327,8 @@ export default function LiquidatorsPage() {
                   👨‍💼
                 </div>
                 <div>
-                  <h4 className="font-semibold text-lg">Robert Klein</h4>
-                  <p className="text-gray-600">Commercial Liquidation Services</p>
+                  <h4 className="font-semibold text-lg">Business Liquidator from Oakland, CA</h4>
+                  <p className="text-gray-600">Commercial Liquidation Specialist</p>
                 </div>
               </div>
               <p className="text-gray-700 italic">
@@ -342,8 +342,8 @@ export default function LiquidatorsPage() {
                   👩‍💼
                 </div>
                 <div>
-                  <h4 className="font-semibold text-lg">Amanda Foster</h4>
-                  <p className="text-gray-600">Asset Recovery Specialists</p>
+                  <h4 className="font-semibold text-lg">Asset Recovery Specialist from San Diego, CA</h4>
+                  <p className="text-gray-600">Professional Liquidator</p>
                 </div>
               </div>
               <p className="text-gray-700 italic">

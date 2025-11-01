@@ -249,8 +249,8 @@ export default function EstateSalesPage() {
                   👨‍💼
                 </div>
                 <div>
-                  <h4 className="font-semibold text-lg">David Thompson</h4>
-                  <p className="text-gray-600">Estate Liquidation Services</p>
+                  <h4 className="font-semibold text-lg">Estate Liquidator from Sacramento, CA</h4>
+                  <p className="text-gray-600">Professional Estate Services</p>
                 </div>
               </div>
               <p className="text-gray-700 italic">
@@ -264,8 +264,8 @@ export default function EstateSalesPage() {
                   👩‍💼
                 </div>
                 <div>
-                  <h4 className="font-semibold text-lg">Jennifer Wu</h4>
-                  <p className="text-gray-600">Professional Estate Liquidator</p>
+                  <h4 className="font-semibold text-lg">Estate Sales Professional from San Jose, CA</h4>
+                  <p className="text-gray-600">Licensed Estate Liquidator</p>
                 </div>
               </div>
               <p className="text-gray-700 italic">

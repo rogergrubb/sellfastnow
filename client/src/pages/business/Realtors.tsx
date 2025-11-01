@@ -249,8 +249,8 @@ export default function RealtorsPage() {
                   👨‍💼
                 </div>
                 <div>
-                  <h4 className="font-semibold text-lg">Michael Chen</h4>
-                  <p className="text-gray-600">Realtor, Bay Area</p>
+                  <h4 className="font-semibold text-lg">Realtor from San Francisco, CA</h4>
+                  <p className="text-gray-600">Real Estate Professional</p>
                 </div>
               </div>
               <p className="text-gray-700 italic">
@@ -264,8 +264,8 @@ export default function RealtorsPage() {
                   👩‍💼
                 </div>
                 <div>
-                  <h4 className="font-semibold text-lg">Sarah Martinez</h4>
-                  <p className="text-gray-600">Real Estate Broker</p>
+                  <h4 className="font-semibold text-lg">Real Estate Broker from Los Angeles, CA</h4>
+                  <p className="text-gray-600">Licensed Broker</p>
                 </div>
               </div>
               <p className="text-gray-700 italic">
