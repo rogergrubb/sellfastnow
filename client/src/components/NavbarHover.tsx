@@ -1,11 +1,11 @@
 import { Link } from "wouter";
 import { useState } from "react";
 import { Search, User, MessageSquare, Sparkles } from "lucide-react";
-import { useUser } from "@/hooks/useUser";
+import { useAuth } from '@/lib/AuthContext';
 import "./NavbarHover.css";
 
 export default function NavbarHover() {
-  const { user, logout } = useUser();
+  const { user, signOut } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -220,7 +220,7 @@ export default function NavbarHover() {
                 </li>
                 <li className="apple-dropdown-divider"></li>
                 <li>
-                  <button onClick={logout} className="apple-dropdown-item-simple">
+                  <button onClick={signOut} className="apple-dropdown-item-simple">
                     🚪 Logout
                   </button>
                 </li>
