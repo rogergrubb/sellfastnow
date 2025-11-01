@@ -311,7 +311,17 @@ export default function HomeNew() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {recentListings.slice(0, 8).map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
+                <ListingCard 
+                  key={listing.id}
+                  id={listing.id}
+                  title={listing.title}
+                  price={parseFloat(listing.price)}
+                  location={listing.location || 'Unknown'}
+                  timePosted={new Date(listing.createdAt).toISOString()}
+                  image={listing.imageUrl}
+                  seller={listing.seller}
+                  sellerStats={listing.sellerStats}
+                />
               ))}
             </div>
           </div>
