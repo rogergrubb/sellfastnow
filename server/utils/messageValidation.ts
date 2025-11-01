@@ -87,8 +87,8 @@ export async function validateMessageListing(
     return { valid: false, error: "Listing not found" };
   }
 
-  // Check if listing is active
-  if (listing.status !== 'active') {
+  // Allow messaging on active and sold listings (for post-sale communication)
+  if (listing.status && listing.status !== 'active' && listing.status !== 'sold') {
     return { valid: false, error: "Cannot message about inactive listings" };
   }
 

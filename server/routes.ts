@@ -1788,7 +1788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             id: newMessage[0].id,
             listingId,
             listingTitle: listing.title,
-            listingImage: listing.images ? JSON.parse(listing.images)[0] : undefined,
+            listingImage: listing.images && listing.images.length > 0 ? listing.images[0] : undefined,
             senderName: `${sender.firstName} ${sender.lastName}`,
             message: content.trim(),
             timestamp: newMessage[0].createdAt,
