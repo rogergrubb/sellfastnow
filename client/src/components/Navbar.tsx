@@ -115,7 +115,7 @@ export default function Navbar() {
                 <DropdownMenuItem onClick={() => window.location.href = '/post-ad'}>
                   <Zap className="mr-2 h-4 w-4 text-blue-600" />
                   <div>
-                    <div className="font-medium">Single Item Upload</div>
+                    <div className="font-medium">1 to 100 items upload</div>
                     <div className="text-xs text-gray-500">Quick AI listing</div>
                   </div>
                 </DropdownMenuItem>
