@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { 
   LayoutDashboard, Package, Users, Mail, Settings, 
@@ -391,13 +392,7 @@ function ClientsTab({ clients, partner }: any) {
 
   const addClientMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch("/api/partners/clients", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to add client");
+      const response = await apiRequest("POST", "/api/partners/clients", data);
       return response.json();
     },
     onSuccess: () => {
@@ -522,13 +517,7 @@ function SettingsTab({ partner }: any) {
 
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch("/api/partners/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to update profile");
+      const response = await apiRequest("PUT", "/api/partners/profile", data);
       return response.json();
     },
     onSuccess: () => {

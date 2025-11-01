@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   Building2, Mail, Phone, Globe, MapPin, Palette, 
   CheckCircle, ArrowRight, ArrowLeft, Upload, Sparkles
@@ -63,20 +64,7 @@ export default function PartnerOnboarding() {
 
   const onboardMutation = useMutation({
     mutationFn: async (data: OnboardingData) => {
-      const response = await fetch("/api/partners/onboard", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to create partner account");
-      }
-
+      const response = await apiRequest("POST", "/api/partners/onboard", data);
       return response.json();
     },
     onSuccess: () => {
