@@ -38,6 +38,8 @@ import BulkEdit from "./pages/BulkEdit";
 import SearchPage from "./pages/SearchPage";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import PartnerStorefront from "./pages/PartnerStorefront";
+import PartnerOnboarding from "./pages/PartnerOnboarding";
+import PartnerDashboard from "./pages/PartnerDashboard";
 import Navbar from "@/components/Navbar";
 import { NotificationManager } from "@/components/NotificationManager";
 import { useQuery } from "@tanstack/react-query";
@@ -80,6 +82,8 @@ function Router() {
       <Route path="/seller-analytics" component={SellerAnalytics} />
       <Route path="/bulk-edit" component={BulkEdit} />
       <Route path="/collections/:batchId" component={Collection} />
+      <Route path="/partner/onboard" component={PartnerOnboarding} />
+      <Route path="/partner/dashboard" component={PartnerDashboard} />
       <Route path="/partner/:domain" component={PartnerStorefront} />
       <Route component={NotFound} />
     </Switch>
