@@ -15,11 +15,18 @@ export default function partnerRoutes(app: Express) {
    */
   app.post("/api/partners/onboard", async (req: any, res) => {
     try {
+      console.log('🔍 Partner onboard request received');
+      console.log('🔍 req.auth:', req.auth);
+      console.log('🔍 req.headers.authorization:', req.headers.authorization);
+      
       const userId = req.auth?.userId;
       
       if (!userId) {
-        return res.status(401).json({ message: "Unauthorized" });
+        console.error('❌ No userId found in req.auth');
+        return res.status(401).json({ message: "Unauthorized - No user ID found" });
       }
+      
+      console.log('✅ User ID found:', userId);
 
       const {
         businessName,
