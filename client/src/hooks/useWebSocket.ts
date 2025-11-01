@@ -32,7 +32,16 @@ export function useWebSocket(): UseWebSocketReturn {
   });
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      // Clean up if user logs out
+      if (socketRef.current) {
+        console.log('🔌 Disconnecting WebSocket (user logged out)');
+        socketRef.current.disconnect();
+        socketRef.current = null;
+        setIsConnected(false);
+      }
+      return;
+    }
 
     // Determine WebSocket URL based on environment
     const wsUrl = import.meta.env.PROD 
@@ -41,14 +50,16 @@ export function useWebSocket(): UseWebSocketReturn {
 
     console.log('🔌 Connecting to WebSocket:', wsUrl);
 
-    // Create socket connection
+    // Create socket connection with enhanced configuration
     const socket = io(wsUrl, {
       path: '/socket.io/',
-      transports: ['websocket', 'polling'],
+      transports: ['websocket', 'polling'], // Try WebSocket first, fallback to polling
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       reconnectionAttempts: 5,
+      timeout: 10000, // Connection timeout
+      autoConnect: true,
     });
 
     socketRef.current = socket;
@@ -59,15 +70,23 @@ export function useWebSocket(): UseWebSocketReturn {
       setIsConnected(true);
       
       // Authenticate with user ID
-      socket.emit('authenticate', { userId: user.id });
+      if (user?.id) {
+        socket.emit('authenticate', { userId: user.id });
+      }
     });
 
     socket.on('authenticated', (data) => {
       console.log('✅ WebSocket authenticated:', data);
     });
 
-    socket.on('disconnect', () => {
-      console.log('🔌 WebSocket disconnected');
+    socket.on('disconnect', (reason) => {
+      console.log('🔌 WebSocket disconnected:', reason);
+      setIsConnected(false);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.warn('⚠️ WebSocket connection error:', error.message);
+      // Don't throw error, just log it - the app should work without WebSocket
       setIsConnected(false);
     });
 
@@ -101,6 +120,7 @@ export function useWebSocket(): UseWebSocketReturn {
       console.log('🔌 Disconnecting WebSocket');
       socket.disconnect();
       socketRef.current = null;
+      setIsConnected(false);
     };
   }, [user]);
 
@@ -108,6 +128,8 @@ export function useWebSocket(): UseWebSocketReturn {
     if (socketRef.current?.connected) {
       socketRef.current.emit('join_conversation', { listingId, otherUserId });
       console.log('📥 Joined conversation:', { listingId, otherUserId });
+    } else {
+      console.warn('⚠️ Cannot join conversation: WebSocket not connected');
     }
   }, []);
 
@@ -160,4 +182,3 @@ export function useWebSocket(): UseWebSocketReturn {
     onUserTyping,
   };
 }
-
