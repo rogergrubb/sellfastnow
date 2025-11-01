@@ -49,6 +49,7 @@ import applyLocationSchemaRoutes from "./routes/applyLocationSchema";
 import searchRoutes from "./routes/search";
 import partnerRoutes from "./routes/partners";
 import adminPartnerRoutes from "./routes/admin-partners";
+import partnerStripeRoutes from "./routes/partner-stripe";
 import referralRoutes from "./routes/referrals";
 import trackingRoutes from "./routes/tracking";
 import { stripe } from "./stripe";
@@ -456,6 +457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   trackingRoutes(app);
   partnerRoutes(app);
   adminPartnerRoutes(app);
+  partnerStripeRoutes(app);
   
   // ======================
   // Listings Routes

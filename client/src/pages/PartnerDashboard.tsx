@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import PartnerStripeConnect from "@/components/PartnerStripeConnect";
 import { 
   LayoutDashboard, Package, Users, Mail, Settings, 
   TrendingUp, DollarSign, ShoppingBag, Eye, Upload,
@@ -536,6 +537,9 @@ function SettingsTab({ partner }: any) {
         <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
         <p className="text-gray-600">Manage your storefront settings and branding</p>
       </div>
+
+      {/* Stripe Connect */}
+      <PartnerStripeConnect />
 
       <div className="bg-white rounded-lg shadow p-6 space-y-6">
         <div>
