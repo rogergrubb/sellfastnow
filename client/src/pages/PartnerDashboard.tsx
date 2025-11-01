@@ -235,7 +235,10 @@ function OverviewTab({ stats, partner }: any) {
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Button className="flex items-center justify-center gap-2">
+          <Button 
+            className="flex items-center justify-center gap-2"
+            onClick={() => navigate('/listings/new')}
+          >
             <Plus className="w-4 h-4" />
             Add New Listing
           </Button>
