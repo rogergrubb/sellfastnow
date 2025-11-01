@@ -30,7 +30,7 @@ export default function LocationInput({ value, onChange, onUseCurrentLocation }:
 
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=us&limit=5`
       );
       const data = await response.json();
       setSuggestions(data);

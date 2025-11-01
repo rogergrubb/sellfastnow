@@ -22,7 +22,8 @@ export async function geocodeLocation(locationString: string): Promise<GeocodeRe
     }
 
     // Use Nominatim API (OpenStreetMap's free geocoding service)
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanLocation)}&format=json&limit=1&addressdetails=1`;
+    // Prioritize US results with countrycodes parameter
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanLocation)}&format=json&limit=1&addressdetails=1&countrycodes=us`;
     
     const response = await fetch(url, {
       headers: {
