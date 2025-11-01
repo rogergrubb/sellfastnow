@@ -126,7 +126,7 @@ export default function Navbar() {
                     <div className="text-xs text-gray-500">100+ items at once</div>
                   </div>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => window.location.href = '/features/ai-listings'}>
+                <DropdownMenuItem onClick={() => window.location.href = '/sell/ai-listings'}>
                   <Sparkles className="mr-2 h-4 w-4 text-yellow-600" />
                   <div>
                     <div className="font-medium">AI-Powered Listings</div>
@@ -134,11 +134,11 @@ export default function Navbar() {
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => window.location.href = '/pricing'}>
+                <DropdownMenuItem onClick={() => window.location.href = '/sell/pricing'}>
                   <span className="mr-2">💰</span>
                   Pricing & Fees
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => window.location.href = '/how-it-works'}>
+                <DropdownMenuItem onClick={() => window.location.href = '/sell/how-it-works'}>
                   <span className="mr-2">❓</span>
                   How It Works
                 </DropdownMenuItem>

@@ -44,6 +44,9 @@ import PartnerBulkUpload from "./pages/PartnerBulkUpload";
 import RealtorsPage from "./pages/business/Realtors";
 import EstateSalesPage from "./pages/business/EstateSales";
 import LiquidatorsPage from "./pages/business/Liquidators";
+import AiListingsPage from "./pages/sell/AiListings";
+import PricingPage from "./pages/sell/Pricing";
+import HowItWorksPageSell from "./pages/sell/HowItWorks";
 import Navbar from "@/components/Navbar";
 import { NotificationManager } from "@/components/NotificationManager";
 import { useQuery } from "@tanstack/react-query";
@@ -93,6 +96,9 @@ function Router() {
       <Route path="/business/realtors" component={RealtorsPage} />
       <Route path="/business/estate-sales" component={EstateSalesPage} />
       <Route path="/business/liquidators" component={LiquidatorsPage} />
+      <Route path="/sell/ai-listings" component={AiListingsPage} />
+      <Route path="/sell/pricing" component={PricingPage} />
+      <Route path="/sell/how-it-works" component={HowItWorksPageSell} />
       <Route component={NotFound} />
     </Switch>
   );
