@@ -242,7 +242,50 @@ export default function partnerRoutes(app: Express) {
   });
 
   /**
-   * Get partner's listings
+   * Get partner's public storefront listings
+   * GET /api/partners/storefront/:domain/listings
+   */
+  app.get("/api/partners/storefront/:domain/listings", async (req, res) => {
+    try {
+      const { domain } = req.params;
+
+      // Get partner
+      const [partner] = await db
+        .select()
+        .from(businessPartners)
+        .where(
+          and(
+            eq(businessPartners.customDomain, domain),
+            eq(businessPartners.status, 'active')
+          )
+        )
+        .limit(1);
+
+      if (!partner) {
+        return res.status(404).json({ message: "Partner storefront not found" });
+      }
+
+      // Get active listings for this partner
+      const listings = await db
+        .select()
+        .from(partnerListings)
+        .where(
+          and(
+            eq(partnerListings.partnerId, partner.id),
+            eq(partnerListings.status, 'active')
+          )
+        )
+        .orderBy(desc(partnerListings.createdAt));
+
+      res.json(listings);
+    } catch (error) {
+      console.error("Get storefront listings error:", error);
+      res.status(500).json({ message: "Failed to fetch listings" });
+    }
+  });
+
+  /**
+   * Get partner's listings (authenticated)
    * GET /api/partners/listings
    */
   app.get("/api/partners/listings", async (req, res) => {

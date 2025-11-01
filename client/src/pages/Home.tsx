@@ -8,6 +8,7 @@ import PricingCalculatorEstate from "@/components/PricingCalculatorEstate";
 import TargetAudiences from "@/components/TargetAudiences";
 import SocialMediaDemo from "@/components/SocialMediaDemo";
 import WelcomeModal from "@/components/WelcomeModal";
+import BusinessPartnerHero from "@/components/BusinessPartnerHero";
 import ReferralCard from "@/components/ReferralCard";
 import HeroWithBenefits from "@/components/HeroWithBenefits";
 import CategoryFilters from "@/components/CategoryFilters";
@@ -208,6 +209,9 @@ export default function Home() {
       <div>
       {/* Welcome Modal for first-time visitors */}
       <WelcomeModal />
+      
+      {/* Business Partner Hero - Top Priority */}
+      <BusinessPartnerHero />
       
       {/* Estate Sale Focus Section */}
       <EstateHero />
