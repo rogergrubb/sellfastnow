@@ -1,7 +1,8 @@
-import { db } from "../storage";
+import { db } from "../db";
 import { businessPartners, partnerClients, partnerListings } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 import type { Express } from "express";
+import { isAuthenticated } from "../supabaseAuth";ess";
 
 export default function partnerRoutes(app: Express) {
   
@@ -13,7 +14,7 @@ export default function partnerRoutes(app: Express) {
    * Create a new business partner account
    * POST /api/partners/onboard
    */
-  app.post("/api/partners/onboard", async (req: any, res) => {
+  app.post("/api/partners/onboard", isAuthenticated, async (req: any, res) => {
     try {
       console.log('🔍 Partner onboard request received');
       console.log('🔍 req.auth:', req.auth);
@@ -113,7 +114,7 @@ export default function partnerRoutes(app: Express) {
    * Get current user's partner profile
    * GET /api/partners/profile
    */
-  app.get("/api/partners/profile", async (req: any, res) => {
+  app.get("/api/partners/profile", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth?.userId;
       
@@ -142,7 +143,7 @@ export default function partnerRoutes(app: Express) {
    * Update partner profile
    * PUT /api/partners/profile
    */
-  app.put("/api/partners/profile", async (req: any, res) => {
+  app.put("/api/partners/profile", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth?.userId;
       
@@ -295,7 +296,7 @@ export default function partnerRoutes(app: Express) {
    * Get partner's listings (authenticated)
    * GET /api/partners/listings
    */
-  app.get("/api/partners/listings", async (req: any, res) => {
+  app.get("/api/partners/listings", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth?.userId;
       
@@ -332,7 +333,7 @@ export default function partnerRoutes(app: Express) {
    * Get partner's clients
    * GET /api/partners/clients
    */
-  app.get("/api/partners/clients", async (req: any, res) => {
+  app.get("/api/partners/clients", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth?.userId;
       
@@ -369,7 +370,7 @@ export default function partnerRoutes(app: Express) {
    * Add a client to partner's list
    * POST /api/partners/clients
    */
-  app.post("/api/partners/clients", async (req: any, res) => {
+  app.post("/api/partners/clients", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth?.userId;
       
@@ -438,7 +439,7 @@ export default function partnerRoutes(app: Express) {
    * Get partner dashboard statistics
    * GET /api/partners/stats
    */
-  app.get("/api/partners/stats", async (req: any, res) => {
+  app.get("/api/partners/stats", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth?.userId;
       
