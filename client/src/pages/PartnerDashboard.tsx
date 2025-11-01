@@ -237,7 +237,7 @@ function OverviewTab({ stats, partner, navigate }: any) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Button 
             className="flex items-center justify-center gap-2"
-            onClick={() => navigate('/listings/new')}
+            onClick={() => navigate('/post-ad')}
           >
             <Plus className="w-4 h-4" />
             Add New Listing
