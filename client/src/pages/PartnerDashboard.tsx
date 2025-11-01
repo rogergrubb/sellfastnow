@@ -137,7 +137,7 @@ export default function PartnerDashboard() {
 
           {/* Overview Tab */}
           <TabsContent value="overview">
-            <OverviewTab stats={stats} partner={partner} />
+            <OverviewTab stats={stats} partner={partner} navigate={navigate} />
           </TabsContent>
 
           {/* Listings Tab */}
@@ -166,7 +166,7 @@ export default function PartnerDashboard() {
 }
 
 // Overview Tab Component
-function OverviewTab({ stats, partner }: any) {
+function OverviewTab({ stats, partner, navigate }: any) {
   const statCards = [
     {
       title: "Total Revenue",
