@@ -3,6 +3,7 @@ import { db } from "../storage";
 import { sql, eq, and } from "drizzle-orm";
 import { z } from "zod";
 import { sendReferralEmail } from "../email";
+import { isAuthenticated } from "../supabaseAuth";
 
 const referralSchema = z.object({
   friendEmail: z.string().email("Please enter a valid email address"),
@@ -10,13 +11,9 @@ const referralSchema = z.object({
 
 export default function referralRoutes(app: Express) {
   // Submit a referral
-  app.post("/api/referrals", async (req, res) => {
+  app.post("/api/referrals", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.headers["x-user-id"] as string;
-      
-      if (!userId) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
+      const userId = req.auth.userId;
 
       // Validate request body
       const validation = referralSchema.safeParse(req.body);
@@ -101,13 +98,9 @@ export default function referralRoutes(app: Express) {
   });
 
   // Get user's referrals
-  app.get("/api/referrals", async (req, res) => {
+  app.get("/api/referrals", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.headers["x-user-id"] as string;
-      
-      if (!userId) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
+      const userId = req.auth.userId;
 
       const referrals = await db.execute(sql`
         SELECT 
