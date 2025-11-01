@@ -1,4 +1,4 @@
-import { Search, Plus, ListChecks, Sparkles, User, LogOut, Settings, MessageCircle, Bell, Menu } from "lucide-react";
+import { Search, Plus, ListChecks, Sparkles, User, LogOut, Settings, MessageCircle, Bell, Menu, Package, Zap, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
@@ -179,14 +179,42 @@ export default function Navbar() {
                   </span>
                 </button>
 
-                {/* Post Ad Button */}
-                <button
-                  className="hidden md:block bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs px-3 py-1.5 rounded-full transition-colors font-medium"
-                  data-testid="button-post-ad"
-                  onClick={() => window.location.href = '/post-ad'}
-                >
-                  Post Ad
-                </button>
+                {/* Post Ad Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="hidden md:flex items-center gap-1 bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs px-3 py-1.5 rounded-full transition-colors font-medium"
+                      data-testid="button-post-ad"
+                    >
+                      <Plus className="h-3 w-3" />
+                      Post Ad
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-white text-black w-56">
+                    <DropdownMenuItem onClick={() => window.location.href = '/post-ad'}>
+                      <Zap className="mr-2 h-4 w-4 text-blue-600" />
+                      <div>
+                        <div className="font-medium">Single Item</div>
+                        <div className="text-xs text-gray-500">Quick upload with AI</div>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => window.location.href = '/bulk-upload'}>
+                      <Package className="mr-2 h-4 w-4 text-purple-600" />
+                      <div>
+                        <div className="font-medium">Bulk Upload</div>
+                        <div className="text-xs text-gray-500">100+ items at once</div>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => window.location.href = '/partner/dashboard'}>
+                      <Store className="mr-2 h-4 w-4 text-green-600" />
+                      <div>
+                        <div className="font-medium">My Branded Page</div>
+                        <div className="text-xs text-gray-500">Business storefront</div>
+                      </div>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 
                 {/* User Profile */}
                 <DropdownMenu>
@@ -240,13 +268,43 @@ export default function Navbar() {
                 >
                   Login
                 </button>
-                <button
-                  className="hidden md:block bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs px-3 py-1.5 rounded-full transition-colors font-medium"
-                  data-testid="button-post-ad"
-                  onClick={() => window.location.href = '/post-ad'}
-                >
-                  Post Ad
-                </button>
+                
+                {/* Post Ad Dropdown for Logged Out Users */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="hidden md:flex items-center gap-1 bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs px-3 py-1.5 rounded-full transition-colors font-medium"
+                      data-testid="button-post-ad"
+                    >
+                      <Plus className="h-3 w-3" />
+                      Post Ad
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-white text-black w-56">
+                    <DropdownMenuItem onClick={() => window.location.href = '/post-ad'}>
+                      <Zap className="mr-2 h-4 w-4 text-blue-600" />
+                      <div>
+                        <div className="font-medium">Single Item</div>
+                        <div className="text-xs text-gray-500">Quick upload with AI</div>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => window.location.href = '/bulk-upload'}>
+                      <Package className="mr-2 h-4 w-4 text-purple-600" />
+                      <div>
+                        <div className="font-medium">Bulk Upload</div>
+                        <div className="text-xs text-gray-500">100+ items at once</div>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => window.location.href = '/partner/onboard'}>
+                      <Store className="mr-2 h-4 w-4 text-green-600" />
+                      <div>
+                        <div className="font-medium">Business Partner</div>
+                        <div className="text-xs text-gray-500">Get branded storefront</div>
+                      </div>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             )}
 
