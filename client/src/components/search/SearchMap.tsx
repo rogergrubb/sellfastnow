@@ -29,7 +29,7 @@ interface Listing {
   distance: number;
   location_latitude?: number;
   location_longitude?: number;
-  imageUrl?: string;
+  images?: string[];
 }
 
 interface SearchMapProps {
@@ -121,9 +121,9 @@ export default function SearchMap({ listings, center, radius }: SearchMapProps) 
               <Popup maxWidth={300}>
                 <div className="p-2">
                   {/* Image */}
-                  {listing.imageUrl ? (
+                  {listing.images && listing.images.length > 0 ? (
                     <img
-                      src={listing.imageUrl}
+                      src={listing.images[0]}
                       alt={listing.title}
                       className="w-full h-32 object-cover rounded mb-2"
                     />

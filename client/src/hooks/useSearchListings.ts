@@ -21,7 +21,7 @@ interface Listing {
   distance: number;
   location_latitude?: number;
   location_longitude?: number;
-  imageUrl?: string;
+  images?: string[];
 }
 
 async function searchListings(params: SearchParams): Promise<Listing[]> {

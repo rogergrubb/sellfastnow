@@ -8,7 +8,7 @@ interface Listing {
   description: string;
   category: string;
   distance: number;
-  imageUrl?: string;
+  images?: string[];
 }
 
 interface SearchResultsProps {
@@ -40,9 +40,9 @@ export default function SearchResults({ listings }: SearchResultsProps) {
         >
           {/* Image */}
           <div className="aspect-video bg-gray-100 relative">
-            {listing.imageUrl ? (
+            {listing.images && listing.images.length > 0 ? (
               <img
-                src={listing.imageUrl}
+                src={listing.images[0]}
                 alt={listing.title}
                 className="w-full h-full object-cover"
               />
