@@ -47,7 +47,7 @@ import LiquidatorsPage from "./pages/business/Liquidators";
 import AiListingsPage from "./pages/sell/AiListings";
 import PricingPage from "./pages/sell/Pricing";
 import HowItWorksPageSell from "./pages/sell/HowItWorks";
-import Navbar from "@/components/Navbar";
+import NavbarHover from "@/components/NavbarHover";
 import { NotificationManager } from "@/components/NotificationManager";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -151,7 +151,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <NavbarHover />
       <Router />
       {user && <NotificationManager userId={user.id} />}
       <PostLoginReferralModal 
