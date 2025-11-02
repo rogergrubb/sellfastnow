@@ -141,30 +141,6 @@ export default function HomeNew() {
                   </div>
                 </div>
 
-                {/* Savings Calculator Example */}
-                <div className="mt-8 p-6 bg-white dark:bg-gray-900 rounded-xl">
-                  <div className="text-center">
-                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Example: Sell $10,000 worth of items</div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <div className="font-bold text-green-600">SellFast: $9,700</div>
-                        <div className="text-xs text-gray-500">($300 fee)</div>
-                      </div>
-                      <div>
-                        <div className="font-bold text-red-600">eBay: $8,710</div>
-                        <div className="text-xs text-gray-500">($1,290 fee)</div>
-                      </div>
-                      <div>
-                        <div className="font-bold text-orange-600">Facebook: $9,500</div>
-                        <div className="text-xs text-gray-500">($500 fee)</div>
-                      </div>
-                      <div>
-                        <div className="font-bold text-gray-600">Craigslist: $10,000</div>
-                        <div className="text-xs text-gray-500">(manual work, spam)</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 
