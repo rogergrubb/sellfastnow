@@ -1,6 +1,41 @@
 import { CheckCircle, Zap, Star, Gem, TrendingUp, Sparkles } from "lucide-react";
 
+import { useState } from 'react';
+import { PricingTierPaymentModal } from '@/components/PricingTierPaymentModal';
+import { useToast } from '@/hooks/use-toast';
+
 export default function PricingPage() {
+  const { toast } = useToast();
+  const [selectedTier, setSelectedTier] = useState<{
+    id: string;
+    name: string;
+    price: number;
+    listings: number;
+    photos: number;
+    aiCredits: number;
+  } | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  const handlePurchase = (tier: any, tierId: string) => {
+    setSelectedTier({
+      id: tierId,
+      name: tier.name,
+      price: parseFloat(tier.price.replace('$', '')),
+      listings: tier.listings,
+      photos: tier.photos,
+      aiCredits: tier.aiCredits,
+    });
+    setIsPaymentModalOpen(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    toast({
+      title: 'Purchase Successful!',
+      description: 'Your credits have been added to your account.',
+    });
+    // Optionally redirect to post-ad page
+    setTimeout(() => window.location.href = '/post-ad', 1500);
+  };
   const individualTiers = [
     {
       name: "Single Listing Unlock",
@@ -190,7 +225,10 @@ export default function PricingPage() {
                   {tier.description}
                 </p>
 
-                <button className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3 px-6 rounded-full hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                <button 
+                  onClick={() => handlePurchase(tier, `${tier.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`)}
+                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3 px-6 rounded-full hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                >
                   {tier.buttonText} – {tier.price}
                 </button>
               </div>
@@ -267,7 +305,10 @@ export default function PricingPage() {
                   {tier.description}
                 </p>
 
-                <button className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-3 px-6 rounded-full hover:from-purple-600 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                <button 
+                  onClick={() => handlePurchase(tier, `${tier.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`)}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-3 px-6 rounded-full hover:from-purple-600 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                >
                   {tier.buttonText} – {tier.price}{tier.priceNote || ''}
                 </button>
               </div>
@@ -468,6 +509,14 @@ export default function PricingPage() {
           🚀 Post Your First Item Free
         </button>
       </div>
+
+      {/* Payment Modal */}
+      <PricingTierPaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        tier={selectedTier}
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 }

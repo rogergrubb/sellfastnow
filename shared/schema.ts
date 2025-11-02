@@ -748,4 +748,9 @@ export * from './analytics-schema';
 // ============================================
 export * from './partners-schema';
 
+// ============================================
+// PRICING TIERS & CREDITS SYSTEM
+// ============================================
+export * from './pricing-tiers-schema';
+
 // Cache bust 1761523424

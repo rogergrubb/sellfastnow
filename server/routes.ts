@@ -38,6 +38,7 @@ import smsCampaignsRoutes from "./routes/smsCampaigns";
 import offersRoutes from "./routes/offers";
 import paymentRoutes from "./routes/payments";
 import photoUnlockRoutes from "./routes/photo-unlock";
+import pricingTiersRoutes from "./routes/pricing-tiers";
 import welcomeRoutes from "./routes/welcome";
 import sitemapRoutes from "./routes/sitemap";
 import analyticsRoutes from "./routes/analytics";
@@ -510,6 +511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/offers", offersRoutes); // For /offers/made, /offers/received, /offers/:id
   app.use("/api/payments", paymentRoutes); // For /payments/transactions/:id/payment-intent
   app.use("/api/photo-unlock", photoUnlockRoutes); // For photo unlock payments
+  app.use("/api/pricing-tiers", pricingTiersRoutes); // For pricing tier purchases and credits
 
   // ======================
   // Images & Upload Routes
