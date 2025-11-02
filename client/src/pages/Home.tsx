@@ -47,8 +47,11 @@ export default function HomeNew() {
               <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4">
                 Sell Smarter.
               </h1>
-              <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8">
+              <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-4">
                 Keep 97% of your sales. Upload in bulk. AI-powered listings.
+              </p>
+              <p className="text-lg text-green-600 dark:text-green-400 font-semibold mb-8">
+                Post for FREE* <span className="text-sm text-gray-500 dark:text-gray-400 font-normal">(Limitations apply)</span>
               </p>
 
               {/* Quick Actions - Craigslist Style */}
@@ -104,7 +107,11 @@ export default function HomeNew() {
                     <div className="text-center mt-4">
                       <div className="text-lg font-semibold mb-2">SellFast.Now</div>
                       <div className="text-4xl font-bold text-green-600 mb-2">3%</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">You keep 97%</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">You keep 97%</div>
+                      <div className="text-sm font-semibold text-green-700 dark:text-green-400 mb-3">
+                        Post for FREE*
+                        <div className="text-xs text-gray-500 dark:text-gray-400 font-normal">(Limitations apply)</div>
+                      </div>
                       <div className="text-xs text-green-600 mb-3">Buyer and seller verification and rating system to protect you</div>
                       <CheckCircle className="w-6 h-6 text-green-500 mx-auto" />
                     </div>
