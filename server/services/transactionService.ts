@@ -497,6 +497,29 @@ export const transactionService = {
   },
 
   /**
+   * Get transactions where user is the buyer (purchases)
+   */
+  async getBuyerTransactions(buyerId: string, options?: { limit?: number; offset?: number }) {
+    return db.query.transactions.findMany({
+      where: eq(transactions.buyerId, buyerId),
+      limit: options?.limit || 50,
+      offset: options?.offset || 0,
+      orderBy: (transactions, { desc }) => [desc(transactions.createdAt)],
+      with: {
+        listing: true,
+        seller: {
+          columns: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            profileImageUrl: true,
+          },
+        },
+      },
+    });
+  },
+
+  /**
    * Get transaction statistics for a user
    */
   async getUserStats(userId: string) {

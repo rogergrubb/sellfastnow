@@ -374,6 +374,30 @@ router.get("/user/:userId/stats", async (req, res) => {
 });
 
 /**
+ * GET /api/transactions/buyer/:buyerId
+ * Get all purchases for a buyer (transactions where user is the buyer)
+ */
+router.get("/buyer/:buyerId", async (req, res) => {
+  try {
+    const { buyerId } = req.params;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    const transactions = await transactionService.getBuyerTransactions(buyerId, {
+      limit,
+      offset,
+    });
+
+    res.json(transactions);
+  } catch (error) {
+    console.error("Error fetching buyer transactions:", error);
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : "Failed to fetch buyer transactions" 
+    });
+  }
+});
+
+/**
  * POST /api/transactions/auto-release
  * Process auto-releases (called by a cron job)
  */

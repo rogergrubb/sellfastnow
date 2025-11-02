@@ -33,6 +33,7 @@ import {
   Share2,
   Upload,
   Star,
+  ShoppingBag,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -231,6 +232,27 @@ export default function Dashboard() {
   const { data: favorites = [], isLoading: favoritesLoading } = useQuery<Listing[]>({
     queryKey: ["/api/favorites"],
     enabled: !!user && activeTab === "favorites",
+  });
+
+  // Fetch purchases (transactions where user is buyer)
+  const { data: purchases = [], isLoading: purchasesLoading } = useQuery<any[]>({
+    queryKey: ["/api/transactions/buyer", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const token = await getToken();
+      const response = await fetch(`/api/transactions/buyer/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch purchases: ${response.status}`);
+      }
+      
+      return response.json();
+    },
+    enabled: !!user && activeTab === "purchases",
   });
 
   // Delete listing mutation
@@ -570,6 +592,18 @@ export default function Dashboard() {
           >
             <Heart className="mr-2 h-4 w-4" />
             Favorites
+          </Button>
+          <Button
+            variant={activeTab === "purchases" ? "secondary" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => {
+              setActiveTab("purchases");
+              setSidebarOpen(false);
+            }}
+            data-testid="button-nav-purchases"
+          >
+            <ShoppingBag className="mr-2 h-4 w-4" />
+            Purchases
           </Button>
           <Button
             variant={activeTab === "messages" ? "secondary" : "ghost"}
@@ -1099,6 +1133,75 @@ export default function Dashboard() {
                           />
                         );
                       })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Purchases Tab */}
+            <TabsContent value="purchases" className="m-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>My Purchases</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {purchasesLoading ? (
+                    <div className="text-center py-8 text-muted-foreground">Loading purchases...</div>
+                  ) : purchases.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                        <ShoppingBag className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">No purchases yet</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Items you buy will appear here
+                      </p>
+                      <Link href="/">
+                        <Button data-testid="button-browse-to-buy">Browse Listings</Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {purchases.map((transaction: any) => (
+                        <div key={transaction.id} className="flex gap-4 p-4 border rounded-lg">
+                          {transaction.listing?.images?.[0] && (
+                            <img
+                              src={transaction.listing.images[0]}
+                              alt={transaction.listing.title}
+                              className="w-24 h-24 object-cover rounded"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{transaction.listing?.title || 'Item'}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Purchased from {transaction.seller?.firstName} {transaction.seller?.lastName}
+                            </p>
+                            <p className="text-sm font-medium">${transaction.amount}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Status: {transaction.status}
+                            </p>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            {transaction.status === 'completed' && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => {
+                                  // Set up review for seller
+                                  setReviewingListing(transaction.listing);
+                                  setReviewModalOpen(true);
+                                }}
+                                className="bg-amber-600 hover:bg-amber-700"
+                                title="Leave a review for the seller"
+                              >
+                                <Star className="h-4 w-4 mr-1" />
+                                Review Seller
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </CardContent>
