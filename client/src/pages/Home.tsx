@@ -105,6 +105,7 @@ export default function HomeNew() {
                       <div className="text-lg font-semibold mb-2">SellFast.Now</div>
                       <div className="text-4xl font-bold text-green-600 mb-2">3%</div>
                       <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">You keep 97%</div>
+                      <div className="text-xs text-green-600 mb-3">Buyer and seller verification and rating system to protect you</div>
                       <CheckCircle className="w-6 h-6 text-green-500 mx-auto" />
                     </div>
                   </div>
