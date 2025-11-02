@@ -135,7 +135,7 @@ export default function HomeNew() {
                       <div className="text-lg font-semibold mb-2">Craigslist</div>
                       <div className="text-4xl font-bold text-gray-600 mb-2">Free</div>
                       <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">But...</div>
-                      <div className="text-xs text-gray-500">No bulk tools, spam, scams</div>
+                      <div className="text-xs text-gray-500">No bulk tools, spam, scams, no buyer and seller rating system</div>
                     </div>
                   </div>
                 </div>
