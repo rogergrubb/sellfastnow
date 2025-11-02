@@ -24,6 +24,7 @@ export { default as messagesRoutes } from './messages';
 export { default as notificationsRoutes } from './notifications';
 export { default as offersRoutes } from './offers';
 export { default as paymentsRoutes } from './payments';
+export { default as photoUnlockRoutes } from './photo-unlock';
 export { default as payoutsRoutes } from './payouts';
 export { default as promotedListingsRoutes } from './promoted-listings';
 export { default as referralsRoutes } from './referrals';

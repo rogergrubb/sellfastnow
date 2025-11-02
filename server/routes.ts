@@ -37,6 +37,7 @@ import savedSearchesRoutes from "./routes/savedSearches";
 import smsCampaignsRoutes from "./routes/smsCampaigns";
 import offersRoutes from "./routes/offers";
 import paymentRoutes from "./routes/payments";
+import photoUnlockRoutes from "./routes/photo-unlock";
 import welcomeRoutes from "./routes/welcome";
 import sitemapRoutes from "./routes/sitemap";
 import analyticsRoutes from "./routes/analytics";
@@ -508,6 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/listings", offersRoutes); // For /listings/:id/offers
   app.use("/api/offers", offersRoutes); // For /offers/made, /offers/received, /offers/:id
   app.use("/api/payments", paymentRoutes); // For /payments/transactions/:id/payment-intent
+  app.use("/api/photo-unlock", photoUnlockRoutes); // For photo unlock payments
 
   // ======================
   // Images & Upload Routes

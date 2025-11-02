@@ -70,6 +70,7 @@ import { insertListingSchema } from "@shared/schema";
 import { ProgressModal } from "@/components/ProgressModal";
 import { BulkItemReview } from "@/components/BulkItemReview";
 import { QRUploadWidget } from "@/components/QRUploadWidget";
+import { PhotoUnlockModal } from "@/components/PhotoUnlockModal";
 import { PaymentModal } from "@/components/PaymentModal";
 import { MultiItemGroupingModal } from "@/components/MultiItemGroupingModal";
 import { PhotoProcessingChoiceModal } from "@/components/PhotoProcessingChoiceModal";
@@ -174,6 +175,8 @@ export default function PostAdEnhanced() {
   const [isGeneratingBundle, setIsGeneratingBundle] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [pendingPublishData, setPendingPublishData] = useState<any>(null);
+  const [photoUnlockPaid, setPhotoUnlockPaid] = useState(false);
+  const [showPhotoUnlockModal, setShowPhotoUnlockModal] = useState(false);
 
   // Fetch free listings remaining
   const { data: freeListingsData } = useQuery<{
@@ -2083,6 +2086,17 @@ export default function PostAdEnhanced() {
   };
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
+    // Check if photo unlock is required
+    if (uploadedImages.length >= 2 && !photoUnlockPaid) {
+      toast({
+        title: "Photo Unlock Required",
+        description: "Please unlock your photos before publishing. Click the 'Unlock Now' button above.",
+        variant: "destructive",
+      });
+      setShowPhotoUnlockModal(true);
+      return;
+    }
+
     // Show pricing modal before publishing
     setPendingPublishData({
       ...data,
@@ -2727,6 +2741,14 @@ export default function PostAdEnhanced() {
                       )}
                     </div>
                     
+                    {/* Photo Pricing Info */}
+                    <Alert className="mb-4">
+                      <Camera className="h-4 w-4" />
+                      <AlertDescription className="text-sm">
+                        🎉 <strong>First photo is FREE!</strong> Upload 2-25 photos for just <strong>$0.99</strong> (one-time fee per listing).
+                      </AlertDescription>
+                    </Alert>
+                    
                     {/* Upload Options Grid */}
                     <div className="grid md:grid-cols-2 gap-4">
                       {/* Traditional Upload */}
@@ -2815,10 +2837,38 @@ export default function PostAdEnhanced() {
                           </AlertDescription>
                         </Alert>
 
+                        {/* Photo Unlock Prompt (if 2+ photos and not paid) */}
+                        {uploadedImages.length >= 2 && !photoUnlockPaid && (
+                          <Alert className="border-primary/50 bg-primary/5">
+                            <Camera className="h-4 w-4" />
+                            <AlertDescription>
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <strong>📸 Unlock {uploadedImages.length} photos for $0.99</strong>
+                                  <p className="text-xs mt-1">First photo is FREE. Unlock photos 2-{uploadedImages.length} to publish your listing.</p>
+                                </div>
+                                <Button
+                                  onClick={() => setShowPhotoUnlockModal(true)}
+                                  size="sm"
+                                  className="ml-4"
+                                >
+                                  Unlock Now
+                                </Button>
+                              </div>
+                            </AlertDescription>
+                          </Alert>
+                        )}
+
                         {/* Prominent CTA Button */}
                         <div className="border-2 border-primary/30 rounded-lg p-4 bg-gradient-to-br from-primary/5 to-primary/10">
                           <div className="text-center space-y-3">
                             <p className="font-medium">Photos uploaded ({uploadedImages.length} image{uploadedImages.length > 1 ? 's' : ''})</p>
+                            {uploadedImages.length >= 2 && photoUnlockPaid && (
+                              <Badge variant="secondary" className="bg-green-100 text-green-700">
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                Photos Unlocked
+                              </Badge>
+                            )}
                             <Button
                               type="button"
                               size="lg"
@@ -3737,6 +3787,20 @@ export default function PostAdEnhanced() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Photo Unlock Modal */}
+      <PhotoUnlockModal
+        open={showPhotoUnlockModal}
+        onOpenChange={setShowPhotoUnlockModal}
+        photoCount={uploadedImages.length}
+        onSuccess={() => {
+          setPhotoUnlockPaid(true);
+          toast({
+            title: "Photos Unlocked!",
+            description: `All ${uploadedImages.length} photos are now unlocked. You can publish your listing.`,
+          });
+        }}
+      />
     </div>
   );
 }
