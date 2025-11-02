@@ -1,0 +1,14 @@
+{
+  "id": "0001_rainy_the_captain",
+  "prevId": "0000_odd_ma_gnuci",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {},
+  "enums": {},
+  "schemas": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  }
+}
