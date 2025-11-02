@@ -21,6 +21,7 @@ import SignUpPage from "./pages/SignUp";
 import LocationSetup from "./pages/LocationSetup";
 import Settings from "./pages/Settings";
 import Messages from "./pages/MessagesNew";
+import Notifications from "./pages/Notifications";
 import MobileUpload from "./pages/MobileUpload";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
@@ -82,6 +83,7 @@ function Router() {
       <Route path="/credits" component={Credits} />
       <Route path="/settings" component={Settings} />
       <Route path="/messages" component={Messages} /> {/* Using MessagesNew with WebSocket and conversation grouping */}
+      <Route path="/notifications" component={Notifications} />
       <Route path="/pay/:sessionId" component={PaymentPage} />
       <Route path="/payment/:transactionId" component={Payment} />
       <Route path="/meetup/:id" component={SellerMeetupPage} />

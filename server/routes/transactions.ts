@@ -449,6 +449,40 @@ router.post("/mark-sold", async (req, res) => {
       .set({ status: 'sold' })
       .where(eq(listings.id, listingId));
 
+    // Send notifications for sale and purchase
+    try {
+      const { notificationService } = await import("../services/notificationService");
+      const seller = await db.query.users.findFirst({
+        where: eq(users.id, listing.userId),
+      });
+      const buyerName = `${buyer.firstName || ''} ${buyer.lastName || ''}`.trim() || buyer.email;
+      const sellerName = `${seller?.firstName || ''} ${seller?.lastName || ''}`.trim() || 'the seller';
+      
+      // Notify seller
+      await notificationService.createNotification({
+        userId: listing.userId,
+        type: "sale",
+        title: `Your item sold: ${listing.title}`,
+        message: `Congratulations! "${listing.title}" sold to ${buyerName} for $${amount}`,
+        relatedId: transaction.id,
+        relatedType: "transaction",
+        actionUrl: `/dashboard`,
+      });
+      
+      // Notify buyer
+      await notificationService.createNotification({
+        userId: buyer.id,
+        type: "purchase",
+        title: `Purchase confirmed: ${listing.title}`,
+        message: `You purchased "${listing.title}" from ${sellerName} for $${amount}`,
+        relatedId: transaction.id,
+        relatedType: "transaction",
+        actionUrl: `/dashboard`,
+      });
+    } catch (error) {
+      console.error("Error sending sale notifications:", error);
+    }
+
     res.json({ success: true, transaction });
   } catch (error) {
     console.error("Error marking as sold:", error);

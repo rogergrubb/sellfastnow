@@ -753,4 +753,9 @@ export * from './partners-schema';
 // ============================================
 export * from './pricing-tiers-schema';
 
+// ============================================
+// NOTIFICATIONS SYSTEM
+// ============================================
+export * from './notifications-schema';
+
 // Cache bust 1761523424

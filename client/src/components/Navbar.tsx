@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import { NotificationBell } from "@/components/NotificationBell";
 import type { UserCredits, Message } from "@shared/schema";
 
 export default function Navbar() {
@@ -392,6 +393,11 @@ export default function Navbar() {
               <div className="w-20 h-9" />
             ) : isSignedIn ? (
               <>
+                {/* Notification Bell */}
+                <div className="hidden lg:block">
+                  <NotificationBell />
+                </div>
+
                 {/* AI Credits - Compact */}
                 <button
                   className="hidden lg:flex items-center gap-1 text-xs hover:text-gray-300 transition-colors"

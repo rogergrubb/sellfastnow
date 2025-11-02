@@ -15,6 +15,7 @@ import { Loader2, MapPin, Shield, Mail, User as UserIcon, Phone, CheckCircle2, A
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PhoneVerificationModal } from "@/components/PhoneVerificationModal";
+import { NotificationPreferences } from "@/components/NotificationPreferences";
 
 export default function Settings() {
   const { toast } = useToast();
@@ -854,6 +855,9 @@ export default function Settings() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Notification Preferences */}
+        <NotificationPreferences />
 
         {/* Meeting Preferences */}
         <Card>

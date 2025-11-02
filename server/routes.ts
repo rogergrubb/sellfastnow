@@ -32,6 +32,7 @@ import draftFoldersRoutes from "./routes/draft-folders";
 import meetupRoutes from "./routes/meetup";
 import reliabilityRoutes from "./routes/reliability";
 import notificationsRoutes from "./routes/notifications";
+import notificationsNewRoutes from "./routes/notificationsNew";
 import boostsRoutes from "./routes/boosts";
 import savedSearchesRoutes from "./routes/savedSearches";
 import smsCampaignsRoutes from "./routes/smsCampaigns";
@@ -411,6 +412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Notifications Routes
   // ======================
   app.use("/api/notifications", notificationsRoutes);
+  app.use("/api/notifications-new", notificationsNewRoutes);
 
   // ======================
   // Boosts Routes
@@ -1801,9 +1803,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Send SMS notification for new message
+      // Send notification for new message
       try {
-        const { sendNewMessageSMS } = await import("./services/smsNotifications");
+        const { notificationService } = await import("./services/notificationService");
         const listing = await db.query.listings.findFirst({
           where: eq(listings.id, listingId),
         });
@@ -1812,19 +1814,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         if (listing && sender) {
-          const senderName = `${sender.firstName} ${sender.lastName}`;
-          const conversationUrl = `https://sellfast.now/messages?listing=${listingId}`;
+          const senderName = `${sender.firstName || ''} ${sender.lastName || ''}`.trim();
+          const messagePreview = content.trim().substring(0, 100);
           
-          await sendNewMessageSMS(
-            receiverId,
-            senderName,
-            listing.title,
-            content.trim(),
-            conversationUrl
-          );
+          await notificationService.createNotification({
+            userId: receiverId,
+            type: "message",
+            title: `New message from ${senderName}`,
+            message: `About: ${listing.title}\n\n"${messagePreview}${content.length > 100 ? '...' : ''}"`,
+            relatedId: newMessage[0].id,
+            relatedType: "message",
+            actionUrl: `/messages?listing=${listingId}`,
+          });
         }
       } catch (error) {
-        console.error("Error sending message SMS:", error);
+        console.error("Error sending message notification:", error);
       }
       
       res.json(newMessage[0]);

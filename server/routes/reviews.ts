@@ -3,7 +3,7 @@
 
 import { Router } from "express";
 import { db } from "../db";
-import { reviews, userStatistics, transactions } from "../../shared/schema";
+import { reviews, userStatistics, transactions, users } from "../../shared/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { isAuthenticated } from "../supabaseAuth";
 
@@ -119,6 +119,31 @@ router.post("/", isAuthenticated, async (req: any, res) => {
 
     // Update user statistics
     await updateUserStatisticsAfterReview(reviewedUserId, overallRating);
+
+    // Send notification for new review
+    try {
+      const { notificationService } = await import("../services/notificationService");
+      const reviewer = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+      });
+      
+      if (reviewer) {
+        const reviewerName = `${reviewer.firstName || ''} ${reviewer.lastName || ''}`.trim();
+        const stars = '⭐'.repeat(Math.round(overallRating / 2));
+        
+        await notificationService.createNotification({
+          userId: reviewedUserId,
+          type: "review",
+          title: `${reviewerName} left you a review`,
+          message: `${reviewerName} rated you ${stars} (${(overallRating / 2).toFixed(1)}/5.0)\n\n"${reviewText.substring(0, 100)}${reviewText.length > 100 ? '...' : ''}"`,
+          relatedId: review.id,
+          relatedType: "review",
+          actionUrl: `/profile/${reviewedUserId}`,
+        });
+      }
+    } catch (error) {
+      console.error("Error sending review notification:", error);
+    }
 
     res.status(201).json(review);
   } catch (error) {
