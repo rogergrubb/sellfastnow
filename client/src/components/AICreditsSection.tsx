@@ -43,30 +43,30 @@ export function AICreditsSection({ onPurchase }: AICreditsSectionProps) {
   };
 
   return (
-    <div className="py-16 px-4 bg-gradient-to-b from-amber-50 to-orange-50">
+    <div className="py-12 sm:py-14 md:py-16 px-4 sm:px-6 bg-gradient-to-b from-amber-50 to-orange-50">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-semibold mb-4">
-            <Sparkles className="h-4 w-4" />
+        <div className="text-center mb-8 md:mb-12">
+          <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-800 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold mb-3 md:mb-4">
+            <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
             AI Credits Only
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 px-2">
             ⚡ Buy AI Credits Your Way
           </h2>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg text-gray-600 max-w-3xl mx-auto px-4">
             Need just AI assistance without photo unlocks? Choose your own amount or save with bulk packages.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 mb-12">
+        <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mb-8 md:mb-12">
           {/* Custom Amount Section */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-amber-300">
-            <div className="flex items-center gap-3 mb-6">
-              <Calculator className="h-8 w-8 text-amber-600" />
+          <div className="bg-white rounded-xl md:rounded-2xl shadow-xl p-5 sm:p-6 md:p-8 border-2 border-amber-300">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-5 md:mb-6">
+              <Calculator className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-amber-600 flex-shrink-0" />
               <div>
-                <h3 className="text-2xl font-bold">Custom Amount</h3>
-                <p className="text-sm text-gray-600">Pay as you go • ${STANDARD_RATE} per credit</p>
+                <h3 className="text-lg sm:text-xl md:text-2xl font-bold">Custom Amount</h3>
+                <p className="text-xs sm:text-sm text-gray-600">Pay as you go • ${STANDARD_RATE} per credit</p>
               </div>
             </div>
 

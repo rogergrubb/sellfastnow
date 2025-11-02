@@ -167,50 +167,50 @@ export default function PricingPage() {
   return (
     <div className="bg-gradient-to-b from-gray-50 to-white min-h-screen">
       {/* Hero Section */}
-      <div className="py-16 px-4 text-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-        <h1 className="text-4xl md:text-6xl font-bold mb-4">
+      <div className="py-12 sm:py-14 md:py-16 lg:py-20 px-4 sm:px-6 text-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 px-2">
           ⚡ SellFast.Now Pricing
         </h1>
-        <p className="text-2xl md:text-3xl font-semibold mb-4">
+        <p className="text-xl sm:text-2xl md:text-3xl font-semibold mb-3 sm:mb-4">
           🪙 Sell free — always.
         </p>
-        <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-90">
+        <p className="text-base sm:text-lg md:text-xl max-w-3xl mx-auto opacity-90 px-4">
           Every item includes 1 photo + 1 AI listing assist (title, description, valuation, meta-tags).
-          <br />
-          Need more photos or AI power? Upgrade once and post with ease.
+          <br className="hidden sm:block" />
+          <span className="block sm:inline mt-1 sm:mt-0">Need more photos or AI power? Upgrade once and post with ease.</span>
         </p>
       </div>
 
       {/* Individual & Small Seller Options */}
-      <div className="py-16 px-4">
+      <div className="py-12 sm:py-14 md:py-16 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 px-2">
               🔸 Individual & Small Seller Options
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-base sm:text-lg text-gray-600 px-4">
               Perfect for casual sellers, weekend warriors, and light resellers
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {individualTiers.map((tier, index) => (
               <div
                 key={index}
-                className={`relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-8 border-2 ${
+                className={`relative bg-white rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-5 sm:p-6 md:p-8 border-2 ${
                   tier.badge ? 'border-yellow-400' : 'border-gray-200'
                 }`}
               >
                 {tier.badge && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-sm font-bold px-4 py-1 rounded-full shadow-lg">
+                  <div className="absolute -top-3 md:-top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-1 rounded-full shadow-lg">
                     {tier.badge}
                   </div>
                 )}
 
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold mb-2">{tier.name}</h3>
+                <div className="text-center mb-4 sm:mb-5 md:mb-6">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2">{tier.name}</h3>
                   <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-5xl font-bold text-blue-600">{tier.price}</span>
+                    <span className="text-3xl sm:text-4xl md:text-5xl font-bold text-blue-600">{tier.price}</span>
                   </div>
                   {tier.savings && (
                     <div className="mt-2 inline-block bg-green-100 text-green-700 text-sm font-semibold px-3 py-1 rounded-full">
@@ -219,28 +219,28 @@ export default function PricingPage() {
                   )}
                 </div>
 
-                <ul className="space-y-3 mb-6">
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
+                <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-5 md:mb-6">
+                  <li className="flex items-center text-sm sm:text-base text-gray-700">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mr-2 sm:mr-3 flex-shrink-0" />
                     <span><strong>{tier.listings}</strong> listing{tier.listings > 1 ? 's' : ''}</span>
                   </li>
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
+                  <li className="flex items-center text-sm sm:text-base text-gray-700">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mr-2 sm:mr-3 flex-shrink-0" />
                     <span><strong>{tier.photos}</strong> photos each</span>
                   </li>
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
+                  <li className="flex items-center text-sm sm:text-base text-gray-700">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mr-2 sm:mr-3 flex-shrink-0" />
                     <span><strong>{tier.aiCredits}</strong> AI credit{tier.aiCredits > 1 ? 's' : ''}</span>
                   </li>
                 </ul>
 
-                <p className="text-sm text-gray-600 mb-6 min-h-[40px]">
+                <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-5 md:mb-6 min-h-[32px] sm:min-h-[40px]">
                   {tier.description}
                 </p>
 
                 <button 
                   onClick={() => handlePurchase(tier, `${tier.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`)}
-                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3 px-6 rounded-full hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-2.5 sm:py-3 px-4 sm:px-6 text-sm sm:text-base rounded-full hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   {tier.buttonText} – {tier.price}
                 </button>
@@ -251,37 +251,37 @@ export default function PricingPage() {
       </div>
 
       {/* Bulk & Power Seller Bundles */}
-      <div className="py-16 px-4 bg-gradient-to-b from-indigo-50 to-purple-50">
+      <div className="py-12 sm:py-14 md:py-16 px-4 sm:px-6 bg-gradient-to-b from-indigo-50 to-purple-50">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 px-2">
               🔹 Bulk & Power Seller Bundles
             </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg text-gray-600 max-w-3xl mx-auto px-4">
               These are for frequent posters, semi-pro sellers, and mini-shop owners.
-              <br />
-              Each pack comes with extra AI credits for smarter, faster listing creation.
+              <br className="hidden sm:block" />
+              <span className="block sm:inline mt-1 sm:mt-0">Each pack comes with extra AI credits for smarter, faster listing creation.</span>
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
             {bulkTiers.map((tier, index) => (
               <div
                 key={index}
-                className={`relative bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 p-8 border-2 ${
+                className={`relative bg-white rounded-xl md:rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 p-5 sm:p-6 md:p-8 border-2 ${
                   tier.badge ? 'border-purple-400' : 'border-gray-200'
                 }`}
               >
                 {tier.badge && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-bold px-4 py-1 rounded-full shadow-lg">
+                  <div className="absolute -top-3 md:-top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-1 rounded-full shadow-lg">
                     {tier.badge}
                   </div>
                 )}
 
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold mb-2">{tier.name}</h3>
+                <div className="text-center mb-4 sm:mb-5 md:mb-6">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2">{tier.name}</h3>
                   <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-5xl font-bold text-purple-600">{tier.price}</span>
+                    <span className="text-3xl sm:text-4xl md:text-5xl font-bold text-purple-600">{tier.price}</span>
                     {tier.priceNote && (
                       <span className="text-lg text-gray-500">{tier.priceNote}</span>
                     )}
@@ -293,34 +293,34 @@ export default function PricingPage() {
                   )}
                 </div>
 
-                <ul className="space-y-3 mb-6">
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle className="h-5 w-5 text-purple-500 mr-3 flex-shrink-0" />
+                <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-5 md:mb-6">
+                  <li className="flex items-center text-sm sm:text-base text-gray-700">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 mr-2 sm:mr-3 flex-shrink-0" />
                     <span><strong>{tier.listings}</strong> listing{tier.listings !== "∞" && tier.listings > 1 ? 's' : tier.listings === "∞" ? 's' : ''}</span>
                   </li>
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle className="h-5 w-5 text-purple-500 mr-3 flex-shrink-0" />
+                  <li className="flex items-center text-sm sm:text-base text-gray-700">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 mr-2 sm:mr-3 flex-shrink-0" />
                     <span><strong>{tier.photos}</strong> photos each</span>
                   </li>
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle className="h-5 w-5 text-purple-500 mr-3 flex-shrink-0" />
+                  <li className="flex items-center text-sm sm:text-base text-gray-700">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 mr-2 sm:mr-3 flex-shrink-0" />
                     <span><strong>{tier.aiCredits}</strong> AI credit{tier.aiCredits !== "∞" && tier.aiCredits > 1 ? 's' : tier.aiCredits === "∞" ? 's' : ''}</span>
                   </li>
                   {tier.features?.map((feature, idx) => (
-                    <li key={idx} className="flex items-center text-gray-700">
-                      <Star className="h-5 w-5 text-yellow-500 mr-3 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
+                    <li key={idx} className="flex items-center text-sm sm:text-base text-gray-700">
+                      <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 mr-2 sm:mr-3 flex-shrink-0" />
+                      <span className="text-xs sm:text-sm">{feature}</span>
                     </li>
                   ))}
                 </ul>
 
-                <p className="text-sm text-gray-600 mb-6">
+                <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-5 md:mb-6">
                   {tier.description}
                 </p>
 
                 <button 
                   onClick={() => handlePurchase(tier, `${tier.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`)}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-3 px-6 rounded-full hover:from-purple-600 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-2.5 sm:py-3 px-4 sm:px-6 text-sm sm:text-base rounded-full hover:from-purple-600 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   {tier.buttonText} – {tier.price}{tier.priceNote || ''}
                 </button>
@@ -386,98 +386,99 @@ export default function PricingPage() {
       </div>
 
       {/* Comparison Table */}
-      <div className="py-16 px-4 bg-gray-50">
+      <div className="py-12 sm:py-14 md:py-16 px-4 sm:px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 px-2">
               🎯 Summary of Tiers
             </h2>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full bg-white rounded-xl shadow-lg overflow-hidden">
-              <thead className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-                <tr>
-                  <th className="px-6 py-4 text-left font-bold">Tier</th>
-                  <th className="px-6 py-4 text-center font-bold">Listings</th>
-                  <th className="px-6 py-4 text-center font-bold">Photos/item</th>
-                  <th className="px-6 py-4 text-center font-bold">AI Credits</th>
-                  <th className="px-6 py-4 text-center font-bold">Price</th>
-                  <th className="px-6 py-4 text-center font-bold">Savings</th>
-                </tr>
-              </thead>
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <table className="min-w-full bg-white rounded-none sm:rounded-xl shadow-lg overflow-hidden">
+                <thead className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                  <tr>
+                    <th className="px-3 sm:px-4 md:px-6 py-3 md:py-4 text-left text-xs sm:text-sm md:text-base font-bold">Tier</th>
+                    <th className="px-2 sm:px-3 md:px-4 py-3 md:py-4 text-center text-xs sm:text-sm md:text-base font-bold">Listings</th>
+                    <th className="px-2 sm:px-3 md:px-4 py-3 md:py-4 text-center text-xs sm:text-sm md:text-base font-bold hidden sm:table-cell">Photos</th>
+                    <th className="px-2 sm:px-3 md:px-4 py-3 md:py-4 text-center text-xs sm:text-sm md:text-base font-bold">AI</th>
+                    <th className="px-2 sm:px-3 md:px-4 py-3 md:py-4 text-center text-xs sm:text-sm md:text-base font-bold">Price</th>
+                    <th className="px-2 sm:px-3 md:px-4 py-3 md:py-4 text-center text-xs sm:text-sm md:text-base font-bold hidden md:table-cell">Save</th>
+                  </tr>
+                </thead>
               <tbody className="divide-y divide-gray-200">
                 <tr className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-semibold">Single Unlock</td>
-                  <td className="px-6 py-4 text-center">1</td>
-                  <td className="px-6 py-4 text-center">20</td>
-                  <td className="px-6 py-4 text-center">1</td>
-                  <td className="px-6 py-4 text-center font-bold text-blue-600">$0.99</td>
-                  <td className="px-6 py-4 text-center text-gray-400">—</td>
+                  <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-xs sm:text-sm md:text-base font-semibold">Single Unlock</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base">1</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">20</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base">1</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base font-bold text-blue-600">$0.99</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base text-gray-400 hidden md:table-cell">—</td>
                 </tr>
                 <tr className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-semibold">Double Deal</td>
-                  <td className="px-6 py-4 text-center">2</td>
-                  <td className="px-6 py-4 text-center">20</td>
-                  <td className="px-6 py-4 text-center">2</td>
-                  <td className="px-6 py-4 text-center font-bold text-blue-600">$1.49</td>
-                  <td className="px-6 py-4 text-center text-green-600 font-semibold">25%</td>
+                  <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-xs sm:text-sm md:text-base font-semibold">Double Deal</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">2</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">20</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">2</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base font-bold text-blue-600">$1.49</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base text-green-600 font-semibold hidden md:table-cell">25%</td>
                 </tr>
                 <tr className="hover:bg-gray-50 bg-yellow-50">
-                  <td className="px-6 py-4 font-semibold">Triple Boost ⭐</td>
-                  <td className="px-6 py-4 text-center">3</td>
-                  <td className="px-6 py-4 text-center">20</td>
-                  <td className="px-6 py-4 text-center">3</td>
-                  <td className="px-6 py-4 text-center font-bold text-blue-600">$1.99</td>
-                  <td className="px-6 py-4 text-center text-green-600 font-semibold">33%</td>
+                  <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-xs sm:text-sm md:text-base font-semibold">Triple Boost ⭐</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">3</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">20</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">3</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base font-bold text-blue-600">$1.99</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base text-green-600 font-semibold hidden md:table-cell">33%</td>
                 </tr>
                 <tr className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-semibold">Five-Item Pack</td>
-                  <td className="px-6 py-4 text-center">5</td>
-                  <td className="px-6 py-4 text-center">20</td>
-                  <td className="px-6 py-4 text-center">5</td>
-                  <td className="px-6 py-4 text-center font-bold text-blue-600">$2.99</td>
-                  <td className="px-6 py-4 text-center text-green-600 font-semibold">40%</td>
+                  <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-xs sm:text-sm md:text-base font-semibold">Five-Item Pack</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">5</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">20</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">5</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base font-bold text-blue-600">$2.99</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base text-green-600 font-semibold hidden md:table-cell">40%</td>
                 </tr>
                 <tr className="hover:bg-gray-50 bg-yellow-50">
-                  <td className="px-6 py-4 font-semibold">Six-Pack Pro 💰</td>
-                  <td className="px-6 py-4 text-center">6</td>
-                  <td className="px-6 py-4 text-center">20</td>
-                  <td className="px-6 py-4 text-center">6</td>
-                  <td className="px-6 py-4 text-center font-bold text-blue-600">$3.49</td>
-                  <td className="px-6 py-4 text-center text-green-600 font-semibold">42%</td>
+                  <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-xs sm:text-sm md:text-base font-semibold">Six-Pack Pro 💰</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">6</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">20</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">6</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base font-bold text-blue-600">$3.49</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base text-green-600 font-semibold hidden md:table-cell">42%</td>
                 </tr>
                 <tr className="hover:bg-gray-50 bg-purple-50">
-                  <td className="px-6 py-4 font-semibold">Power Starter</td>
-                  <td className="px-6 py-4 text-center">10</td>
-                  <td className="px-6 py-4 text-center">20</td>
-                  <td className="px-6 py-4 text-center">10</td>
-                  <td className="px-6 py-4 text-center font-bold text-purple-600">$4.99</td>
-                  <td className="px-6 py-4 text-center text-green-600 font-semibold">50%</td>
+                  <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-xs sm:text-sm md:text-base font-semibold">Power Starter</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">10</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">20</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">10</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base font-bold text-purple-600">$4.99</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base text-green-600 font-semibold hidden md:table-cell">50%</td>
                 </tr>
                 <tr className="hover:bg-gray-50 bg-purple-50">
-                  <td className="px-6 py-4 font-semibold">Local Hero ⭐</td>
-                  <td className="px-6 py-4 text-center">25</td>
-                  <td className="px-6 py-4 text-center">50</td>
-                  <td className="px-6 py-4 text-center">30</td>
-                  <td className="px-6 py-4 text-center font-bold text-purple-600">$9.99</td>
-                  <td className="px-6 py-4 text-center text-green-600 font-semibold">65%</td>
+                  <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-xs sm:text-sm md:text-base font-semibold">Local Hero ⭐</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">25</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">50</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">30</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base font-bold text-purple-600">$9.99</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base text-green-600 font-semibold hidden md:table-cell">65%</td>
                 </tr>
                 <tr className="hover:bg-gray-50 bg-purple-50">
-                  <td className="px-6 py-4 font-semibold">Marketplace Pro</td>
-                  <td className="px-6 py-4 text-center">50</td>
-                  <td className="px-6 py-4 text-center">50</td>
-                  <td className="px-6 py-4 text-center">75</td>
-                  <td className="px-6 py-4 text-center font-bold text-purple-600">$14.99</td>
-                  <td className="px-6 py-4 text-center text-green-600 font-semibold">75%</td>
+                  <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-xs sm:text-sm md:text-base font-semibold">Marketplace Pro</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">50</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">50</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">75</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base font-bold text-purple-600">$14.99</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base text-green-600 font-semibold hidden md:table-cell">75%</td>
                 </tr>
                 <tr className="hover:bg-gray-50 bg-gradient-to-r from-purple-50 to-pink-50">
-                  <td className="px-6 py-4 font-semibold">Unlimited Growth 💎</td>
-                  <td className="px-6 py-4 text-center">∞</td>
-                  <td className="px-6 py-4 text-center">50</td>
-                  <td className="px-6 py-4 text-center">∞</td>
-                  <td className="px-6 py-4 text-center font-bold text-purple-600">$19.99/mo</td>
-                  <td className="px-6 py-4 text-center text-green-600 font-semibold">90%</td>
+                  <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-xs sm:text-sm md:text-base font-semibold">Unlimited Growth 💎</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">∞</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">50</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base hidden sm:table-cell">∞</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base font-bold text-purple-600">$19.99/mo</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-xs sm:text-sm md:text-base text-green-600 font-semibold hidden md:table-cell">90%</td>
                 </tr>
               </tbody>
             </table>
