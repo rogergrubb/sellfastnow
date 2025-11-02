@@ -535,5 +535,6 @@ export default function PricingPage() {
         onSuccess={handlePaymentSuccess}
       />
     </div>
+  </div>
   );
 }
