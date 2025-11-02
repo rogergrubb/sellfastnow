@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Listing } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@/hooks/use-user";
+import { useAuth } from "@/lib/AuthContext";
 
 interface MarkAsSoldDialogProps {
   open: boolean;
@@ -34,7 +34,7 @@ export function MarkAsSoldDialog({
   onConfirm,
   isLoading = false,
 }: MarkAsSoldDialogProps) {
-  const { user } = useUser();
+  const { user } = useAuth();
   const [buyerId, setBuyerId] = useState("");
   const [amount, setAmount] = useState(listing?.price?.toString() || "");
   const [paymentMethod, setPaymentMethod] = useState("cash");
