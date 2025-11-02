@@ -32,6 +32,7 @@ import {
   X,
   Share2,
   Upload,
+  Star,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +40,7 @@ import type { User, Listing, Message } from "@shared/schema";
 import ListingCard from "@/components/ListingCard";
 import { DashboardShareModal } from "@/components/DashboardShareModal";
 import InlineListingEditor from "@/components/InlineListingEditor";
+import { LeaveReviewModal } from "@/components/LeaveReviewModal";
 
 type DashboardStats = {
   totalActive: number;
@@ -140,6 +142,8 @@ export default function Dashboard() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [editingListing, setEditingListing] = useState<Listing | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewingListing, setReviewingListing] = useState<Listing | null>(null);
 
   // Sync active tab and filter with URL query parameters
   useEffect(() => {
@@ -1001,6 +1005,22 @@ export default function Dashboard() {
                                     Sold
                                   </Button>
                                 )}
+                                {listing.status === "sold" && (
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() => {
+                                      setReviewingListing(listing);
+                                      setReviewModalOpen(true);
+                                    }}
+                                    data-testid={`button-review-buyer-${listing.id}`}
+                                    className="bg-amber-600 hover:bg-amber-700"
+                                    title="Leave a review for the buyer"
+                                  >
+                                    <Star className="h-4 w-4 mr-1" />
+                                    Review Buyer
+                                  </Button>
+                                )}
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -1145,6 +1165,19 @@ export default function Dashboard() {
             // Refresh listings after save
             queryClient.invalidateQueries({ queryKey: ['/api/listings/my-listings'] });
           }}
+        />
+      )}
+
+      {/* Leave Review Modal */}
+      {reviewingListing && currentUser && (
+        <LeaveReviewModal
+          open={reviewModalOpen}
+          onOpenChange={setReviewModalOpen}
+          listingId={reviewingListing.id}
+          reviewedUserId={reviewingListing.buyerId || ''}
+          reviewerRole="seller"
+          currentUserId={currentUser.id}
+          queryKey={['/api/listings/my-listings']}
         />
       )}
     </div>
