@@ -261,11 +261,7 @@ export default function NavbarHover() {
             Post Ad
           </a>
 
-          {user && (
-            <a href="/dashboard" className="apple-nav-icon" aria-label="Profile">
-              <User className="h-4 w-4" />
-            </a>
-          )}
+
         </div>
 
         {/* Mobile Menu Button */}
