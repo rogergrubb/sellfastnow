@@ -54,11 +54,6 @@ export default function NavbarHover() {
               </li>
               <li className="apple-dropdown-divider"></li>
               <li>
-                <a href="/sell/pricing" className="apple-dropdown-item-simple">
-                  💰 Pricing & Fees
-                </a>
-              </li>
-              <li>
                 <a href="/sell/how-it-works" className="apple-dropdown-item-simple">
                   ❓ How It Works
                 </a>
@@ -137,6 +132,13 @@ export default function NavbarHover() {
             </ul>
           </li>
 
+          {/* Pricing - Standalone Link */}
+          <li className="apple-nav-item">
+            <a href="/sell/pricing" className="apple-nav-link">
+              Pricing
+            </a>
+          </li>
+
           {/* Tools Dropdown */}
           <li className="apple-nav-item">
             <a href="#" className="apple-nav-link">
@@ -170,11 +172,6 @@ export default function NavbarHover() {
               <li>
                 <a href="/sell/how-it-works" className="apple-dropdown-item-simple">
                   📖 How It Works
-                </a>
-              </li>
-              <li>
-                <a href="/sell/pricing" className="apple-dropdown-item-simple">
-                  💵 Pricing Calculator
                 </a>
               </li>
               <li>
