@@ -264,7 +264,7 @@ export default function PartnerOnboarding() {
                   onChange={(e) => updateField("businessDescription", e.target.value)}
                   rows={4}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Tell customers about your business, specialties, and what makes you unique..."
+                  placeholder="How may we better serve you? what exactly are you looking for?"
                 />
               </div>
 
