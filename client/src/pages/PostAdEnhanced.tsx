@@ -3301,7 +3301,7 @@ export default function PostAdEnhanced() {
                     </Button>
                     <Button 
                       type="submit" 
-                      className="flex-1"
+                      className="flex-1 animate-gradient-shift animate-glow-pulse hover:scale-105 transition-transform"
                       disabled={createListingMutation.isPending}
                       data-testid="button-submit-coached"
                     >

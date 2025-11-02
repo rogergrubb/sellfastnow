@@ -330,3 +330,59 @@
     inset: -1px;
   }
 }
+/* Custom animations for prominent CTAs */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px hsl(var(--primary)), 0 0 10px hsl(var(--primary)), 0 0 15px hsl(var(--primary));
+  }
+  50% {
+    box-shadow: 0 0 10px hsl(var(--primary)), 0 0 20px hsl(var(--primary)), 0 0 30px hsl(var(--primary));
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--primary) / 0.8) 25%,
+    hsl(var(--primary)) 50%,
+    hsl(var(--primary) / 0.8) 75%,
+    hsl(var(--primary)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-gradient-shift {
+  background: linear-gradient(
+    -45deg,
+    hsl(var(--primary)),
+    hsl(216 91% 70%),
+    hsl(var(--primary)),
+    hsl(216 91% 50%)
+  );
+  background-size: 400% 400%;
+  animation: gradient-shift 3s ease infinite;
+}
