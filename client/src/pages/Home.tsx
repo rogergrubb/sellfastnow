@@ -47,9 +47,6 @@ export default function HomeNew() {
               <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4">
                 Sell Smart. Sell Safe. SellFast.Now
               </h1>
-              <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-4">
-                Keep 97% of your sales. Upload in bulk. AI-powered listings.
-              </p>
               <p className="text-lg text-green-600 dark:text-green-400 font-semibold mb-8">
                 Post for FREE* <span className="text-sm text-gray-500 dark:text-gray-400 font-normal">(Limitations apply)</span>
               </p>
