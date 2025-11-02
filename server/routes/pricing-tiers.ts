@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import Stripe from 'stripe';
 import { db } from '../db';
-import { users, pricingTierPurchases, userCredits, creditUsageHistory } from '../db/schema';
+import { users, pricingTierPurchases, userCredits, creditUsageHistory } from '../../shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
 
 const router = Router();
@@ -11,7 +11,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 // Pricing tier definitions
 const PRICING_TIERS = {
-  'single-unlock': {
+  'single-listing-unlock': {
     name: 'Single Listing Unlock',
     price: 0.99,
     listings: 1,
@@ -51,7 +51,7 @@ const PRICING_TIERS = {
     aiCredits: 6,
     isMonthly: false,
   },
-  'power-starter': {
+  'power-starter-pack': {
     name: 'Power Starter Pack',
     price: 4.99,
     listings: 10,
@@ -59,7 +59,7 @@ const PRICING_TIERS = {
     aiCredits: 10,
     isMonthly: false,
   },
-  'local-hero': {
+  'local-hero-pack': {
     name: 'Local Hero Pack',
     price: 9.99,
     listings: 25,
@@ -67,7 +67,7 @@ const PRICING_TIERS = {
     aiCredits: 30,
     isMonthly: false,
   },
-  'marketplace-pro': {
+  'marketplace-pro-pack': {
     name: 'Marketplace Pro Pack',
     price: 14.99,
     listings: 50,
@@ -75,12 +75,12 @@ const PRICING_TIERS = {
     aiCredits: 75,
     isMonthly: false,
   },
-  'unlimited-growth': {
-    name: 'Unlimited Growth Pack',
+  'mega-growth-pack': {
+    name: 'Mega Growth Pack',
     price: 19.99,
-    listings: 999999, // Effectively unlimited
+    listings: 100,
     photos: 50,
-    aiCredits: 999999, // Effectively unlimited
+    aiCredits: 100,
     isMonthly: true,
   },
 };
