@@ -374,6 +374,28 @@ router.get("/user/:userId/stats", async (req, res) => {
 });
 
 /**
+ * GET /api/transactions/listing/:listingId
+ * Get transaction for a specific listing
+ */
+router.get("/listing/:listingId", async (req, res) => {
+  try {
+    const { listingId } = req.params;
+    const transaction = await transactionService.getTransactionByListing(listingId);
+    
+    if (!transaction) {
+      return res.status(404).json({ error: "Transaction not found" });
+    }
+    
+    res.json(transaction);
+  } catch (error) {
+    console.error("Error fetching transaction by listing:", error);
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : "Failed to fetch transaction" 
+    });
+  }
+});
+
+/**
  * GET /api/transactions/buyer/:buyerId
  * Get all purchases for a buyer (transactions where user is the buyer)
  */

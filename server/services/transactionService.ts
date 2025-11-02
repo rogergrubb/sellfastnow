@@ -497,6 +497,16 @@ export const transactionService = {
   },
 
   /**
+   * Get transaction by listing ID
+   */
+  async getTransactionByListing(listingId: string) {
+    return db.query.transactions.findFirst({
+      where: eq(transactions.listingId, listingId),
+      orderBy: (transactions, { desc }) => [desc(transactions.createdAt)],
+    });
+  },
+
+  /**
    * Get transactions where user is the buyer (purchases)
    */
   async getBuyerTransactions(buyerId: string, options?: { limit?: number; offset?: number }) {

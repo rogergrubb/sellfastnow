@@ -145,6 +145,10 @@ export default function Dashboard() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reviewingListing, setReviewingListing] = useState<Listing | null>(null);
+  const [reviewContext, setReviewContext] = useState<{
+    reviewedUserId: string;
+    reviewerRole: 'buyer' | 'seller';
+  } | null>(null);
 
   // Sync active tab and filter with URL query parameters
   useEffect(() => {
@@ -1043,9 +1047,35 @@ export default function Dashboard() {
                                   <Button
                                     variant="default"
                                     size="sm"
-                                    onClick={() => {
-                                      setReviewingListing(listing);
-                                      setReviewModalOpen(true);
+                                    onClick={async () => {
+                                      // Fetch transaction to get buyer ID
+                                      try {
+                                        const token = await getToken();
+                                        const response = await fetch(`/api/transactions/listing/${listing.id}`, {
+                                          headers: { 'Authorization': `Bearer ${token}` },
+                                        });
+                                        if (response.ok) {
+                                          const transaction = await response.json();
+                                          setReviewingListing(listing);
+                                          setReviewContext({
+                                            reviewedUserId: transaction.buyerId,
+                                            reviewerRole: 'seller',
+                                          });
+                                          setReviewModalOpen(true);
+                                        } else {
+                                          toast({
+                                            title: "Error",
+                                            description: "Could not find transaction for this listing",
+                                            variant: "destructive",
+                                          });
+                                        }
+                                      } catch (error) {
+                                        toast({
+                                          title: "Error",
+                                          description: "Failed to load transaction",
+                                          variant: "destructive",
+                                        });
+                                      }
                                     }}
                                     data-testid={`button-review-buyer-${listing.id}`}
                                     className="bg-amber-600 hover:bg-amber-700"
@@ -1188,8 +1218,12 @@ export default function Dashboard() {
                                 variant="default"
                                 size="sm"
                                 onClick={() => {
-                                  // Set up review for seller
+                                  // Set up review for seller (buyer reviewing seller)
                                   setReviewingListing(transaction.listing);
+                                  setReviewContext({
+                                    reviewedUserId: transaction.sellerId,
+                                    reviewerRole: 'buyer',
+                                  });
                                   setReviewModalOpen(true);
                                 }}
                                 className="bg-amber-600 hover:bg-amber-700"
@@ -1272,13 +1306,13 @@ export default function Dashboard() {
       )}
 
       {/* Leave Review Modal */}
-      {reviewingListing && currentUser && (
+      {reviewingListing && currentUser && reviewContext && (
         <LeaveReviewModal
           open={reviewModalOpen}
           onOpenChange={setReviewModalOpen}
           listingId={reviewingListing.id}
-          reviewedUserId={reviewingListing.buyerId || ''}
-          reviewerRole="seller"
+          reviewedUserId={reviewContext.reviewedUserId}
+          reviewerRole={reviewContext.reviewerRole}
           currentUserId={currentUser.id}
           queryKey={['/api/listings/my-listings']}
         />
