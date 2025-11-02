@@ -37,7 +37,7 @@ import SellerAnalytics from "./pages/SellerAnalytics";
 import BulkEdit from "./pages/BulkEdit";
 import SearchPage from "./pages/SearchPage";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
-import PartnerStorefront from "./pages/PartnerStorefront";
+import PartnerStorefront from "./pages/PartnerStorefrontEnhanced";
 import PartnerOnboarding from "./pages/PartnerOnboarding";
 import PartnerDashboard from "./pages/PartnerDashboard";
 import PartnerBulkUpload from "./pages/PartnerBulkUpload";
