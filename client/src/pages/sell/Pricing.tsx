@@ -2,6 +2,7 @@ import { CheckCircle, Zap, Star, Gem, TrendingUp, Sparkles } from "lucide-react"
 
 import { useState } from 'react';
 import { PricingTierPaymentModal } from '@/components/PricingTierPaymentModal';
+import { AICreditsSection } from '@/components/AICreditsSection';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PricingPage() {
@@ -35,6 +36,18 @@ export default function PricingPage() {
     });
     // Optionally redirect to post-ad page
     setTimeout(() => window.location.href = '/post-ad', 1500);
+  };
+
+  const handleAICreditsPurchase = (credits: number, price: number, isCustom: boolean) => {
+    setSelectedTier({
+      id: isCustom ? 'ai-credits-custom' : `ai-credits-${credits}`,
+      name: isCustom ? `${credits} AI Credits (Custom)` : `${credits} AI Credits Package`,
+      price: price,
+      listings: 0,
+      photos: 0,
+      aiCredits: credits,
+    });
+    setIsPaymentModalOpen(true);
   };
   const individualTiers = [
     {
@@ -316,6 +329,9 @@ export default function PricingPage() {
           </div>
         </div>
       </div>
+
+      {/* AI Credits Purchase Section */}
+      <AICreditsSection onPurchase={handleAICreditsPurchase} />
 
       {/* What the AI Does */}
       <div className="py-16 px-4 bg-white">

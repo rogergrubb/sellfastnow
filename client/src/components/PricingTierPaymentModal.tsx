@@ -143,10 +143,18 @@ export function PricingTierPaymentModal({ isOpen, onClose, tier, onSuccess }: Pr
         headers['Authorization'] = `Bearer ${token}`;
       }
 
+      const body: any = { tierId: tier.id };
+      
+      // If it's a custom AI credits purchase, include the custom data
+      if (tier.id === 'ai-credits-custom') {
+        body.customCredits = tier.aiCredits;
+        body.customPrice = tier.price;
+      }
+
       const response = await fetch('/api/pricing-tiers/create-payment-intent', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ tierId: tier.id }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {

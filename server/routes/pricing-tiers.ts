@@ -84,22 +84,71 @@ const PRICING_TIERS = {
     aiCredits: 100,
     isMonthly: true,
   },
+  // AI Credits Only Packages
+  'ai-credits-50': {
+    name: '50 AI Credits Package',
+    price: 6.00,
+    listings: 0,
+    photos: 0,
+    aiCredits: 50,
+    isMonthly: false,
+  },
+  'ai-credits-100': {
+    name: '100 AI Credits Package',
+    price: 10.00,
+    listings: 0,
+    photos: 0,
+    aiCredits: 100,
+    isMonthly: false,
+  },
+  'ai-credits-250': {
+    name: '250 AI Credits Package',
+    price: 22.00,
+    listings: 0,
+    photos: 0,
+    aiCredits: 250,
+    isMonthly: false,
+  },
+  'ai-credits-500': {
+    name: '500 AI Credits Package',
+    price: 40.00,
+    listings: 0,
+    photos: 0,
+    aiCredits: 500,
+    isMonthly: false,
+  },
 };
 
 // POST /api/pricing-tiers/create-payment-intent
 // Create a Stripe payment intent for a pricing tier
 router.post('/create-payment-intent', isAuthenticated, async (req, res) => {
   try {
-    const { tierId } = req.body;
+    const { tierId, customCredits, customPrice } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const tier = PRICING_TIERS[tierId as keyof typeof PRICING_TIERS];
-    if (!tier) {
-      return res.status(400).json({ error: 'Invalid tier ID' });
+    let tier;
+    let isCustom = false;
+
+    // Check if it's a custom AI credits purchase
+    if (tierId === 'ai-credits-custom' && customCredits && customPrice) {
+      isCustom = true;
+      tier = {
+        name: `${customCredits} AI Credits (Custom)`,
+        price: customPrice,
+        listings: 0,
+        photos: 0,
+        aiCredits: customCredits,
+        isMonthly: false,
+      };
+    } else {
+      tier = PRICING_TIERS[tierId as keyof typeof PRICING_TIERS];
+      if (!tier) {
+        return res.status(400).json({ error: 'Invalid tier ID' });
+      }
     }
 
     // Get user email
