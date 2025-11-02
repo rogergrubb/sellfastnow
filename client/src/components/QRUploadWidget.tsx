@@ -177,19 +177,13 @@ export function QRUploadWidget({ onImagesReceived }: QRUploadWidgetProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* QR Code */}
-        <div className="flex justify-center p-4 bg-white rounded-md">
-          <QRCodeSVG value={uploadUrl} size={180} level="M" />
+        <div className="flex justify-center p-3 bg-white rounded-md">
+          <QRCodeSVG value={uploadUrl} size={120} level="M" />
         </div>
 
         {/* Instructions */}
-        <div className="text-sm text-muted-foreground space-y-2">
-          <p className="font-medium text-foreground">How to use:</p>
-          <ol className="list-decimal list-inside space-y-1 text-xs">
-            <li>Open your phone camera</li>
-            <li>Point at the QR code above</li>
-            <li>Tap the notification to open</li>
-            <li>Select photos to upload</li>
-          </ol>
+        <div className="text-xs text-muted-foreground text-center">
+          <p>Scan with phone camera → Tap notification → Select photos</p>
         </div>
 
         {/* Status */}

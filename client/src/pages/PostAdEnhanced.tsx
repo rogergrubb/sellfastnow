@@ -2682,11 +2682,11 @@ export default function PostAdEnhanced() {
       <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Sparkles className="h-8 w-8 text-primary" />
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Sparkles className="h-6 w-6 text-primary" />
               {isEditMode ? 'Edit Your Listing' : 'Smart Listing Coach'}
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground">
               AI-powered guidance to create the perfect listing
             </p>
           </div>
@@ -2823,7 +2823,7 @@ export default function PostAdEnhanced() {
                               type="button"
                               size="lg"
                               onClick={handleAutoGenerateClick}
-                              className="w-full gap-2"
+                              className="w-full gap-2 animate-pulse hover:animate-none"
                               data-testid="button-auto-generate"
                               disabled={!userCredits || userCredits.creditsRemaining === 0}
                             >
