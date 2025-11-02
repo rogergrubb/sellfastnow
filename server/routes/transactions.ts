@@ -374,6 +374,76 @@ router.get("/user/:userId/stats", async (req, res) => {
 });
 
 /**
+ * POST /api/transactions/mark-sold
+ * Mark a listing as sold and create a transaction (for offline/cash sales)
+ */
+router.post("/mark-sold", async (req, res) => {
+  try {
+    const { listingId, buyerEmail, amount, paymentMethod } = req.body;
+    
+    if (!listingId || !buyerEmail || !amount) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Get the listing to verify ownership
+    const listing = await db.query.listings.findFirst({
+      where: eq(listings.id, listingId),
+    });
+
+    if (!listing) {
+      return res.status(404).json({ error: "Listing not found" });
+    }
+
+    // Verify the current user is the seller
+    if (listing.userId !== req.user?.id) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Find buyer by email
+    let buyer = await db.query.users.findFirst({
+      where: eq(users.email, buyerEmail.toLowerCase()),
+    });
+
+    // If buyer doesn't exist, create a placeholder account
+    if (!buyer) {
+      const [newBuyer] = await db.insert(users).values({
+        id: crypto.randomUUID(),
+        email: buyerEmail.toLowerCase(),
+        firstName: buyerEmail.split('@')[0],
+        lastName: '',
+        isEmailVerified: false,
+        createdAt: new Date(),
+      }).returning();
+      buyer = newBuyer;
+    }
+
+    // Create transaction
+    const [transaction] = await db.insert(transactions).values({
+      id: crypto.randomUUID(),
+      buyerId: buyer.id,
+      sellerId: listing.userId,
+      listingId: listing.id,
+      amount: amount,
+      paymentMethod: paymentMethod || 'cash',
+      status: 'completed',
+      createdAt: new Date(),
+    }).returning();
+
+    // Mark listing as sold
+    await db.update(listings)
+      .set({ status: 'sold' })
+      .where(eq(listings.id, listingId));
+
+    res.json({ success: true, transaction });
+  } catch (error) {
+    console.error("Error marking as sold:", error);
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : "Failed to mark as sold" 
+    });
+  }
+});
+
+/**
  * GET /api/transactions/listing/:listingId
  * Get transaction for a specific listing
  */

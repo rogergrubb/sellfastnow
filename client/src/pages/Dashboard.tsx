@@ -42,6 +42,7 @@ import ListingCard from "@/components/ListingCard";
 import { DashboardShareModal } from "@/components/DashboardShareModal";
 import InlineListingEditor from "@/components/InlineListingEditor";
 import { LeaveReviewModal } from "@/components/LeaveReviewModal";
+import { MarkAsSoldDialog } from "@/components/MarkAsSoldDialog";
 
 type DashboardStats = {
   totalActive: number;
@@ -149,6 +150,8 @@ export default function Dashboard() {
     reviewedUserId: string;
     reviewerRole: 'buyer' | 'seller';
   } | null>(null);
+  const [markAsSoldDialogOpen, setMarkAsSoldDialogOpen] = useState(false);
+  const [listingToMarkSold, setListingToMarkSold] = useState<Listing | null>(null);
 
   // Sync active tab and filter with URL query parameters
   useEffect(() => {
@@ -342,22 +345,25 @@ export default function Dashboard() {
 
   // Mark as sold mutation
   const markAsSoldMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (data: { listingId: string; buyerEmail: string; amount: number; paymentMethod: string }) => {
       const token = await getToken();
-      const response = await fetch(`/api/listings/${id}/status`, {
-        method: 'PUT',
+      
+      // Create transaction with buyer info
+      const response = await fetch(`/api/transactions/mark-sold`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status: 'sold' }),
+        body: JSON.stringify(data),
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to mark as sold: ${response.status}`);
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to mark as sold');
       }
       
-      return response;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/listings"] });
@@ -1035,8 +1041,10 @@ export default function Dashboard() {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => markAsSoldMutation.mutate(listing.id)}
-                                    disabled={markAsSoldMutation.isPending}
+                                    onClick={() => {
+                                      setListingToMarkSold(listing);
+                                      setMarkAsSoldDialogOpen(true);
+                                    }}
                                     data-testid={`button-mark-sold-${listing.id}`}
                                   >
                                     <CheckCircle className="h-4 w-4 mr-1" />
@@ -1317,6 +1325,23 @@ export default function Dashboard() {
           queryKey={['/api/listings/my-listings']}
         />
       )}
+
+      {/* Mark as Sold Dialog */}
+      <MarkAsSoldDialog
+        open={markAsSoldDialogOpen}
+        onOpenChange={setMarkAsSoldDialogOpen}
+        listing={listingToMarkSold}
+        isLoading={markAsSoldMutation.isPending}
+        onConfirm={(data) => {
+          if (listingToMarkSold) {
+            markAsSoldMutation.mutate({
+              listingId: listingToMarkSold.id,
+              ...data,
+            });
+            setMarkAsSoldDialogOpen(false);
+          }
+        }}
+      />
     </div>
   );
 }
