@@ -62,6 +62,7 @@ function Router() {
       <Route path="/analytics" component={AnalyticsDashboard} />
       <Route path="/how-it-works" component={HowItWorks} />
       <Route path="/sign-in" component={SignInPage} />
+      <Route path="/auth/login" component={SignInPage} />
       <Route path="/sign-up" component={SignUpPage} />
       <Route path="/location-setup" component={LocationSetup} />
       <Route path="/post-ad" component={PostAdEnhanced} />
