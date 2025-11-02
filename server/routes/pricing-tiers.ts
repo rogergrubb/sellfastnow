@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { db } from '../db';
 import { users, pricingTierPurchases, userCredits, creditUsageHistory } from '../../shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
+import { isAuthenticated } from '../supabaseAuth';
 
 const router = Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -87,7 +88,7 @@ const PRICING_TIERS = {
 
 // POST /api/pricing-tiers/create-payment-intent
 // Create a Stripe payment intent for a pricing tier
-router.post('/create-payment-intent', async (req, res) => {
+router.post('/create-payment-intent', isAuthenticated, async (req, res) => {
   try {
     const { tierId } = req.body;
     const userId = req.user?.id;
@@ -148,7 +149,7 @@ router.post('/create-payment-intent', async (req, res) => {
 
 // POST /api/pricing-tiers/confirm-payment
 // Confirm payment and credit user account
-router.post('/confirm-payment', async (req, res) => {
+router.post('/confirm-payment', isAuthenticated, async (req, res) => {
   try {
     const { paymentIntentId, purchaseId } = req.body;
     const userId = req.user?.id;
@@ -247,7 +248,7 @@ router.post('/confirm-payment', async (req, res) => {
 
 // GET /api/pricing-tiers/credits
 // Get user's current credit balance
-router.get('/credits', async (req, res) => {
+router.get('/credits', isAuthenticated, async (req, res) => {
   try {
     const userId = req.user?.id;
 
@@ -286,7 +287,7 @@ router.get('/credits', async (req, res) => {
 
 // POST /api/pricing-tiers/use-credit
 // Use a credit (photo unlock or AI generation)
-router.post('/use-credit', async (req, res) => {
+router.post('/use-credit', isAuthenticated, async (req, res) => {
   try {
     const { creditType, listingId } = req.body; // creditType: 'photo_unlock' or 'ai_generation'
     const userId = req.user?.id;
@@ -356,7 +357,7 @@ router.post('/use-credit', async (req, res) => {
 
 // GET /api/pricing-tiers/purchase-history
 // Get user's purchase history
-router.get('/purchase-history', async (req, res) => {
+router.get('/purchase-history', isAuthenticated, async (req, res) => {
   try {
     const userId = req.user?.id;
 
