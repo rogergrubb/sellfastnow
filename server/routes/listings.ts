@@ -2,6 +2,9 @@ import { Router } from "express";
 import { isAuthenticated } from "../supabaseAuth";
 import { storage } from "../storage";
 import { processNewListingForNotifications } from "../services/savedSearchNotifications";
+import { db } from "../db";
+import { users } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 const router = Router();
 
@@ -170,6 +173,29 @@ const router = Router();
       });
 
       console.log(`Listing created successfully: ${listing.id}`);
+      
+      // Increment free listings counter if this is a free listing (under $50)
+      if ((status === 'active' || !status) && price && price < 50) {
+        try {
+          const user = await storage.getUser(userId);
+          if (user) {
+            const freeListingsUsed = (user.freeListingsUsedThisMonth || 0) + 1;
+            const resetDate = user.freeListingsResetDate || new Date();
+            
+            await db.update(users)
+              .set({ 
+                freeListingsUsedThisMonth: freeListingsUsed,
+                freeListingsResetDate: resetDate
+              })
+              .where(eq(users.id, userId));
+            
+            console.log(`📊 Free listings counter updated: ${freeListingsUsed}/5 used`);
+          }
+        } catch (error) {
+          console.error('Error updating free listings counter:', error);
+          // Don't fail the listing creation if counter update fails
+        }
+      }
       
       // Trigger saved search notifications (don't await - run in background)
       if (status === 'active' || !status) {

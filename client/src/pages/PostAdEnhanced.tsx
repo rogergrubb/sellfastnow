@@ -587,6 +587,7 @@ export default function PostAdEnhanced() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/listings'] });
       queryClient.invalidateQueries({ queryKey: ['/api/user/listings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/free-listings-remaining'] });
       
       const isDraft = data.status === 'draft';
       toast({
