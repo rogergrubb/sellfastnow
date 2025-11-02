@@ -379,9 +379,9 @@ router.get("/user/:userId/stats", async (req, res) => {
  */
 router.post("/mark-sold", async (req, res) => {
   try {
-    const { listingId, buyerEmail, amount, paymentMethod } = req.body;
+    const { listingId, buyerId, amount, paymentMethod } = req.body;
     
-    if (!listingId || !buyerEmail || !amount) {
+    if (!listingId || !buyerId || !amount) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -399,22 +399,37 @@ router.post("/mark-sold", async (req, res) => {
       return res.status(403).json({ error: "Not authorized" });
     }
 
-    // Find buyer by email
-    let buyer = await db.query.users.findFirst({
-      where: eq(users.email, buyerEmail.toLowerCase()),
-    });
+    // buyerId can be either a user ID or an email address
+    let buyer;
+    
+    // Check if it's an email (contains @)
+    if (buyerId.includes('@')) {
+      // Find buyer by email
+      buyer = await db.query.users.findFirst({
+        where: eq(users.email, buyerId.toLowerCase()),
+      });
 
-    // If buyer doesn't exist, create a placeholder account
-    if (!buyer) {
-      const [newBuyer] = await db.insert(users).values({
-        id: crypto.randomUUID(),
-        email: buyerEmail.toLowerCase(),
-        firstName: buyerEmail.split('@')[0],
-        lastName: '',
-        isEmailVerified: false,
-        createdAt: new Date(),
-      }).returning();
-      buyer = newBuyer;
+      // If buyer doesn't exist, create a placeholder account
+      if (!buyer) {
+        const [newBuyer] = await db.insert(users).values({
+          id: crypto.randomUUID(),
+          email: buyerId.toLowerCase(),
+          firstName: buyerId.split('@')[0],
+          lastName: '',
+          isEmailVerified: false,
+          createdAt: new Date(),
+        }).returning();
+        buyer = newBuyer;
+      }
+    } else {
+      // It's a user ID, find by ID
+      buyer = await db.query.users.findFirst({
+        where: eq(users.id, buyerId),
+      });
+      
+      if (!buyer) {
+        return res.status(404).json({ error: "Buyer not found" });
+      }
     }
 
     // Create transaction
@@ -439,6 +454,54 @@ router.post("/mark-sold", async (req, res) => {
     console.error("Error marking as sold:", error);
     res.status(500).json({ 
       error: error instanceof Error ? error.message : "Failed to mark as sold" 
+    });
+  }
+});
+
+/**
+ * GET /api/transactions/listing/:listingId/messaged-users
+ * Get all users who have messaged about a specific listing
+ * Used for the mark-as-sold dialog to show potential buyers
+ */
+router.get("/listing/:listingId/messaged-users", async (req, res) => {
+  try {
+    const { listingId } = req.params;
+    const { sellerId } = req.query;
+
+    if (!sellerId) {
+      return res.status(400).json({ error: "Missing required parameter: sellerId" });
+    }
+
+    const { db } = await import("../db");
+    const { messages, users } = await import("../../shared/schema");
+    const { eq, or, and, sql } = await import("drizzle-orm");
+
+    // Get all unique users who have messaged about this listing
+    // (excluding the seller themselves)
+    const messagedUsers = await db
+      .selectDistinct({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+      })
+      .from(messages)
+      .innerJoin(users, or(
+        and(eq(messages.senderId, users.id), eq(messages.receiverId, sellerId as string)),
+        and(eq(messages.receiverId, users.id), eq(messages.senderId, sellerId as string))
+      ))
+      .where(
+        and(
+          eq(messages.listingId, listingId),
+          sql`${users.id} != ${sellerId}`
+        )
+      );
+
+    res.json(messagedUsers);
+  } catch (error) {
+    console.error("Error fetching messaged users:", error);
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : "Failed to fetch messaged users" 
     });
   }
 });

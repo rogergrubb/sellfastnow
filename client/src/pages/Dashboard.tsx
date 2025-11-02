@@ -345,7 +345,7 @@ export default function Dashboard() {
 
   // Mark as sold mutation
   const markAsSoldMutation = useMutation({
-    mutationFn: async (data: { listingId: string; buyerEmail: string; amount: number; paymentMethod: string }) => {
+    mutationFn: async (data: { listingId: string; buyerId: string; amount: number; paymentMethod: string }) => {
       const token = await getToken();
       
       // Create transaction with buyer info
