@@ -543,6 +543,96 @@ export async function runMigrations() {
     `);
     console.log("✅ Partner indexes created");
 
+    // Create notifications system tables
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        type VARCHAR(50) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        related_id VARCHAR,
+        related_type VARCHAR(50),
+        action_url VARCHAR(500),
+        is_read BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        read_at TIMESTAMP
+      );
+    `);
+    console.log("✅ Notifications table created");
+
+    // Create notification indexes
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
+    `);
+    console.log("✅ Notification indexes created");
+
+    // Create notification preferences table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS notification_preferences (
+        user_id VARCHAR PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        in_app_messages BOOLEAN NOT NULL DEFAULT true,
+        in_app_offers BOOLEAN NOT NULL DEFAULT true,
+        in_app_reviews BOOLEAN NOT NULL DEFAULT true,
+        in_app_transactions BOOLEAN NOT NULL DEFAULT true,
+        in_app_sales BOOLEAN NOT NULL DEFAULT true,
+        in_app_purchases BOOLEAN NOT NULL DEFAULT true,
+        in_app_system BOOLEAN NOT NULL DEFAULT true,
+        email_messages BOOLEAN NOT NULL DEFAULT true,
+        email_offers BOOLEAN NOT NULL DEFAULT true,
+        email_reviews BOOLEAN NOT NULL DEFAULT true,
+        email_transactions BOOLEAN NOT NULL DEFAULT true,
+        email_sales BOOLEAN NOT NULL DEFAULT true,
+        email_purchases BOOLEAN NOT NULL DEFAULT true,
+        email_system BOOLEAN NOT NULL DEFAULT false,
+        email_daily_digest BOOLEAN NOT NULL DEFAULT false,
+        email_weekly_digest BOOLEAN NOT NULL DEFAULT false,
+        sms_messages BOOLEAN NOT NULL DEFAULT false,
+        sms_offers BOOLEAN NOT NULL DEFAULT false,
+        sms_reviews BOOLEAN NOT NULL DEFAULT false,
+        sms_transactions BOOLEAN NOT NULL DEFAULT false,
+        sms_sales BOOLEAN NOT NULL DEFAULT false,
+        sms_purchases BOOLEAN NOT NULL DEFAULT false,
+        sms_system BOOLEAN NOT NULL DEFAULT false,
+        quiet_hours_enabled BOOLEAN NOT NULL DEFAULT false,
+        quiet_hours_start TIME,
+        quiet_hours_end TIME,
+        timezone VARCHAR(100),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+    console.log("✅ Notification preferences table created");
+
+    // Create notification delivery log table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS notification_delivery_log (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        notification_id VARCHAR NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
+        delivery_method VARCHAR(20) NOT NULL,
+        status VARCHAR(20) NOT NULL,
+        recipient VARCHAR(255),
+        error_message TEXT,
+        sent_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+    console.log("✅ Notification delivery log table created");
+
+    // Create default preferences for existing users
+    await db.execute(sql`
+      INSERT INTO notification_preferences (user_id)
+      SELECT id FROM users
+      WHERE id NOT IN (SELECT user_id FROM notification_preferences)
+      ON CONFLICT (user_id) DO NOTHING;
+    `);
+    console.log("✅ Default notification preferences created for existing users");
+
     console.log("✅ Database migrations completed successfully");
   } catch (error) {
     console.error("❌ Migration error:", error);
