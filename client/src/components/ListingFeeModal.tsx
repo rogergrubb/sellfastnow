@@ -7,6 +7,7 @@ import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-
 import { Loader2, DollarSign, Info, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { apiRequest } from "@/lib/queryClient";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
 
@@ -126,22 +127,10 @@ export function ListingFeeModal({
   const createPaymentIntent = async () => {
     setIsCreatingIntent(true);
     try {
-      const response = await fetch('/api/listing-fee/create-payment-intent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          listingPrice,
-          listingTitle,
-        }),
+      const response = await apiRequest('POST', '/api/listing-fee/create-payment-intent', {
+        listingPrice,
+        listingTitle,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create payment intent');
-      }
 
       const data = await response.json();
       setClientSecret(data.clientSecret);

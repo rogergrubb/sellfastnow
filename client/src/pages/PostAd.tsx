@@ -63,20 +63,7 @@ export default function PostAd() {
 
   const createListingMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema> & { paymentIntentId?: string }) => {
-      const response = await fetch('/api/listings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create listing');
-      }
-      
+      const response = await apiRequest('POST', '/api/listings', data);
       return response.json();
     },
     onSuccess: () => {
