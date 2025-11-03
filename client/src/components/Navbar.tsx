@@ -466,12 +466,12 @@ export default function Navbar() {
           <div className="absolute left-0 right-0 top-11 bg-[#1d1d1f] border-t border-gray-700 p-4">
             <div className="max-w-[1440px] mx-auto">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
                 <input
                   type="search"
                   placeholder="Search listings..."
-                  className="w-full bg-[#2d2d2f] text-white placeholder:text-gray-400 pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
-                  style={{ color: 'white', WebkitTextFillColor: 'white' }}
+                  className="w-full bg-white text-black placeholder:text-gray-500 pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+                  style={{ color: 'black', WebkitTextFillColor: 'black' }}
                   data-testid="input-search"
                   autoFocus
                   onBlur={() => setTimeout(() => setSearchOpen(false), 200)}
