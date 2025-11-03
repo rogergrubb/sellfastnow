@@ -14,7 +14,7 @@ const router = Router();
  */
 router.get("/", isAuthenticated, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).auth.userId;
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = parseInt(req.query.offset as string) || 0;
     const unreadOnly = req.query.unreadOnly === "true";
@@ -38,7 +38,7 @@ router.get("/", isAuthenticated, async (req, res) => {
  */
 router.get("/unread-count", isAuthenticated, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).auth.userId;
     const count = await notificationService.getUnreadCount(userId);
     res.json({ count });
   } catch (error) {
@@ -53,7 +53,7 @@ router.get("/unread-count", isAuthenticated, async (req, res) => {
  */
 router.put("/:id/read", isAuthenticated, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).auth.userId;
     const notificationId = req.params.id;
 
     const success = await notificationService.markAsRead(notificationId, userId);
@@ -75,7 +75,7 @@ router.put("/:id/read", isAuthenticated, async (req, res) => {
  */
 router.put("/read-all", isAuthenticated, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).auth.userId;
     const success = await notificationService.markAllAsRead(userId);
 
     if (success) {
@@ -95,7 +95,7 @@ router.put("/read-all", isAuthenticated, async (req, res) => {
  */
 router.delete("/:id", isAuthenticated, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).auth.userId;
     const notificationId = req.params.id;
 
     const success = await notificationService.deleteNotification(notificationId, userId);
@@ -117,7 +117,7 @@ router.delete("/:id", isAuthenticated, async (req, res) => {
  */
 router.get("/preferences", isAuthenticated, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).auth.userId;
     const preferences = await notificationService.getUserPreferences(userId);
 
     if (preferences) {
@@ -137,7 +137,7 @@ router.get("/preferences", isAuthenticated, async (req, res) => {
  */
 router.put("/preferences", isAuthenticated, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).auth.userId;
     const updates = req.body;
 
     const updated = await notificationService.updatePreferences(userId, updates);
@@ -159,7 +159,7 @@ router.put("/preferences", isAuthenticated, async (req, res) => {
  */
 router.post("/test", isAuthenticated, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).auth.userId;
 
     await notificationService.createNotification({
       userId,
