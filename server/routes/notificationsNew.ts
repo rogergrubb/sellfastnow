@@ -4,7 +4,7 @@
 import { Router } from "express";
 import { db } from "../db";
 import { notificationService } from "../services/notificationService";
-import { requireAuth } from "../middleware/auth";
+import { isAuthenticated } from "../supabaseAuth";
 
 const router = Router();
 
@@ -12,7 +12,7 @@ const router = Router();
  * GET /api/notifications-new
  * Get all notifications for the current user
  */
-router.get("/", requireAuth, async (req, res) => {
+router.get("/", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
     const limit = parseInt(req.query.limit as string) || 50;
@@ -36,7 +36,7 @@ router.get("/", requireAuth, async (req, res) => {
  * GET /api/notifications-new/unread-count
  * Get count of unread notifications
  */
-router.get("/unread-count", requireAuth, async (req, res) => {
+router.get("/unread-count", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
     const count = await notificationService.getUnreadCount(userId);
@@ -51,7 +51,7 @@ router.get("/unread-count", requireAuth, async (req, res) => {
  * PUT /api/notifications-new/:id/read
  * Mark a notification as read
  */
-router.put("/:id/read", requireAuth, async (req, res) => {
+router.put("/:id/read", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
     const notificationId = req.params.id;
@@ -73,7 +73,7 @@ router.put("/:id/read", requireAuth, async (req, res) => {
  * PUT /api/notifications-new/read-all
  * Mark all notifications as read
  */
-router.put("/read-all", requireAuth, async (req, res) => {
+router.put("/read-all", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
     const success = await notificationService.markAllAsRead(userId);
@@ -93,7 +93,7 @@ router.put("/read-all", requireAuth, async (req, res) => {
  * DELETE /api/notifications-new/:id
  * Delete a notification
  */
-router.delete("/:id", requireAuth, async (req, res) => {
+router.delete("/:id", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
     const notificationId = req.params.id;
@@ -115,7 +115,7 @@ router.delete("/:id", requireAuth, async (req, res) => {
  * GET /api/notifications-new/preferences
  * Get user notification preferences
  */
-router.get("/preferences", requireAuth, async (req, res) => {
+router.get("/preferences", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
     const preferences = await notificationService.getUserPreferences(userId);
@@ -135,7 +135,7 @@ router.get("/preferences", requireAuth, async (req, res) => {
  * PUT /api/notifications-new/preferences
  * Update user notification preferences
  */
-router.put("/preferences", requireAuth, async (req, res) => {
+router.put("/preferences", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
     const updates = req.body;
@@ -157,7 +157,7 @@ router.put("/preferences", requireAuth, async (req, res) => {
  * POST /api/notifications-new/test
  * Create a test notification (development only)
  */
-router.post("/test", requireAuth, async (req, res) => {
+router.post("/test", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
 
