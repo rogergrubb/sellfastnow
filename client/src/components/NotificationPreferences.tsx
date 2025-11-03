@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -58,6 +59,22 @@ export function NotificationPreferences() {
   const { data: preferences, isLoading } = useQuery<NotificationPreferences>({
     queryKey: ["/api/notifications-new/preferences"],
     enabled: !!user,
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch("/api/notifications-new/preferences", {
+        headers,
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch preferences");
+      return response.json();
+    },
   });
 
   const [localPrefs, setLocalPrefs] = useState<Partial<NotificationPreferences>>({});
@@ -71,9 +88,17 @@ export function NotificationPreferences() {
   // Update preferences mutation
   const updatePreferencesMutation = useMutation({
     mutationFn: async (updates: Partial<NotificationPreferences>) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch("/api/notifications-new/preferences", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(updates),
       });
       if (!response.ok) throw new Error("Failed to update preferences");
