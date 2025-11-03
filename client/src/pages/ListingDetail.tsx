@@ -136,6 +136,13 @@ export default function ListingDetail() {
   };
 
   const handleMessageSeller = () => {
+    console.log('🔍 DEBUG handleMessageSeller:', {
+      currentUserId: currentUser?.id,
+      sellerId: seller?.id,
+      listingUserId: listing?.userId,
+      match: currentUser?.id === seller?.id
+    });
+    
     if (!currentUser) {
       toast({
         title: "Sign in required",
@@ -567,7 +574,7 @@ export default function ListingDetail() {
                 
                 {/* DEBUG: Show ownership info */}
                 {currentUser && (
-                  <div className="w-full p-4 bg-yellow-50 border border-yellow-200 rounded text-sm">
+                  <div className="w-full p-4 bg-yellow-50 border border-yellow-200 rounded text-sm font-mono">
                     <strong>DEBUG INFO:</strong><br/>
                     Current User ID: {currentUser.id}<br/>
                     Listing User ID: {data?.listing.userId}<br/>
@@ -663,6 +670,16 @@ export default function ListingDetail() {
 
       {/* Mobile Action Buttons - Sticky Bottom */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t lg:hidden shadow-lg" data-testid="card-mobile-actions">
+        {/* DEBUG: Show ownership info - Mobile */}
+        {currentUser && (
+          <div className="w-full p-2 mb-2 bg-yellow-50 border border-yellow-200 rounded text-xs font-mono">
+            <strong>DEBUG:</strong><br/>
+            User: {currentUser.id.substring(0, 8)}...<br/>
+            Listing: {data?.listing.userId?.substring(0, 8)}...<br/>
+            Seller: {seller?.id?.substring(0, 8)}...<br/>
+            Match: {String(currentUser.id === seller?.id)}
+          </div>
+        )}
         <div className="flex gap-2">
           <Button
             variant="outline"
