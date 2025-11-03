@@ -119,7 +119,7 @@ const router = Router();
   router.post("/", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth.userId;
-      const { title, description, price, category, condition, location, images, status, folderId, imageRotations } = req.body;
+      const { title, description, price, category, condition, location, images, status, folderId, imageRotations, paymentIntentId } = req.body;
 
       const isDraft = status === 'draft';
       
@@ -127,6 +127,51 @@ const router = Router();
       if (!isDraft) {
         if (!title || !description || !price || !category || !condition) {
           return res.status(400).json({ message: "Missing required fields" });
+        }
+        
+        // PAYMENT ENFORCEMENT: Listings >= $50 require payment
+        const listingPrice = parseFloat(price);
+        if (listingPrice >= 50) {
+          if (!paymentIntentId) {
+            return res.status(402).json({ 
+              message: "Payment required for listings $50 and above",
+              requiresPayment: true,
+              listingFee: (listingPrice * 0.03).toFixed(2)
+            });
+          }
+          
+          // Verify payment with Stripe
+          try {
+            const { stripe } = await import("../stripe");
+            const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+            
+            if (paymentIntent.status !== 'succeeded') {
+              return res.status(402).json({ 
+                message: "Payment not completed",
+                paymentStatus: paymentIntent.status
+              });
+            }
+            
+            // Verify payment amount matches listing fee (3%)
+            const expectedFee = Math.round(listingPrice * 0.03 * 100); // in cents
+            if (paymentIntent.amount !== expectedFee) {
+              return res.status(400).json({ 
+                message: "Payment amount mismatch",
+                expected: expectedFee,
+                received: paymentIntent.amount
+              });
+            }
+            
+            // Verify payment metadata matches this listing
+            if (paymentIntent.metadata.userId !== userId) {
+              return res.status(403).json({ message: "Payment does not belong to this user" });
+            }
+            
+            console.log(`✅ Payment verified for listing: $${listingPrice}, fee: $${(listingPrice * 0.03).toFixed(2)}`);
+          } catch (error: any) {
+            console.error("Error verifying payment:", error);
+            return res.status(500).json({ message: "Failed to verify payment" });
+          }
         }
       } else {
         // For drafts, only require at least one image

@@ -57,6 +57,7 @@ import partnerStripeRoutes from "./routes/partner-stripe";
 import referralRoutes from "./routes/referrals";
 import trackingRoutes from "./routes/tracking";
 import debugRoutes from "./routes/debug";
+import listingFeeRoutes from "./routes/listing-fee";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -524,6 +525,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/payments", paymentRoutes); // For /payments/transactions/:id/payment-intent
   app.use("/api/photo-unlock", photoUnlockRoutes); // For photo unlock payments
   app.use("/api/pricing-tiers", pricingTiersRoutes); // For pricing tier purchases and credits
+  app.use("/api/listing-fee", listingFeeRoutes); // For listing fee payments (3% for items >= $50)
 
   // ======================
   // Images & Upload Routes
