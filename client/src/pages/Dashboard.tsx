@@ -35,7 +35,7 @@ import {
   Star,
   ShoppingBag,
 } from "lucide-react";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { User, Listing, Message } from "@shared/schema";
 import ListingCard from "@/components/ListingCard";
