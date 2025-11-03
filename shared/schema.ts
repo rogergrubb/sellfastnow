@@ -180,6 +180,7 @@ export const listings = pgTable("listings", {
   
   images: text("images").array().notNull().default(sql`'{}'::text[]`),
   imageRotations: jsonb("image_rotations").default(sql`'[]'::jsonb`), // Array of rotation angles [0, 90, 180, 270]
+  tags: text("tags").array().default(sql`'{}'::text[]`), // Product tags/keywords for search and categorization
   status: varchar("status", { length: 20 }).notNull().default("active"),
   
   // Analytics fields

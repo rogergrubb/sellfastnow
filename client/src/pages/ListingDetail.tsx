@@ -394,6 +394,20 @@ export default function ListingDetail() {
               )}
             </Card>
 
+            {/* Tags Card */}
+            {listing.tags && listing.tags.length > 0 && (
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-4">Tags</h2>
+                <div className="flex flex-wrap gap-2">
+                  {listing.tags.map((tag, index) => (
+                    <Badge key={index} variant="secondary" className="text-sm">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </Card>
+            )}
+
             {/* Similar Listings */}
             {similarListings.length > 0 && (
               <div className="space-y-4">

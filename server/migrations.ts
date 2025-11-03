@@ -637,6 +637,18 @@ export async function runMigrations() {
     `);
     console.log("✅ Default notification preferences created for existing users");
 
+    // Add tags field to listings table
+    await db.execute(sql`
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS tags text[] DEFAULT '{}';
+    `);
+    console.log("✅ Tags field added to listings table");
+
+    // Add GIN index for tags array for better search performance
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_listings_tags ON listings USING GIN (tags);
+    `);
+    console.log("✅ Tags index created for listings table");
+
     console.log("✅ Database migrations completed successfully");
   } catch (error) {
     console.error("❌ Migration error:", error);

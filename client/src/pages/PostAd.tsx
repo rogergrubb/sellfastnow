@@ -53,6 +53,7 @@ export default function PostAd() {
       condition: "new",
       location: "",
       images: [],
+      tags: [],
     },
   });
 
@@ -134,6 +135,12 @@ export default function PostAd() {
         if (analysis.condition && !userEditedFields.has('condition')) {
           form.setValue('condition', analysis.condition);
           setAiSuggestions(prev => ({ ...prev, condition: true }));
+        }
+        
+        // Auto-populate tags if provided by AI
+        if (analysis.tags && analysis.tags.length > 0 && !userEditedFields.has('tags')) {
+          form.setValue('tags', analysis.tags);
+          setAiSuggestions(prev => ({ ...prev, tags: true }));
         }
 
         // Show toast only if we got useful analysis data
@@ -494,6 +501,42 @@ export default function PostAd() {
                 )}
               />
             </div>
+
+            {/* Tags Field */}
+            <FormField
+              control={form.control}
+              name="tags"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    Tags
+                    {aiSuggestions.tags && (
+                      <Badge variant="secondary" className="text-xs">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        AI Suggested
+                      </Badge>
+                    )}
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g. book, mystery, cozy, fiction (comma-separated)"
+                      data-testid="input-tags"
+                      value={field.value?.join(', ') || ''}
+                      onChange={(e) => {
+                        const tags = e.target.value.split(',').map(t => t.trim()).filter(t => t);
+                        field.onChange(tags);
+                        setUserEditedFields(prev => new Set(prev).add('tags'));
+                      }}
+                      onFocus={() => setUserEditedFields(prev => new Set(prev).add('tags'))}
+                    />
+                  </FormControl>
+                  <p className="text-sm text-muted-foreground">
+                    Add keywords to help buyers find your item
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="flex gap-4 pt-4">
               <Button

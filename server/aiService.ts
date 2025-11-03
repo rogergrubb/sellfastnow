@@ -38,8 +38,8 @@ const getGemini = () => {
   return new GoogleGenerativeAI(apiKey);
 };
 
-// Category list
-const CATEGORY_LIST = "Electronics, Furniture, Clothing, Vehicles, Services";
+// Category list - must match the categories in PostAd.tsx form
+const CATEGORY_LIST = "Electronics, Furniture, Clothing, Home & Garden, Sports & Outdoors, Books & Media, Toys & Games, Automotive, Other";
 
 // Type definitions
 export interface ProductAnalysis {
