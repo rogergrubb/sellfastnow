@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 import { Bell, Check, CheckCheck, Trash2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,7 +24,7 @@ interface Notification {
 
 export default function Notifications() {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("all");
 
@@ -93,7 +93,7 @@ export default function Notifications() {
 
     // Navigate to action URL
     if (notification.actionUrl) {
-      navigate(notification.actionUrl);
+      setLocation(notification.actionUrl);
     }
   };
 
@@ -141,7 +141,7 @@ export default function Notifications() {
             <p className="text-muted-foreground mb-6">
               You need to be signed in to access your notifications.
             </p>
-            <Button onClick={() => navigate("/")}>Go to Home</Button>
+            <Button onClick={() => setLocation("/")}>Go to Home</Button>
           </CardContent>
         </Card>
       </div>
@@ -171,7 +171,7 @@ export default function Notifications() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate("/settings#notifications")}
+            onClick={() => setLocation("/settings")}
           >
             <Settings className="h-4 w-4 mr-2" />
             Settings
