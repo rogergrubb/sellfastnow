@@ -565,6 +565,18 @@ export default function ListingDetail() {
                   </Button>
                 )}
                 
+                {/* DEBUG: Show ownership info */}
+                {currentUser && (
+                  <div className="w-full p-4 bg-yellow-50 border border-yellow-200 rounded text-sm">
+                    <strong>DEBUG INFO:</strong><br/>
+                    Current User ID: {currentUser.id}<br/>
+                    Listing User ID: {data?.listing.userId}<br/>
+                    Seller ID: {seller?.id}<br/>
+                    Match (currentUser.id === seller.id): {String(currentUser.id === seller?.id)}<br/>
+                    Match (currentUser.id === listing.userId): {String(currentUser.id === data?.listing.userId)}
+                  </div>
+                )}
+
                 <Button 
                   className="w-full" 
                   size="lg" 
