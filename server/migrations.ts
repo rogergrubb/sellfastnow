@@ -573,9 +573,13 @@ export async function runMigrations() {
     `);
     console.log("✅ Notification indexes created");
 
-    // Create notification preferences table
+    // Drop and recreate notification preferences table with correct schema
     await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS notification_preferences (
+      DROP TABLE IF EXISTS notification_preferences CASCADE;
+    `);
+    
+    await db.execute(sql`
+      CREATE TABLE notification_preferences (
         user_id VARCHAR PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
         in_app_messages BOOLEAN NOT NULL DEFAULT true,
         in_app_offers BOOLEAN NOT NULL DEFAULT true,
