@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { MessageOfferPopup } from "./MessageOfferPopup";
 import { useQuery } from "@tanstack/react-query";
+import { getQueryFn } from "@/lib/queryClient";
 
 interface Notification {
   id: string;
@@ -27,13 +28,10 @@ export function NotificationManager({ userId }: NotificationManagerProps) {
 
   // Fetch unread notifications on mount (for login scenario)
   const { data: unreadNotifications } = useQuery({
-    queryKey: ["unread-notifications", userId],
-    queryFn: async () => {
-      const response = await fetch(`/api/notifications/unread`);
-      if (!response.ok) throw new Error("Failed to fetch notifications");
-      return response.json();
-    },
+    queryKey: ["/api", "notifications", "unread"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!userId,
+    retry: false,
   });
 
   // Show unread notifications on login
