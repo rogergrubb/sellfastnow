@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DollarSign, Check, X, ArrowRightLeft, Star } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -44,12 +44,33 @@ export function OfferMessageCard({
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [offerData, setOfferData] = useState<any>(null);
+  const [currentStatus, setCurrentStatus] = useState(metadata.status);
   const [counterAmount, setCounterAmount] = useState("");
   const [counterMessage, setCounterMessage] = useState("");
   const [acceptMessage, setAcceptMessage] = useState("");
   const [rejectMessage, setRejectMessage] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch current offer status on mount and when metadata changes
+  useEffect(() => {
+    const fetchOfferStatus = async () => {
+      try {
+        const response = await fetch(`/api/offers/${metadata.offerId}`);
+        if (response.ok) {
+          const offer = await response.json();
+          setCurrentStatus(offer.status);
+          setOfferData(offer);
+        }
+      } catch (error) {
+        console.error('Failed to fetch offer status:', error);
+      }
+    };
+
+    if (messageType === 'offer_made' || messageType === 'offer_received') {
+      fetchOfferStatus();
+    }
+  }, [metadata.offerId, messageType]);
 
   const acceptOfferMutation = useMutation({
     mutationFn: async (message?: string) => {
@@ -174,10 +195,10 @@ export function OfferMessageCard({
       : 0;
 
     return (
-      <Card className={`p-4 border-2 ${getStatusColor(metadata.status)}`}>
+      <Card className={`p-4 border-2 ${getStatusColor(currentStatus)}`}>
         <div className="flex items-start gap-3">
           <div className="p-2 rounded-full bg-white">
-            {getStatusIcon(metadata.status)}
+            {getStatusIcon(currentStatus)}
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
@@ -185,7 +206,7 @@ export function OfferMessageCard({
                 {isOwnMessage ? "You made an offer" : "Offer received"}
               </h4>
               <span className="text-xs px-2 py-1 rounded-full bg-white capitalize">
-                {metadata.status}
+                {currentStatus}
               </span>
             </div>
             
@@ -209,7 +230,7 @@ export function OfferMessageCard({
             )}
 
             {/* Action buttons when offer is pending */}
-            {!isOwnMessage && metadata.status === "pending" && !showCounterForm && !showAcceptForm && !showRejectForm && (
+            {!isOwnMessage && currentStatus === "pending" && !showCounterForm && !showAcceptForm && !showRejectForm && (
               <div className="flex gap-2 mt-3">
                 <Button
                   size="sm"
@@ -231,6 +252,39 @@ export function OfferMessageCard({
                   size="sm"
                   variant="destructive"
                   onClick={() => setShowRejectForm(true)}
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Decline
+                </Button>
+              </div>
+            )}
+
+            {/* Show disabled buttons when offer is no longer pending */}
+            {!isOwnMessage && currentStatus !== "pending" && (
+              <div className="flex gap-2 mt-3">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled
+                  className="opacity-50 cursor-not-allowed"
+                >
+                  <Check className="h-4 w-4 mr-1" />
+                  Accept
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled
+                  className="opacity-50 cursor-not-allowed"
+                >
+                  <ArrowRightLeft className="h-4 w-4 mr-1" />
+                  Counter
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled
+                  className="opacity-50 cursor-not-allowed"
                 >
                   <X className="h-4 w-4 mr-1" />
                   Decline
