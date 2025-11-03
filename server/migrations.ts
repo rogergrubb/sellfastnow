@@ -603,7 +603,7 @@ export async function runMigrations() {
         quiet_hours_enabled BOOLEAN NOT NULL DEFAULT false,
         quiet_hours_start TIME,
         quiet_hours_end TIME,
-        timezone VARCHAR(100),
+        quiet_hours_timezone VARCHAR(50) DEFAULT 'America/New_York',
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       );
