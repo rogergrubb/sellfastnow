@@ -8,7 +8,7 @@ import { PhoneVerification } from "@/components/PhoneVerification";
 import { TrustScore } from "@/components/VerificationBadge";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiRequest } from "@/lib/api";
+import { apiRequest } from "@/lib/queryClient";
 
 interface VerificationStatus {
   emailVerified: boolean;
