@@ -28,6 +28,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Upload, X, Loader2, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ListingFeeModal } from "@/components/ListingFeeModal";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertListingSchema } from "@shared/schema";
 
@@ -42,6 +43,9 @@ export default function PostAd() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<{[key: string]: boolean}>({});
   const [userEditedFields, setUserEditedFields] = useState<Set<string>>(new Set());
+  const [showListingFeeModal, setShowListingFeeModal] = useState(false);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [pendingListingData, setPendingListingData] = useState<z.infer<typeof formSchema> | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,7 +62,7 @@ export default function PostAd() {
   });
 
   const createListingMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof formSchema>) => {
+    mutationFn: async (data: z.infer<typeof formSchema> & { paymentIntentId?: string }) => {
       const response = await fetch('/api/listings', {
         method: 'POST',
         headers: {
@@ -216,7 +220,29 @@ export default function PostAd() {
   };
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-    createListingMutation.mutate(data);
+    const listingPrice = parseFloat(data.price);
+    
+    // Check if listing fee is required (items >= $50)
+    if (listingPrice >= 50) {
+      // Show payment modal
+      setPendingListingData(data);
+      setShowListingFeeModal(true);
+    } else {
+      // No fee required, create listing directly
+      createListingMutation.mutate(data);
+    }
+  };
+
+  const handlePaymentSuccess = (paymentIntentId: string) => {
+    if (pendingListingData) {
+      // Create listing with payment intent ID
+      createListingMutation.mutate({
+        ...pendingListingData,
+        paymentIntentId,
+      });
+      setPendingListingData(null);
+      setPaymentIntentId(null);
+    }
   };
 
   // Redirect to sign-in if not authenticated
@@ -567,6 +593,18 @@ export default function PostAd() {
           </form>
         </Form>
       </Card>
+
+      {/* Listing Fee Payment Modal */}
+      <ListingFeeModal
+        open={showListingFeeModal}
+        onClose={() => {
+          setShowListingFeeModal(false);
+          setPendingListingData(null);
+        }}
+        onPaymentSuccess={handlePaymentSuccess}
+        listingPrice={pendingListingData ? parseFloat(pendingListingData.price) : 0}
+        listingTitle={pendingListingData?.title || ""}
+      />
     </div>
   );
 }
