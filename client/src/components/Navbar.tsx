@@ -470,7 +470,8 @@ export default function Navbar() {
                 <input
                   type="search"
                   placeholder="Search listings..."
-                  className="w-full bg-[#2d2d2f] text-white pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+                  className="w-full bg-[#2d2d2f] text-white placeholder:text-gray-400 pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+                  style={{ color: 'white', WebkitTextFillColor: 'white' }}
                   data-testid="input-search"
                   autoFocus
                   onBlur={() => setTimeout(() => setSearchOpen(false), 200)}
