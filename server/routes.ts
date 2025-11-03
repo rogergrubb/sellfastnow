@@ -55,6 +55,7 @@ import adminPartnerRoutes from "./routes/admin-partners";
 import partnerStripeRoutes from "./routes/partner-stripe";
 import referralRoutes from "./routes/referrals";
 import trackingRoutes from "./routes/tracking";
+import debugRoutes from "./routes/debug";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -449,6 +450,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Bulk Edit Routes
   // ======================
   app.use("/api/bulk-edit", bulkEditRoutes);
+
+  // ======================
+  // Debug Routes
+  // ======================
+  app.use("/api/debug", debugRoutes);
 
   // ======================
   // Emergency Migration Routes (NO AUTH REQUIRED)
