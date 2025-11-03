@@ -1735,7 +1735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.auth.userId;
       const { listingId } = req.params;
       const { messages } = await import("@shared/schema");
-      const { desc, and, or } = await import("drizzle-orm");
+      const { asc, and, or } = await import("drizzle-orm");
       
       // Get messages for this listing where user is involved
       const listingMessages = await db.select()
@@ -1746,7 +1746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             or(eq(messages.senderId, userId), eq(messages.receiverId, userId))
           )
         )
-        .orderBy(desc(messages.createdAt));
+        .orderBy(asc(messages.createdAt));
       
       res.json(listingMessages);
     } catch (error) {
