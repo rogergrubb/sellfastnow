@@ -68,8 +68,8 @@ export default function searchRoutes(app: Express) {
           price: listings.price,
           description: listings.description,
           category: listings.category,
+          images: listings.images,
           distance: distanceFormula,
-          // Add other fields you want to return
         })
         .from(listings)
         .where(and(...whereClauses))

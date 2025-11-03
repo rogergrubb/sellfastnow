@@ -35,7 +35,7 @@ export default function SearchResults({ listings }: SearchResultsProps) {
       {listings.map((listing) => (
         <Link
           key={listing.id}
-          to={`/listing/${listing.id}`}
+          to={`/listings/${listing.id}`}
           className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden border"
         >
           {/* Image */}
