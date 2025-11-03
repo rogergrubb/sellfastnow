@@ -20,6 +20,7 @@ import { registerSharesRoutes } from "./routes/shares";
 import conversationRoutes from "./routes/conversations";
 import messageReadRoutes from "./routes/message-read";
 import messageSearchRoutes from "./routes/message-search";
+import unreadCountRoutes from "./routes/unread-count";
 import emailVerificationRoutes from "./routes/email-verification";
 import phoneVerificationRoutes from "./routes/phone-verification";
 import locationRoutes from "./routes/location";
@@ -378,6 +379,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Message Search Routes
   app.use("/api/messages", messageSearchRoutes);
+
+  // Unread Count Routes
+  app.use("/api/messages", unreadCountRoutes);
 
   // ======================
   // Location Routes

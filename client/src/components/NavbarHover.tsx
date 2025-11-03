@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Search, User, MessageSquare, Sparkles } from "lucide-react";
 import { useAuth } from '@/lib/AuthContext';
 import "./NavbarHover.css";
@@ -8,6 +9,15 @@ export default function NavbarHover() {
   const { user, signOut } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Fetch unread message count
+  const { data: unreadData } = useQuery<{ unreadCount: number }>({
+    queryKey: ['/api/messages/unread-count'],
+    enabled: !!user,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
+  const unreadCount = unreadData?.unreadCount || 0;
 
   return (
     <nav className="apple-nav">
@@ -244,8 +254,28 @@ export default function NavbarHover() {
 
           {user && (
             <>
-              <a href="/messages" className="apple-nav-icon" aria-label="Messages">
+              <a href="/messages" className="apple-nav-icon" aria-label="Messages" style={{ position: 'relative' }}>
                 <MessageSquare className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    backgroundColor: '#ef4444',
+                    color: 'white',
+                    borderRadius: '9999px',
+                    fontSize: '10px',
+                    fontWeight: 'bold',
+                    minWidth: '16px',
+                    height: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 4px',
+                  }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </a>
               <div className="apple-nav-credits">
                 <Sparkles className="h-3 w-3" />
