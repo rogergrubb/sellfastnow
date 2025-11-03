@@ -23,20 +23,7 @@ export default function SmsSettings() {
       smsCreditGiveaways?: boolean;
       smsPromotional?: boolean;
     }) => {
-      const token = await getToken();
-      const response = await fetch("/api/auth/user", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(preferences),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update preferences");
-      }
-
+      const response = await apiRequest("PATCH", "/api/auth/user", preferences);
       return response.json();
     },
     onSuccess: () => {

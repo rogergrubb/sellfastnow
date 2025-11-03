@@ -8,6 +8,7 @@ import { PhoneVerification } from "@/components/PhoneVerification";
 import { TrustScore } from "@/components/VerificationBadge";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiRequest } from "@/lib/api";
 
 interface VerificationStatus {
   emailVerified: boolean;
@@ -36,8 +37,8 @@ export default function VerificationSettings() {
   const fetchVerificationStatus = async () => {
     try {
       const [statusResponse, userResponse] = await Promise.all([
-        fetch("/api/verification/status", { credentials: "include" }),
-        fetch("/api/auth/user", { credentials: "include" }),
+        apiRequest("GET", "/api/verification/status"),
+        apiRequest("GET", "/api/auth/user"),
       ]);
 
       if (statusResponse.ok && userResponse.ok) {

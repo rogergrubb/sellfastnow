@@ -113,14 +113,8 @@ function AppContent() {
   
   // Get current user for notifications
   const { data: user } = useQuery({
-    queryKey: ["user"],
-    queryFn: async () => {
-      const response = await fetch("/api/auth/user", {
-        credentials: "include",
-      });
-      if (!response.ok) return null;
-      return response.json();
-    },
+    queryKey: ["/api", "auth", "user"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
   });
 

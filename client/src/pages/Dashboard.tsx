@@ -173,26 +173,8 @@ export default function Dashboard() {
 
   // Fetch current user with Bearer token auth
   const { data: user, isLoading: userLoading, isSuccess, isError } = useQuery<User>({
-    queryKey: ["/api/auth/user"],
-    queryFn: async () => {
-      const token = await getToken();
-      console.log('🔑 Dashboard fetching user with token:', token ? 'present' : 'missing');
-      
-      const response = await fetch('/api/auth/user', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      
-      if (!response.ok) {
-        console.error('❌ Dashboard user fetch failed:', response.status);
-        throw new Error(`Failed to fetch user: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('✅ Dashboard user fetch successful:', data?.id);
-      return data;
-    },
+    queryKey: ["/api", "auth", "user"],
+    queryFn: getQueryFn({ on401: "throw" }),
     retry: false,
     enabled: isLoaded && isSignedIn,
   });
