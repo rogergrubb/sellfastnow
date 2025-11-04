@@ -4,6 +4,7 @@
 import { Router } from "express";
 import { transactionService } from "../services/transactionService";
 import { TransactionMessagingService } from "../services/transactionMessagingService";
+import { isAuthenticated } from "../supabaseAuth";
 
 const router = Router();
 
@@ -377,7 +378,7 @@ router.get("/user/:userId/stats", async (req, res) => {
  * POST /api/transactions/mark-sold
  * Mark a listing as sold and create a transaction (for offline/cash sales)
  */
-router.post("/mark-sold", async (req, res) => {
+router.post("/mark-sold", isAuthenticated, async (req, res) => {
   try {
     const { listingId, buyerId, amount, paymentMethod } = req.body;
     
