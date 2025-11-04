@@ -12,7 +12,11 @@ router.post("/:listingId/offers", isAuthenticated, async (req: any, res) => {
   try {
     const { listingId } = req.params;
     const { offerAmount, depositAmount, message } = req.body;
-    const buyerId = req.auth.userId;
+    const buyerId = req.user?.id;
+
+    if (!buyerId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
     // Validate input
     if (!offerAmount || offerAmount <= 0) {
@@ -113,7 +117,11 @@ router.post("/:listingId/offers", isAuthenticated, async (req: any, res) => {
 router.get("/:listingId/offers", isAuthenticated, async (req: any, res) => {
   try {
     const { listingId } = req.params;
-    const userId = req.auth.userId;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
     // Get listing to verify user is the seller
     const listing = await storage.getListing(listingId);
@@ -137,7 +145,12 @@ router.get("/:listingId/offers", isAuthenticated, async (req: any, res) => {
 // GET /api/offers/made - Get all offers made by the current user
 router.get("/made", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const offersMade = await storage.getUserOffersMade(userId);
     res.json({ offers: offersMade });
   } catch (error) {
@@ -149,7 +162,12 @@ router.get("/made", isAuthenticated, async (req: any, res) => {
 // GET /api/offers/received - Get all offers received by the current user
 router.get("/received", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const offersReceived = await storage.getUserOffersReceived(userId);
     res.json({ offers: offersReceived });
   } catch (error) {
@@ -162,7 +180,11 @@ router.get("/received", isAuthenticated, async (req: any, res) => {
 router.get("/:offerId", isAuthenticated, async (req: any, res) => {
   try {
     const { offerId } = req.params;
-    const userId = req.auth.userId;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
     const offer = await storage.getOffer(offerId);
     if (!offer) {
@@ -186,7 +208,11 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
   try {
     const { offerId } = req.params;
     const { status, counterOfferAmount, counterOfferMessage, responseMessage } = req.body;
-    const userId = req.auth.userId;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
     // Get the offer
     const offerData = await storage.getOffer(offerId);
