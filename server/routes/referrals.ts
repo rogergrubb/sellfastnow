@@ -13,7 +13,11 @@ export default function referralRoutes(app: Express) {
   // Submit a referral
   app.post("/api/referrals", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
 
       // Validate request body
       const validation = referralSchema.safeParse(req.body);
@@ -100,7 +104,11 @@ export default function referralRoutes(app: Express) {
   // Get user's referrals
   app.get("/api/referrals", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
 
       const referrals = await db.execute(sql`
         SELECT 

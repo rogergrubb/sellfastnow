@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserPlus, Gift, X } from "lucide-react";
@@ -65,6 +65,12 @@ export function PostLoginReferralModal({ isOpen, onClose }: PostLoginReferralMod
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
+        {/* Accessibility: Hidden title and description for screen readers */}
+        <DialogTitle className="sr-only">Refer a Friend & Earn 50 AI Credits</DialogTitle>
+        <DialogDescription className="sr-only">
+          Share SellFast with friends and get rewarded when they sign up!
+        </DialogDescription>
+
         {/* Close button */}
         <button
           onClick={handleSkip}
