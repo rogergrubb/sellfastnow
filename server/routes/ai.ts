@@ -247,15 +247,32 @@ router.post("/analyze-bulk-images", isAuthenticated, async (req: any, res) => {
     
     console.log(`✅ Detection complete: Found ${groupingAnalysis.products.length} products`);
     
-    // STEP 2: Generate AI descriptions for first 5 items only (demo strategy)
+    // STEP 2: Check user credits and determine how many items can get AI descriptions
     const totalProducts = groupingAnalysis.products.length;
     const FREE_AI_DEMO_LIMIT = 5;
-    const itemsWithAI = Math.min(FREE_AI_DEMO_LIMIT, totalProducts);
+    
+    // Get user's credit balance
+    const userCredits = await storage.getUserCredits(userId);
+    const availableCredits = userCredits?.creditsRemaining || 0;
+    
+    // Get AI usage info to check free tier
+    const usageInfoBefore = await storage.getAIUsageInfo(userId);
+    const freeRemaining = Math.max(0, FREE_AI_DEMO_LIMIT - usageInfoBefore.usesThisMonth);
+    
+    // Calculate how many items can get AI: free remaining + purchased credits
+    const totalAvailableAI = freeRemaining + availableCredits;
+    const itemsWithAI = Math.min(totalAvailableAI, totalProducts);
     const itemsWithoutAI = Math.max(0, totalProducts - itemsWithAI);
     
     console.log(`📦 Total products detected: ${totalProducts}`);
-    console.log(`✨ Generating AI for first ${itemsWithAI} items (demo strategy)`);
+    console.log(`💳 User credits: ${availableCredits}, Free remaining: ${freeRemaining}`);
+    console.log(`✨ Generating AI for ${itemsWithAI} items (${freeRemaining} free + ${Math.min(availableCredits, itemsWithAI - freeRemaining)} credits)`);
     console.log(`📝 Remaining ${itemsWithoutAI} items will be empty (manual entry required)`);
+    
+    // Check if user has enough credits
+    if (itemsWithAI < totalProducts && availableCredits === 0 && freeRemaining === 0) {
+      console.log(`⚠️ User has no credits remaining and has used all free AI generations`);
+    }
     
     // STEP 3: For first 5 items, call AI to generate full descriptions IN PARALLEL
     const { analyzeProductImage } = await import("../aiService");
@@ -331,13 +348,30 @@ router.post("/analyze-bulk-images", isAuthenticated, async (req: any, res) => {
     
     console.log(`⚡ PARALLEL AI analysis complete in ${totalTime}s (was ~${itemsWithAI * 60}s sequentially)`);
     
-    // Increment AI usage counter for items that got AI descriptions
+    // Increment AI usage counter and deduct credits for items that got AI descriptions
     if (itemsWithAI > 0) {
-      await storage.incrementAIUsage(userId, itemsWithAI);
-      console.log(`✅ AI usage tracked: +${itemsWithAI} descriptions generated`);
+      // First, use free credits
+      const freeUsed = Math.min(itemsWithAI, freeRemaining);
+      const paidUsed = itemsWithAI - freeUsed;
+      
+      // Track free usage
+      if (freeUsed > 0) {
+        await storage.incrementAIUsage(userId, freeUsed);
+        console.log(`✅ Free AI usage tracked: +${freeUsed} descriptions`);
+      }
+      
+      // Deduct purchased credits
+      if (paidUsed > 0) {
+        await storage.deductCredits(userId, paidUsed);
+        console.log(`💳 Deducted ${paidUsed} purchased credits`);
+      }
+      
+      console.log(`✅ AI usage complete: ${freeUsed} free + ${paidUsed} paid = ${itemsWithAI} total`);
     }
     
     const usageInfo = await storage.getAIUsageInfo(userId);
+    const creditsAfter = await storage.getUserCredits(userId);
+    console.log(`✅ Remaining: ${creditsAfter?.creditsRemaining || 0} credits, ${Math.max(0, FREE_AI_DEMO_LIMIT - usageInfo.usesThisMonth)} free`);
     console.log(`✅ Bulk analysis complete: ${itemsWithAI} with AI, ${itemsWithoutAI} manual`);
     
     // Return all products with AI/manual flags
