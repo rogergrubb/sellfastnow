@@ -373,7 +373,7 @@ router.post("/analyze-bulk-images", isAuthenticated, async (req: any, res) => {
       
       // Deduct purchased credits
       if (paidUsed > 0) {
-        await storage.deductCredits(userId, paidUsed);
+        await storage.useCredits(userId, paidUsed, `AI bulk analysis - ${paidUsed} product descriptions`);
         console.log(`💳 Deducted ${paidUsed} purchased credits`);
       }
       
