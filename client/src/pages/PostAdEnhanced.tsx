@@ -1406,6 +1406,9 @@ export default function PostAdEnhanced() {
         setBulkProducts(products);
         setGroupingInfo(groupingInfo);
         
+        // Invalidate credits cache to update navbar with new balance
+        queryClient.invalidateQueries({ queryKey: ['/api/user/credits'] });
+        
         // Store remaining items info
         if (remainingItems && remainingItems.count > 0) {
           setRemainingItemsInfo({
