@@ -2180,6 +2180,7 @@ export default function PostAdEnhanced() {
             setUploadedImages([]);
           }}
           onUpgradeRemaining={handleUpgradeRemainingItems}
+          userCredits={userCredits}
         />
         <ProgressModal
           open={showProgressModal}

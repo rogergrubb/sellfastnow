@@ -63,6 +63,7 @@ interface BulkItemReviewProps {
   products: DetectedProduct[];
   onCancel: () => void;
   onUpgradeRemaining?: () => void;
+  userCredits?: { creditsRemaining: number };
 }
 
 const CATEGORIES = [
@@ -106,7 +107,7 @@ function generateSuggestedTags(title: string, category: string): string[] {
   return tags.slice(0, 5);
 }
 
-export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeRemaining }: BulkItemReviewProps) {
+export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeRemaining, userCredits }: BulkItemReviewProps) {
   const { getToken } = useAuth();
   const [products, setProducts] = useState<ProductWithState[]>(
     initialProducts.map(p => ({
@@ -881,7 +882,9 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
                         <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                         <div className="flex-1 space-y-2">
                           <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                            Your first 5 free AI generations have been used (0 remaining)
+                            {userCredits && userCredits.creditsRemaining > 0 
+                              ? `You have ${userCredits.creditsRemaining} AI credits remaining`
+                              : 'Your first 5 free AI generations have been used (0 remaining)'}
                           </p>
                           <p className="text-xs text-blue-800 dark:text-blue-200 font-semibold">
                             Why use AI descriptions?
