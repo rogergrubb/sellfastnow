@@ -30,10 +30,10 @@ export default function MobileUpload() {
     const newFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
     const totalFiles = selectedFiles.length + newFiles.length;
     
-    if (totalFiles > 24) {
+    if (totalFiles > 100) {
       toast({
         title: "Too many images",
-        description: `You can only upload up to 24 images per session. You have ${selectedFiles.length} selected.`,
+        description: `You can only upload up to 100 images per session. You have ${selectedFiles.length} selected.`,
         variant: "destructive",
       });
       return;
