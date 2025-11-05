@@ -274,18 +274,25 @@ router.post("/analyze-bulk-images", isAuthenticated, async (req: any, res) => {
       console.log(`⚠️ User has no credits remaining and has used all free AI generations`);
     }
     
-    // STEP 3: For first 5 items, call AI to generate full descriptions IN PARALLEL
+    // STEP 3: Generate AI descriptions with rate limiting (Gemini has 10 req/min limit)
     const { analyzeProductImage } = await import("../aiService");
     
-    console.log(`⚡ Running AI analysis in PARALLEL for ${itemsWithAI} items...`);
+    const BATCH_SIZE = 8; // Process 8 at a time to stay under 10/min limit
+    const BATCH_DELAY_MS = 60000; // 60 seconds between batches
+    
+    console.log(`⚡ Running AI analysis with rate limiting for ${itemsWithAI} items...`);
+    console.log(`📊 Batch size: ${BATCH_SIZE}, Delay between batches: ${BATCH_DELAY_MS/1000}s`);
     const startTime = Date.now();
     
-    // Create promises for all AI analyses to run in parallel
-    const aiPromises = groupingAnalysis.products.map(async (product, i) => {
+    const allProducts = [];
+    
+    // Process all products
+    for (let i = 0; i < groupingAnalysis.products.length; i++) {
+      const product = groupingAnalysis.products[i];
       const imageUrlsForProduct = product.imageIndices.map(idx => imageUrls[idx]);
       
       if (i < itemsWithAI) {
-        // First 5: Generate full AI descriptions
+        // Generate AI description
         console.log(`🤖 [${i + 1}/${itemsWithAI}] Starting AI analysis...`);
         try {
           const primaryImageUrl = imageUrlsForProduct[0];
@@ -293,7 +300,7 @@ router.post("/analyze-bulk-images", isAuthenticated, async (req: any, res) => {
           
           console.log(`✅ [${i + 1}/${itemsWithAI}] AI generated: "${aiAnalysis.title}"`);
           
-          return {
+          allProducts.push({
             imageIndices: product.imageIndices,
             imageUrls: imageUrlsForProduct,
             title: aiAnalysis.title,
@@ -305,11 +312,17 @@ router.post("/analyze-bulk-images", isAuthenticated, async (req: any, res) => {
             condition: aiAnalysis.condition,
             confidence: aiAnalysis.confidence,
             isAIGenerated: true,
-          };
+          });
+          
+          // Add delay after every BATCH_SIZE items (except the last one)
+          if ((i + 1) % BATCH_SIZE === 0 && (i + 1) < itemsWithAI) {
+            console.log(`⏳ Batch complete. Waiting ${BATCH_DELAY_MS/1000}s before next batch to respect rate limits...`);
+            await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
+          }
         } catch (error) {
           console.error(`❌ [${i + 1}/${itemsWithAI}] AI generation failed:`, error);
           // On error, return empty item
-          return {
+          allProducts.push({
             imageIndices: product.imageIndices,
             imageUrls: imageUrlsForProduct,
             title: '',
@@ -321,11 +334,11 @@ router.post("/analyze-bulk-images", isAuthenticated, async (req: any, res) => {
             condition: '',
             confidence: 0,
             isAIGenerated: false,
-          };
+          });
         }
       } else {
-        // Items 6+: Empty fields for manual entry
-        return {
+        // Items without AI: Empty fields for manual entry
+        allProducts.push({
           imageIndices: product.imageIndices,
           imageUrls: imageUrlsForProduct,
           title: '',
@@ -337,16 +350,14 @@ router.post("/analyze-bulk-images", isAuthenticated, async (req: any, res) => {
           condition: '',
           confidence: 0,
           isAIGenerated: false,
-        };
+        });
       }
-    });
+    }
     
-    // Wait for all AI analyses to complete in parallel
-    const allProducts = await Promise.all(aiPromises);
     const endTime = Date.now();
     const totalTime = ((endTime - startTime) / 1000).toFixed(2);
     
-    console.log(`⚡ PARALLEL AI analysis complete in ${totalTime}s (was ~${itemsWithAI * 60}s sequentially)`);
+    console.log(`⚡ Rate-limited AI analysis complete in ${totalTime}s`);
     
     // Increment AI usage counter and deduct credits for items that got AI descriptions
     if (itemsWithAI > 0) {
