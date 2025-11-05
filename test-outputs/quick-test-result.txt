@@ -1,0 +1,73 @@
+[33m[2025-11-05T10:28:48.093Z] [WARN] [REKOGNITION] AWS credentials not configured. Rekognition will be skipped.[0m
+[32m[2025-11-05T10:28:48.770Z] [INFO] [VISION] Google Cloud Vision client initialized[0m
+[33m[2025-11-05T10:28:48.909Z] [WARN] [AMAZON_PRODUCT] Amazon Product API credentials not configured. Will be skipped.[0m
+[33m[2025-11-05T10:28:48.909Z] [WARN] [GOOGLE_SHOPPING] Google Shopping API key not configured. Will be skipped.[0m
+[33m[2025-11-05T10:28:48.910Z] [WARN] [EBAY] eBay App ID not configured. Will be skipped.[0m
+[33m[2025-11-05T10:28:48.911Z] [WARN] [STEP3] Native Gemini API not configured[0m
+[32m[2025-11-05T10:28:48.912Z] [INFO] [STEP3] OpenAI-compatible client initialized[0m
+🧪 Quick Pipeline Test
+
+Testing with: https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800
+
+================================================================================
+[32m[2025-11-05T10:28:48.913Z] [INFO] [PIPELINE] Starting pipeline for image: https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800[0m
+[32m[2025-11-05T10:28:48.913Z] [INFO] [PIPELINE] Options: {"llmModel":"gemini-2.0-flash"}[0m
+[32m[2025-11-05T10:28:48.913Z] [INFO] [STEP1] Starting STEP1...[0m
+[32m[2025-11-05T10:28:48.914Z] [INFO] [VISION] Analyzing image: https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800[0m
+[32m[2025-11-05T10:28:51.532Z] [INFO] [VISION] Analysis complete {"duration_ms":2618,"labels":2,"objects":2,"text":5,"webEntities":10,"confidence":"0.66"}[0m
+[32m[2025-11-05T10:28:51.533Z] [INFO] [STEP1] Unifying results from Rekognition and Vision[0m
+[32m[2025-11-05T10:28:51.533Z] [INFO] [STEP1] Unification complete {"primaryObject":"Trainer","category":"Other","textCount":3,"tagsCount":2,"confidence":"0.66"}[0m
+[32m[2025-11-05T10:28:51.533Z] [INFO] [STEP1] STEP1 completed {"duration_ms":2620}[0m
+[32m[2025-11-05T10:28:51.533Z] [INFO] [STEP2] Starting STEP2...[0m
+[32m[2025-11-05T10:28:51.533Z] [INFO] [STEP2] Enriching product: Trainer[0m
+[32m[2025-11-05T10:28:51.534Z] [INFO] [STEP2] Unifying pricing data[0m
+[33m[2025-11-05T10:28:51.534Z] [WARN] [STEP2] No pricing data found from APIs, using estimation[0m
+[32m[2025-11-05T10:28:51.534Z] [INFO] [STEP2] Using ML-based price estimation[0m
+[32m[2025-11-05T10:28:51.534Z] [INFO] [STEP2] Estimated price: $87.5 {"category":"Other","range":{"min":25,"max":150}}[0m
+[32m[2025-11-05T10:28:51.534Z] [INFO] [STEP2] Pricing unified {"retail_price":"87.50","used_price":"52.50","confidence":"0.20"}[0m
+[32m[2025-11-05T10:28:51.534Z] [INFO] [STEP2] STEP2 completed {"duration_ms":1}[0m
+[32m[2025-11-05T10:28:51.534Z] [INFO] [STEP3] Starting STEP3...[0m
+[32m[2025-11-05T10:28:51.534Z] [INFO] [STEP3] Generating content with OpenAI-compatible API (Gemini)...[0m
+[32m[2025-11-05T10:28:57.997Z] [INFO] [STEP3] OpenAI-compatible generation complete {"response_length":2394,"tokens":1051}[0m
+[32m[2025-11-05T10:28:57.997Z] [INFO] [STEP3] STEP3 completed {"duration_ms":6463}[0m
+[32m[2025-11-05T10:28:57.997Z] [INFO] [PIPELINE] Pipeline complete {"total_duration_ms":9084,"status":"success"}[0m
+
+📊 RESULT:
+================================================================================
+Status: success
+Duration: 9084ms
+
+✨ FINAL PRODUCT:
+Title: Nike Free Flyknit Red Lightweight Athletic Training Sneaker
+Category: Sports & Outdoors
+Description: Introducing the Nike Free Flyknit trainer, engineered for peak performance and natural foot movement. This model integrates the revolutionary Flyknit upper, ensuring a seamless, sock-like fit that is ...
+Retail Price: $87.50
+Used Price: $52.50
+Confidence: 50.4%
+
+SEO Slug: nike-free-flyknit-red-trainer
+Tags: nike, free, flyknit, trainer, red
+
+📋 STEP DETAILS:
+================================================================================
+
+Step 1 (Image Analysis):
+  Duration: 2620ms
+  Rekognition: error
+  Vision: success
+  Primary Object: Trainer
+  Detected Text: NIKE, FLYKN, NIKE FREE
+
+Step 2 (Product Enrichment):
+  Duration: 1ms
+  Amazon: error
+  Google Shopping: error
+  eBay: error
+
+Step 3 (AI Synthesis):
+  Duration: 6463ms
+  LLM: gemini-2.5-flash
+  Status: success
+
+✅ Test complete!
+
