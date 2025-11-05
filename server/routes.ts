@@ -26,6 +26,7 @@ import phoneVerificationRoutes from "./routes/phone-verification";
 import locationRoutes from "./routes/location";
 import favoritesRoutes from "./routes/favorites";
 import aiRoutes from "./routes/ai";
+import bulkAnalysisV2Routes from "./routes/bulk-analysis-v2";
 import listingsRoutes from "./routes/listings";
 import imagesRoutes from "./routes/images";
 import collectionsRoutes from "./routes/collections";
@@ -398,6 +399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Routes
   // ======================
   app.use("/api/ai", aiRoutes);
+  app.use("/api/ai", bulkAnalysisV2Routes); // Google Cloud Vision bulk analysis
 
   // ======================
   // Draft Folders Routes
@@ -872,6 +874,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create Checkout Session for credit purchases
   app.post("/api/create-checkout-session", isAuthenticated, stripeCheckoutSessionLimiter, async (req: any, res) => {
       try {
+        // Validate Stripe key is a secret key, not publishable
+        if (!process.env.STRIPE_SECRET_KEY) {
+          console.error("STRIPE_SECRET_KEY is not configured");
+          return res.status(500).json({ message: "Payment system not configured. Please contact support." });
+        }
+        if (process.env.STRIPE_SECRET_KEY.startsWith('pk_')) {
+          console.error("STRIPE_SECRET_KEY is a publishable key, not a secret key!");
+          return res.status(500).json({ message: "Payment system misconfigured. Please contact support to fix Stripe API key." });
+        }
+        
         const userId = req.auth.userId;
         const { credits } = req.body;
 

@@ -1372,8 +1372,8 @@ export default function PostAdEnhanced() {
         });
       }, 3000); // Update every 3 seconds (more realistic for actual processing time)
 
-      console.log('📤 Calling /api/ai/analyze-bulk-images endpoint...');
-      const response = await fetch('/api/ai/analyze-bulk-images', {
+      console.log('📤 Calling /api/ai/analyze-bulk-images-v2 endpoint (Google Cloud Vision - no rate limits)...');
+      const response = await fetch('/api/ai/analyze-bulk-images-v2', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
