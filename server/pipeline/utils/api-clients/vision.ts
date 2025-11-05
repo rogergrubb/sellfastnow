@@ -12,7 +12,8 @@ export class VisionService {
     // Check if Google Cloud credentials are configured
     this.enabled = !!(
       process.env.GOOGLE_CLOUD_PROJECT_ID ||
-      process.env.GOOGLE_APPLICATION_CREDENTIALS
+      process.env.GOOGLE_APPLICATION_CREDENTIALS ||
+      process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
     );
 
     if (!this.enabled) {
@@ -22,8 +23,15 @@ export class VisionService {
     }
 
     try {
-      this.client = new vision.ImageAnnotatorClient();
-      logger.info('VISION', 'Google Cloud Vision client initialized');
+      // Support both file path and JSON string credentials
+      if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+        const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+        this.client = new vision.ImageAnnotatorClient({ credentials });
+        logger.info('VISION', 'Google Cloud Vision client initialized from JSON credentials');
+      } else {
+        this.client = new vision.ImageAnnotatorClient();
+        logger.info('VISION', 'Google Cloud Vision client initialized from file credentials');
+      }
     } catch (error: any) {
       logger.error('VISION', `Failed to initialize client: ${error.message}`);
       this.enabled = false;
