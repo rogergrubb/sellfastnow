@@ -39,14 +39,13 @@ router.post("/analyze-bulk-images-claude", isAuthenticated, async (req: any, res
       // Create default credits record
       [userCredit] = await db.insert(userCredits).values({
         userId,
-        photoUnlockCredits: 0,
-        aiGenerationCredits: 0,
-        totalPhotoUnlocksPurchased: 0,
-        totalAiCreditsPurchased: 0,
+        creditsRemaining: 0,
+        creditsPurchased: 0,
+        creditsUsed: 0,
       }).returning();
     }
 
-    const availableCredits = userCredit.aiGenerationCredits || 0;
+    const availableCredits = userCredit.creditsRemaining || 0;
     console.log(`💳 User has ${availableCredits} AI generation credits`);
 
     // Calculate how many items we can process
@@ -189,7 +188,8 @@ router.post("/analyze-bulk-images-claude", isAuthenticated, async (req: any, res
       await db
         .update(userCredits)
         .set({
-          aiGenerationCredits: sql`${userCredits.aiGenerationCredits} - ${itemsWithAI}`,
+          creditsRemaining: sql`${userCredits.creditsRemaining} - ${itemsWithAI}`,
+          creditsUsed: sql`${userCredits.creditsUsed} + ${itemsWithAI}`,
           updatedAt: new Date(),
         })
         .where(eq(userCredits.userId, userId));
