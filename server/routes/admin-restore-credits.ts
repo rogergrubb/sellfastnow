@@ -24,7 +24,7 @@ router.post("/restore-credits", isAuthenticated, async (req: any, res) => {
   try {
     const requestingUserId = req.auth.userId;
     const TARGET_USER_ID = '9ed23ff1-ec6f-4295-a973-24420523fb2f';
-    const CREDITS_TO_RESTORE = 169;
+    const CREDITS_TO_RESTORE = 10000;
 
     console.log(`🔧 Credit restoration request from user: ${requestingUserId}`);
 
@@ -54,7 +54,7 @@ router.post("/restore-credits", isAuthenticated, async (req: any, res) => {
 
     console.log(`📊 Current balance: ${current.creditsRemaining} remaining, ${current.creditsPurchased} purchased`);
 
-    // Idempotency check: If user already has >= 169 credits, don't add more
+    // Idempotency check: If user already has >= 10000 credits, don't add more
     if (current.creditsRemaining >= CREDITS_TO_RESTORE) {
       console.log(`✅ Credits already restored (${current.creditsRemaining} >= ${CREDITS_TO_RESTORE})`);
       return res.json({
