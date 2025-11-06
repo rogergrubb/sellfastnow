@@ -27,6 +27,7 @@ import locationRoutes from "./routes/location";
 import favoritesRoutes from "./routes/favorites";
 import aiRoutes from "./routes/ai";
 import bulkAnalysisV2Routes from "./routes/bulk-analysis-v2";
+import bulkAnalysisClaudeRoutes from "./routes/bulk-analysis-claude";
 import listingsRoutes from "./routes/listings";
 import imagesRoutes from "./routes/images";
 import collectionsRoutes from "./routes/collections";
@@ -400,6 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ======================
   app.use("/api/ai", aiRoutes);
   app.use("/api/ai", bulkAnalysisV2Routes); // Google Cloud Vision bulk analysis
+  app.use("/api/ai", bulkAnalysisClaudeRoutes); // Claude Vision bulk analysis (high quality)
 
   // ======================
   // Draft Folders Routes
