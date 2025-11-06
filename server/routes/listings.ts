@@ -418,7 +418,7 @@ const router = Router();
             locationPlaceId: listingData.locationPlaceId,
             locationTimezone: listingData.locationTimezone,
             locationGeocoded: listingData.locationGeocoded || false,
-            locationGeocodedAt: listingData.locationGeocodedAt,
+            locationGeocodedAt: listingData.locationGeocodedAt ? new Date(listingData.locationGeocodedAt) : undefined,
             locationGeocodingService: listingData.locationGeocodingService,
             locationGeocodingAccuracy: listingData.locationGeocodingAccuracy,
             pickupAvailable: listingData.pickupAvailable !== undefined ? listingData.pickupAvailable : true,
