@@ -61,6 +61,7 @@ import trackingRoutes from "./routes/tracking";
 import debugRoutes from "./routes/debug";
 import adminRestoreCreditsRoutes from "./routes/admin-restore-credits";
 import adminRestoreSimpleRoutes from "./routes/admin-restore-simple";
+import adminAddCreditsRoutes from "./routes/admin-add-credits";
 import listingFeeRoutes from "./routes/listing-fee";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
@@ -472,6 +473,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ======================
   app.use("/api/admin", adminRestoreCreditsRoutes);
   app.use("/api/admin", adminRestoreSimpleRoutes);
+  app.use("/api/admin", adminAddCreditsRoutes);
 
   // ======================
   // Emergency Migration Routes (NO AUTH REQUIRED)
