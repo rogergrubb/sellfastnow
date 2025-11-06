@@ -312,21 +312,28 @@ router.get('/credits', isAuthenticated, async (req, res) => {
       .limit(1);
 
     if (!userCredit) {
-      // Create default credits record
+      // Create default credits record with NEW unified schema
       [userCredit] = await db.insert(userCredits).values({
         userId,
-        photoUnlockCredits: 0,
-        aiGenerationCredits: 0,
-        totalPhotoUnlocksPurchased: 0,
-        totalAiCreditsPurchased: 0,
+        creditsRemaining: 0,
+        creditsPurchased: 0,
+        creditsUsed: 0,
       }).returning();
     }
 
+    // Return NEW unified schema fields
+    // Frontend should use creditsRemaining for display
     res.json({
-      photoUnlockCredits: userCredit.photoUnlockCredits || 0,
-      aiGenerationCredits: userCredit.aiGenerationCredits || 0,
-      totalPhotoUnlocksPurchased: userCredit.totalPhotoUnlocksPurchased || 0,
-      totalAiCreditsPurchased: userCredit.totalAiCreditsPurchased || 0,
+      // New unified fields (primary)
+      creditsRemaining: userCredit.creditsRemaining || 0,
+      creditsPurchased: userCredit.creditsPurchased || 0,
+      creditsUsed: userCredit.creditsUsed || 0,
+      
+      // Legacy fields for backward compatibility (deprecated)
+      aiGenerationCredits: userCredit.creditsRemaining || 0, // Map to new field
+      photoUnlockCredits: 0, // Deprecated
+      totalAiCreditsPurchased: userCredit.creditsPurchased || 0, // Map to new field
+      totalPhotoUnlocksPurchased: 0, // Deprecated
     });
   } catch (error) {
     console.error('Error fetching credits:', error);
