@@ -1,8 +1,6 @@
 import { Router } from "express";
 import { isAuthenticated } from "../supabaseAuth";
-import { db } from "../db";
-import { userCredits } from "@shared/schema";
-import { eq, sql } from "drizzle-orm";
+import { storage } from "../storage";
 import { ClaudeVisionProvider } from "../pipeline/providers/vision/claude";
 
 const router = Router();
@@ -13,8 +11,6 @@ const FREE_AI_DEMO_LIMIT = 5;
 /**
  * POST /api/ai/analyze-bulk-images-claude
  * Bulk analyze images using Claude Vision (high quality product identification)
- * 
- * FIXED: Uses actual database schema (ai_generation_credits) instead of non-existent creditsRemaining
  */
 router.post("/analyze-bulk-images-claude", isAuthenticated, async (req: any, res) => {
   try {
@@ -28,34 +24,29 @@ router.post("/analyze-bulk-images-claude", isAuthenticated, async (req: any, res
     console.log(`📦 Starting bulk analysis for ${imageUrls.length} images using Claude Vision`);
     console.log(`👤 User ID: ${userId}`);
 
-    // Get user credits from database (using actual schema)
-    let [userCredit] = await db
-      .select()
-      .from(userCredits)
-      .where(eq(userCredits.userId, userId))
-      .limit(1);
+    // Check user's AI usage
+    const usageInfo = await storage.getAIUsageInfo(userId);
+    const freeRemaining = Math.max(0, FREE_AI_DEMO_LIMIT - usageInfo.usesThisMonth);
+    
+    console.log(`📊 Free AI remaining: ${freeRemaining}/${FREE_AI_DEMO_LIMIT}`);
 
-    if (!userCredit) {
-      // Create default credits record
-      [userCredit] = await db.insert(userCredits).values({
-        userId,
-        photoUnlockCredits: 0,
-        aiGenerationCredits: 0,
-        totalPhotoUnlocksPurchased: 0,
-        totalAiCreditsPurchased: 0,
-      }).returning();
+    // Get user credits
+    let credits = await storage.getUserCredits(userId);
+    if (!credits) {
+      const user = await storage.getUser(userId);
+      credits = await storage.createOrUpdateUserCredits(userId, user?.email || '');
     }
 
-    const availableCredits = userCredit.aiGenerationCredits || 0;
-    console.log(`💳 User has ${availableCredits} AI generation credits`);
+    console.log(`💳 User has ${credits.creditsRemaining} purchased credits`);
 
     // Calculate how many items we can process
-    const itemsWithAI = Math.min(imageUrls.length, availableCredits);
+    const totalAvailable = freeRemaining + credits.creditsRemaining;
+    const itemsWithAI = Math.min(imageUrls.length, totalAvailable);
     const itemsWithoutAI = imageUrls.length - itemsWithAI;
 
-    console.log(`✅ Will process ${itemsWithAI} items with AI`);
+    console.log(`✅ Will process ${itemsWithAI} items with AI (${freeRemaining} free + ${Math.max(0, itemsWithAI - freeRemaining)} paid)`);
     if (itemsWithoutAI > 0) {
-      console.log(`⏭️  ${itemsWithoutAI} items will require manual entry (insufficient credits)`);
+      console.log(`⏭️  ${itemsWithoutAI} items will require manual entry`);
     }
 
     // STEP 1: Group images into products using simple logic
@@ -186,15 +177,18 @@ router.post("/analyze-bulk-images-claude", isAuthenticated, async (req: any, res
 
     // STEP 3: Deduct credits
     if (itemsWithAI > 0) {
-      await db
-        .update(userCredits)
-        .set({
-          aiGenerationCredits: sql`${userCredits.aiGenerationCredits} - ${itemsWithAI}`,
-          updatedAt: new Date(),
-        })
-        .where(eq(userCredits.userId, userId));
+      const freeUsed = Math.min(itemsWithAI, freeRemaining);
+      const paidUsed = itemsWithAI - freeUsed;
       
-      console.log(`💳 Deducted ${itemsWithAI} AI generation credits`);
+      if (freeUsed > 0) {
+        await storage.incrementAIUsage(userId, freeUsed);
+        console.log(`✅ Free AI usage tracked: +${freeUsed} descriptions`);
+      }
+      
+      if (paidUsed > 0) {
+        await storage.useCredits(userId, paidUsed, `AI bulk analysis (Claude) - ${paidUsed} product descriptions`);
+        console.log(`💳 Deducted ${paidUsed} purchased credits`);
+      }
     }
 
     console.log(`✅ Bulk analysis complete: ${itemsWithAI} with AI, ${itemsWithoutAI} manual`);
