@@ -18,7 +18,7 @@ const router = Router();
 router.post("/restore-credits-simple", async (req, res) => {
   try {
     const { secret } = req.body;
-    const TARGET_USER_ID = '9ed23ff1-ec6f-4295-a973-24420523fb2f';
+    const TARGET_USER_ID = '60861352-09f2-4a59-b033-51f0bac2906b';
     const CREDITS_TO_RESTORE = 10000;
     const EXPECTED_SECRET = 'restore-credits-2024';
 
