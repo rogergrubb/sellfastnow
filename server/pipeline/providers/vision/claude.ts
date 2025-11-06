@@ -132,7 +132,7 @@ export class ClaudeVisionProvider implements VisionProvider {
 
       // Call Claude with vision
       const response = await this.client.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-3-5-sonnet-20240620',
         max_tokens: 2048,
         messages: [
           {
