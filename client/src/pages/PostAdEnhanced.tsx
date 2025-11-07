@@ -62,7 +62,8 @@ import {
   RotateCw,
   RotateCcw,
   CheckSquare,
-  Square
+  Square,
+  MapPin
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -77,6 +78,7 @@ import { PhotoProcessingChoiceModal } from "@/components/PhotoProcessingChoiceMo
 import { PhotoReviewModal } from "@/components/PhotoReviewModal";
 import { FolderSelectionModal } from "@/components/FolderSelectionModal";
 import { ListingPricingModal } from "@/components/ListingPricingModal";
+import { LocationSelectionModalWithMap, type LocationData } from "@/components/LocationSelectionModalWithMap";
 
 const formSchema = insertListingSchema.omit({ userId: true });
 
@@ -271,6 +273,10 @@ export default function PostAdEnhanced() {
   // Folder selection modal state
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [pendingDraftData, setPendingDraftData] = useState<z.infer<typeof formSchema> | null>(null);
+  
+  // Location selection modal state
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -2101,9 +2107,21 @@ export default function PostAdEnhanced() {
       return;
     }
 
+    // Check if location is set (REQUIRED for all listings)
+    if (!selectedLocation) {
+      toast({
+        title: "Location Required",
+        description: "Please set the item location before publishing.",
+        variant: "destructive",
+      });
+      setShowLocationModal(true);
+      return;
+    }
+
     // Show pricing modal before publishing
     setPendingPublishData({
       ...data,
+      ...selectedLocation, // Include all location data
       status: 'active',
       imageRotations: imageRotations
     });
@@ -3350,22 +3368,54 @@ export default function PostAdEnhanced() {
                   </div>
 
                   {/* Location */}
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g. San Francisco, CA"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-5 w-5 text-primary" />
+                        <Label className="text-lg font-semibold">Item Location *</Label>
+                      </div>
+                    </div>
+                    
+                    {selectedLocation ? (
+                      <div className="p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">
+                              ✓ Location Set
+                            </p>
+                            <p className="text-sm text-green-700 dark:text-green-300">
+                              {selectedLocation.location}
+                            </p>
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                              Privacy: {selectedLocation.locationPrecisionLevel === 'exact' ? 'Exact Address' : 
+                                       selectedLocation.locationPrecisionLevel === 'proximity' ? 'Approximate (~1km)' : 'City Only'}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setShowLocationModal(true)}
+                          >
+                            Change
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-20 border-2 border-dashed hover:border-primary"
+                        onClick={() => setShowLocationModal(true)}
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          <MapPin className="h-6 w-6 text-primary" />
+                          <span className="font-medium">Click to Set Location on Map</span>
+                          <span className="text-xs text-muted-foreground">Required before publishing</span>
+                        </div>
+                      </Button>
                     )}
-                  />
+                  </div>
 
                   {/* Submit Buttons */}
                   <div className="flex gap-3 pt-4">
@@ -3845,6 +3895,20 @@ export default function PostAdEnhanced() {
           toast({
             title: "Photos Unlocked!",
             description: `All ${uploadedImages.length} photos are now unlocked. You can publish your listing.`,
+          });
+        }}
+      />
+
+      {/* Location Selection Modal */}
+      <LocationSelectionModalWithMap
+        open={showLocationModal}
+        onOpenChange={setShowLocationModal}
+        onSave={(locationData) => {
+          setSelectedLocation(locationData);
+          setShowLocationModal(false);
+          toast({
+            title: "Location Set",
+            description: "Item location has been set successfully.",
           });
         }}
       />
