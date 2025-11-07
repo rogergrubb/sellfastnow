@@ -108,6 +108,7 @@ export interface IStorage {
   getUserListingsStats(userId: string): Promise<DashboardStats>;
   getAllListings(): Promise<Listing[]>;
   getListingsByCategory(category: string): Promise<Listing[]>;
+  getListingsByBatchId(batchId: string): Promise<Listing[]>;
   updateListing(id: string, listing: Partial<InsertListing>): Promise<Listing>;
   updateListingStatus(id: string, status: string): Promise<Listing>;
   deleteListing(id: string): Promise<void>;
@@ -379,6 +380,16 @@ export class DatabaseStorage implements IStorage {
       .from(listings)
       .where(
         and(eq(listings.category, category), eq(listings.status, "active"))
+      )
+      .orderBy(desc(listings.createdAt));
+  }
+
+  async getListingsByBatchId(batchId: string): Promise<Listing[]> {
+    return await db
+      .select()
+      .from(listings)
+      .where(
+        and(eq(listings.batchId, batchId), eq(listings.status, "active"))
       )
       .orderBy(desc(listings.createdAt));
   }

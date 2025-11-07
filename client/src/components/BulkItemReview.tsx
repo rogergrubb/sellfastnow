@@ -165,6 +165,7 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successListingIds, setSuccessListingIds] = useState<string[]>([]);
   const [successListingTitles, setSuccessListingTitles] = useState<string[]>([]);
+  const [successBatchId, setSuccessBatchId] = useState<string | null>(null);
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
@@ -348,6 +349,11 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
         await new Promise(resolve => setTimeout(resolve, 300));
       }
 
+      // Generate a unique batch ID for this publish session
+      const batchId = `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const batchTitle = `Batch Upload - ${new Date().toLocaleDateString()}`;
+      
+      console.log('🏷️ Generated batch ID:', batchId);
       console.log('🚀 Calling batch API with listings:', listings);
       
       // Get fresh auth token for batch publish
@@ -360,7 +366,11 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ listings }),
+        body: JSON.stringify({ 
+          listings,
+          batchId,
+          batchTitle 
+        }),
       });
 
       if (!response.ok) {
@@ -400,11 +410,12 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
           const hasErrors = result.errors && result.errors.length > 0;
           const partialSuccess = hasErrors && actualCreatedCount < products.length;
           
-          // Extract listing IDs and titles from the response
+          // Extract listing IDs, titles, and batchId from the response
           const listingIds = result.listings?.map((l: any) => String(l.id)) || [];
           const listingTitles = result.listings?.map((l: any) => l.title) || [];
+          const responseBatchId = result.batchId || null;
           
-          console.log('📋 Extracted listing data for modal:', { listingIds, listingTitles });
+          console.log('📋 Extracted listing data for modal:', { listingIds, listingTitles, batchId: responseBatchId });
           
           // Show partial success toast if some failed
           if (partialSuccess) {
@@ -422,6 +433,7 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
           // Show success modal with shareable links
           setSuccessListingIds(listingIds);
           setSuccessListingTitles(listingTitles);
+          setSuccessBatchId(responseBatchId);
           setShowSuccessModal(true);
         } else {
           // All creates failed
@@ -1348,6 +1360,7 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
         }}
         listingIds={successListingIds}
         listingTitles={successListingTitles}
+        batchId={successBatchId || undefined}
       />
 
       {/* Folder Selection Modal */}

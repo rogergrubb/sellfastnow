@@ -449,10 +449,32 @@ const router = Router();
         created: createdListings.length,
         listings: createdListings,
         errors: errors.length > 0 ? errors : undefined,
+        batchId: batchId || null,
+        batchTitle: batchTitle || null,
       });
     } catch (error: any) {
       console.error("❌ Batch create listings error:", error);
       res.status(500).json({ message: error.message || "Failed to create listings" });
+    }
+  });
+
+  // Get listings by batch ID (for collection view)
+  router.get("/collections/:batchId", async (req, res) => {
+    try {
+      const { batchId } = req.params;
+      
+      if (!batchId) {
+        return res.status(400).json({ message: "Batch ID is required" });
+      }
+      
+      console.log(`📦 Fetching listings for batch: ${batchId}`);
+      const listings = await storage.getListingsByBatchId(batchId);
+      
+      console.log(`✅ Found ${listings.length} listings in batch ${batchId}`);
+      res.json(listings);
+    } catch (error: any) {
+      console.error("❌ Error fetching batch listings:", error);
+      res.status(500).json({ message: "Failed to fetch batch listings" });
     }
   });
 

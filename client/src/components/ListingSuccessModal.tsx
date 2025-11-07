@@ -267,7 +267,7 @@ export function ListingSuccessModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <Button onClick={onClose} className="flex-1" size="lg">
               Done
             </Button>
@@ -277,7 +277,7 @@ export function ListingSuccessModal({
               className="flex-1"
               size="lg"
             >
-              Go to Dashboard
+              View My Listings
             </Button>
           </div>
         </div>
