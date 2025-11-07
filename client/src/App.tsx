@@ -24,6 +24,7 @@ import Messages from "./pages/MessagesNew";
 import Notifications from "./pages/Notifications";
 import MobileUpload from "./pages/MobileUpload";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import ListingPaymentSuccess from "./pages/ListingPaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import Admin from "./pages/Admin";
 import Credits from "./pages/Credits";
@@ -78,6 +79,7 @@ function Router() {
       <Route path="/unsubscribe" component={Unsubscribe} />
       <Route path="/mobile-upload/:sessionId" component={MobileUpload} />
       <Route path="/payment/success" component={PaymentSuccess} />
+      <Route path="/listing-payment-success" component={ListingPaymentSuccess} />
       <Route path="/payment/cancel" component={PaymentCancel} />
       <Route path="/admin" component={Admin} />
       <Route path="/credits" component={Credits} />

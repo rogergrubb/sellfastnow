@@ -2110,13 +2110,55 @@ export default function PostAdEnhanced() {
     setShowPricingModal(true);
   };
 
-  const handleConfirmPublish = () => {
+  const handleConfirmPublish = async () => {
     if (!pendingPublishData) return;
     
-    // Actually publish the listing
-    createListingMutation.mutate(pendingPublishData);
-    setShowPricingModal(false);
-    setPendingPublishData(null);
+    const listingPrice = parseFloat(pendingPublishData.price || '0');
+    
+    // Check if payment is required (listings >= $50)
+    if (listingPrice >= 50) {
+      try {
+        // Create Stripe Checkout session
+        const token = await getToken();
+        const response = await fetch('/api/listing-fee/create-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            listingPrice,
+            listingTitle: pendingPublishData.title || 'Untitled Item',
+            listingData: pendingPublishData, // Store listing data in session metadata
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to create checkout session');
+        }
+
+        const { url } = await response.json();
+        
+        console.log('💳 Redirecting to Stripe Checkout for listing fee payment...');
+        
+        // Redirect to Stripe Checkout
+        window.location.href = url;
+        
+      } catch (error: any) {
+        console.error('Error creating checkout session:', error);
+        toast({
+          title: "Payment Error",
+          description: error.message || "Failed to start checkout. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      // No payment required for items under $50
+      createListingMutation.mutate(pendingPublishData);
+      setShowPricingModal(false);
+      setPendingPublishData(null);
+    }
   };
 
   const saveDraft = () => {
