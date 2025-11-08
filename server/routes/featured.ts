@@ -6,7 +6,14 @@ import Stripe from "stripe";
 import { isAuthenticated } from "../supabaseAuth";
 
 const router = Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.error("❌ STRIPE_SECRET_KEY is not set in environment variables");
+  throw new Error("STRIPE_SECRET_KEY must be configured");
+}
+
+console.log("✅ Stripe initialized for featured listings");
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2024-11-20.acacia",
 });
 
@@ -119,9 +126,18 @@ router.post("/:id/feature", isAuthenticated, async (req: any, res) => {
       amount,
       duration,
     });
-  } catch (error) {
-    console.error("Error creating feature payment:", error);
-    res.status(500).json({ message: "Failed to create payment" });
+  } catch (error: any) {
+    console.error("❌ Error creating feature payment:", error);
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      type: error.type,
+      code: error.code,
+    });
+    res.status(500).json({ 
+      message: "Failed to create payment",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
