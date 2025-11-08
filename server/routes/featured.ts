@@ -3,6 +3,7 @@ import { db } from "../db";
 import { listings } from "@shared/schema";
 import { eq, and, gt, sql } from "drizzle-orm";
 import Stripe from "stripe";
+import { isAuthenticated } from "../supabaseAuth";
 
 const router = Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -55,7 +56,7 @@ router.get("/", async (req, res) => {
  * POST /api/featured-listings/:id/feature
  * Create a Stripe PaymentIntent to feature a listing
  */
-router.post("/:id/feature", async (req, res) => {
+router.post("/:id/feature", isAuthenticated, async (req, res) => {
   try {
     const { id } = req.params;
     const { duration } = req.body as { duration: "24h" | "48h" | "7d" };
