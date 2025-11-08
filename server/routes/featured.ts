@@ -2,20 +2,10 @@ import { Router } from "express";
 import { db } from "../db";
 import { listings } from "@shared/schema";
 import { eq, and, gt, sql } from "drizzle-orm";
-import Stripe from "stripe";
+import { stripe } from "../stripe";
 import { isAuthenticated } from "../supabaseAuth";
 
 const router = Router();
-
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.error("❌ STRIPE_SECRET_KEY is not set in environment variables");
-  throw new Error("STRIPE_SECRET_KEY must be configured");
-}
-
-console.log("✅ Stripe initialized for featured listings");
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-11-20.acacia",
-});
 
 /**
  * GET /api/featured-listings
