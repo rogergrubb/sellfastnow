@@ -122,13 +122,12 @@ export function FeatureListingModal({
   const handleContinue = async () => {
     setLoading(true);
     try {
-      const response = await apiRequest<{ clientSecret: string; amount: number; duration: string }>(
+      const res = await apiRequest(
+        "POST",
         `/api/featured-listings/${listingId}/feature`,
-        {
-          method: "POST",
-          body: JSON.stringify({ duration: selectedDuration }),
-        }
+        { duration: selectedDuration }
       );
+      const response = await res.json() as { clientSecret: string; amount: number; duration: string };
 
       setClientSecret(response.clientSecret);
     } catch (error: any) {
