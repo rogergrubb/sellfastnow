@@ -78,7 +78,7 @@ import { PhotoProcessingChoiceModal } from "@/components/PhotoProcessingChoiceMo
 import { PhotoReviewModal } from "@/components/PhotoReviewModal";
 import { FolderSelectionModal } from "@/components/FolderSelectionModal";
 import { ListingPricingModal } from "@/components/ListingPricingModal";
-import { LocationSelectionModalWithMap, type LocationData } from "@/components/LocationSelectionModalWithMap";
+import { SimpleLocationModal, type LocationData } from "@/components/SimpleLocationModal";
 
 const formSchema = insertListingSchema.omit({ userId: true });
 
@@ -3900,7 +3900,7 @@ export default function PostAdEnhanced() {
       />
 
       {/* Location Selection Modal */}
-      <LocationSelectionModalWithMap
+      <SimpleLocationModal
         open={showLocationModal}
         onOpenChange={setShowLocationModal}
         onSave={(locationData) => {

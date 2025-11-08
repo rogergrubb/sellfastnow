@@ -9,8 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import { RotateCw, Save, X, MapPin } from "lucide-react";
 import type { Listing } from "@shared/schema";
-import { LocationSelectionModalWithMap } from "@/components/LocationSelectionModalWithMap";
-import type { LocationData } from "@/components/LocationSelectionModalWithMap";
+import { SimpleLocationModal, type LocationData } from "@/components/SimpleLocationModal";
 
 interface InlineListingEditorProps {
   listing: Listing;
@@ -355,7 +354,7 @@ export default function InlineListingEditor({
       </DialogContent>
 
       {/* Location Selection Modal */}
-      <LocationSelectionModalWithMap
+      <SimpleLocationModal
         open={showLocationModal}
         onOpenChange={setShowLocationModal}
         onSave={(data) => {

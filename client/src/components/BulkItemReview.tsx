@@ -33,7 +33,7 @@ import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { ListingSuccessModal } from "@/components/ListingSuccessModal";
 import { FolderSelectionModal } from "@/components/FolderSelectionModal";
-import { LocationSelectionModalWithMap, type LocationData } from "@/components/LocationSelectionModalWithMap";
+import { SimpleLocationModal, type LocationData } from "@/components/SimpleLocationModal";
 
 interface DetectedProduct {
   title: string;
@@ -1370,7 +1370,7 @@ export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeR
         onSave={handleSaveDraftsToFolder}
       />
 
-      <LocationSelectionModalWithMap
+      <SimpleLocationModal
         open={showLocationModal}
         onOpenChange={setShowLocationModal}
         onSave={(locationData) => {
