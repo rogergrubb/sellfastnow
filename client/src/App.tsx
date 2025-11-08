@@ -27,6 +27,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import ListingPaymentSuccess from "./pages/ListingPaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import Admin from "./pages/Admin";
+import AdminMigration from "./pages/AdminMigration";
 import Credits from "./pages/Credits";
 import PaymentPage from "./pages/PaymentPage";
 import Payment from "./pages/Payment";
@@ -82,6 +83,7 @@ function Router() {
       <Route path="/listing-payment-success" component={ListingPaymentSuccess} />
       <Route path="/payment/cancel" component={PaymentCancel} />
       <Route path="/admin" component={Admin} />
+      <Route path="/admin/migration" component={AdminMigration} />
       <Route path="/credits" component={Credits} />
       <Route path="/settings" component={Settings} />
       <Route path="/messages" component={Messages} /> {/* Using MessagesNew with WebSocket and conversation grouping */}
