@@ -342,6 +342,20 @@ export default function ListingDetail() {
               imageRotations={listing.imageRotations as number[] | undefined}
             />
 
+            {/* Feature Listing Button - Prominent placement under images */}
+            {currentUser && data?.listing.userId === currentUser.id && data?.listing.status === 'active' && (
+              <Button 
+                variant="default" 
+                size="lg"
+                className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold shadow-lg" 
+                onClick={() => setIsFeatureModalOpen(true)}
+                data-testid="button-feature-listing"
+              >
+                <Sparkles className="h-5 w-5 mr-2" />
+                ✨ Feature This Listing on Homepage - Starting at $5
+              </Button>
+            )}
+
             {/* Listing Details Card */}
             <Card className="p-6">
               <h1 className="text-3xl font-bold mb-4" data-testid="text-listing-title">
@@ -635,18 +649,7 @@ export default function ListingDetail() {
                   Share
                 </Button>
                 
-                {/* Feature Listing Button - Only for listing owners */}
-                {currentUser && data?.listing.userId === currentUser.id && data?.listing.status === 'active' && (
-                  <Button 
-                    variant="default" 
-                    className="w-full bg-yellow-600 hover:bg-yellow-700" 
-                    onClick={() => setIsFeatureModalOpen(true)}
-                    data-testid="button-feature-listing"
-                  >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Feature on Homepage - $5
-                  </Button>
-                )}
+
               </div>
             </Card>
 
