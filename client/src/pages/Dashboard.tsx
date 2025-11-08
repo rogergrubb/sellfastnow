@@ -1346,7 +1346,8 @@ export default function Dashboard() {
       {/* Feature Listing Modal */}
       {featuringListing && (
         <FeatureListingModal
-          listing={featuringListing}
+          listingId={featuringListing.id}
+          listingTitle={featuringListing.title}
           open={featureModalOpen}
           onOpenChange={(open) => {
             setFeatureModalOpen(open);
