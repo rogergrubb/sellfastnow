@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation } from "swiper/modules";
 import { Sparkles } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+
 
 // Import Swiper styles
 import "swiper/css";
@@ -25,7 +25,9 @@ export function FeaturedCarousel() {
 
   const fetchFeaturedListings = async () => {
     try {
-      const response = await apiRequest<FeaturedListing[]>("/api/featured-listings");
+      const res = await fetch("/api/featured-listings");
+      if (!res.ok) throw new Error("Failed to fetch featured listings");
+      const response = await res.json() as FeaturedListing[];
       setListings(response);
     } catch (error) {
       console.error("Error fetching featured listings:", error);

@@ -1,7 +1,7 @@
+import { db } from "../db";
 import { sql } from "drizzle-orm";
-import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
-export async function up(db: PostgresJsDatabase) {
+export async function up() {
   console.log("Running migration: 008_featured_listings");
   
   // Add featured listing fields to listings table
@@ -23,7 +23,7 @@ export async function up(db: PostgresJsDatabase) {
   console.log("Migration 008_featured_listings completed successfully");
 }
 
-export async function down(db: PostgresJsDatabase) {
+export async function down() {
   console.log("Rolling back migration: 008_featured_listings");
   
   // Drop index
