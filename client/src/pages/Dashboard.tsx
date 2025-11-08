@@ -43,6 +43,7 @@ import { DashboardShareModal } from "@/components/DashboardShareModal";
 import InlineListingEditor from "@/components/InlineListingEditor";
 import { LeaveReviewModal } from "@/components/LeaveReviewModal";
 import { MarkAsSoldDialog } from "@/components/MarkAsSoldDialog";
+import { FeatureListingModal } from "@/components/FeatureListingModal";
 
 type DashboardStats = {
   totalActive: number;
@@ -152,6 +153,8 @@ export default function Dashboard() {
   } | null>(null);
   const [markAsSoldDialogOpen, setMarkAsSoldDialogOpen] = useState(false);
   const [listingToMarkSold, setListingToMarkSold] = useState<Listing | null>(null);
+  const [featureModalOpen, setFeatureModalOpen] = useState(false);
+  const [featuringListing, setFeaturingListing] = useState<Listing | null>(null);
 
   // Sync active tab and filter with URL query parameters
   useEffect(() => {
@@ -1020,18 +1023,33 @@ export default function Dashboard() {
                                   </Button>
                                 )}
                                 {listing.status === "active" && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setListingToMarkSold(listing);
-                                      setMarkAsSoldDialogOpen(true);
-                                    }}
-                                    data-testid={`button-mark-sold-${listing.id}`}
-                                  >
-                                    <CheckCircle className="h-4 w-4 mr-1" />
-                                    Sold
-                                  </Button>
+                                  <>
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      onClick={() => {
+                                        setFeatureModalOpen(true);
+                                        setFeaturingListing(listing);
+                                      }}
+                                      className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+                                      data-testid={`button-feature-${listing.id}`}
+                                    >
+                                      <Rocket className="h-4 w-4 mr-1" />
+                                      Boost
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setListingToMarkSold(listing);
+                                        setMarkAsSoldDialogOpen(true);
+                                      }}
+                                      data-testid={`button-mark-sold-${listing.id}`}
+                                    >
+                                      <CheckCircle className="h-4 w-4 mr-1" />
+                                      Sold
+                                    </Button>
+                                  </>
                                 )}
                                 {listing.status === "sold" && (
                                   <Button
@@ -1324,6 +1342,24 @@ export default function Dashboard() {
           }
         }}
       />
+
+      {/* Feature Listing Modal */}
+      {featuringListing && (
+        <FeatureListingModal
+          listing={featuringListing}
+          open={featureModalOpen}
+          onOpenChange={(open) => {
+            setFeatureModalOpen(open);
+            if (!open) {
+              setFeaturingListing(null);
+            }
+          }}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['/api/listings/my-listings'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/featured-listings'] });
+          }}
+        />
+      )}
     </div>
   );
 }
