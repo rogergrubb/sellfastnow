@@ -54,10 +54,17 @@ router.get("/", async (req, res) => {
  * Create a Stripe PaymentIntent to feature a listing
  */
 router.post("/:id/feature", isAuthenticated, async (req: any, res) => {
+  console.log("✅ Feature listing endpoint called");
+  console.log("Request params:", req.params);
+  console.log("Request body:", req.body);
+  console.log("Auth user ID:", req.auth?.userId);
+  
   try {
     const { id } = req.params;
     const { duration } = req.body as { duration: "24h" | "48h" | "7d" };
     const userId = req.auth?.userId;
+    
+    console.log("Processing feature request for listing:", id, "duration:", duration, "user:", userId);
 
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -97,6 +104,9 @@ router.post("/:id/feature", isAuthenticated, async (req: any, res) => {
     };
 
     const amount = prices[duration];
+    
+    console.log("Creating Stripe PaymentIntent with amount:", amount);
+    console.log("Stripe instance available:", !!stripe);
 
     // Create Stripe PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
