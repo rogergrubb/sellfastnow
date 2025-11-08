@@ -38,7 +38,7 @@ export const STRIPE_CONFIG = {
 export function validateStripeEnv(): { valid: boolean; missing: string[] } {
   const required = [
     'STRIPE_SECRET_KEY',
-    'STRIPE_WEBHOOK_SECRET',
+    // STRIPE_WEBHOOK_SECRET is only needed for webhook endpoints, not for PaymentIntents
   ];
 
   const missing = required.filter(key => !process.env[key]);
