@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -113,6 +113,9 @@ export function LocationSelectionModalWithMap({
             <MapPin className="h-5 w-5" />
             Set Item Location
           </DialogTitle>
+          <DialogDescription>
+            Click anywhere on the map to set your location, or search for an address
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
