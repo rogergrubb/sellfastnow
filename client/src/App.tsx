@@ -82,8 +82,8 @@ function Router() {
       <Route path="/payment/success" component={PaymentSuccess} />
       <Route path="/listing-payment-success" component={ListingPaymentSuccess} />
       <Route path="/payment/cancel" component={PaymentCancel} />
-      <Route path="/admin" component={Admin} />
       <Route path="/admin/migration" component={AdminMigration} />
+      <Route path="/admin" component={Admin} />
       <Route path="/credits" component={Credits} />
       <Route path="/settings" component={Settings} />
       <Route path="/messages" component={Messages} /> {/* Using MessagesNew with WebSocket and conversation grouping */}
