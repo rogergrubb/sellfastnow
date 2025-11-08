@@ -63,6 +63,7 @@ import adminRestoreCreditsRoutes from "./routes/admin-restore-credits";
 import adminRestoreSimpleRoutes from "./routes/admin-restore-simple";
 import adminAddCreditsRoutes from "./routes/admin-add-credits";
 import listingFeeRoutes from "./routes/listing-fee";
+import featuredRoutes from "./routes/featured";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -492,6 +493,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Listings Routes
   // ======================
   app.use("/api/listings", listingsRoutes);
+  
+  // Featured Listings Routes
+  // ======================
+  app.use("/api/featured-listings", featuredRoutes);
   
   // ======================
   // Collection Routes
@@ -1034,6 +1039,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           } catch (error) {
             console.error("Error activating boost:", error);
+          }
+        }
+
+        // Handle featured listing payment
+        const { feature_type, listing_id, duration } = paymentIntent.metadata;
+        if (feature_type === 'homepage_carousel' && listing_id && duration) {
+          try {
+            // Calculate expiry time based on duration
+            const now = new Date();
+            let expiryTime = new Date(now);
+            
+            if (duration === '24h') {
+              expiryTime.setHours(expiryTime.getHours() + 24);
+            } else if (duration === '48h') {
+              expiryTime.setHours(expiryTime.getHours() + 48);
+            } else if (duration === '7d') {
+              expiryTime.setDate(expiryTime.getDate() + 7);
+            }
+
+            // Update listing to featured status
+            await db
+              .update(listings)
+              .set({
+                featuredUntil: expiryTime,
+                featuredPaymentId: paymentIntent.id,
+                featuredCreatedAt: now,
+                featuredDuration: duration,
+              })
+              .where(eq(listings.id, listing_id));
+
+            console.log(`✅ Featured listing ${listing_id} until ${expiryTime.toISOString()}`);
+          } catch (error) {
+            console.error("Error featuring listing:", error);
           }
         }
       }

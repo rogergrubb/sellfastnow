@@ -21,6 +21,7 @@ import { VerificationBadges } from "@/components/VerificationBadge";
 import { MeetingPreferencesDisplay } from "@/components/SafetyPrompt";
 import { DepositSubmissionModal } from "@/components/DepositSubmissionModal";
 import { TransactionControlPanel } from "@/components/TransactionControlPanel";
+import { FeatureListingModal } from "@/components/FeatureListingModal";
 import {
   MapPin,
   Heart,
@@ -32,6 +33,7 @@ import {
   Clock,
   Star,
   XCircle,
+  Sparkles,
 } from "lucide-react";
 import type { Listing, User } from "@shared/schema";
 
@@ -52,6 +54,7 @@ export default function ListingDetail() {
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [isFeatureModalOpen, setIsFeatureModalOpen] = useState(false);
 
   // Fetch current user
   const { data: currentUser } = useQuery<User>({
@@ -631,6 +634,19 @@ export default function ListingDetail() {
                   <Share2 className="h-4 w-4 mr-2" />
                   Share
                 </Button>
+                
+                {/* Feature Listing Button - Only for listing owners */}
+                {currentUser && data?.listing.userId === currentUser.id && data?.listing.status === 'active' && (
+                  <Button 
+                    variant="default" 
+                    className="w-full bg-yellow-600 hover:bg-yellow-700" 
+                    onClick={() => setIsFeatureModalOpen(true)}
+                    data-testid="button-feature-listing"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Feature on Homepage - $5
+                  </Button>
+                )}
               </div>
             </Card>
 
@@ -779,6 +795,15 @@ export default function ListingDetail() {
               sellerId={seller.id}
               listingTitle={listing.title}
               listingPrice={parseFloat(listing.price)}
+            />
+          )}
+          {/* Feature Listing Modal - Only for listing owners */}
+          {data && currentUser && data.listing.userId === currentUser.id && (
+            <FeatureListingModal
+              open={isFeatureModalOpen}
+              onOpenChange={setIsFeatureModalOpen}
+              listingId={id!}
+              listingTitle={listing.title}
             />
           )}
         </>

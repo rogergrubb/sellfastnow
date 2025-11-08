@@ -194,6 +194,12 @@ export const listings = pgTable("listings", {
   // New folder system
   folderId: varchar("folder_id").references(() => draftFolders.id, { onDelete: "set null" }),
   
+  // Featured listing fields
+  featuredUntil: timestamp("featured_until"), // null = not featured, timestamp = featured until this time
+  featuredPaymentId: varchar("featured_payment_id", { length: 255 }), // Stripe PaymentIntent ID
+  featuredCreatedAt: timestamp("featured_created_at"), // When featured status was activated
+  featuredDuration: varchar("featured_duration", { length: 10 }), // '24h', '48h', '7d'
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

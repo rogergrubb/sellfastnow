@@ -5,6 +5,7 @@ import { up as runImageRotationsMigration } from "./004_image_rotations";
 import { up as runFreeListingsTrackingMigration } from "./005_free_listings_tracking";
 import { up as runSavedSearchesMigration } from "./006_saved_searches";
 import { up as runSmsPreferencesMigration } from "./007_sms_preferences";
+import { up as runFeaturedListingsMigration } from "./008_featured_listings";
 
 /**
  * Run all pending migrations
@@ -34,6 +35,9 @@ export async function runMigrations() {
     
     console.log("Running migration 007: sms_preferences...");
     await runSmsPreferencesMigration();
+    
+    console.log("Running migration 008: featured_listings...");
+    await runFeaturedListingsMigration();
     
     console.log("✅ All migrations completed successfully");
   } catch (error) {

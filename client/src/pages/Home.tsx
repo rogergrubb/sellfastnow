@@ -5,6 +5,7 @@ import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ListingCard from "@/components/ListingCard";
+import { FeaturedCarousel } from "@/components/FeaturedCarousel";
 import { 
   Search, Plus, TrendingUp, Zap, DollarSign, 
   Package, Sparkles, CheckCircle, ArrowRight 
@@ -78,6 +79,9 @@ export default function HomeNew() {
             </div>
           </div>
         </section>
+
+        {/* Featured Listings Carousel */}
+        <FeaturedCarousel />
 
         {/* Bulk Sellers Section - Top Priority */}
         <section className="py-12 md:py-16 lg:py-20 bg-white dark:bg-gray-900">
