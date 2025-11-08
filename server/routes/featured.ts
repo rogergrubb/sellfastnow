@@ -56,11 +56,11 @@ router.get("/", async (req, res) => {
  * POST /api/featured-listings/:id/feature
  * Create a Stripe PaymentIntent to feature a listing
  */
-router.post("/:id/feature", isAuthenticated, async (req, res) => {
+router.post("/:id/feature", isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
     const { duration } = req.body as { duration: "24h" | "48h" | "7d" };
-    const userId = req.user?.id;
+    const userId = req.auth?.userId;
 
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
