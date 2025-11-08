@@ -64,6 +64,7 @@ import adminRestoreSimpleRoutes from "./routes/admin-restore-simple";
 import adminAddCreditsRoutes from "./routes/admin-add-credits";
 import listingFeeRoutes from "./routes/listing-fee";
 import featuredRoutes from "./routes/featured";
+import adminFeaturedDemoRoutes from "./routes/admin-featured-demo";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -497,6 +498,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Featured Listings Routes
   // ======================
   app.use("/api/featured-listings", featuredRoutes);
+  
+  // Admin Featured Demo Routes
+  // ======================
+  app.use("/api/admin/featured-demo", adminFeaturedDemoRoutes);
   
   // ======================
   // Collection Routes
