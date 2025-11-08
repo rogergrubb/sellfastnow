@@ -66,6 +66,7 @@ import listingFeeRoutes from "./routes/listing-fee";
 import featuredRoutes from "./routes/featured";
 import adminFeaturedDemoRoutes from "./routes/admin-featured-demo";
 import adminRunMigrationRoutes from "./routes/admin-run-migration";
+import stripeDiagnosticRoutes from "./routes/stripe-diagnostic";
 import { stripe } from "./stripe";
 import { STRIPE_CONFIG, calculatePlatformFee, getBaseUrl } from "./config/stripe.config";
 import { 
@@ -507,6 +508,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Migration Routes
   // ======================
   app.use("/api/admin", adminRunMigrationRoutes);
+  
+  // Stripe Diagnostic Route (for debugging)
+  // ======================
+  app.use("/api/stripe-diagnostic", stripeDiagnosticRoutes);
   
   // ======================
   // Collection Routes
