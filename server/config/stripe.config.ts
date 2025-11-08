@@ -15,7 +15,7 @@ export const STRIPE_CONFIG = {
   PLATFORM_FEE_PERCENTAGE: 0.05,
 
   // API Version
-  API_VERSION: "2025-09-30.clover" as const,
+  API_VERSION: "2024-11-20.acacia" as const,
 
   // Rate Limits (requests per time window)
   RATE_LIMITS: {

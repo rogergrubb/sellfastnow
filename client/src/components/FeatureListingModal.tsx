@@ -22,6 +22,7 @@ interface FeatureListingModalProps {
   onOpenChange: (open: boolean) => void;
   listingId: string;
   listingTitle: string;
+  onSuccess?: () => void;
 }
 
 const durations = [
@@ -113,6 +114,7 @@ export function FeatureListingModal({
   onOpenChange,
   listingId,
   listingTitle,
+  onSuccess,
 }: FeatureListingModalProps) {
   const { toast } = useToast();
   const [selectedDuration, setSelectedDuration] = useState("7d");
@@ -148,6 +150,9 @@ export function FeatureListingModal({
     });
     onOpenChange(false);
     setClientSecret(null);
+    if (onSuccess) {
+      onSuccess();
+    }
   };
 
   const handleCancel = () => {
