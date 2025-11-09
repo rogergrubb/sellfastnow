@@ -112,6 +112,9 @@ router.post("/:id/feature", isAuthenticated, async (req: any, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: "usd",
+      automatic_payment_methods: {
+        enabled: true,
+      },
       metadata: {
         listing_id: id,
         duration,
