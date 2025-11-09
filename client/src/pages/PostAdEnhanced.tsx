@@ -2133,8 +2133,8 @@ export default function PostAdEnhanced() {
     
     const listingPrice = parseFloat(pendingPublishData.price || '0');
     
-    // Check if payment is required (listings >= $50)
-    if (listingPrice >= 50) {
+    // Check if payment is required (listings >= $100)
+    if (listingPrice >= 100) {
       try {
         // Create Stripe Checkout session
         const token = await getToken();
@@ -2172,7 +2172,7 @@ export default function PostAdEnhanced() {
         });
       }
     } else {
-      // No payment required for items under $50
+      // No payment required for items under $100
       createListingMutation.mutate(pendingPublishData);
       setShowPricingModal(false);
       setPendingPublishData(null);

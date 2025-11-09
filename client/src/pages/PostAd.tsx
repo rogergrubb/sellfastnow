@@ -209,8 +209,8 @@ export default function PostAd() {
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     const listingPrice = parseFloat(data.price);
     
-    // Check if listing fee is required (items >= $50)
-    if (listingPrice >= 50) {
+    // Check if listing fee is required (items >= $100)
+    if (listingPrice >= 100) {
       // Show payment modal
       setPendingListingData(data);
       setShowListingFeeModal(true);

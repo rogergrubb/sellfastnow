@@ -129,14 +129,14 @@ const router = Router();
           return res.status(400).json({ message: "Missing required fields" });
         }
         
-        // PAYMENT ENFORCEMENT: Listings >= $50 require payment
+        // PAYMENT ENFORCEMENT: Free under $100, 1% fee for $100 and above
         const listingPrice = parseFloat(price);
-        if (listingPrice >= 50) {
+        if (listingPrice >= 100) {
           if (!paymentIntentId) {
             return res.status(402).json({ 
-              message: "Payment required for listings $50 and above",
+              message: "Payment required for listings $100 and above",
               requiresPayment: true,
-              listingFee: (listingPrice * 0.03).toFixed(2)
+              listingFee: (listingPrice * 0.01).toFixed(2)
             });
           }
           
@@ -152,8 +152,8 @@ const router = Router();
               });
             }
             
-            // Verify payment amount matches listing fee (3%)
-            const expectedFee = Math.round(listingPrice * 0.03 * 100); // in cents
+            // Verify payment amount matches listing fee (1%)
+            const expectedFee = Math.round(listingPrice * 0.01 * 100); // in cents
             if (paymentIntent.amount !== expectedFee) {
               return res.status(400).json({ 
                 message: "Payment amount mismatch",
@@ -167,7 +167,7 @@ const router = Router();
               return res.status(403).json({ message: "Payment does not belong to this user" });
             }
             
-            console.log(`✅ Payment verified for listing: $${listingPrice}, fee: $${(listingPrice * 0.03).toFixed(2)}`);
+            console.log(`✅ Payment verified for listing: $${listingPrice}, fee: $${(listingPrice * 0.01).toFixed(2)}`);
           } catch (error: any) {
             console.error("Error verifying payment:", error);
             return res.status(500).json({ message: "Failed to verify payment" });

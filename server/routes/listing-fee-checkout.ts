@@ -7,20 +7,21 @@ const router = Router();
 /**
  * POST /api/listing-fee/create-checkout-session
  * Create a Stripe Checkout session for listing fee payment
+ * Fee structure: Free for items under $100, 1% for $100 and above
  */
 router.post("/create-checkout-session", isAuthenticated, async (req: any, res) => {
   try {
     const userId = req.auth.userId;
     const { listingPrice, listingTitle, listingData } = req.body;
 
-    if (!listingPrice || listingPrice < 50) {
+    if (!listingPrice || listingPrice < 100) {
       return res.status(400).json({ 
-        error: "Listing fee only applies to items $50 and above" 
+        error: "Listing fee only applies to items $100 and above" 
       });
     }
 
-    // Calculate 3% listing fee
-    const listingFee = listingPrice * 0.03;
+    // Calculate 1% listing fee for items $100 and above
+    const listingFee = listingPrice * 0.01;
     const feeInCents = Math.round(listingFee * 100);
 
     // Create Stripe Checkout Session
@@ -32,7 +33,7 @@ router.post("/create-checkout-session", isAuthenticated, async (req: any, res) =
             currency: 'usd',
             product_data: {
               name: `Listing Fee for: ${listingTitle || 'Untitled Item'}`,
-              description: `3% listing fee for $${listingPrice} item on SellFast.Now`,
+              description: `1% listing fee for $${listingPrice} item on SellFast.Now`,
             },
             unit_amount: feeInCents,
           },
@@ -51,7 +52,7 @@ router.post("/create-checkout-session", isAuthenticated, async (req: any, res) =
       },
     });
 
-    console.log(`💳 Created Stripe Checkout session for listing fee: $${listingFee.toFixed(2)} (3% of $${listingPrice})`);
+    console.log(`💳 Created Stripe Checkout session for listing fee: $${listingFee.toFixed(2)} (1% of $${listingPrice})`);
     console.log(`🔗 Checkout URL: ${session.url}`);
 
     res.json({
