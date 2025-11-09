@@ -36,7 +36,7 @@ export default function HomeNew() {
     <>
       <Helmet>
         <title>SellFast.Now - Sell in Bulk, Save More | AI-Powered Marketplace</title>
-        <meta name="description" content="The smarter way to sell. Bulk upload tools, AI-powered listings, and keep 97% of your sales. Compare: eBay 12.9%, Facebook 5%, Craigslist spam." />
+        <meta name="description" content="The smarter way to sell. Bulk upload tools, AI-powered listings, and keep 99%+ of your sales. Compare: eBay 13%/2.35%, Facebook 5%, Craigslist $5 auto/RV." />
       </Helmet>
 
       <div className="min-h-screen">
@@ -117,10 +117,10 @@ export default function HomeNew() {
                   {/* eBay */}
                   <div className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200">
                     <div className="text-center">
-                      <div className="text-lg font-semibold mb-2">eBay</div>
-                      <div className="text-4xl font-bold text-red-600 mb-2">12.9%</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">+ listing fees</div>
-                      <div className="text-xs text-red-600">4.3x more expensive</div>
+                      <div className="text-lg font-semibold mb-2">eBay***</div>
+                      <div className="text-3xl font-bold text-red-600 mb-2">13% / 2.35%</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">13% first $7.5K</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mb-4">2.35% above $7.5K</div>
                     </div>
                   </div>
 
@@ -143,6 +143,13 @@ export default function HomeNew() {
                       <div className="text-xs text-gray-500">No bulk tools, spam, scams, no buyer and seller rating system</div>
                     </div>
                   </div>
+                </div>
+
+                {/* Disclaimer */}
+                <div className="mt-4 text-center">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    *** Visit <a href="https://www.ebay.com/help/selling/fees-credits-invoices/selling-fees?id=4364" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">eBay.com</a> for complete fee details. Fees vary by category.
+                  </p>
                 </div>
 
               </div>

@@ -249,11 +249,12 @@ export default function ComparePricing() {
               {/* eBay */}
               <tr>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <span className="font-semibold text-gray-900 dark:text-white">eBay</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">eBay***</span>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
-                  <div className="font-semibold text-gray-900 dark:text-white">~13% per sale</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">10% + 3% payment</div>
+                  <div className="font-semibold text-gray-900 dark:text-white">13% / 2.35% tiered</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">13% on first $7,500</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">2.35% above $7,500</div>
                 </td>
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
                   <div className="space-y-1">
@@ -334,6 +335,13 @@ export default function ComparePricing() {
               </tr>
             </tbody>
           </table>
+          
+          {/* Disclaimer */}
+          <div className="mt-4 text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              *** Visit <a href="https://www.ebay.com/help/selling/fees-credits-invoices/selling-fees?id=4364" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">eBay.com</a> for complete fee details. Fees vary by category.
+            </p>
+          </div>
         </div>
 
         {/* AI Advantage Callout */}
