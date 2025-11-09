@@ -77,11 +77,13 @@ export default function HomeNew() {
                 </form>
               </div>
             </div>
+
+            {/* Featured Listings Carousel */}
+            <div className="mt-8 md:mt-12">
+              <FeaturedCarousel />
+            </div>
           </div>
         </section>
-
-        {/* Featured Listings Carousel */}
-        <FeaturedCarousel />
 
         {/* Bulk Sellers Section - Top Priority */}
         <section className="py-12 md:py-16 lg:py-20 bg-white dark:bg-gray-900">

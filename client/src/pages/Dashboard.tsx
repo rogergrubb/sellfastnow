@@ -1031,11 +1031,12 @@ export default function Dashboard() {
                                         setFeatureModalOpen(true);
                                         setFeaturingListing(listing);
                                       }}
-                                      className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+                                      disabled={listing.featuredUntil && new Date(listing.featuredUntil) > new Date()}
+                                      className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                       data-testid={`button-feature-${listing.id}`}
                                     >
                                       <Rocket className="h-4 w-4 mr-1" />
-                                      Boost
+                                      {listing.featuredUntil && new Date(listing.featuredUntil) > new Date() ? "Boosted" : "Boost"}
                                     </Button>
                                     <Button
                                       variant="outline"
