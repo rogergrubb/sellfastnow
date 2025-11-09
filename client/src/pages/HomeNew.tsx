@@ -103,8 +103,8 @@ export default function HomeNew() {
                     </div>
                     <div className="text-center mt-4">
                       <div className="text-lg font-semibold mb-2">SellFast.Now</div>
-                      <div className="text-4xl font-bold text-green-600 mb-2">3%</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">You keep 97%</div>
+                      <div className="text-3xl font-bold text-green-600 mb-2">FREE to $100</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Then 1% above $100</div>
                       <div className="text-sm font-semibold text-green-700 dark:text-green-400 mb-3">
                         Post for FREE*
                         <div className="text-xs text-gray-500 dark:text-gray-400 font-normal">(Limitations apply)</div>
@@ -138,8 +138,8 @@ export default function HomeNew() {
                   <div className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200">
                     <div className="text-center">
                       <div className="text-lg font-semibold mb-2">Craigslist</div>
-                      <div className="text-4xl font-bold text-gray-600 mb-2">Free</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">But...</div>
+                      <div className="text-4xl font-bold text-gray-600 mb-2">Free*</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">$5 for auto/RV</div>
                       <div className="text-xs text-gray-500">No bulk tools, spam, scams, no buyer and seller rating system</div>
                     </div>
                   </div>

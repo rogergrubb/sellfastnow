@@ -179,7 +179,7 @@ export default function PlatformFeeComparison() {
             <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Fee Breakdown</h4>
               <div className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
-                <p>• <strong>SellFast.Now:</strong> 5% transaction fee, $0 listing fees</p>
+                <p>• <strong>SellFast.Now:</strong> FREE up to $100, then 1% listing fee + 5% transaction fee (when using Stripe)</p>
                 <p>• <strong>eBay:</strong> 13.25% final value fee + $0.35 per listing</p>
                 <p>• <strong>Etsy:</strong> 6.5% transaction + 3% payment + $0.20 per listing</p>
                 <p>• <strong>EstateSales.org:</strong> 15% commission</p>

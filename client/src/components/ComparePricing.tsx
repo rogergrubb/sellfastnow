@@ -42,22 +42,34 @@ export default function ComparePricing() {
                 Our Simple, Fair Pricing
               </h3>
               <p className="text-gray-700 dark:text-gray-300">
-                Just 1% for all items - no tiers, no confusion. Simple and fair for everyone. 
+                List items up to $100 for FREE, then just 1% for higher-priced items. Simple and fair for everyone. 
                 Includes AI-generated titles, descriptions, valuations, and SEO meta tags.
               </p>
             </div>
           </div>
 
-          <div className="flex justify-center">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border-2 border-green-200 dark:border-green-700 max-w-md w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border-2 border-green-500 dark:border-green-600">
               <div className="text-center">
-                <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">All Items</div>
-                <div className="text-4xl font-bold text-green-600 dark:text-green-400 mb-3">1¢ per dollar</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">$0 - $100</div>
+                <div className="text-4xl font-bold text-green-600 dark:text-green-400 mb-3">FREE</div>
+                <div className="text-lg text-gray-700 dark:text-gray-300 mb-4">No listing fee</div>
+                <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div>Example: $20 book = $0.00</div>
+                  <div>Example: $50 lamp = $0.00</div>
+                  <div>Example: $100 chair = $0.00</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border-2 border-blue-500 dark:border-blue-600">
+              <div className="text-center">
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">$100+</div>
+                <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-3">1¢ per dollar</div>
                 <div className="text-lg text-gray-700 dark:text-gray-300 mb-4">(1% flat rate)</div>
                 <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                  <div>Example: $20 book = $0.20 fee</div>
-                  <div>Example: $100 chair = $1.00 fee</div>
-                  <div>Example: $1,000 antique = $10.00 fee</div>
+                  <div>Example: $150 table = $1.50</div>
+                  <div>Example: $500 sofa = $5.00</div>
+                  <div>Example: $1,000 antique = $10.00</div>
                 </div>
               </div>
             </div>

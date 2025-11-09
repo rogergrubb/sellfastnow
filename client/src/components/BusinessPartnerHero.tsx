@@ -26,15 +26,15 @@ export default function BusinessPartnerHero() {
     },
     {
       icon: DollarSign,
-      title: "Only 3% Fee",
-      description: "Keep 97% of every sale"
+      title: "Free up to $100",
+      description: "Then just 1% above $100"
     }
   ];
 
   const stats = [
     { value: "156+", label: "Business Partners" },
     { value: "$2.4M", label: "Total Sales" },
-    { value: "97%", label: "You Keep" },
+    { value: "99%+", label: "You Keep" },
     { value: "24/7", label: "Support" }
   ];
 

@@ -170,7 +170,7 @@ export default function EstateHero() {
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border-2 border-purple-200 dark:border-purple-800">
               <div className="text-5xl text-purple-600 dark:text-purple-400 leading-none mb-4">"</div>
               <p className="text-base text-gray-700 dark:text-gray-300 italic mb-6">
-                Other platforms charge me <span className="font-bold text-red-600 dark:text-red-400">13% fees.</span> SellFast.Now charges <span className="font-bold text-green-600 dark:text-green-400">4%</span> AND gives me AI-powered descriptions. I'm <span className="font-bold text-green-600 dark:text-green-400">saving thousands</span> per estate.
+                Other platforms charge me <span className="font-bold text-red-600 dark:text-red-400">13% fees.</span> SellFast.Now is <span className="font-bold text-green-600 dark:text-green-400">FREE up to $100, then just 1%</span> AND gives me AI-powered descriptions. I'm <span className="font-bold text-green-600 dark:text-green-400">saving thousands</span> per estate.
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-lg">

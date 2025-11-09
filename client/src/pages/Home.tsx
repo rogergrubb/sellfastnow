@@ -109,8 +109,8 @@ export default function HomeNew() {
                     </div>
                     <div className="text-center mt-3 md:mt-4">
                       <div className="text-sm sm:text-base md:text-lg font-semibold mb-1 md:mb-2">SellFast.Now</div>
-                      <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-green-600 mb-1 md:mb-2">3%</div>
-                      <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-1 md:mb-2">You keep 97%</div>
+                      <div className="text-xl sm:text-2xl md:text-3xl font-bold text-green-600 mb-1 md:mb-2">FREE to $100</div>
+                      <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-1 md:mb-2">Then 1% above $100</div>
                       <div className="text-xs md:text-sm font-semibold text-green-700 dark:text-green-400 mb-2 md:mb-3">
                         Post for FREE*
                         <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 font-normal">(Limitations apply)</div>
@@ -144,8 +144,8 @@ export default function HomeNew() {
                   <div className="bg-white dark:bg-gray-900 rounded-lg md:rounded-xl p-3 sm:p-4 md:p-6 border border-gray-200 col-span-2 md:col-span-1">
                     <div className="text-center">
                       <div className="text-sm sm:text-base md:text-lg font-semibold mb-1 md:mb-2">Craigslist</div>
-                      <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-600 mb-1 md:mb-2">Free</div>
-                      <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-2 md:mb-4">But...</div>
+                      <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-600 mb-1 md:mb-2">Free*</div>
+                      <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-2 md:mb-4">$5 for auto/RV</div>
                       <div className="text-[10px] md:text-xs text-gray-500">No bulk tools, spam, scams</div>
                     </div>
                   </div>
@@ -176,7 +176,7 @@ export default function HomeNew() {
                 <DollarSign className="w-10 h-10 sm:w-12 sm:h-12 text-purple-600 mb-3 md:mb-4" />
                 <h3 className="text-lg sm:text-xl font-bold mb-2">Direct Payments</h3>
                 <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
-                  Stripe integration. 97% goes directly to your bank account. No waiting.
+                  Stripe integration. 99%+ goes directly to your bank account. No waiting.
                 </p>
               </div>
             </div>
