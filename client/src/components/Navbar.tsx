@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { NotificationBell } from "@/components/NotificationBell";
-import type { UserCredits, Message } from "@shared/schema";
+import type { UserCredits } from "@shared/schema";
 
 export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -24,11 +24,12 @@ export default function Navbar() {
   const isSignedIn = !!user && !!session;
   const isLoaded = !loading;
 
-  // Fetch messages for unread count
-  const { data: messages = [] } = useQuery<Message[]>({
-    queryKey: ['/api/messages'],
+  // Fetch unread message count
+  const { data: unreadData } = useQuery<{ unreadCount: number }>({
+    queryKey: ['/api/messages/unread-count'],
     enabled: isSignedIn && isLoaded,
     retry: false,
+    refetchInterval: 10000, // Refetch every 10 seconds
   });
 
   // Listen for new messages via WebSocket and refresh unread count
@@ -37,19 +38,24 @@ export default function Navbar() {
 
     const handleNewMessage = (data: any) => {
       console.log('📨 New message received in Navbar, refreshing unread count');
-      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages/unread-count'] });
+    };
+
+    const handleMessageRead = (data: any) => {
+      console.log('📖 Message marked as read in Navbar, refreshing unread count');
+      queryClient.invalidateQueries({ queryKey: ['/api/messages/unread-count'] });
     };
 
     socket.on('new_message', handleNewMessage);
+    socket.on('message_read', handleMessageRead);
 
     return () => {
       socket.off('new_message', handleNewMessage);
+      socket.off('message_read', handleMessageRead);
     };
   }, [socket, queryClient]);
 
-  const unreadCount = Array.isArray(messages) 
-    ? messages.filter(m => m.receiverId === user?.id && !m.isRead).length 
-    : 0;
+  const unreadCount = unreadData?.unreadCount || 0;
 
   // Fetch user credits
   const { data: credits, isLoading: creditsLoading, error: creditsError, refetch: refetchCredits } = useQuery<UserCredits>({

@@ -61,6 +61,35 @@ export function MessageModal({
     refetchInterval: 5000, // Poll every 5 seconds for new messages
   });
 
+  // Mark messages as read mutation
+  const markAsReadMutation = useMutation({
+    mutationFn: async (messageId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`/api/messages/${messageId}/read`, {
+        method: "POST",
+        headers,
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to mark message as read");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate queries to refresh unread counts
+      queryClient.invalidateQueries({ queryKey: [`/api/messages/listing/${listingId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/messages/unread-count"] });
+    },
+  });
+
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -153,6 +182,21 @@ export function MessageModal({
     }
     prevMessageCountRef.current = messages.length;
   }, [messages, user]);
+
+  // Mark unread messages as read when modal opens or messages change
+  useEffect(() => {
+    if (!isOpen || !user || !messages.length) return;
+
+    // Find all unread messages where current user is the receiver
+    const unreadMessages = messages.filter(
+      (msg) => msg.receiverId === user.id && !msg.isRead
+    );
+
+    // Mark each unread message as read
+    unreadMessages.forEach((msg) => {
+      markAsReadMutation.mutate(msg.id);
+    });
+  }, [isOpen, messages, user]);
 
   const formatMessageTime = (date: Date | string | null) => {
     if (!date) return "";
