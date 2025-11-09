@@ -376,18 +376,26 @@ export default function ListingDetail() {
             />
 
             {/* Feature Listing Button - Prominent placement under images */}
-            {currentUser && data?.listing.userId === currentUser.id && data?.listing.status === 'active' && (
-              <Button 
-                variant="default" 
-                size="lg"
-                className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold shadow-lg" 
-                onClick={() => setIsFeatureModalOpen(true)}
-                data-testid="button-feature-listing"
-              >
-                <Sparkles className="h-5 w-5 mr-2" />
-                ✨ Feature This Listing on Homepage - Starting at $5
-              </Button>
-            )}
+            {currentUser && data?.listing.userId === currentUser.id && data?.listing.status === 'active' && (() => {
+              const isFeatured = data?.listing.featuredUntil && new Date(data.listing.featuredUntil) > new Date();
+              return (
+                <Button 
+                  variant="default" 
+                  size="lg"
+                  className={`w-full font-semibold shadow-lg ${
+                    isFeatured 
+                      ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed text-gray-700' 
+                      : 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white'
+                  }`}
+                  onClick={() => !isFeatured && setIsFeatureModalOpen(true)}
+                  disabled={isFeatured}
+                  data-testid="button-feature-listing"
+                >
+                  <Sparkles className="h-5 w-5 mr-2" />
+                  {isFeatured ? '✨ Featured' : '✨ Feature This Listing on Homepage - Starting at $5'}
+                </Button>
+              );
+            })()}
 
             {/* Listing Details Card */}
             <Card className="p-6">
