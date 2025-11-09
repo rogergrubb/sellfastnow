@@ -17,25 +17,13 @@ interface ListingPricingModalProps {
   isProcessing?: boolean;
 }
 
-// Progressive pricing tiers
+// Flat 1% pricing for all items
 const calculateItemFee = (price: number): number => {
-  if (price <= 50) {
-    return price * 0.05; // 5¢ per dollar
-  } else if (price <= 100) {
-    return price * 0.04; // 4¢ per dollar
-  } else {
-    return price * 0.03; // 3¢ per dollar
-  }
+  return price * 0.01; // 1¢ per dollar (1%)
 };
 
 const getTierInfo = (price: number): { rate: string; percentage: string } => {
-  if (price <= 50) {
-    return { rate: "5¢ per dollar", percentage: "5%" };
-  } else if (price <= 100) {
-    return { rate: "4¢ per dollar", percentage: "4%" };
-  } else {
-    return { rate: "3¢ per dollar", percentage: "3%" };
-  }
+  return { rate: "1¢ per dollar", percentage: "1%" };
 };
 
 export function ListingPricingModal({
@@ -77,29 +65,22 @@ export function ListingPricingModal({
             Listing Fee Breakdown
           </DialogTitle>
           <DialogDescription>
-            Review your listing fees before publishing. Our progressive pricing ensures fair rates based on item value.
+            Review your listing fees before publishing. Our simple 1% flat rate ensures fair pricing for all items.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Progressive Pricing Explanation */}
+          {/* Flat 1% Pricing Explanation */}
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-green-600" />
-              Our Fair, Progressive Pricing
+              Our Simple, Fair Pricing
             </h3>
-            <div className="grid grid-cols-3 gap-3 text-sm">
-              <div>
-                <div className="font-semibold text-green-700 dark:text-green-400">$0 - $50</div>
-                <div className="text-gray-600 dark:text-gray-400">5¢ per dollar (5%)</div>
-              </div>
-              <div>
-                <div className="font-semibold text-green-700 dark:text-green-400">$51 - $100</div>
-                <div className="text-gray-600 dark:text-gray-400">4¢ per dollar (4%)</div>
-              </div>
-              <div>
-                <div className="font-semibold text-green-700 dark:text-green-400">$101+</div>
-                <div className="text-gray-600 dark:text-gray-400">3¢ per dollar (3%)</div>
+            <div className="text-center">
+              <div className="font-semibold text-green-700 dark:text-green-400 text-xl mb-1">All Items</div>
+              <div className="text-gray-600 dark:text-gray-400 text-lg">1¢ per dollar (1%)</div>
+              <div className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                Simple flat rate - no tiers, no confusion
               </div>
             </div>
           </div>

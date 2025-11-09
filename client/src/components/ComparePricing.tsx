@@ -39,40 +39,26 @@ export default function ComparePricing() {
             </div>
             <div>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Our Fair, Progressive Pricing
+                Our Simple, Fair Pricing
               </h3>
               <p className="text-gray-700 dark:text-gray-300">
-                Pay based on item value - lower prices for everyday items, fair rates for premium goods. 
+                Just 1% for all items - no tiers, no confusion. Simple and fair for everyone. 
                 Includes AI-generated titles, descriptions, valuations, and SEO meta tags.
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-2 border-green-200 dark:border-green-700">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Low-Value Items</div>
-              <div className="text-lg font-bold text-gray-900 dark:text-white mb-1">$0 - $50</div>
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">5¢ per dollar</div>
-              <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                Example: $20 book = $1 fee (5%)
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-2 border-green-200 dark:border-green-700">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Medium-Value Items</div>
-              <div className="text-lg font-bold text-gray-900 dark:text-white mb-1">$51 - $100</div>
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">4¢ per dollar</div>
-              <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                Example: $100 chair = $4 fee (4%)
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-2 border-green-200 dark:border-green-700">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">High-Value Items</div>
-              <div className="text-lg font-bold text-gray-900 dark:text-white mb-1">$101+</div>
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">3¢ per dollar</div>
-              <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                Example: $1,000 antique = $30 fee (3%)
+          <div className="flex justify-center">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border-2 border-green-200 dark:border-green-700 max-w-md w-full">
+              <div className="text-center">
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">All Items</div>
+                <div className="text-4xl font-bold text-green-600 dark:text-green-400 mb-3">1¢ per dollar</div>
+                <div className="text-lg text-gray-700 dark:text-gray-300 mb-4">(1% flat rate)</div>
+                <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div>Example: $20 book = $0.20 fee</div>
+                  <div>Example: $100 chair = $1.00 fee</div>
+                  <div>Example: $1,000 antique = $10.00 fee</div>
+                </div>
               </div>
             </div>
           </div>
@@ -178,11 +164,9 @@ export default function ComparePricing() {
                 <td className="p-4 border border-gray-300 dark:border-gray-700">
                   <div className="space-y-2">
                     <div className="font-bold text-green-600 dark:text-green-400 text-lg">First 5 FREE/month (under $50)</div>
-                    <div className="font-semibold text-gray-900 dark:text-white">Progressive pricing:</div>
+                    <div className="font-semibold text-gray-900 dark:text-white">Simple flat rate:</div>
                     <div className="space-y-1 text-sm">
-                      <div className="text-gray-700 dark:text-gray-300">• $0-$50: 5¢ per dollar</div>
-                      <div className="text-gray-700 dark:text-gray-300">• $51-$100: 4¢ per dollar</div>
-                      <div className="text-gray-700 dark:text-gray-300">• $101+: 3¢ per dollar</div>
+                      <div className="text-gray-700 dark:text-gray-300">• All items: 1¢ per dollar (1%)</div>
                     </div>
                   </div>
                 </td>
