@@ -182,4 +182,128 @@ router.get("/:id/status", async (req, res) => {
   }
 });
 
+/**
+ * POST /api/featured-listings/:id/activate
+ * Manually activate featured status after successful payment
+ * Called by frontend after Stripe redirect
+ */
+router.post("/:id/activate", isAuthenticated, async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentIntentId, duration } = req.body as { paymentIntentId: string; duration: string };
+    const userId = req.auth?.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // Get the listing
+    const [listing] = await db
+      .select()
+      .from(listings)
+      .where(eq(listings.id, id))
+      .limit(1);
+
+    if (!listing) {
+      return res.status(404).json({ message: "Listing not found" });
+    }
+
+    // Verify ownership
+    if (listing.userId !== userId) {
+      return res.status(403).json({ message: "You can only feature your own listings" });
+    }
+
+    // Verify the payment intent with Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    
+    if (paymentIntent.status !== "succeeded") {
+      return res.status(400).json({ message: "Payment not completed" });
+    }
+
+    // Verify the payment intent matches this listing
+    if (paymentIntent.metadata.listing_id !== id) {
+      return res.status(400).json({ message: "Payment does not match listing" });
+    }
+
+    // Calculate featured_until timestamp
+    const now = new Date();
+    const durationHours: Record<string, number> = {
+      "24h": 24,
+      "48h": 48,
+      "7d": 168,
+    };
+
+    const hours = durationHours[duration];
+    const featuredUntil = new Date(now.getTime() + hours * 60 * 60 * 1000);
+
+    // Update the listing
+    await db
+      .update(listings)
+      .set({
+        featuredUntil,
+        featuredPaymentId: paymentIntentId,
+        featuredCreatedAt: now,
+        featuredDuration: duration,
+      })
+      .where(eq(listings.id, id));
+
+    console.log(`✅ Listing ${id} featured until ${featuredUntil}`);
+
+    res.json({ success: true, featuredUntil });
+  } catch (error) {
+    console.error("❌ Error activating featured status:", error);
+    res.status(500).json({ message: "Failed to activate featured status" });
+  }
+});
+
+/**
+ * POST /api/featured-listings/webhook
+ * Stripe webhook to handle successful feature payments
+ */
+router.post("/webhook", async (req, res) => {
+  try {
+    const event = req.body;
+
+    // Handle payment_intent.succeeded event
+    if (event.type === "payment_intent.succeeded") {
+      const paymentIntent = event.data.object;
+      const { listing_id, duration } = paymentIntent.metadata;
+
+      if (!listing_id || !duration) {
+        console.error("Missing metadata in payment intent:", paymentIntent.id);
+        return res.status(400).json({ message: "Missing required metadata" });
+      }
+
+      // Calculate featured_until timestamp based on duration
+      const now = new Date();
+      const durationHours: Record<string, number> = {
+        "24h": 24,
+        "48h": 48,
+        "7d": 168, // 7 days = 168 hours
+      };
+
+      const hours = durationHours[duration];
+      const featuredUntil = new Date(now.getTime() + hours * 60 * 60 * 1000);
+
+      // Update the listing
+      await db
+        .update(listings)
+        .set({
+          featuredUntil,
+          featuredPaymentId: paymentIntent.id,
+          featuredCreatedAt: now,
+          featuredDuration: duration,
+        })
+        .where(eq(listings.id, listing_id));
+
+      console.log(`✅ Listing ${listing_id} featured until ${featuredUntil}`);
+    }
+
+    res.json({ received: true });
+  } catch (error) {
+    console.error("❌ Webhook error:", error);
+    res.status(500).json({ message: "Webhook handler failed" });
+  }
+});
+
 export default router;

@@ -57,11 +57,10 @@ function PaymentForm({
     setProcessing(true);
 
     try {
-      const { error } = await stripe.confirmPayment({
+      // Confirm payment without redirect
+      const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
-        confirmParams: {
-          return_url: `${window.location.origin}/listings/${listingId}?featured=success`,
-        },
+        redirect: "if_required",
       });
 
       if (error) {
@@ -70,8 +69,25 @@ function PaymentForm({
           description: error.message,
           variant: "destructive",
         });
-      } else {
-        onSuccess();
+      } else if (paymentIntent && paymentIntent.status === "succeeded") {
+        // Payment succeeded! Now activate the featured status
+        try {
+          await apiRequest(
+            "POST",
+            `/api/featured-listings/${listingId}/activate`,
+            {
+              paymentIntentId: paymentIntent.id,
+              duration,
+            }
+          );
+          onSuccess();
+        } catch (activateError: any) {
+          toast({
+            title: "Activation Error",
+            description: "Payment succeeded but failed to activate featured status. Please contact support.",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error: any) {
       toast({
