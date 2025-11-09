@@ -585,6 +585,18 @@ export default function PostAdEnhanced() {
       
       if (!response.ok) {
         const error = await response.json();
+        
+        // Handle payment required for price threshold crossing
+        if (response.status === 402 && error.requiresPayment) {
+          throw {
+            status: 402,
+            requiresPayment: true,
+            listingFee: error.listingFee,
+            reason: error.reason,
+            message: error.message
+          };
+        }
+        
         throw new Error(error.message || `Failed to ${isEditMode ? 'update' : 'create'} listing`);
       }
       
@@ -613,6 +625,19 @@ export default function PostAdEnhanced() {
       }
     },
     onError: (error: any) => {
+      // Handle payment required for price threshold crossing
+      if (error.status === 402 && error.requiresPayment) {
+        toast({
+          title: "Payment Required",
+          description: error.reason || "This price change requires a listing fee.",
+          variant: "destructive",
+        });
+        // TODO: Show pricing modal for payment
+        // For now, just show the error. The pricing modal integration
+        // would require state management to trigger it from here.
+        return;
+      }
+      
       toast({
         title: "Error",
         description: error.message || `Failed to ${isEditMode ? 'update' : 'post'} listing. Please try again.`,

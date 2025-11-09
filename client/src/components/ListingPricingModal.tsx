@@ -17,12 +17,18 @@ interface ListingPricingModalProps {
   isProcessing?: boolean;
 }
 
-// Flat 1% pricing for all items
+// Free up to $100, then 1% for anything above $100
 const calculateItemFee = (price: number): number => {
-  return price * 0.01; // 1¢ per dollar (1%)
+  if (price <= 100) {
+    return 0; // Free for items $100 or less
+  }
+  return price * 0.01; // 1% for items over $100
 };
 
 const getTierInfo = (price: number): { rate: string; percentage: string } => {
+  if (price <= 100) {
+    return { rate: "FREE", percentage: "0%" };
+  }
   return { rate: "1¢ per dollar", percentage: "1%" };
 };
 
@@ -65,7 +71,7 @@ export function ListingPricingModal({
             Listing Fee Breakdown
           </DialogTitle>
           <DialogDescription>
-            Review your listing fees before publishing. Our simple 1% flat rate ensures fair pricing for all items.
+            Review your listing fees before publishing. List items up to $100 for FREE, then just 1% for higher-priced items.
           </DialogDescription>
         </DialogHeader>
 
@@ -76,11 +82,20 @@ export function ListingPricingModal({
               <Sparkles className="h-4 w-4 text-green-600" />
               Our Simple, Fair Pricing
             </h3>
-            <div className="text-center">
-              <div className="font-semibold text-green-700 dark:text-green-400 text-xl mb-1">All Items</div>
-              <div className="text-gray-600 dark:text-gray-400 text-lg">1¢ per dollar (1%)</div>
-              <div className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-                Simple flat rate - no tiers, no confusion
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="font-semibold text-green-700 dark:text-green-400 text-xl mb-1">$0 - $100</div>
+                <div className="text-gray-600 dark:text-gray-400 text-lg font-bold">FREE</div>
+                <div className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                  No listing fee
+                </div>
+              </div>
+              <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="font-semibold text-blue-700 dark:text-blue-400 text-xl mb-1">$100+</div>
+                <div className="text-gray-600 dark:text-gray-400 text-lg">1¢ per dollar (1%)</div>
+                <div className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                  Simple flat rate
+                </div>
               </div>
             </div>
           </div>

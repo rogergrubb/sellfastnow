@@ -312,6 +312,27 @@ const router = Router();
         return res.status(403).json({ message: "You don't have permission to update this listing" });
       }
 
+      // Check if price is being updated from ≤$100 to >$100
+      const oldPrice = listing.price;
+      const newPrice = updateData.price !== undefined ? updateData.price : oldPrice;
+      const priceThresholdCrossed = oldPrice <= 100 && newPrice > 100;
+      
+      if (priceThresholdCrossed) {
+        // Check if listing fee has been paid
+        const listingFee = newPrice * 0.01; // 1% fee
+        
+        // If the listing was originally free (≤$100) and hasn't been paid for,
+        // we need to require payment before allowing the price update
+        if (!listing.isPaid) {
+          return res.status(402).json({ 
+            message: "Payment required",
+            requiresPayment: true,
+            listingFee: listingFee,
+            reason: "Price update from $" + oldPrice + " to $" + newPrice + " requires a listing fee"
+          });
+        }
+      }
+
       // Update the listing
       const updatedListing = await storage.updateListing(id, updateData);
       console.log(`✏️ Listing ${id} updated by user ${userId}`);
