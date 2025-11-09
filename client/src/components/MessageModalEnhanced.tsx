@@ -116,6 +116,29 @@ export function MessageModalEnhanced({
     return cleanup;
   }, [user, listingId, receiverId, onUserTyping]);
 
+  // Mark existing unread messages as read when modal opens
+  useEffect(() => {
+    if (!isOpen || !user || !messages.length) return;
+
+    // Find all unread messages where current user is the receiver
+    const unreadMessages = messages.filter(
+      (msg) => msg.receiverId === user.id && !msg.isRead
+    );
+
+    // Mark each unread message as read
+    unreadMessages.forEach((msg) => {
+      markMessageAsRead(msg.id);
+    });
+
+    // Invalidate unread count after marking messages as read
+    if (unreadMessages.length > 0) {
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/messages/unread-count'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
+      }, 500);
+    }
+  }, [isOpen, messages, user]);
+
   // Listen for read receipts
   useEffect(() => {
     if (!user) return;
@@ -126,6 +149,8 @@ export function MessageModalEnhanced({
       queryClient.invalidateQueries({ 
         queryKey: [`/api/conversations/${listingId}/${receiverId}`] 
       });
+      // Also refresh unread count
+      queryClient.invalidateQueries({ queryKey: ['/api/messages/unread-count'] });
     });
 
     return cleanup;
