@@ -770,6 +770,18 @@ export default function Dashboard() {
                             </Button>
                           </Link>
                           
+                          {/* Delete Multiple Items Button */}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => setIsSelectMode(true)}
+                            data-testid="button-delete-multiple"
+                          >
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            Delete Multiple
+                          </Button>
+                          
                           {/* Publish All Button (only for drafts) */}
                           {listingFilter === "draft" && filteredListings.filter(l => l.status === 'draft').length > 0 && (
                             <Button
