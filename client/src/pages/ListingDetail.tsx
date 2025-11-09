@@ -98,6 +98,39 @@ export default function ListingDetail() {
     }
   }, [favoriteData]);
 
+  // Handle featured payment success
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentIntent = params.get('payment_intent');
+    const featured = params.get('featured');
+    
+    if (featured === 'success' && paymentIntent && id) {
+      // Call activate endpoint
+      apiRequest(`/api/featured-listings/${id}/activate`, {
+        method: 'POST',
+        body: JSON.stringify({ paymentIntentId: paymentIntent }),
+      })
+        .then(() => {
+          toast({
+            title: "Listing Featured!",
+            description: "Your listing is now featured on the homepage carousel.",
+          });
+          // Remove query params from URL
+          window.history.replaceState({}, '', `/listings/${id}`);
+          // Refresh listing data
+          queryClient.invalidateQueries({ queryKey: [`/api/listings/${id}`] });
+        })
+        .catch((error) => {
+          console.error('Failed to activate featured listing:', error);
+          toast({
+            title: "Activation Failed",
+            description: "Payment succeeded but failed to activate listing. Please contact support.",
+            variant: "destructive",
+          });
+        });
+    }
+  }, [id, toast]);
+
   // Toggle favorite mutation
   const toggleFavoriteMutation = useMutation({
     mutationFn: async () => {
