@@ -167,16 +167,26 @@ export function MessageModalEnhanced({
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
 
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
+      if (!token) {
+        console.error("No auth token available for marking message as read");
+        return;
       }
 
-      await fetch(`/api/messages/${messageId}/read`, {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      headers["Authorization"] = `Bearer ${token}`;
+
+      const response = await fetch(`/api/messages/${messageId}/read`, {
         method: "POST",
         headers,
         credentials: "include",
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Failed to mark message as read (${response.status}):`, errorText);
+      } else {
+        console.log(`✅ Message ${messageId} marked as read`);
+      }
     } catch (error) {
       console.error("Error marking message as read:", error);
     }
