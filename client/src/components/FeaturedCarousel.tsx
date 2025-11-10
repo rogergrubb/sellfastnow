@@ -189,12 +189,12 @@ export function FeaturedCarousel() {
                   </div>
 
                   {/* Image Container */}
-                  <div className="relative w-full h-48 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
+                  <div className="relative w-full h-64 bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                     {listing.primaryImage ? (
                       <img
                         src={listing.primaryImage}
                         alt={listing.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
