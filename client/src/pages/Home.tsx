@@ -8,13 +8,15 @@ import ListingCard from "@/components/ListingCard";
 import { FeaturedCarousel } from "@/components/FeaturedCarousel";
 import { 
   Search, Plus, TrendingUp, Zap, DollarSign, 
-  Package, Sparkles, CheckCircle, ArrowRight 
+  Package, Sparkles, CheckCircle, ArrowRight, Share2 
 } from "lucide-react";
+import { SocialMediaShareModal } from "@/components/SocialMediaShareModal";
 import type { Listing } from "@shared/schema";
 
 export default function HomeNew() {
   const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Fetch recent listings
   const { data: recentListings = [] } = useQuery<Listing[]>({
@@ -48,6 +50,9 @@ export default function HomeNew() {
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-4 px-2">
                 Sell Smart. Sell Safe. SellFast.Now
               </h1>
+              <p className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-700 dark:text-gray-300 mb-4 px-2">
+                Sell Even Faster Now With Quick Social Media Links!
+              </p>
               <p className="text-base sm:text-lg md:text-xl text-green-600 dark:text-green-400 font-semibold mb-6 md:mb-8">
                 Post for FREE* <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-normal">(Limitations apply)</span>
               </p>
@@ -75,6 +80,17 @@ export default function HomeNew() {
                     />
                   </div>
                 </form>
+
+                <Button 
+                  size="lg" 
+                  variant="default"
+                  className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 shadow-lg hover:shadow-xl bg-cyan-600 hover:bg-cyan-700 text-white"
+                  onClick={() => setShowShareModal(true)}
+                >
+                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                  <span className="hidden md:inline">Press Here to Generate Links to Share On All Social Media Platforms. One Item or 1,000 At a Time!</span>
+                  <span className="md:hidden">Share on Social Media</span>
+                </Button>
               </div>
             </div>
 
@@ -322,6 +338,12 @@ export default function HomeNew() {
           </div>
         </section>
       </div>
+
+      {/* Social Media Share Modal */}
+      <SocialMediaShareModal 
+        open={showShareModal} 
+        onClose={() => setShowShareModal(false)} 
+      />
     </>
   );
 }
