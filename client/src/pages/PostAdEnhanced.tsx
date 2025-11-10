@@ -2839,7 +2839,7 @@ export default function PostAdEnhanced() {
                     <Alert className="mb-4">
                       <Camera className="h-4 w-4" />
                       <AlertDescription className="text-sm">
-                        🎉 <strong>First photo is FREE!</strong> Upload 2-25 photos for just <strong>$0.99</strong> (one-time fee per listing).
+                        🎉 <strong>All photo uploads are FREE!</strong> Upload 2-25 photos for just <strong>$0.99</strong> (one-time fee per listing).
                       </AlertDescription>
                     </Alert>
                     
@@ -2939,7 +2939,7 @@ export default function PostAdEnhanced() {
                               <div className="flex items-center justify-between">
                                 <div>
                                   <strong>📸 Unlock {uploadedImages.length} photos for $0.99</strong>
-                                  <p className="text-xs mt-1">First photo is FREE. Unlock photos 2-{uploadedImages.length} to publish your listing.</p>
+                                  <p className="text-xs mt-1">All photo uploads are FREE. Unlock photos 2-{uploadedImages.length} to publish your listing.</p>
                                 </div>
                                 <Button
                                   onClick={() => setShowPhotoUnlockModal(true)}
