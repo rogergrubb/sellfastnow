@@ -34,6 +34,7 @@ export function SocialMediaShareModal({ open, onClose }: SocialMediaShareModalPr
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [shareMode, setShareMode] = useState<'single' | 'all'>('single');
 
   // Fetch user's listings
   const { data: userListings = [], isLoading } = useQuery<Listing[]>({
@@ -59,11 +60,27 @@ export function SocialMediaShareModal({ open, onClose }: SocialMediaShareModalPr
     }
   }, [userListings, selectedListing]);
 
-  const generateShareLinks = (listing: Listing) => {
+  const generateShareLinks = (listing: Listing | null, mode: 'single' | 'all') => {
     const baseUrl = window.location.origin;
+    
+    if (mode === 'all') {
+      // Generate a link to user's storefront/profile showing all listings
+      const profileUrl = `${baseUrl}/user/${user?.id}`;
+      const title = `Check out my ${userListings.length} listings on SellFast.Now!`;
+      
+      return {
+        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(profileUrl)}`,
+        twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(profileUrl)}&text=${encodeURIComponent(title)}`,
+        linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(profileUrl)}`,
+        whatsapp: `https://wa.me/?text=${encodeURIComponent(`${title} - ${profileUrl}`)}`,
+        direct: profileUrl,
+      };
+    }
+    
+    // Single listing mode
+    if (!listing) return null;
     const listingUrl = `${baseUrl}/listing/${listing.id}`;
     const title = listing.title;
-    const description = listing.description?.substring(0, 100) || '';
 
     return {
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(listingUrl)}`,
@@ -166,7 +183,7 @@ export function SocialMediaShareModal({ open, onClose }: SocialMediaShareModalPr
     );
   }
 
-  const shareLinks = selectedListing ? generateShareLinks(selectedListing) : null;
+  const shareLinks = generateShareLinks(shareMode === 'single' ? selectedListing : null, shareMode);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -182,7 +199,29 @@ export function SocialMediaShareModal({ open, onClose }: SocialMediaShareModalPr
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Listing Selector */}
+          {/* Share Mode Toggle */}
+          <div>
+            <label className="text-sm font-medium mb-3 block">What would you like to share?</label>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant={shareMode === 'single' ? 'default' : 'outline'}
+                className="w-full"
+                onClick={() => setShareMode('single')}
+              >
+                One Listing
+              </Button>
+              <Button
+                variant={shareMode === 'all' ? 'default' : 'outline'}
+                className="w-full"
+                onClick={() => setShareMode('all')}
+              >
+                All Listings ({userListings.length})
+              </Button>
+            </div>
+          </div>
+
+          {/* Listing Selector - Only show in single mode */}
+          {shareMode === 'single' && (
           <div>
             <label className="text-sm font-medium mb-2 block">Select a Listing to Share</label>
             <select
@@ -203,6 +242,7 @@ export function SocialMediaShareModal({ open, onClose }: SocialMediaShareModalPr
               You have {userListings.length} listing{userListings.length !== 1 ? 's' : ''} available to share
             </p>
           </div>
+          )}
 
           {/* Share Buttons */}
           {shareLinks && (
