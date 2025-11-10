@@ -59,15 +59,6 @@ export default function HomeNew() {
 
               {/* Quick Actions - Craigslist Style */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center mb-8 md:mb-12 max-w-4xl mx-auto px-4">
-                <Button 
-                  size="lg" 
-                  className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 shadow-lg hover:shadow-xl"
-                  onClick={() => navigate('/post-ad')}
-                >
-                  <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  Post an Item
-                </Button>
-                
                 <form onSubmit={handleSearch} className="w-full sm:flex-1 sm:max-w-md">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
