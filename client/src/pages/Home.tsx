@@ -116,6 +116,7 @@ export default function HomeNew() {
                         <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 font-normal">(Limitations apply)</div>
                       </div>
                       <div className="text-[10px] md:text-xs text-green-600 mb-2 md:mb-3 hidden sm:block">Buyer and seller verification and rating system to protect you</div>
+                      <div className="text-[10px] md:text-xs text-blue-600 mb-2 md:mb-3 hidden sm:block font-semibold">✨ AI-generated titles, descriptions & SEO meta tags</div>
                       <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-green-500 mx-auto" />
                     </div>
                   </div>
@@ -133,7 +134,7 @@ export default function HomeNew() {
                   {/* Facebook Marketplace */}
                   <div className="bg-white dark:bg-gray-900 rounded-lg md:rounded-xl p-3 sm:p-4 md:p-6 border border-gray-200">
                     <div className="text-center">
-                      <div className="text-sm sm:text-base md:text-lg font-semibold mb-1 md:mb-2">Facebook</div>
+                      <div className="text-sm sm:text-base md:text-lg font-semibold mb-1 md:mb-2">Facebook***</div>
                       <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-orange-600 mb-1 md:mb-2">5%</div>
                       <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-2 md:mb-4">+ payment fees</div>
                       <div className="text-[10px] md:text-xs text-orange-600">1.7x more</div>
@@ -143,7 +144,7 @@ export default function HomeNew() {
                   {/* Craigslist */}
                   <div className="bg-white dark:bg-gray-900 rounded-lg md:rounded-xl p-3 sm:p-4 md:p-6 border border-gray-200 col-span-2 md:col-span-1">
                     <div className="text-center">
-                      <div className="text-sm sm:text-base md:text-lg font-semibold mb-1 md:mb-2">Craigslist</div>
+                      <div className="text-sm sm:text-base md:text-lg font-semibold mb-1 md:mb-2">Craigslist***</div>
                       <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-600 mb-1 md:mb-2">Free*</div>
                       <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-2 md:mb-4">$5 for auto/RV</div>
                       <div className="text-[10px] md:text-xs text-gray-500">No bulk tools, spam, scams</div>
@@ -154,7 +155,7 @@ export default function HomeNew() {
                 {/* Disclaimer */}
                 <div className="mt-4 text-center">
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    *** Visit <a href="https://www.ebay.com/help/selling/fees-credits-invoices/selling-fees?id=4364" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">eBay.com</a> for complete fee details. Fees vary by category.
+                    *** Visit <a href="https://www.ebay.com/help/selling/fees-credits-invoices/selling-fees?id=4364" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">eBay.com</a>, <a href="https://www.facebook.com/business/help/2342427072668691" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">Facebook.com</a>, and <a href="https://www.craigslist.org/about/help/posting_fees" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">Craigslist.org</a> for complete fee details. Fees vary by category. eBay, Facebook, and Craigslist do not provide automatic title/description generation or SEO meta tags.
                   </p>
                 </div>
 
