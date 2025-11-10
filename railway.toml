@@ -1,6 +1,9 @@
 [build]
 builder = "nixpacks"
 
+[build.nixpacksPlan.variables]
+NO_CACHE = "1"
+
 [build.nixpacksPlan.phases.install]
 cmds = ["npm install"]
 
