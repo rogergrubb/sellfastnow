@@ -128,8 +128,9 @@ router.post("/create-checkout-session", isAuthenticated, async (req: any, res) =
         type: 'listing_fee',
         userId,
         listingPrice: listingPrice.toString(),
-        listingTitle: listingTitle || 'Untitled',
-        listingData: JSON.stringify(listingData), // Store listing data to create after payment
+        listingTitle: (listingTitle || 'Untitled').substring(0, 100), // Limit title length
+        // Note: listingData is NOT stored in metadata due to Stripe's 500-char limit
+        // Frontend should handle listing creation after payment verification
       },
     });
 
@@ -172,7 +173,9 @@ router.get("/verify-session/:sessionId", isAuthenticated, async (req: any, res) 
       paymentIntentId: session.payment_intent as string,
       amount: session.amount_total ? session.amount_total / 100 : 0,
       listingPrice: parseFloat(session.metadata?.listingPrice || "0"),
-      listingData: session.metadata?.listingData ? JSON.parse(session.metadata.listingData) : null,
+      listingTitle: session.metadata?.listingTitle || null,
+      // listingData is no longer stored in metadata (Stripe 500-char limit)
+      // Frontend should maintain listing data in state/localStorage
     });
   } catch (error: any) {
     console.error("Error verifying checkout session:", error);

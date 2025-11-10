@@ -38,13 +38,24 @@ export default function ListingPaymentSuccess() {
           throw new Error('Failed to verify payment');
         }
 
-        const { status: paymentStatus, paymentIntentId, listingData } = await verifyResponse.json();
+        const { status: paymentStatus, paymentIntentId } = await verifyResponse.json();
 
         if (paymentStatus !== 'paid') {
           setStatus('error');
           setMessage('Payment was not completed');
           return;
         }
+
+        // Retrieve listing data from localStorage (stored before Stripe redirect)
+        const listingDataJson = localStorage.getItem(`pending_listing_${sessionId}`);
+        if (!listingDataJson) {
+          throw new Error('Listing data not found. Please try creating your listing again.');
+        }
+        
+        const listingData = JSON.parse(listingDataJson);
+        
+        // Clean up localStorage
+        localStorage.removeItem(`pending_listing_${sessionId}`);
 
         // Create the listing with the payment intent ID
         const listingResponse = await fetch('/api/listings', {

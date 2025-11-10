@@ -2172,7 +2172,8 @@ export default function PostAdEnhanced() {
           body: JSON.stringify({
             listingPrice,
             listingTitle: pendingPublishData.title || 'Untitled Item',
-            listingData: pendingPublishData, // Store listing data in session metadata
+            // Note: listingData is NOT sent (would exceed Stripe's 500-char metadata limit)
+            // Instead, we store it in localStorage keyed by sessionId
           }),
         });
 
@@ -2181,9 +2182,12 @@ export default function PostAdEnhanced() {
           throw new Error(error.message || 'Failed to create checkout session');
         }
 
-        const { url } = await response.json();
+        const { url, sessionId } = await response.json();
         
         console.log('💳 Redirecting to Stripe Checkout for listing fee payment...');
+        
+        // Store listing data in localStorage (Stripe metadata has 500-char limit)
+        localStorage.setItem(`pending_listing_${sessionId}`, JSON.stringify(pendingPublishData));
         
         // Redirect to Stripe Checkout
         window.location.href = url;
