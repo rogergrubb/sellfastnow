@@ -75,12 +75,11 @@ export default function HomeNew() {
                 <Button 
                   size="lg" 
                   variant="default"
-                  className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 shadow-lg hover:shadow-xl bg-cyan-600 hover:bg-cyan-700 text-white"
-                  onClick={() => setShowShareModal(true)}
+                  className="w-full sm:w-auto text-sm sm:text-base px-4 sm:px-6 py-5 sm:py-6 shadow-md hover:shadow-lg"
+                  onClick={() => navigate('/post-ad')}
                 >
-                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  <span className="hidden md:inline">Press Here to Generate Links to Share On All Social Media Platforms. One Item or 1,000 At a Time!</span>
-                  <span className="md:hidden">Share on Social Media</span>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Post 1 or 100 new items HERE
                 </Button>
               </div>
             </div>
