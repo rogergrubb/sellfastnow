@@ -90,7 +90,9 @@ export default function PricingPage() {
         amount: parseFloat(price.totalPrice),
       });
       
-      return response;
+      // Parse JSON response
+      const data = await response.json();
+      return data;
     },
     onSuccess: (data) => {
       if (data.url) {
