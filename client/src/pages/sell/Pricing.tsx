@@ -85,7 +85,7 @@ export default function PricingPage() {
       const price = calculatePrice(credits);
       
       // Create Stripe checkout session
-      const response = await apiRequest('/api/credits/purchase', 'POST', {
+      const response = await apiRequest('POST', '/api/credits/purchase', {
         credits: credits,
         amount: parseFloat(price.totalPrice),
       });
