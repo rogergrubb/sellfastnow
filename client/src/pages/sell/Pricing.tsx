@@ -13,45 +13,45 @@ export default function PricingPage() {
   const [selectedCredits, setSelectedCredits] = useState(50);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Preset tiers
+  // Preset tiers (50% reduced prices)
   const presetTiers = [
     {
       credits: 10,
-      basePrice: 0.99,
+      basePrice: 0.49,
       discount: 0.10,
-      pricePerCredit: 0.89,
-      totalPrice: 8.91,
+      pricePerCredit: 0.44,
+      totalPrice: 4.41,
       badge: null,
     },
     {
       credits: 25,
-      basePrice: 0.99,
+      basePrice: 0.49,
       discount: 0.20,
-      pricePerCredit: 0.79,
-      totalPrice: 19.80,
+      pricePerCredit: 0.39,
+      totalPrice: 9.80,
       badge: null,
     },
     {
       credits: 50,
-      basePrice: 0.99,
+      basePrice: 0.49,
       discount: 0.30,
-      pricePerCredit: 0.69,
-      totalPrice: 34.65,
+      pricePerCredit: 0.34,
+      totalPrice: 17.15,
       badge: "⭐ Most Popular",
     },
     {
       credits: 100,
-      basePrice: 0.99,
+      basePrice: 0.49,
       discount: 0.40,
-      pricePerCredit: 0.59,
-      totalPrice: 59.40,
+      pricePerCredit: 0.29,
+      totalPrice: 29.40,
       badge: null,
     },
   ];
 
-  // Calculate price based on credits
+  // Calculate price based on credits (50% reduced base price)
   const calculatePrice = (credits: number) => {
-    const basePrice = 0.99;
+    const basePrice = 0.49;
     let discount = 0;
     
     if (credits >= 100) {
