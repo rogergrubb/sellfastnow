@@ -922,11 +922,11 @@ export default function Dashboard() {
                       {filteredListings.map((listing) => (
                         <Card
                           key={listing.id}
-                          className="hover-elevate overflow-hidden"
+                          className="hover-elevate"
                           data-testid={`card-my-listing-${listing.id}`}
                         >
                           <CardContent className="p-4">
-                            <div className="flex flex-col lg:flex-row gap-4 w-full">
+                            <div className="flex flex-col md:flex-row gap-4">
                               {/* Checkbox for selection mode */}
                               {isSelectMode && (
                                 <div className="flex items-start pt-2">
@@ -1007,7 +1007,7 @@ export default function Dashboard() {
                               </div>
 
                               {/* Action Buttons */}
-                              <div className="flex flex-row lg:flex-col gap-2 flex-wrap lg:flex-nowrap justify-start lg:justify-end flex-shrink-0">
+                              <div className="flex flex-row flex-wrap md:flex-col gap-2 justify-start md:justify-end md:flex-shrink-0 w-full md:w-auto">
                                 <Button
                                   variant="outline"
                                   size="sm"
