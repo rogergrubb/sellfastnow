@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { CheckCircle, Sparkles, Zap, TrendingUp, Star } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
-import { useUser } from '@/hooks/use-user';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
 export default function PricingPage() {
   const { toast } = useToast();
-  const { user } = useUser();
+  // Get current user
+  const { data: user } = useQuery<any>({
+    queryKey: ['/api/auth/user'],
+  });
   const [selectedCredits, setSelectedCredits] = useState(50);
   const [isProcessing, setIsProcessing] = useState(false);
 
