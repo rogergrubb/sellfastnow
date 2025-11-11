@@ -926,10 +926,10 @@ export default function Dashboard() {
                           data-testid={`card-my-listing-${listing.id}`}
                         >
                           <CardContent className="p-4">
-                            <div className="flex flex-col md:flex-row gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-4 items-start">
                               {/* Checkbox for selection mode */}
                               {isSelectMode && (
-                                <div className="flex items-start pt-2">
+                                <div className="flex items-start pt-2 md:col-start-1">
                                   <input
                                     type="checkbox"
                                     checked={selectedListings.includes(listing.id)}
@@ -947,8 +947,8 @@ export default function Dashboard() {
                               )}
 
                               {/* Thumbnail */}
-                              <Link href={`/listings/${listing.id}`}>
-                                <div className="w-full sm:w-32 h-32 bg-muted rounded-md overflow-hidden flex-shrink-0">
+                              <Link href={`/listings/${listing.id}`} className={isSelectMode ? "md:col-start-2" : "md:col-start-1"}>
+                                <div className="w-full md:w-32 h-32 bg-muted rounded-md overflow-hidden">
                                   {listing.images && listing.images.length > 0 ? (
                                     <img
                                       src={listing.images[0]}
@@ -964,7 +964,7 @@ export default function Dashboard() {
                               </Link>
 
                               {/* Details */}
-                              <div className="flex-1 min-w-0">
+                              <div className={`min-w-0 ${isSelectMode ? "md:col-start-3" : "md:col-start-2"}`}>
                                 <Link href={`/listings/${listing.id}`}>
                                   <h3
                                     className="font-semibold text-lg mb-1 truncate hover:text-primary"
@@ -1007,7 +1007,7 @@ export default function Dashboard() {
                               </div>
 
                               {/* Action Buttons */}
-                              <div className="flex flex-row flex-wrap md:flex-col gap-2 justify-start md:justify-end md:flex-shrink-0 w-full md:w-auto">
+                              <div className={`flex flex-row flex-wrap md:flex-col gap-2 justify-start md:justify-end w-full md:w-auto ${isSelectMode ? "md:col-start-4" : "md:col-start-3"}`}>
                                 <Button
                                   variant="outline"
                                   size="sm"
