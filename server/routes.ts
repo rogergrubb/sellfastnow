@@ -1761,27 +1761,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Purchase credits
+  // Purchase credits - Create Stripe checkout session
   app.post("/api/credits/purchase", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.auth.userId;
-      const { amount, cost, stripePaymentId } = req.body;
+      const { credits, amount } = req.body;
 
-      if (!amount || !cost) {
-        return res.status(400).json({ message: "Amount and cost are required" });
+      if (!credits || !amount || credits <= 0 || amount <= 0) {
+        return res.status(400).json({ message: "Credits and amount are required" });
       }
 
-      const updatedCredits = await storage.purchaseCredits(
-        userId,
-        amount,
-        cost,
-        stripePaymentId
-      );
+      // Get user for email prefill
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
 
-      res.json(updatedCredits);
+      const baseUrl = getBaseUrl();
+
+      // Create Stripe Checkout Session
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: `${credits} AI Credits`,
+                description: `Purchase ${credits} AI credits for automatic listing generation`,
+              },
+              unit_amount: Math.round(amount * 100), // Convert to cents
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: `${baseUrl}/credits?success=true&credits=${credits}`,
+        cancel_url: `${baseUrl}/sell/pricing?canceled=true`,
+        customer_email: user.email,
+        metadata: {
+          userId: userId,
+          credits: credits.toString(),
+          type: 'ai_credits',
+        },
+      });
+
+      console.log(`✅ Created Stripe checkout session for ${credits} credits ($${amount}) for user ${userId}`);
+
+      res.json({ url: session.url, sessionId: session.id });
     } catch (error: any) {
-      console.error("Error purchasing credits:", error);
-      res.status(500).json({ message: error.message || "Failed to purchase credits" });
+      console.error("Error creating checkout session:", error);
+      res.status(500).json({ message: error.message || "Failed to create checkout session" });
     }
   });
 
