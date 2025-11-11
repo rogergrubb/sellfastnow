@@ -926,7 +926,7 @@ export default function Dashboard() {
                           data-testid={`card-my-listing-${listing.id}`}
                         >
                           <CardContent className="p-4">
-                            <div className="flex flex-col sm:flex-row gap-4">
+                            <div className="flex flex-col lg:flex-row gap-4 w-full">
                               {/* Checkbox for selection mode */}
                               {isSelectMode && (
                                 <div className="flex items-start pt-2">
@@ -1007,7 +1007,7 @@ export default function Dashboard() {
                               </div>
 
                               {/* Action Buttons */}
-                              <div className="flex sm:flex-col gap-2 justify-end">
+                              <div className="flex flex-row lg:flex-col gap-2 flex-wrap lg:flex-nowrap justify-start lg:justify-end flex-shrink-0">
                                 <Button
                                   variant="outline"
                                   size="sm"
