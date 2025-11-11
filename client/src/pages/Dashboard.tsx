@@ -922,7 +922,7 @@ export default function Dashboard() {
                       {filteredListings.map((listing) => (
                         <Card
                           key={listing.id}
-                          className="hover-elevate"
+                          className="hover-elevate overflow-hidden"
                           data-testid={`card-my-listing-${listing.id}`}
                         >
                           <CardContent className="p-4">
