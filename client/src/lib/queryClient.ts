@@ -13,17 +13,31 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Get Supabase auth token
-  const { data: { session } } = await supabase.auth.getSession();
+  // Get Supabase auth token, refresh if needed
+  let { data: { session } } = await supabase.auth.getSession();
+  
+  // If no session or session is expired, try to refresh
+  if (!session || !session.access_token) {
+    console.log('No valid session found, attempting to refresh...');
+    const { data: { session: refreshedSession }, error } = await supabase.auth.refreshSession();
+    if (error) {
+      console.error('Failed to refresh session:', error);
+      throw new Error('Authentication required. Please sign in again.');
+    }
+    session = refreshedSession;
+  }
+  
   const token = session?.access_token;
+  
+  if (!token) {
+    throw new Error('No authentication token available. Please sign in.');
+  }
 
   const headers: Record<string, string> = {};
   if (data) {
     headers["Content-Type"] = "application/json";
   }
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
+  headers["Authorization"] = `Bearer ${token}`;
 
   const res = await fetch(url, {
     method,
