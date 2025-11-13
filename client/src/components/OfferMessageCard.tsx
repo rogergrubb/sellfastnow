@@ -58,9 +58,8 @@ export function OfferMessageCard({
       try {
         const response = await apiRequest("GET", `/api/offers/${metadata.offerId}`);
         const offer = await response.json();
-          setCurrentStatus(offer.status);
-          setOfferData(offer);
-        }
+        setCurrentStatus(offer.status);
+        setOfferData(offer);
       } catch (error) {
         console.error('Failed to fetch offer status:', error);
       }
