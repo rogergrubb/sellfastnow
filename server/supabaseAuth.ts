@@ -146,8 +146,8 @@ export const isAuthenticated: RequestHandler = async (req: any, res, next) => {
     console.log('✅ Authentication successful for user:', user.id);
     
     // Attach user info to request
-    req.auth = {
-      userId: user.id,
+    req.user = {
+      id: user.id,
       email: user.email,
     };
     
