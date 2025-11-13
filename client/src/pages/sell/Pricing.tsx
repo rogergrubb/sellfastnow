@@ -1,17 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckCircle, Sparkles, Zap, TrendingUp, Star } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
 export default function PricingPage() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   // Get current user
   const { data: user } = useQuery<any>({
     queryKey: ['/api/auth/user'],
   });
   const [selectedCredits, setSelectedCredits] = useState(50);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Handle return from Stripe checkout
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+    const success = params.get('success');
+    
+    if (success === 'true' || sessionId) {
+      // Invalidate credits cache to force refresh
+      queryClient.invalidateQueries({ queryKey: ['/api/user/credits'] });
+      
+      // Dispatch event to trigger navbar refresh
+      window.dispatchEvent(new Event('paymentSuccess'));
+      
+      toast({
+        title: "Purchase Successful!",
+        description: "Your credits have been added to your account.",
+      });
+      
+      // Clean up URL
+      window.history.replaceState({}, '', '/sell/pricing');
+    }
+  }, [queryClient, toast]);
 
   // Preset tiers (50% reduced prices)
   const presetTiers = [

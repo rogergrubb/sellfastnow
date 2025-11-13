@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Sparkles, TrendingUp, History, ShoppingCart, Loader2 } from "lucide-rea
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import type { UserCredits } from "@shared/schema";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const CREDIT_BUNDLES = [
   { credits: 25, price: 2.99, pricePerCredit: 0.12, popular: true, badge: "POPULAR" },
@@ -19,10 +19,11 @@ const CREDIT_BUNDLES = [
 export default function Credits() {
   const { getToken } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Fetch user credits
-  const { data: credits, isLoading } = useQuery<UserCredits>({
+  const { data: credits, isLoading, refetch } = useQuery<UserCredits>({
     queryKey: ['/api/user/credits'],
     queryFn: async () => {
       const token = await getToken();
@@ -35,6 +36,34 @@ export default function Credits() {
       return res.json();
     },
   });
+
+  // Handle payment success event
+  useEffect(() => {
+    const handlePaymentSuccess = () => {
+      console.log('💳 Payment success event received, refreshing credits...');
+      queryClient.invalidateQueries({ queryKey: ['/api/user/credits'] });
+      refetch();
+    };
+    
+    window.addEventListener('paymentSuccess', handlePaymentSuccess);
+    return () => window.removeEventListener('paymentSuccess', handlePaymentSuccess);
+  }, [queryClient, refetch]);
+
+  // Handle return from Stripe checkout
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+    const success = params.get('success');
+    
+    if (success === 'true' || sessionId) {
+      console.log('✅ Detected return from Stripe, refreshing credits...');
+      queryClient.invalidateQueries({ queryKey: ['/api/user/credits'] });
+      refetch();
+      
+      // Clean up URL
+      window.history.replaceState({}, '', '/credits');
+    }
+  }, [queryClient, refetch]);
 
   const handleBuyCredits = async (creditAmount: number) => {
     setIsProcessing(true);
