@@ -75,6 +75,10 @@ export default function Navbar() {
     retry: 3,
     retryDelay: 1000,
     refetchInterval: 5000,
+    staleTime: 0, // Always consider data stale
+    gcTime: 0, // Don't cache (formerly cacheTime)
+    refetchOnMount: 'always', // Always refetch on component mount
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   useEffect(() => {
