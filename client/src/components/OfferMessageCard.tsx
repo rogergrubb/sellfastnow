@@ -56,9 +56,8 @@ export function OfferMessageCard({
   useEffect(() => {
     const fetchOfferStatus = async () => {
       try {
-        const response = await fetch(`/api/offers/${metadata.offerId}`);
-        if (response.ok) {
-          const offer = await response.json();
+        const response = await apiRequest("GET", `/api/offers/${metadata.offerId}`);
+        const offer = await response.json();
           setCurrentStatus(offer.status);
           setOfferData(offer);
         }
@@ -420,8 +419,7 @@ export function OfferMessageCard({
 
     // Otherwise, fetch the offer data
     try {
-      const response = await fetch(`/api/offers/${metadata.offerId}`);
-      if (!response.ok) throw new Error("Failed to fetch offer");
+      const response = await apiRequest("GET", `/api/offers/${metadata.offerId}`);
       const offer = await response.json();
       setOfferData(offer);
       setShowReviewModal(true);
