@@ -16,18 +16,35 @@ export async function apiRequest(
   // Get Supabase auth token, refresh if needed
   let { data: { session } } = await supabase.auth.getSession();
   
-  // If no session or session is expired, try to refresh
-  if (!session || !session.access_token) {
-    console.log('No valid session found, attempting to refresh...');
+  // Check if session is missing, has no token, or is expired/expiring soon
+  const now = Math.floor(Date.now() / 1000);
+  const isExpired = session?.expires_at ? session.expires_at <= now : true;
+  const isExpiringSoon = session?.expires_at ? session.expires_at - now < 60 : true; // Refresh if less than 60 seconds left
+  
+  if (!session || !session.access_token || isExpired || isExpiringSoon) {
+    console.log('Session invalid or expiring, refreshing...', {
+      hasSession: !!session,
+      hasToken: !!session?.access_token,
+      isExpired,
+      isExpiringSoon,
+      expiresAt: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'N/A'
+    });
+    
     const { data: { session: refreshedSession }, error } = await supabase.auth.refreshSession();
     if (error) {
       console.error('Failed to refresh session:', error);
       throw new Error('Authentication required. Please sign in again.');
     }
+    
+    if (!refreshedSession?.access_token) {
+      throw new Error('Failed to obtain valid session after refresh.');
+    }
+    
     session = refreshedSession;
+    console.log('✅ Session refreshed successfully, new expiry:', new Date((session.expires_at || 0) * 1000).toISOString());
   }
   
-  const token = session?.access_token;
+  const token = session.access_token;
   
   if (!token) {
     throw new Error('No authentication token available. Please sign in.');
