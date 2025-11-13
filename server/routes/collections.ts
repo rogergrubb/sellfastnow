@@ -12,7 +12,7 @@ const router = Router();
 router.get("/:userId", isAuthenticated, async (req: any, res) => {
   try {
     const { userId } = req.params;
-    const requestingUserId = req.auth.userId;
+    const requestingUserId = req.user.id;
 
     // Only allow users to fetch their own collections
     if (userId !== requestingUserId) {
@@ -59,7 +59,7 @@ router.get("/:userId", isAuthenticated, async (req: any, res) => {
  */
 router.post("/", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { collectionName, subsetName, draftId, metadata, segmentPrediction, aiSuggestionSource } = req.body;
 
     if (!collectionName || !draftId) {
@@ -92,7 +92,7 @@ router.post("/", isAuthenticated, async (req: any, res) => {
 router.patch("/:id", isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { collectionName, subsetName, metadata } = req.body;
 
     // Verify ownership
@@ -125,7 +125,7 @@ router.patch("/:id", isAuthenticated, async (req: any, res) => {
 router.delete("/:id", isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     // Verify ownership
     const existing = await storage.getCollectionById(id);
@@ -152,7 +152,7 @@ router.delete("/:id", isAuthenticated, async (req: any, res) => {
  */
 router.post("/drafts/save", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { draftId, collectionName, subsetName, metadata } = req.body;
 
     if (!draftId || !collectionName) {
@@ -189,7 +189,7 @@ export default router;
  */
 router.post("/ai/suggestCollections", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { objectTypes, geolocation, timestamp, userBehaviorPatterns } = req.body;
 
     const { generateCollectionSuggestions } = await import("../services/collectionSuggestionService");
@@ -229,7 +229,7 @@ router.post("/ai/suggestCollections", isAuthenticated, async (req: any, res) => 
  */
 router.post("/monetization/trigger", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { eventType, segment, offerType, collectionId, metadata } = req.body;
 
     if (!eventType || !segment || !offerType) {

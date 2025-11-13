@@ -17,13 +17,13 @@ export default function partnerRoutes(app: Express) {
   app.post("/api/partners/onboard", isAuthenticated, async (req: any, res) => {
     try {
       console.log('🔍 Partner onboard request received');
-      console.log('🔍 req.auth:', req.auth);
+      console.log('🔍 req.user:', req.user);
       console.log('🔍 req.headers.authorization:', req.headers.authorization);
       
-      const userId = req.auth?.userId;
+      const userId = req.user?.userId;
       
       if (!userId) {
-        console.error('❌ No userId found in req.auth');
+        console.error('❌ No userId found in req.user');
         return res.status(401).json({ message: "Unauthorized - No user ID found" });
       }
       
@@ -116,7 +116,7 @@ export default function partnerRoutes(app: Express) {
    */
   app.get("/api/partners/profile", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth?.userId;
+      const userId = req.user?.userId;
       
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -145,7 +145,7 @@ export default function partnerRoutes(app: Express) {
    */
   app.put("/api/partners/profile", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth?.userId;
+      const userId = req.user?.userId;
       
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -298,7 +298,7 @@ export default function partnerRoutes(app: Express) {
    */
   app.get("/api/partners/listings", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth?.userId;
+      const userId = req.user?.userId;
       
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -335,7 +335,7 @@ export default function partnerRoutes(app: Express) {
    */
   app.get("/api/partners/clients", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth?.userId;
+      const userId = req.user?.userId;
       
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -372,7 +372,7 @@ export default function partnerRoutes(app: Express) {
    */
   app.post("/api/partners/clients", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth?.userId;
+      const userId = req.user?.userId;
       
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -441,7 +441,7 @@ export default function partnerRoutes(app: Express) {
    */
   app.get("/api/partners/stats", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth?.userId;
+      const userId = req.user?.userId;
       
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });

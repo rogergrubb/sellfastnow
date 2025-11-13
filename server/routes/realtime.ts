@@ -22,7 +22,7 @@ const router = Router();
  */
 router.post("/heartbeat", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     updateUserOnlineStatus(userId);
     res.json({ success: true });
   } catch (error) {
@@ -76,7 +76,7 @@ router.post("/status/batch", isAuthenticated, async (req, res) => {
 router.post("/typing/:conversationId", isAuthenticated, async (req: any, res) => {
   try {
     const { conversationId } = req.params;
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     
     setUserTyping(conversationId, userId);
     res.json({ success: true });
@@ -93,7 +93,7 @@ router.post("/typing/:conversationId", isAuthenticated, async (req: any, res) =>
 router.delete("/typing/:conversationId", isAuthenticated, async (req: any, res) => {
   try {
     const { conversationId } = req.params;
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     
     removeUserTyping(conversationId, userId);
     res.json({ success: true });
@@ -124,7 +124,7 @@ router.get("/typing/:conversationId", isAuthenticated, async (req, res) => {
  */
 router.post("/logout", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     removeUserOnlineStatus(userId);
     res.json({ success: true });
   } catch (error) {

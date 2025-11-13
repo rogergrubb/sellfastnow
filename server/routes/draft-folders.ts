@@ -9,7 +9,7 @@ const router = Router();
 // Get all draft folders for the current user
 router.get("/", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     // Get folders with listing counts
     const foldersWithCounts = await db
@@ -42,7 +42,7 @@ router.get("/", isAuthenticated, async (req: any, res) => {
 // Create a new draft folder
 router.post("/", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { name } = req.body;
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
@@ -72,7 +72,7 @@ router.post("/", isAuthenticated, async (req: any, res) => {
 // Update a draft folder
 router.patch("/:id", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const folderId = req.params.id;
     const { name } = req.body;
 
@@ -115,7 +115,7 @@ router.patch("/:id", isAuthenticated, async (req: any, res) => {
 // Delete a draft folder
 router.delete("/:id", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const folderId = req.params.id;
 
     // Check if folder exists and belongs to user

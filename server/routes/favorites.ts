@@ -12,7 +12,7 @@ const router = Router();
  */
 router.get("/:listingId", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { listingId } = req.params;
 
     const favorite = await db.select()
@@ -38,7 +38,7 @@ router.get("/:listingId", isAuthenticated, async (req: any, res) => {
  */
 router.post("/toggle", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { listingId } = req.body;
 
     if (!listingId) {
@@ -113,7 +113,7 @@ router.post("/toggle", isAuthenticated, async (req: any, res) => {
  */
 router.get("/", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     const userFavorites = await db.select()
       .from(favorites)

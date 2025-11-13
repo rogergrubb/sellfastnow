@@ -140,7 +140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ======================
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -152,7 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user profile (including SMS preferences)
   app.patch('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const updates = req.body;
       
       // Validate phone number format if provided
@@ -178,7 +178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get free listings remaining for current user
   app.get('/api/auth/free-listings-remaining', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -231,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // MUST be defined BEFORE transactionRoutes to avoid 404
   app.get("/api/transactions/pending", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       
       // Get all transactions where user is buyer or seller and status requires action
       const pendingStatuses = ['pending_payment', 'escrow', 'pending_meetup'];
@@ -344,7 +344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // MUST be defined BEFORE the route handlers to avoid conflicts
   app.get("/api/messages", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       
       // Pagination parameters
       const page = parseInt(req.query.page as string) || 1;
@@ -634,7 +634,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user profile
   app.put("/api/users/profile", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const { 
         firstName, 
         lastName, 
@@ -668,7 +668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send phone verification code
   app.post("/api/phone/send-code", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const { phoneNumber } = req.body;
 
       if (!phoneNumber) {
@@ -691,7 +691,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Verify phone code
   app.post("/api/phone/verify-code", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const { phoneNumber, code } = req.body;
 
       if (!phoneNumber || !code) {
@@ -735,7 +735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user settings (comprehensive)
   app.put("/api/user/settings", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const updateData: any = {};
       
       // Profile Information
@@ -791,7 +791,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sync email verification from Clerk (one-time fix for existing users)
   app.post("/api/user/sync-verification", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       
       // Get current user
       const user = await storage.getUser(userId);
@@ -829,7 +829,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve protected images
   app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const objectStorageService = new ObjectStorageService();
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
       
@@ -916,7 +916,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(500).json({ message: "Payment system misconfigured. Please contact support to fix Stripe API key." });
         }
         
-        const userId = req.auth.userId;
+        const userId = req.user.id;
         const { credits } = req.body;
 
         if (!credits || credits <= 0) {
@@ -1142,7 +1142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Confirm AI Credit Purchase (alternative to webhook for testing)
     app.post("/api/confirm-ai-credit-purchase", isAuthenticated, async (req: any, res) => {
       try {
-        const userId = req.auth.userId;
+        const userId = req.user.id;
         const { paymentIntentId } = req.body;
 
         if (!paymentIntentId) {
@@ -1178,7 +1178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Verify Checkout Session and Complete Purchase
     app.post("/api/verify-checkout-session", isAuthenticated, async (req: any, res) => {
       try {
-        const userId = req.auth.userId;
+        const userId = req.user.id;
         const { sessionId } = req.body;
 
         if (!sessionId) {
@@ -1238,7 +1238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
      */
     app.post("/api/deposits/submit", isAuthenticated, async (req: any, res) => {
       try {
-        const buyerId = req.auth.userId;
+        const buyerId = req.user.id;
         const { listingId, amount, latitude, longitude } = req.body;
 
         if (!listingId || !amount || amount <= 0) {
@@ -1351,7 +1351,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
      */
     app.post("/api/deposits/:transactionId/accept", isAuthenticated, async (req: any, res) => {
       try {
-        const sellerId = req.auth.userId;
+        const sellerId = req.user.id;
         const { transactionId } = req.params;
         const { latitude, longitude } = req.body;
 
@@ -1416,7 +1416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
      */
     app.post("/api/deposits/:transactionId/reject", isAuthenticated, async (req: any, res) => {
       try {
-        const sellerId = req.auth.userId;
+        const sellerId = req.user.id;
         const { transactionId } = req.params;
         const { reason } = req.body;
 
@@ -1477,7 +1477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
      */
     app.post("/api/transactions/:transactionId/complete", isAuthenticated, async (req: any, res) => {
       try {
-        const buyerId = req.auth.userId;
+        const buyerId = req.user.id;
         const { transactionId } = req.params;
         const { latitude, longitude } = req.body;
 
@@ -1566,7 +1566,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
      */
     app.post("/api/transactions/:transactionId/refund", isAuthenticated, async (req: any, res) => {
       try {
-        const buyerId = req.auth.userId;
+        const buyerId = req.user.id;
         const { transactionId } = req.params;
         const { reason, latitude, longitude } = req.body;
 
@@ -1699,7 +1699,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's listings (for dashboard)
   app.get("/api/user/listings", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const listings = await storage.getUserListings(userId);
       console.log(`📋 Fetched ${listings.length} listings for user ${userId}`);
       res.json(listings);
@@ -1727,7 +1727,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user credits
   app.get("/api/user/credits", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -1750,7 +1750,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get credit transactions history
   app.get("/api/user/credit-transactions", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
       
       const transactions = await storage.getCreditTransactions(userId, limit);
@@ -1764,7 +1764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Purchase credits - Create Stripe checkout session
   app.post("/api/credits/purchase", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const { credits, amount } = req.body;
 
       if (!credits || !amount || credits <= 0 || amount <= 0) {
@@ -1818,7 +1818,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Use credits
   app.post("/api/credits/use", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const { amount, description } = req.body;
 
       if (!amount) {
@@ -1841,7 +1841,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get messages for a specific listing conversation
   app.get("/api/messages/listing/:listingId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const { listingId } = req.params;
       const { messages } = await import("@shared/schema");
       const { asc, and, or } = await import("drizzle-orm");
@@ -1867,7 +1867,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send a message with validation and rate limiting
   app.post("/api/messages", isAuthenticated, messageSendLimiter, async (req: any, res) => {
     try {
-      const senderId = req.auth.userId;
+      const senderId = req.user.id;
       const { listingId, receiverId, content } = req.body;
       
       console.log('📨 Sending message:', { senderId, listingId, receiverId, contentLength: content?.length });
@@ -1970,7 +1970,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mark messages as read
   app.put("/api/messages/:id/read", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const { id } = req.params;
       const { messages } = await import("@shared/schema");
       const { and } = await import("drizzle-orm");
@@ -1998,7 +1998,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/seed-listings", isAuthenticated, async (req: any, res) => {
     try {
       const { categories, locations, categoryImages } = await import("./seed-data.js");
-      const userId = req.auth.userId;
+      const userId = req.user.id;
 
       console.log("🌱 Starting to seed listings...");
 

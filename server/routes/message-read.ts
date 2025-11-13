@@ -14,7 +14,7 @@ const router = Router();
  */
 router.post("/:messageId/read", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { messageId } = req.params;
 
     // Get the message

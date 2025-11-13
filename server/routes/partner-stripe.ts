@@ -13,7 +13,7 @@ export default function partnerStripeRoutes(app: Express) {
    */
   app.post("/api/partners/stripe/create-account", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth?.userId;
+      const userId = req.user?.userId;
       
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -78,7 +78,7 @@ export default function partnerStripeRoutes(app: Express) {
    */
   app.post("/api/partners/stripe/onboarding-link", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth?.userId;
+      const userId = req.user?.userId;
       
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -121,7 +121,7 @@ export default function partnerStripeRoutes(app: Express) {
    */
   app.get("/api/partners/stripe/account-status", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth?.userId;
+      const userId = req.user?.userId;
       
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -169,7 +169,7 @@ export default function partnerStripeRoutes(app: Express) {
    */
   app.post("/api/partners/stripe/dashboard-link", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth?.userId;
+      const userId = req.user?.userId;
       
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -203,7 +203,7 @@ export default function partnerStripeRoutes(app: Express) {
    */
   app.post("/api/partners/stripe/disconnect", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth?.userId;
+      const userId = req.user?.userId;
       
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });

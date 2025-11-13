@@ -18,7 +18,7 @@ const router = Router();
  */
 router.post("/create-account", isAuthenticated, stripeAccountCreationLimiter, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     
     // Debug: Check if Stripe key is loaded
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -94,7 +94,7 @@ router.post("/create-account", isAuthenticated, stripeAccountCreationLimiter, as
  */
 router.post("/onboarding-link", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     // Get user's Stripe account ID
     const user = await db.query.users.findFirst({
@@ -136,7 +136,7 @@ router.post("/onboarding-link", isAuthenticated, async (req: any, res) => {
  */
 router.get("/account-status", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     // Get user's Stripe account ID
     const user = await db.query.users.findFirst({
@@ -188,7 +188,7 @@ router.get("/account-status", isAuthenticated, async (req: any, res) => {
  */
 router.get("/balance", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     // Get user's Stripe account ID
     const user = await db.query.users.findFirst({
@@ -219,7 +219,7 @@ router.get("/balance", isAuthenticated, async (req: any, res) => {
  */
 router.post("/upgrade-to-standard", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     // Get user's current account
     const user = await db.query.users.findFirst({
@@ -288,7 +288,7 @@ router.post("/upgrade-to-standard", isAuthenticated, async (req: any, res) => {
  */
 router.post("/dashboard-link", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     // Get user's Stripe account ID
     const user = await db.query.users.findFirst({

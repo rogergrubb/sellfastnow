@@ -20,7 +20,7 @@ const router = Router();
  */
 router.post("/", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const {
       listingId,
       transactionId,
@@ -287,7 +287,7 @@ router.get("/stats/:userId", async (req, res) => {
  */
 router.post("/:id/response", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { id } = req.params;
     const { responseText } = req.body;
 

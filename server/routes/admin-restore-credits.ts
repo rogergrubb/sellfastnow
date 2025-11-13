@@ -22,7 +22,7 @@ const router = Router();
  */
 router.post("/restore-credits", isAuthenticated, async (req: any, res) => {
   try {
-    const requestingUserId = req.auth.userId;
+    const requestingUserId = req.user.id;
     const TARGET_USER_ID = '9ed23ff1-ec6f-4295-a973-24420523fb2f';
     const CREDITS_TO_RESTORE = 10000;
 

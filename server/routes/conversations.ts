@@ -16,7 +16,7 @@ const router = Router();
  */
 router.get("/", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     // Get all messages where user is involved
     const userMessages = await db
@@ -133,7 +133,7 @@ router.get("/", isAuthenticated, async (req: any, res) => {
  */
 router.get("/:listingId/:otherUserId", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { listingId, otherUserId } = req.params;
 
     // Pagination

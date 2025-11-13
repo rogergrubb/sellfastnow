@@ -13,7 +13,7 @@ const router = Router();
 router.patch("/listings/:id", isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const updates = req.body;
 
     // Verify ownership
@@ -54,7 +54,7 @@ router.patch("/listings/:id", isAuthenticated, async (req: any, res) => {
  */
 router.get("/listings", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     const userListings = await db.query.listings.findMany({
       where: eq(listings.userId, userId),

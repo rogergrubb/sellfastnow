@@ -27,8 +27,8 @@ const router = Router();
       
       // Get user's location if authenticated
       let userLocation = null;
-      if (req.auth?.userId) {
-        const user = await storage.getUserById(req.auth.userId);
+      if (req.user?.userId) {
+        const user = await storage.getUserById(req.user.id);
         if (user?.locationLatitude && user?.locationLongitude) {
           userLocation = {
             latitude: parseFloat(user.locationLatitude),
@@ -62,7 +62,7 @@ const router = Router();
   // Get user's own listings
   router.get("/mine", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const listings = await storage.getUserListings(userId);
       console.log(`📋 Fetched ${listings.length} listings for user ${userId}`);
       res.json(listings);
@@ -75,7 +75,7 @@ const router = Router();
   // Get dashboard stats (MUST be before :id route)
   router.get("/stats", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const stats = await storage.getUserListingsStats(userId);
       console.log(`📊 Fetched stats for user ${userId}:`, stats);
       res.json(stats);
@@ -118,7 +118,7 @@ const router = Router();
   // Create single listing
   router.post("/", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const { title, description, price, category, condition, location, images, status, folderId, imageRotations, paymentIntentId } = req.body;
 
       const isDraft = status === 'draft';
@@ -271,7 +271,7 @@ const router = Router();
   router.delete("/:id", isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const userId = req.auth.userId;
+      const userId = req.user.id;
 
       // First check if the listing exists and belongs to the user
       const listing = await storage.getListing(id);
@@ -298,7 +298,7 @@ const router = Router();
   router.put("/:id", isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const updateData = req.body;
 
       // Check if the listing belongs to the user
@@ -349,7 +349,7 @@ const router = Router();
     try {
       const { id } = req.params;
       const { status } = req.body;
-      const userId = req.auth.userId;
+      const userId = req.user.id;
 
       // Check if the listing belongs to the user
       const listing = await storage.getListing(id);
@@ -375,7 +375,7 @@ const router = Router();
   // Batch create listings (for AI-generated items)
   router.post("/batch", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const { listings: listingsData, status: batchStatus, batchId, batchTitle, folderId } = req.body;
 
       if (!listingsData || !Array.isArray(listingsData)) {
@@ -502,7 +502,7 @@ const router = Router();
   // Get draft folders for current user
   router.get("/draft-folders", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.user.id;
       const folders = await storage.getDraftFolders(userId);
       
       console.log(`📁 Fetched ${folders.length} draft folders for user ${userId}`);

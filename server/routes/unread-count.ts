@@ -12,7 +12,7 @@ const router = Router();
  */
 router.get("/unread-count", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     // Count all unread messages where current user is the receiver
     const result = await db

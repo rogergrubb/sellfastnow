@@ -14,7 +14,7 @@ const FREE_AI_DEMO_LIMIT = 5;
  */
 router.post("/analyze-bulk-images-v2", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { imageUrls, manualCategory } = req.body;
 
     if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {

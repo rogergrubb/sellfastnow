@@ -11,7 +11,7 @@ const router = Router();
  */
 router.post("/upload", isAuthenticated, upload.single("image"), async (req: any, res) => {
   try {
-    console.log('📤 Image upload request received from user:', req.auth?.userId);
+    console.log('📤 Image upload request received from user:', req.user?.userId);
     
     if (!req.file) {
       console.error('❌ No image file provided in request');
@@ -75,7 +75,7 @@ router.post("/upload-multiple", isAuthenticated, upload.array("images", 200), as
 router.post("/upload-session/create", isAuthenticated, async (req: any, res) => {
   try {
     const { nanoid } = await import('nanoid');
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const sessionId = nanoid(12); // Generate unique 12-char ID
     
     // Sessions expire in 30 minutes
@@ -152,7 +152,7 @@ router.post("/upload-session/:id/upload", upload.array("images", 100), async (re
 router.get("/upload-session/:id/images", isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     
     const session = await storage.getUploadSession(id);
     if (!session) {
@@ -184,7 +184,7 @@ router.get("/upload-session/:id/images", isAuthenticated, async (req: any, res) 
 router.delete("/upload-session/:id", isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     
     const session = await storage.getUploadSession(id);
     if (session && session.userId !== userId) {

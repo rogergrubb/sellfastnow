@@ -14,7 +14,7 @@ export function createRateLimiter(max: number, windowMs: number, message?: strin
     legacyHeaders: false,
     // Use user ID if authenticated, otherwise IP
     keyGenerator: (req: any) => {
-      return req.auth?.userId || req.ip;
+      return req.user?.userId || req.ip;
     },
   });
 }

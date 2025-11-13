@@ -28,7 +28,7 @@ router.get("/detect", async (req, res) => {
  */
 router.put("/user/location", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { city, region, country, postalCode, latitude, longitude, displayPrecision } = req.body;
     
     if (!city || !country) {

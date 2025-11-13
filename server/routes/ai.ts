@@ -10,7 +10,7 @@ const router = Router();
  */
 router.get('/usage', isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const usageInfo = await storage.getAIUsageInfo(userId);
     res.json(usageInfo);
   } catch (error) {
@@ -144,7 +144,7 @@ router.post("/analyze-item", isAuthenticated, async (req: any, res) => {
   try {
     console.log('🤖 Sequential AI item analysis request received');
     const { imageUrl, manualCategory, itemIndex } = req.body;
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     
     if (!imageUrl) {
       console.error('❌ No imageUrl provided in request');
@@ -231,7 +231,7 @@ router.post("/analyze-bulk-images", isAuthenticated, async (req: any, res) => {
   try {
     console.log('🤖 Bulk image analysis request received');
     const { imageUrls, manualCategory } = req.body;
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     
     if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
       console.error('❌ No imageUrls array provided in request');
@@ -455,7 +455,7 @@ router.post("/identify-product", isAuthenticated, async (req: any, res) => {
   try {
     console.log('🤖 Single product identification request received');
     const { imageUrl, manualCategory } = req.body;
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     
     if (!imageUrl) {
       console.error('❌ No imageUrl provided in request');

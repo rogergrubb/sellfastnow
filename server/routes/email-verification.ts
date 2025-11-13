@@ -13,7 +13,7 @@ const router = Router();
  */
 router.post("/email/send", async (req, res) => {
   try {
-    const userId = req.auth?.userId;
+    const userId = req.user?.userId;
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -88,7 +88,7 @@ router.get("/email/verify", async (req, res) => {
  */
 router.post("/email/resend", async (req, res) => {
   try {
-    const userId = req.auth?.userId;
+    const userId = req.user?.userId;
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -131,7 +131,7 @@ router.post("/email/resend", async (req, res) => {
  */
 router.get("/status", async (req, res) => {
   try {
-    const userId = req.auth?.userId;
+    const userId = req.user?.userId;
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });

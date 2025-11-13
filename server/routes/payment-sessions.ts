@@ -32,7 +32,7 @@ const paymentSessions = new Map<string, {
  */
 router.post("/seller-initiate", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { listingId, amount } = req.body;
 
     if (!listingId || !amount || amount <= 0) {
@@ -122,7 +122,7 @@ router.post("/seller-initiate", isAuthenticated, async (req: any, res) => {
  */
 router.post("/buyer-initiate", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { listingId, amount } = req.body;
 
     if (!listingId || !amount || amount <= 0) {
@@ -269,7 +269,7 @@ router.get("/:sessionId", async (req, res) => {
  */
 router.post("/:sessionId/accept", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { sessionId } = req.params;
     const session = paymentSessions.get(sessionId);
 
@@ -313,7 +313,7 @@ router.post("/:sessionId/accept", isAuthenticated, async (req: any, res) => {
  */
 router.post("/:sessionId/create-payment-intent", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { sessionId } = req.params;
     const session = paymentSessions.get(sessionId);
 

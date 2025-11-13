@@ -13,7 +13,7 @@ const router = Router();
 router.get("/listing/:id", isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const currentUserId = req.auth.userId;
+    const currentUserId = req.user.id;
 
     // Get the listing with seller info
     const result = await db
@@ -60,7 +60,7 @@ router.get("/listing/:id", isAuthenticated, async (req: any, res) => {
  */
 router.get("/me", isAuthenticated, async (req: any, res) => {
   try {
-    const currentUserId = req.auth.userId;
+    const currentUserId = req.user.id;
 
     // Get current user info
     const [user] = await db

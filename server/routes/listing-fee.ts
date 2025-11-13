@@ -10,7 +10,7 @@ const router = Router();
  */
 router.post("/create-payment-intent", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { listingPrice, listingTitle } = req.body;
 
     if (!listingPrice || listingPrice < 100) {
@@ -63,7 +63,7 @@ router.post("/create-payment-intent", isAuthenticated, async (req: any, res) => 
 router.get("/verify/:paymentIntentId", isAuthenticated, async (req: any, res) => {
   try {
     const { paymentIntentId } = req.params;
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
@@ -92,7 +92,7 @@ router.get("/verify/:paymentIntentId", isAuthenticated, async (req: any, res) =>
  */
 router.post("/create-checkout-session", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const { listingPrice, listingTitle, listingData } = req.body;
 
     if (!listingPrice || listingPrice < 100) {
@@ -159,7 +159,7 @@ router.post("/create-checkout-session", isAuthenticated, async (req: any, res) =
 router.get("/verify-session/:sessionId", isAuthenticated, async (req: any, res) => {
   try {
     const { sessionId } = req.params;
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 

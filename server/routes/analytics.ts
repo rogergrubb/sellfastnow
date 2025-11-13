@@ -27,7 +27,7 @@ const router = Router();
 router.get("/listings/:id", isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     // Verify the listing belongs to the authenticated user
     const listing = await db.query.listings.findFirst({
@@ -63,7 +63,7 @@ router.get("/listings/:id", isAuthenticated, async (req: any, res) => {
 router.get("/listings/:id/quality", isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     // Verify the listing belongs to the authenticated user
     const listing = await db.query.listings.findFirst({
@@ -98,7 +98,7 @@ router.get("/listings/:id/quality", isAuthenticated, async (req: any, res) => {
  */
 router.get("/seller", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const analytics = await getSellerAnalytics(userId);
 
     if (!analytics) {
@@ -119,7 +119,7 @@ router.get("/seller", isAuthenticated, async (req: any, res) => {
 router.get("/listings/:id/pricing", isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const userId = req.auth.userId;
+    const userId = req.user.id;
 
     // Verify the listing belongs to the authenticated user
     const listing = await db.query.listings.findFirst({
@@ -154,7 +154,7 @@ router.get("/listings/:id/pricing", isAuthenticated, async (req: any, res) => {
  */
 router.get("/seller/stale-listings", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const staleListings = await getStaleListings(userId);
     res.json(staleListings);
   } catch (error) {
@@ -169,7 +169,7 @@ router.get("/seller/stale-listings", isAuthenticated, async (req: any, res) => {
  */
 router.get("/seller/pricing-insights", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const insights = await getSellerPricingInsights(userId);
 
     if (!insights) {
@@ -189,7 +189,7 @@ router.get("/seller/pricing-insights", isAuthenticated, async (req: any, res) =>
  */
 router.get("/seller/sales", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = req.user.id;
     const period = (req.query.period as "7d" | "30d" | "90d" | "1y" | "all") || "30d";
     
     const salesAnalytics = await getSellerSalesAnalytics(userId, period);
