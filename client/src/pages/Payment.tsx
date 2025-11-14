@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Check, X, Loader2, QrCode as QrCodeIcon, Copy, ExternalLink, Clock } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Payment() {
   const { transactionId } = useParams<{ transactionId: string }>();
@@ -18,15 +19,7 @@ export default function Payment() {
   // Create payment intent and get QR code
   const createPaymentMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`/api/payments/transactions/${transactionId}/payment-intent`, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create payment");
-      }
-      return response.json();
+      return await apiRequest("POST", `/api/payments/transactions/${transactionId}/payment-intent`);
     },
     onSuccess: (data) => {
       setPaymentData(data);
@@ -43,15 +36,7 @@ export default function Payment() {
   // Confirm payment after inspection
   const confirmPaymentMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`/api/payments/transactions/${transactionId}/confirm-payment`, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to confirm payment");
-      }
-      return response.json();
+      return await apiRequest("POST", `/api/payments/transactions/${transactionId}/confirm-payment`);
     },
     onSuccess: () => {
       toast({
@@ -73,17 +58,7 @@ export default function Payment() {
   // Cancel payment if item is rejected
   const cancelPaymentMutation = useMutation({
     mutationFn: async (reason: string) => {
-      const response = await fetch(`/api/payments/transactions/${transactionId}/cancel-payment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ reason }),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to cancel payment");
-      }
-      return response.json();
+      return await apiRequest("POST", `/api/payments/transactions/${transactionId}/cancel-payment`, { reason });
     },
     onSuccess: () => {
       toast({
