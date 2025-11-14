@@ -296,10 +296,17 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
       
       await storage.createMessage(statusMessage);
       
-      // Emit WebSocket event to notify buyer
+      // Emit WebSocket event to notify both buyer and seller
       const wsService = getWebSocketService();
       if (wsService) {
+        // Notify the buyer
         wsService.emitToUser(offer.buyerId, "new_message", {
+          listingId: offer.listingId,
+          senderId: userId,
+          messageType,
+        });
+        // Also notify the seller so they see their own counter offer
+        wsService.emitToUser(offer.sellerId, "new_message", {
           listingId: offer.listingId,
           senderId: userId,
           messageType,
