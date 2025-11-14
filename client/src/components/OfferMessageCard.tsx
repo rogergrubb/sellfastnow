@@ -309,38 +309,80 @@ export function OfferMessageCard({
               </div>
             )}
 
-            {/* Accept form */}
+            {/* Accept form with payment choice */}
             {showAcceptForm && (
-              <div className="mt-3 space-y-2 p-3 bg-white rounded-lg">
+              <div className="mt-3 space-y-3 p-4 bg-white rounded-lg border-2 border-green-200">
                 <div>
-                  <label className="text-xs text-muted-foreground">Message (optional)</label>
-                  <Textarea
-                    placeholder="Add a message..."
-                    value={acceptMessage}
-                    onChange={(e) => setAcceptMessage(e.target.value)}
-                    className="mt-1"
-                    rows={2}
-                  />
+                  <h4 className="font-semibold text-sm mb-2">Choose Payment Method</h4>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    How would you like to complete this purchase?
+                  </p>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => acceptOfferMutation.mutate(acceptMessage)}
-                    disabled={acceptOfferMutation.isPending}
-                  >
-                    Confirm Accept
-                  </Button>
+                
+                <div className="space-y-2">
+                  {/* Pay Upon Inspection */}
                   <Button
                     size="sm"
                     variant="outline"
+                    className="w-full justify-start h-auto py-3 px-4"
                     onClick={() => {
-                      setShowAcceptForm(false);
-                      setAcceptMessage("");
+                      acceptOfferMutation.mutate("Payment upon inspection");
                     }}
+                    disabled={acceptOfferMutation.isPending}
                   >
-                    Cancel
+                    <div className="flex items-start gap-3 text-left">
+                      <div className="text-2xl">🤝</div>
+                      <div className="flex-1">
+                        <div className="font-semibold">Pay Upon Inspection</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Meet in person to inspect the item before paying
+                        </div>
+                      </div>
+                    </div>
+                  </Button>
+
+                  {/* Pay Now (Stripe) */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full justify-start h-auto py-3 px-4 border-blue-200 hover:bg-blue-50"
+                    onClick={() => {
+                      // TODO: Redirect to Stripe payment page
+                      toast({
+                        title: "Payment Processing",
+                        description: "Redirecting to secure payment...",
+                      });
+                      acceptOfferMutation.mutate("Online payment via Stripe");
+                      // After accepting, redirect to payment
+                      setTimeout(() => {
+                        window.location.href = `/payment/${metadata.offerId}`;
+                      }, 1000);
+                    }}
+                    disabled={acceptOfferMutation.isPending}
+                  >
+                    <div className="flex items-start gap-3 text-left">
+                      <div className="text-2xl">⚡</div>
+                      <div className="flex-1">
+                        <div className="font-semibold">Pay Now (Trusted Seller)</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Secure online payment with escrow protection (5% fee)
+                        </div>
+                      </div>
+                    </div>
                   </Button>
                 </div>
+
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => {
+                    setShowAcceptForm(false);
+                    setAcceptMessage("");
+                  }}
+                >
+                  Cancel
+                </Button>
               </div>
             )}
 
@@ -582,38 +624,80 @@ export function OfferMessageCard({
               </div>
             )}
 
-            {/* Accept form */}
+            {/* Accept form with payment choice */}
             {showAcceptForm && (
-              <div className="mt-3 space-y-2 p-3 bg-white rounded-lg">
+              <div className="mt-3 space-y-3 p-4 bg-white rounded-lg border-2 border-green-200">
                 <div>
-                  <label className="text-xs text-muted-foreground">Message (optional)</label>
-                  <Textarea
-                    placeholder="Add a message..."
-                    value={acceptMessage}
-                    onChange={(e) => setAcceptMessage(e.target.value)}
-                    className="mt-1"
-                    rows={2}
-                  />
+                  <h4 className="font-semibold text-sm mb-2">Choose Payment Method</h4>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    How would you like to complete this purchase?
+                  </p>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => acceptOfferMutation.mutate(acceptMessage)}
-                    disabled={acceptOfferMutation.isPending}
-                  >
-                    Confirm Accept
-                  </Button>
+                
+                <div className="space-y-2">
+                  {/* Pay Upon Inspection */}
                   <Button
                     size="sm"
                     variant="outline"
+                    className="w-full justify-start h-auto py-3 px-4"
                     onClick={() => {
-                      setShowAcceptForm(false);
-                      setAcceptMessage("");
+                      acceptOfferMutation.mutate("Payment upon inspection");
                     }}
+                    disabled={acceptOfferMutation.isPending}
                   >
-                    Cancel
+                    <div className="flex items-start gap-3 text-left">
+                      <div className="text-2xl">🤝</div>
+                      <div className="flex-1">
+                        <div className="font-semibold">Pay Upon Inspection</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Meet in person to inspect the item before paying
+                        </div>
+                      </div>
+                    </div>
+                  </Button>
+
+                  {/* Pay Now (Stripe) */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full justify-start h-auto py-3 px-4 border-blue-200 hover:bg-blue-50"
+                    onClick={() => {
+                      // TODO: Redirect to Stripe payment page
+                      toast({
+                        title: "Payment Processing",
+                        description: "Redirecting to secure payment...",
+                      });
+                      acceptOfferMutation.mutate("Online payment via Stripe");
+                      // After accepting, redirect to payment
+                      setTimeout(() => {
+                        window.location.href = `/payment/${metadata.offerId}`;
+                      }, 1000);
+                    }}
+                    disabled={acceptOfferMutation.isPending}
+                  >
+                    <div className="flex items-start gap-3 text-left">
+                      <div className="text-2xl">⚡</div>
+                      <div className="flex-1">
+                        <div className="font-semibold">Pay Now (Trusted Seller)</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Secure online payment with escrow protection (5% fee)
+                        </div>
+                      </div>
+                    </div>
                   </Button>
                 </div>
+
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => {
+                    setShowAcceptForm(false);
+                    setAcceptMessage("");
+                  }}
+                >
+                  Cancel
+                </Button>
               </div>
             )}
 
