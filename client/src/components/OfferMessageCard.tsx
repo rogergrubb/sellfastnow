@@ -74,20 +74,20 @@ export function OfferMessageCard({
         } else {
           // If fetch fails, use metadata status as fallback
           console.warn('Failed to fetch offer status, using metadata:', response.status);
-          setCurrentStatus(metadata.status);
+          setCurrentStatus(metadata.status || "pending");
         }
       } catch (error) {
         console.warn("❌ Failed to fetch offer status, using metadata:", error);
         console.log('📝 Metadata status fallback:', metadata.status);
-        // Fall back to metadata status on error
-        setCurrentStatus(metadata.status);
+        // Fall back to metadata status on error, default to "pending" if undefined
+        setCurrentStatus(metadata.status || "pending");
       }
     };
 
     if (messageType === 'offer_made' || messageType === 'offer_received') {
       fetchOfferStatus();
     }
-  }, [metadata.offerId, messageType, metadata.status]);
+  }, [metadata.offerId, messageType]);
 
   const acceptOfferMutation = useMutation({
     mutationFn: async (message?: string) => {
