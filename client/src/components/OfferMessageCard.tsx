@@ -89,6 +89,8 @@ export function OfferMessageCard({
     }
   }, [metadata.offerId, messageType]);
 
+  const [pendingTransactionId, setPendingTransactionId] = useState<string | null>(null);
+
   const acceptOfferMutation = useMutation({
     mutationFn: async (message?: string) => {
       return await apiRequest("PATCH", `/api/offers/${metadata.offerId}`, {
@@ -96,13 +98,19 @@ export function OfferMessageCard({
         responseMessage: message,
       });
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       toast({
         title: "Offer accepted",
         description: "The other party will be notified",
       });
       setShowAcceptForm(false);
       setAcceptMessage("");
+      
+      // Store transaction ID if returned
+      if (data.transactionId) {
+        setPendingTransactionId(data.transactionId);
+      }
+      
       queryClient.invalidateQueries({ queryKey: [`/api/messages/listing/${listingId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
     },
@@ -346,17 +354,28 @@ export function OfferMessageCard({
                     size="sm"
                     variant="outline"
                     className="w-full justify-start h-auto py-3 px-4 border-blue-200 hover:bg-blue-50"
-                    onClick={() => {
-                      // TODO: Redirect to Stripe payment page
+                    onClick={async () => {
                       toast({
                         title: "Payment Processing",
                         description: "Redirecting to secure payment...",
                       });
-                      acceptOfferMutation.mutate("Online payment via Stripe");
-                      // After accepting, redirect to payment
-                      setTimeout(() => {
-                        window.location.href = `/payment/${metadata.offerId}`;
-                      }, 1000);
+                      
+                      try {
+                        const result = await acceptOfferMutation.mutateAsync("Online payment via Stripe");
+                        
+                        // Redirect to payment page with transaction ID
+                        if (result.transactionId) {
+                          window.location.href = `/payment/${result.transactionId}`;
+                        } else {
+                          toast({
+                            title: "Error",
+                            description: "Failed to create payment transaction",
+                            variant: "destructive",
+                          });
+                        }
+                      } catch (error) {
+                        console.error("Failed to accept offer:", error);
+                      }
                     }}
                     disabled={acceptOfferMutation.isPending}
                   >
@@ -661,17 +680,28 @@ export function OfferMessageCard({
                     size="sm"
                     variant="outline"
                     className="w-full justify-start h-auto py-3 px-4 border-blue-200 hover:bg-blue-50"
-                    onClick={() => {
-                      // TODO: Redirect to Stripe payment page
+                    onClick={async () => {
                       toast({
                         title: "Payment Processing",
                         description: "Redirecting to secure payment...",
                       });
-                      acceptOfferMutation.mutate("Online payment via Stripe");
-                      // After accepting, redirect to payment
-                      setTimeout(() => {
-                        window.location.href = `/payment/${metadata.offerId}`;
-                      }, 1000);
+                      
+                      try {
+                        const result = await acceptOfferMutation.mutateAsync("Online payment via Stripe");
+                        
+                        // Redirect to payment page with transaction ID
+                        if (result.transactionId) {
+                          window.location.href = `/payment/${result.transactionId}`;
+                        } else {
+                          toast({
+                            title: "Error",
+                            description: "Failed to create payment transaction",
+                            variant: "destructive",
+                          });
+                        }
+                      } catch (error) {
+                        console.error("Failed to accept offer:", error);
+                      }
                     }}
                     disabled={acceptOfferMutation.isPending}
                   >

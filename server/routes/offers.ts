@@ -361,6 +361,7 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
     }
 
     // If accepted, create a transaction
+    let transactionId = null;
     if (status === "accepted") {
       try {
         const finalAmount = offer.counterOfferAmount || offer.offerAmount;
@@ -381,6 +382,7 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
           status: "pending", // Waiting for buyer to pay
         });
 
+        transactionId = transaction.id;
         console.log("Transaction created:", transaction.id);
 
         // Send a "proceed to payment" message
@@ -413,7 +415,7 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
       }
     }
 
-    res.json({ offer: updatedOffer });
+    res.json({ offer: updatedOffer, transactionId });
   } catch (error: any) {
     console.error("Error updating offer:", error);
     console.error("Error details:", {
