@@ -296,17 +296,10 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
       
       await storage.createMessage(statusMessage);
       
-      // Emit WebSocket event to notify both buyer and seller
+      // Emit WebSocket event to notify buyer
       const wsService = getWebSocketService();
       if (wsService) {
-        // Notify the receiver
-        wsService.emitToUser(receiverId, "new_message", {
-          listingId: offer.listingId,
-          senderId: userId,
-          messageType,
-        });
-        // Also notify the sender so their own chat updates
-        wsService.emitToUser(userId, "new_message", {
+        wsService.emitToUser(offer.buyerId, "new_message", {
           listingId: offer.listingId,
           senderId: userId,
           messageType,
@@ -426,84 +419,6 @@ router.patch("/:offerId", isAuthenticated, async (req: any, res) => {
     });
     res.status(500).json({ 
       error: "Failed to update offer",
-      details: error.message 
-    });
-  }
-});
-
-// DELETE /api/offers/:offerId - Retract or delete an offer
-router.delete("/:offerId", isAuthenticated, async (req: any, res) => {
-  try {
-    const { offerId } = req.params;
-    const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    // Get the offer
-    const offerData = await storage.getOffer(offerId);
-    if (!offerData) {
-      return res.status(404).json({ error: "Offer not found" });
-    }
-
-    const offer = offerData.offer;
-
-    // Only the buyer (who made the offer) can retract it
-    // Only allow retraction if offer is still pending
-    if (offer.buyerId !== userId) {
-      return res.status(403).json({ error: "Only the buyer can retract their offer" });
-    }
-
-    if (offer.status !== "pending" && offer.status !== "countered") {
-      return res.status(400).json({ error: "Can only retract pending or countered offers" });
-    }
-
-    // Update offer status to "retracted"
-    const updatedOffer = await storage.updateOfferStatus(offerId, "retracted", {});
-
-    // Create a message in the thread
-    try {
-      const statusMessage = {
-        listingId: offer.listingId,
-        senderId: userId,
-        receiverId: offer.sellerId,
-        content: "Offer retracted",
-        messageType: "offer_retracted",
-        metadata: {
-          offerId,
-          originalAmount: offer.offerAmount,
-          status: "retracted",
-          buyerId: offer.buyerId,
-          sellerId: offer.sellerId,
-        },
-      };
-
-      await storage.createMessage(statusMessage);
-
-      // Emit WebSocket event to notify both users
-      const wsService = getWebSocketService();
-      if (wsService) {
-        wsService.emitToUser(offer.sellerId, "new_message", {
-          listingId: offer.listingId,
-          senderId: userId,
-          messageType: "offer_retracted",
-        });
-        wsService.emitToUser(userId, "new_message", {
-          listingId: offer.listingId,
-          senderId: userId,
-          messageType: "offer_retracted",
-        });
-      }
-    } catch (error) {
-      console.error("Error creating retraction message:", error);
-    }
-
-    res.json({ offer: updatedOffer });
-  } catch (error: any) {
-    console.error("Error retracting offer:", error);
-    res.status(500).json({ 
-      error: "Failed to retract offer",
       details: error.message 
     });
   }

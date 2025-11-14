@@ -173,27 +173,6 @@ export function OfferMessageCard({
     },
   });
 
-  const retractOfferMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("DELETE", `/api/offers/${metadata.offerId}`);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Offer retracted",
-        description: "Your offer has been withdrawn",
-      });
-      queryClient.invalidateQueries({ queryKey: [`/api/messages/listing/${listingId}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to retract offer",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "accepted":
@@ -326,22 +305,6 @@ export function OfferMessageCard({
                 >
                   <X className="h-4 w-4 mr-1" />
                   Decline
-                </Button>
-              </div>
-            )}
-
-            {/* Retract button for buyer's own pending offer */}
-            {isOwnMessage && (currentStatus === "pending" || currentStatus === "countered") && (
-              <div className="flex gap-2 mt-3">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => retractOfferMutation.mutate()}
-                  disabled={retractOfferMutation.isPending}
-                  className="text-red-600 border-red-300 hover:bg-red-50"
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Retract Offer
                 </Button>
               </div>
             )}
