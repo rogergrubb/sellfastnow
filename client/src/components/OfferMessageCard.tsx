@@ -69,7 +69,7 @@ export function OfferMessageCard({
         const response = await apiRequest("GET", `/api/offers/${metadata.offerId}`);
         if (response.ok) {
           const offer = await response.json();
-          setCurrentStatus(offer.status);
+          setCurrentStatus(offer.status || "pending");
           setOfferData(offer);
         } else {
           // If fetch fails, use metadata status as fallback
