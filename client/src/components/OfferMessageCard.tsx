@@ -44,7 +44,17 @@ export function OfferMessageCard({
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [offerData, setOfferData] = useState<any>(null);
-  const [currentStatus, setCurrentStatus] = useState(metadata.status);
+  const [currentStatus, setCurrentStatus] = useState(metadata.status || "pending");
+  
+  // Debug logging
+  console.log('🔍 OfferMessageCard Debug:', {
+    offerId: metadata.offerId,
+    metadataStatus: metadata.status,
+    currentStatus,
+    isOwnMessage,
+    messageType
+  });
+  
   const [counterAmount, setCounterAmount] = useState("");
   const [counterMessage, setCounterMessage] = useState("");
   const [acceptMessage, setAcceptMessage] = useState("");
@@ -67,7 +77,8 @@ export function OfferMessageCard({
           setCurrentStatus(metadata.status);
         }
       } catch (error) {
-        console.error('Failed to fetch offer status, using metadata:', error);
+        console.warn("❌ Failed to fetch offer status, using metadata:", error);
+        console.log('📝 Metadata status fallback:', metadata.status);
         // Fall back to metadata status on error
         setCurrentStatus(metadata.status);
       }
