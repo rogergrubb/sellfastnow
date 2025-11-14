@@ -57,18 +57,26 @@ export function OfferMessageCard({
     const fetchOfferStatus = async () => {
       try {
         const response = await apiRequest("GET", `/api/offers/${metadata.offerId}`);
-        const offer = await response.json();
-        setCurrentStatus(offer.status);
-        setOfferData(offer);
+        if (response.ok) {
+          const offer = await response.json();
+          setCurrentStatus(offer.status);
+          setOfferData(offer);
+        } else {
+          // If fetch fails, use metadata status as fallback
+          console.warn('Failed to fetch offer status, using metadata:', response.status);
+          setCurrentStatus(metadata.status);
+        }
       } catch (error) {
-        console.error('Failed to fetch offer status:', error);
+        console.error('Failed to fetch offer status, using metadata:', error);
+        // Fall back to metadata status on error
+        setCurrentStatus(metadata.status);
       }
     };
 
     if (messageType === 'offer_made' || messageType === 'offer_received') {
       fetchOfferStatus();
     }
-  }, [metadata.offerId, messageType]);
+  }, [metadata.offerId, messageType, metadata.status]);
 
   const acceptOfferMutation = useMutation({
     mutationFn: async (message?: string) => {
