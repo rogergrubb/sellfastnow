@@ -62,7 +62,7 @@ export function OfferMessageCard({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch current offer status on mount and when metadata changes
+  // Fetch current offer status on mount and when metadata changes (v2 - force rebuild)
   useEffect(() => {
     const fetchOfferStatus = async () => {
       try {
