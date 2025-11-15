@@ -248,9 +248,18 @@ router.get("/stats/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const stats = await db.query.userStatistics.findFirst({
-      where: eq(userStatistics.userId, userId),
-    });
+    const [stats] = await db
+      .select({
+        totalReviewsReceived: userStatistics.totalReviewsReceived,
+        averageRating: userStatistics.averageRating,
+        fiveStarReviews: userStatistics.fiveStarReviews,
+        fourStarReviews: userStatistics.fourStarReviews,
+        threeStarReviews: userStatistics.threeStarReviews,
+        twoStarReviews: userStatistics.twoStarReviews,
+        oneStarReviews: userStatistics.oneStarReviews,
+      })
+      .from(userStatistics)
+      .where(eq(userStatistics.userId, userId));
 
     if (!stats) {
       return res.json({
