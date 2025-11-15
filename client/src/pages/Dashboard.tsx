@@ -226,6 +226,23 @@ export default function Dashboard() {
     enabled: !!user && activeTab === "favorites",
   });
 
+  // Fetch user's review stats
+  const { data: userReviewStats } = useQuery<{
+    averageRating: number | null;
+    totalReviewsReceived: number;
+  }>({
+    queryKey: ["/api/reviews/stats", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return { averageRating: null, totalReviewsReceived: 0 };
+      const response = await fetch(`/api/reviews/stats/${user.id}`, {
+        credentials: "include",
+      });
+      if (!response.ok) return { averageRating: null, totalReviewsReceived: 0 };
+      return response.json();
+    },
+    enabled: !!user,
+  });
+
   // Fetch purchases (transactions where user is buyer)
   const { data: purchases = [], isLoading: purchasesLoading } = useQuery<any[]>({
     queryKey: ["/api/transactions/buyer", user?.id],
@@ -1181,6 +1198,21 @@ export default function Dashboard() {
                             location={listing.location}
                             timePosted={timePosted}
                             image={listing.images && listing.images.length > 0 ? listing.images[0] : undefined}
+                            seller={user ? {
+                              id: user.id,
+                              firstName: user.firstName,
+                              lastName: user.lastName,
+                              profileImageUrl: user.profileImageUrl,
+                              emailVerified: user.emailVerified,
+                              phoneVerified: user.phoneVerified,
+                              idVerified: user.idVerified,
+                              addressVerified: user.addressVerified,
+                            } : undefined}
+                            sellerStats={userReviewStats ? {
+                              averageRating: userReviewStats.averageRating,
+                              totalReviews: userReviewStats.totalReviewsReceived,
+                              successRate: null,
+                            } : undefined}
                           />
                         );
                       })}
