@@ -655,6 +655,7 @@ export class DatabaseStorage implements IStorage {
 
     // Get unique user IDs
     const userIds = [...new Set(combinedResults.map(l => l.userId))];
+    console.log('🔍 advancedSearch: Found', combinedResults.length, 'listings with', userIds.length, 'unique sellers');
 
     // Fetch seller information for all unique users
     const sellersData = await db
@@ -700,11 +701,13 @@ export class DatabaseStorage implements IStorage {
     );
 
     // Combine listings with seller data and calculate distances
+    console.log('🗺️ advancedSearch: sellersMap size:', sellersMap.size);
     let resultsWithSellers = combinedResults.map(listing => ({
       ...listing,
       isPromoted: promotedIds.includes(listing.id),
       ...(sellersMap.get(listing.userId) || {}),
     }));
+    console.log('✅ advancedSearch: First result has seller?', !!resultsWithSellers[0]?.seller);
 
     // Calculate distances and filter by distance if user location is provided
     if (filters.userLocation && filters.distance) {
