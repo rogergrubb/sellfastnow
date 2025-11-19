@@ -1,5 +1,22 @@
-import { Link } from 'wouter';
-import { MapPin, Package } from 'lucide-react';
+import { Package } from 'lucide-react';
+import ListingCard from '../ListingCard';
+
+interface Seller {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  profileImageUrl: string | null;
+  emailVerified: boolean | null;
+  phoneVerified: boolean | null;
+  idVerified: boolean | null;
+  addressVerified: boolean | null;
+}
+
+interface SellerStats {
+  averageRating: string | null;
+  totalReviews: number;
+  successRate: string | null;
+}
 
 interface Listing {
   id: string;
@@ -7,8 +24,13 @@ interface Listing {
   price: number;
   description: string;
   category: string;
+  condition: string;
+  location: string;
   distance: number;
   images?: string[];
+  createdAt: string;
+  seller?: Seller;
+  sellerStats?: SellerStats | null;
 }
 
 interface SearchResultsProps {
@@ -32,57 +54,40 @@ export default function SearchResults({ listings }: SearchResultsProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {listings.map((listing) => (
-        <Link
-          key={listing.id}
-          to={`/listings/${listing.id}`}
-          className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden border"
-        >
-          {/* Image */}
-          <div className="aspect-video bg-gray-100 relative">
-            {listing.images && listing.images.length > 0 ? (
-              <img
-                src={listing.images[0]}
-                alt={listing.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Package className="w-12 h-12 text-gray-300" />
-              </div>
-            )}
-            
-            {/* Distance Badge */}
-            <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-              <MapPin className="w-3 h-3" />
-              {listing.distance < 1 
-                ? `${(listing.distance * 1000).toFixed(0)}m`
-                : `${listing.distance.toFixed(1)}km`
-              }
-            </div>
-          </div>
+      {listings.map((listing) => {
+        // Calculate time posted
+        const createdDate = new Date(listing.createdAt);
+        const now = new Date();
+        const diffMs = now.getTime() - createdDate.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+        
+        let timePosted: string;
+        if (diffMins < 60) {
+          timePosted = `${diffMins}m ago`;
+        } else if (diffHours < 24) {
+          timePosted = `${diffHours}h ago`;
+        } else {
+          timePosted = `${diffDays}d ago`;
+        }
 
-          {/* Content */}
-          <div className="p-4">
-            <h3 className="font-semibold text-lg text-gray-900 mb-1 line-clamp-1">
-              {listing.title}
-            </h3>
-            
-            <p className="text-2xl font-bold text-blue-600 mb-2">
-              ${listing.price.toLocaleString()}
-            </p>
-
-            <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-              {listing.description}
-            </p>
-
-            <div className="flex items-center justify-between text-xs text-gray-500">
-              <span className="capitalize">{listing.category}</span>
-            </div>
-          </div>
-        </Link>
-      ))}
+        return (
+          <ListingCard
+            key={listing.id}
+            id={listing.id}
+            title={listing.title}
+            price={listing.price}
+            location={listing.location}
+            timePosted={timePosted}
+            image={listing.images && listing.images.length > 0 ? listing.images[0] : undefined}
+            condition={listing.condition}
+            seller={listing.seller}
+            sellerStats={listing.sellerStats}
+            distance={listing.distance}
+          />
+        );
+      })}
     </div>
   );
 }
-

@@ -97,9 +97,9 @@ export default function ListingCard({
         </h3>
         
         {seller && (
-          <div className="mb-3 pb-3 border-b">
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-sm text-muted-foreground">Seller: {sellerName}</p>
+          <div className="mb-3 pb-3 border-b bg-gray-50/50 -mx-4 px-4 py-3 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-gray-900">Seller: {sellerName}</p>
               <VerificationBadges user={seller} size="sm" />
             </div>
             <ReviewBadge
@@ -108,11 +108,11 @@ export default function ListingCard({
               rating={sellerStats?.averageRating}
               reviewCount={sellerStats?.totalReviews || 0}
               showLink={false}
-              size="small"
-              variant="compact"
+              size="medium"
+              variant="inline"
             />
             {sellerStats?.successRate !== undefined && sellerStats.successRate !== null && (
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-2">
                 {Number(sellerStats.successRate).toFixed(0)}% success rate
               </p>
             )}
