@@ -1,6 +1,6 @@
 import { db } from "../storage";
-import { listings, users } from "@shared/schema";
-import { sql, and, or, asc, desc, gte, lte, ilike } from "drizzle-orm";
+import { listings, users, userStatistics } from "@shared/schema";
+import { sql, and, or, asc, desc, gte, lte, ilike, inArray, eq } from "drizzle-orm";
 import type { Express } from "express";
 
 export default function searchRoutes(app: Express) {
@@ -61,21 +61,82 @@ export default function searchRoutes(app: Express) {
           break;
       }
 
+      // Get listings with distance
       const searchResults = await db
         .select({
           id: listings.id,
+          userId: listings.userId,
           title: listings.title,
           price: listings.price,
           description: listings.description,
           category: listings.category,
+          condition: listings.condition,
+          location: listings.location,
           images: listings.images,
+          createdAt: listings.createdAt,
           distance: distanceFormula,
         })
         .from(listings)
         .where(and(...whereClauses))
         .orderBy(orderByClause);
 
-      res.json(searchResults);
+      // Get unique user IDs
+      const userIds = [...new Set(searchResults.map(l => l.userId))];
+
+      if (userIds.length === 0) {
+        return res.json([]);
+      }
+
+      // Fetch seller information for all unique users
+      const sellersData = await db
+        .select({
+          userId: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+          emailVerified: users.emailVerified,
+          phoneVerified: users.phoneVerified,
+          idVerified: users.idVerified,
+          addressVerified: users.addressVerified,
+          averageRating: userStatistics.averageRating,
+          totalReviews: userStatistics.totalReviewsReceived,
+          successRate: userStatistics.sellerSuccessRate,
+        })
+        .from(users)
+        .leftJoin(userStatistics, eq(users.id, userStatistics.userId))
+        .where(inArray(users.id, userIds));
+
+      // Create a map for quick lookup
+      const sellersMap = new Map(
+        sellersData.map(seller => [
+          seller.userId,
+          {
+            seller: {
+              id: seller.userId,
+              firstName: seller.firstName,
+              lastName: seller.lastName,
+              profileImageUrl: seller.profileImageUrl,
+              emailVerified: seller.emailVerified,
+              phoneVerified: seller.phoneVerified,
+              idVerified: seller.idVerified,
+              addressVerified: seller.addressVerified,
+            },
+            sellerStats: {
+              averageRating: seller.averageRating,
+              totalReviews: seller.totalReviews || 0,
+              successRate: seller.successRate,
+            },
+          },
+        ])
+      );
+
+      // Combine listings with seller data
+      const resultsWithSellers = searchResults.map(listing => ({
+        ...listing,
+        ...(sellersMap.get(listing.userId) || {}),
+      }));
+
+      res.json(resultsWithSellers);
     } catch (error) {
       console.error("Search error:", error);
       res.status(500).json({ message: "An error occurred during the search." });
