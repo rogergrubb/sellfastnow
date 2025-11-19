@@ -368,53 +368,134 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllListings(): Promise<ListingWithSeller[]> {
-    const result = await db
-      .select({
-        listing: listings,
-        seller: users,
-        stats: userStatistics,
-      })
+    // Get all active listings
+    const allListings = await db
+      .select()
       .from(listings)
-      .innerJoin(users, eq(listings.userId, users.id))
-      .leftJoin(userStatistics, eq(users.id, userStatistics.userId))
       .where(eq(listings.status, "active"))
       .orderBy(desc(listings.createdAt));
     
-    // Map results to include seller data and stats in listing object
-    return result.map((row) => ({
-      ...row.listing,
-      seller: row.seller,
-      sellerStats: row.stats ? {
-        averageRating: row.stats.averageRating,
-        totalReviews: row.stats.totalReviewsReceived || 0,
-        successRate: row.stats.sellerSuccessRate,
-      } : null,
+    // Get unique user IDs
+    const userIds = [...new Set(allListings.map(l => l.userId))];
+    
+    if (userIds.length === 0) {
+      return [];
+    }
+    
+    // Fetch seller information for all unique users
+    const sellersData = await db
+      .select({
+        userId: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImageUrl: users.profileImageUrl,
+        emailVerified: users.emailVerified,
+        phoneVerified: users.phoneVerified,
+        idVerified: users.idVerified,
+        addressVerified: users.addressVerified,
+        averageRating: userStatistics.averageRating,
+        totalReviews: userStatistics.totalReviewsReceived,
+        successRate: userStatistics.sellerSuccessRate,
+      })
+      .from(users)
+      .leftJoin(userStatistics, eq(users.id, userStatistics.userId))
+      .where(sql`${users.id} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`);
+    
+    // Create a map for quick lookup
+    const sellersMap = new Map(
+      sellersData.map(seller => [
+        seller.userId,
+        {
+          seller: {
+            id: seller.userId,
+            firstName: seller.firstName,
+            lastName: seller.lastName,
+            profileImageUrl: seller.profileImageUrl,
+            emailVerified: seller.emailVerified,
+            phoneVerified: seller.phoneVerified,
+            idVerified: seller.idVerified,
+            addressVerified: seller.addressVerified,
+          },
+          sellerStats: {
+            averageRating: seller.averageRating,
+            totalReviews: seller.totalReviews || 0,
+            successRate: seller.successRate,
+          },
+        },
+      ])
+    );
+    
+    // Combine listings with seller data
+    return allListings.map(listing => ({
+      ...listing,
+      ...(sellersMap.get(listing.userId) || {}),
     }));
   }
 
   async getListingsByCategory(category: string): Promise<ListingWithSeller[]> {
-    const result = await db
-      .select({
-        listing: listings,
-        seller: users,
-        stats: userStatistics,
-      })
+    // Get listings by category
+    const categoryListings = await db
+      .select()
       .from(listings)
-      .innerJoin(users, eq(listings.userId, users.id))
-      .leftJoin(userStatistics, eq(users.id, userStatistics.userId))
       .where(
         and(eq(listings.category, category), eq(listings.status, "active"))
       )
       .orderBy(desc(listings.createdAt));
     
-    return result.map((row) => ({
-      ...row.listing,
-      seller: row.seller,
-      sellerStats: row.stats ? {
-        averageRating: row.stats.averageRating,
-        totalReviews: row.stats.totalReviewsReceived || 0,
-        successRate: row.stats.sellerSuccessRate,
-      } : null,
+    // Get unique user IDs
+    const userIds = [...new Set(categoryListings.map(l => l.userId))];
+    
+    if (userIds.length === 0) {
+      return [];
+    }
+    
+    // Fetch seller information
+    const sellersData = await db
+      .select({
+        userId: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImageUrl: users.profileImageUrl,
+        emailVerified: users.emailVerified,
+        phoneVerified: users.phoneVerified,
+        idVerified: users.idVerified,
+        addressVerified: users.addressVerified,
+        averageRating: userStatistics.averageRating,
+        totalReviews: userStatistics.totalReviewsReceived,
+        successRate: userStatistics.sellerSuccessRate,
+      })
+      .from(users)
+      .leftJoin(userStatistics, eq(users.id, userStatistics.userId))
+      .where(sql`${users.id} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`);
+    
+    // Create a map for quick lookup
+    const sellersMap = new Map(
+      sellersData.map(seller => [
+        seller.userId,
+        {
+          seller: {
+            id: seller.userId,
+            firstName: seller.firstName,
+            lastName: seller.lastName,
+            profileImageUrl: seller.profileImageUrl,
+            emailVerified: seller.emailVerified,
+            phoneVerified: seller.phoneVerified,
+            idVerified: seller.idVerified,
+            addressVerified: seller.addressVerified,
+          },
+          sellerStats: {
+            averageRating: seller.averageRating,
+            totalReviews: seller.totalReviews || 0,
+            successRate: seller.successRate,
+          },
+        },
+      ])
+    );
+    
+    // Combine listings with seller data
+    return categoryListings.map(listing => ({
+      ...listing,
+      ...(sellersMap.get(listing.userId) || {}),
     }));
   }
 
@@ -724,27 +805,70 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserFavorites(userId: string): Promise<ListingWithSeller[]> {
-    const result = await db
-      .select({ 
-        listing: listings,
-        seller: users,
-        stats: userStatistics,
-      })
+    // Get favorite listings
+    const favoriteResults = await db
+      .select({ listing: listings })
       .from(favorites)
       .innerJoin(listings, eq(favorites.listingId, listings.id))
-      .innerJoin(users, eq(listings.userId, users.id))
-      .leftJoin(userStatistics, eq(users.id, userStatistics.userId))
       .where(eq(favorites.userId, userId))
       .orderBy(desc(favorites.createdAt));
     
-    return result.map((row) => ({
-      ...row.listing,
-      seller: row.seller,
-      sellerStats: row.stats ? {
-        averageRating: row.stats.averageRating,
-        totalReviews: row.stats.totalReviewsReceived || 0,
-        successRate: row.stats.sellerSuccessRate,
-      } : null,
+    const favoriteListings = favoriteResults.map(r => r.listing);
+    
+    // Get unique user IDs
+    const userIds = [...new Set(favoriteListings.map(l => l.userId))];
+    
+    if (userIds.length === 0) {
+      return [];
+    }
+    
+    // Fetch seller information
+    const sellersData = await db
+      .select({
+        userId: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImageUrl: users.profileImageUrl,
+        emailVerified: users.emailVerified,
+        phoneVerified: users.phoneVerified,
+        idVerified: users.idVerified,
+        addressVerified: users.addressVerified,
+        averageRating: userStatistics.averageRating,
+        totalReviews: userStatistics.totalReviewsReceived,
+        successRate: userStatistics.sellerSuccessRate,
+      })
+      .from(users)
+      .leftJoin(userStatistics, eq(users.id, userStatistics.userId))
+      .where(sql`${users.id} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`);
+    
+    // Create a map for quick lookup
+    const sellersMap = new Map(
+      sellersData.map(seller => [
+        seller.userId,
+        {
+          seller: {
+            id: seller.userId,
+            firstName: seller.firstName,
+            lastName: seller.lastName,
+            profileImageUrl: seller.profileImageUrl,
+            emailVerified: seller.emailVerified,
+            phoneVerified: seller.phoneVerified,
+            idVerified: seller.idVerified,
+            addressVerified: seller.addressVerified,
+          },
+          sellerStats: {
+            averageRating: seller.averageRating,
+            totalReviews: seller.totalReviews || 0,
+            successRate: seller.successRate,
+          },
+        },
+      ])
+    );
+    
+    // Combine listings with seller data
+    return favoriteListings.map(listing => ({
+      ...listing,
+      ...(sellersMap.get(listing.userId) || {}),
     }));
   }
 
