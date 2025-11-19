@@ -1189,6 +1189,26 @@ export default function Dashboard() {
                             })()
                           : "N/A";
                         
+                        // DEBUG: Log seller and stats data
+                        console.log('🔍 Dashboard Debug:', {
+                          listingId: listing.id,
+                          listingTitle: listing.title,
+                          hasUser: !!user,
+                          userId: user?.id,
+                          userName: user ? `${user.firstName} ${user.lastName}` : 'N/A',
+                          hasUserReviewStats: !!userReviewStats,
+                          userReviewStats: userReviewStats,
+                          sellerProp: user ? {
+                            id: user.id,
+                            firstName: user.firstName,
+                            lastName: user.lastName,
+                          } : undefined,
+                          sellerStatsProp: userReviewStats ? {
+                            averageRating: userReviewStats.averageRating,
+                            totalReviews: userReviewStats.totalReviewsReceived,
+                          } : undefined
+                        });
+                        
                         return (
                           <ListingCard
                             key={listing.id}
