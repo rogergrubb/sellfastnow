@@ -65,6 +65,7 @@ import {
   type InsertWelcomeSignup,
   type GiveawayEntry,
   type InsertGiveawayEntry,
+  type ListingWithSeller,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
@@ -106,8 +107,8 @@ export interface IStorage {
   getSimilarListings(listingId: string, limit?: number): Promise<Listing[]>;
   getUserListings(userId: string): Promise<Listing[]>;
   getUserListingsStats(userId: string): Promise<DashboardStats>;
-  getAllListings(): Promise<Listing[]>;
-  getListingsByCategory(category: string): Promise<Listing[]>;
+  getAllListings(): Promise<ListingWithSeller[]>;
+  getListingsByCategory(category: string): Promise<ListingWithSeller[]>;
   getListingsByBatchId(batchId: string): Promise<Listing[]>;
   updateListing(id: string, listing: Partial<InsertListing>): Promise<Listing>;
   updateListingStatus(id: string, status: string): Promise<Listing>;
@@ -125,7 +126,7 @@ export interface IStorage {
   addFavorite(favorite: InsertFavorite): Promise<Favorite>;
   removeFavorite(userId: string, listingId: string): Promise<void>;
   toggleFavorite(userId: string, listingId: string): Promise<{ isFavorited: boolean }>;
-  getUserFavorites(userId: string): Promise<Listing[]>;
+  getUserFavorites(userId: string): Promise<ListingWithSeller[]>;
   isFavorited(userId: string, listingId: string): Promise<boolean>;
 
   // Review operations
@@ -366,7 +367,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getAllListings(): Promise<Listing[]> {
+  async getAllListings(): Promise<ListingWithSeller[]> {
     const result = await db
       .select({
         listing: listings,
@@ -391,7 +392,7 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getListingsByCategory(category: string): Promise<Listing[]> {
+  async getListingsByCategory(category: string): Promise<ListingWithSeller[]> {
     const result = await db
       .select({
         listing: listings,
@@ -722,7 +723,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getUserFavorites(userId: string): Promise<Listing[]> {
+  async getUserFavorites(userId: string): Promise<ListingWithSeller[]> {
     const result = await db
       .select({ 
         listing: listings,

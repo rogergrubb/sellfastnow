@@ -766,3 +766,25 @@ export * from './pricing-tiers-schema';
 export * from './notifications-schema';
 
 // Cache bust 1761523424
+
+// ============================================
+// LISTING WITH SELLER DATA TYPE
+// ============================================
+// Extended listing type that includes seller information and review stats
+export type ListingWithSeller = Listing & {
+  seller?: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    profileImageUrl: string | null;
+    emailVerified: boolean | null;
+    phoneVerified: boolean | null;
+    idVerified: boolean | null;
+    addressVerified: boolean | null;
+  };
+  sellerStats?: {
+    averageRating: string | null;
+    totalReviews: number;
+    successRate: string | null;
+  } | null;
+};
