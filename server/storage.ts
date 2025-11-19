@@ -367,21 +367,54 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllListings(): Promise<Listing[]> {
-    return await db
-      .select()
+    const result = await db
+      .select({
+        listing: listings,
+        seller: users,
+        stats: userStatistics,
+      })
       .from(listings)
+      .innerJoin(users, eq(listings.userId, users.id))
+      .leftJoin(userStatistics, eq(users.id, userStatistics.userId))
       .where(eq(listings.status, "active"))
       .orderBy(desc(listings.createdAt));
+    
+    // Map results to include seller data and stats in listing object
+    return result.map((row) => ({
+      ...row.listing,
+      seller: row.seller,
+      sellerStats: row.stats ? {
+        averageRating: row.stats.averageRating,
+        totalReviews: row.stats.totalReviewsReceived || 0,
+        successRate: row.stats.sellerSuccessRate,
+      } : null,
+    }));
   }
 
   async getListingsByCategory(category: string): Promise<Listing[]> {
-    return await db
-      .select()
+    const result = await db
+      .select({
+        listing: listings,
+        seller: users,
+        stats: userStatistics,
+      })
       .from(listings)
+      .innerJoin(users, eq(listings.userId, users.id))
+      .leftJoin(userStatistics, eq(users.id, userStatistics.userId))
       .where(
         and(eq(listings.category, category), eq(listings.status, "active"))
       )
       .orderBy(desc(listings.createdAt));
+    
+    return result.map((row) => ({
+      ...row.listing,
+      seller: row.seller,
+      sellerStats: row.stats ? {
+        averageRating: row.stats.averageRating,
+        totalReviews: row.stats.totalReviewsReceived || 0,
+        successRate: row.stats.sellerSuccessRate,
+      } : null,
+    }));
   }
 
   async getListingsByBatchId(batchId: string): Promise<Listing[]> {
@@ -691,13 +724,27 @@ export class DatabaseStorage implements IStorage {
 
   async getUserFavorites(userId: string): Promise<Listing[]> {
     const result = await db
-      .select({ listing: listings })
+      .select({ 
+        listing: listings,
+        seller: users,
+        stats: userStatistics,
+      })
       .from(favorites)
       .innerJoin(listings, eq(favorites.listingId, listings.id))
+      .innerJoin(users, eq(listings.userId, users.id))
+      .leftJoin(userStatistics, eq(users.id, userStatistics.userId))
       .where(eq(favorites.userId, userId))
       .orderBy(desc(favorites.createdAt));
-
-    return result.map((row) => row.listing);
+    
+    return result.map((row) => ({
+      ...row.listing,
+      seller: row.seller,
+      sellerStats: row.stats ? {
+        averageRating: row.stats.averageRating,
+        totalReviews: row.stats.totalReviewsReceived || 0,
+        successRate: row.stats.sellerSuccessRate,
+      } : null,
+    }));
   }
 
   async isFavorited(userId: string, listingId: string): Promise<boolean> {

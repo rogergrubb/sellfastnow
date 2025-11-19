@@ -1190,23 +1190,13 @@ export default function Dashboard() {
                           : "N/A";
                         
                         // DEBUG: Log seller and stats data
-                        console.log('🔍 Dashboard Debug:', {
+                        console.log('🔍 Dashboard Favorites Debug:', {
                           listingId: listing.id,
                           listingTitle: listing.title,
-                          hasUser: !!user,
-                          userId: user?.id,
-                          userName: user ? `${user.firstName} ${user.lastName}` : 'N/A',
-                          hasUserReviewStats: !!userReviewStats,
-                          userReviewStats: userReviewStats,
-                          sellerProp: user ? {
-                            id: user.id,
-                            firstName: user.firstName,
-                            lastName: user.lastName,
-                          } : undefined,
-                          sellerStatsProp: userReviewStats ? {
-                            averageRating: userReviewStats.averageRating,
-                            totalReviews: userReviewStats.totalReviewsReceived,
-                          } : undefined
+                          hasSeller: !!listing.seller,
+                          sellerName: listing.seller ? `${listing.seller.firstName} ${listing.seller.lastName}` : 'N/A',
+                          hasSellerStats: !!listing.sellerStats,
+                          sellerStats: listing.sellerStats,
                         });
                         
                         return (
@@ -1218,21 +1208,8 @@ export default function Dashboard() {
                             location={listing.location}
                             timePosted={timePosted}
                             image={listing.images && listing.images.length > 0 ? listing.images[0] : undefined}
-                            seller={user ? {
-                              id: user.id,
-                              firstName: user.firstName,
-                              lastName: user.lastName,
-                              profileImageUrl: user.profileImageUrl,
-                              emailVerified: user.emailVerified,
-                              phoneVerified: user.phoneVerified,
-                              idVerified: user.idVerified,
-                              addressVerified: user.addressVerified,
-                            } : undefined}
-                            sellerStats={userReviewStats ? {
-                              averageRating: userReviewStats.averageRating,
-                              totalReviews: userReviewStats.totalReviewsReceived,
-                              successRate: null,
-                            } : undefined}
+                            seller={listing.seller}
+                            sellerStats={listing.sellerStats}
                           />
                         );
                       })}
