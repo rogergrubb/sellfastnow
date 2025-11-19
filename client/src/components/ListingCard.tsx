@@ -96,20 +96,6 @@ export default function ListingCard({
           {title}
         </h3>
         
-        {/* DEBUG: Log seller prop */}
-        {(() => {
-          console.log('🎯 ListingCard Debug:', {
-            listingId: id,
-            listingTitle: title,
-            hasSeller: !!seller,
-            seller: seller,
-            hasSellerStats: !!sellerStats,
-            sellerStats: sellerStats,
-            sellerName: seller ? `${seller.firstName} ${seller.lastName}` : 'N/A'
-          });
-          return null;
-        })()}
-        
         {seller && (
           <div className="mb-3 pb-3 border-b">
             <div className="flex items-center justify-between mb-1">

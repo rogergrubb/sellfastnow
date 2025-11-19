@@ -1189,16 +1189,6 @@ export default function Dashboard() {
                             })()
                           : "N/A";
                         
-                        // DEBUG: Log seller and stats data
-                        console.log('🔍 Dashboard Favorites Debug:', {
-                          listingId: listing.id,
-                          listingTitle: listing.title,
-                          hasSeller: !!listing.seller,
-                          sellerName: listing.seller ? `${listing.seller.firstName} ${listing.seller.lastName}` : 'N/A',
-                          hasSellerStats: !!listing.sellerStats,
-                          sellerStats: listing.sellerStats,
-                        });
-                        
                         return (
                           <ListingCard
                             key={listing.id}
