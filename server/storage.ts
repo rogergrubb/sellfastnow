@@ -68,7 +68,7 @@ import {
   type ListingWithSeller,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, sql } from "drizzle-orm";
+import { eq, and, or, desc, sql, inArray } from "drizzle-orm";
 
 export interface SearchFilters {
   query?: string;
@@ -399,7 +399,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(users)
       .leftJoin(userStatistics, eq(users.id, userStatistics.userId))
-      .where(sql`${users.id} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`);
+      .where(inArray(users.id, userIds));
     
     // Create a map for quick lookup
     const sellersMap = new Map(
@@ -466,7 +466,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(users)
       .leftJoin(userStatistics, eq(users.id, userStatistics.userId))
-      .where(sql`${users.id} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`);
+      .where(inArray(users.id, userIds));
     
     // Create a map for quick lookup
     const sellersMap = new Map(
@@ -669,7 +669,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(users)
       .leftJoin(userStatistics, eq(users.id, userStatistics.userId))
-      .where(sql`${users.id} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`);
+      .where(inArray(users.id, userIds));
 
     // Create a map for quick lookup
     const sellersMap = new Map(
@@ -839,7 +839,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(users)
       .leftJoin(userStatistics, eq(users.id, userStatistics.userId))
-      .where(sql`${users.id} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`);
+      .where(inArray(users.id, userIds));
     
     // Create a map for quick lookup
     const sellersMap = new Map(
