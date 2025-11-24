@@ -4,7 +4,7 @@
 import { Router } from "express";
 import { db } from "../db";
 import { messages, users, listings } from "../../shared/schema";
-import { eq, or, and, desc, sql } from "drizzle-orm";
+import { eq, or, and, desc, asc, sql } from "drizzle-orm";
 import { isAuthenticated } from "../supabaseAuth";
 
 const router = Router();
@@ -154,7 +154,7 @@ router.get("/:listingId/:otherUserId", isAuthenticated, async (req: any, res) =>
           )
         )
       )
-      .orderBy(desc(messages.createdAt))
+      .orderBy(asc(messages.createdAt))
       .limit(limit)
       .offset(offset);
 
