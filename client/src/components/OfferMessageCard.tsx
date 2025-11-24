@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Check, X, ArrowRightLeft, Star } from "lucide-react";
+import { DollarSign, Check, X, ArrowRightLeft, Star, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LeaveReviewModal } from "@/components/LeaveReviewModal";
 import { useAuth } from "@/lib/AuthContext";
+import { Link } from "wouter";
 
 interface OfferMessageCardProps {
   messageType: string;
@@ -256,7 +257,7 @@ export function OfferMessageCard({
 
             {/* Action buttons when offer is pending */}
             {!isOwnMessage && currentStatus === "pending" && !showCounterForm && !showAcceptForm && !showRejectForm && (
-              <div className="flex gap-2 mt-3">
+              <div className="flex flex-wrap gap-2 mt-3">
                 <Button
                   size="sm"
                   variant="default"
@@ -281,6 +282,19 @@ export function OfferMessageCard({
                   <X className="h-4 w-4 mr-1" />
                   Decline
                 </Button>
+                {/* View buyer's profile/reviews */}
+                {metadata.buyerId && (
+                  <Link href={`/users/${metadata.buyerId}`}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-blue-600 hover:text-blue-700"
+                    >
+                      <User className="h-4 w-4 mr-1" />
+                      View Buyer
+                    </Button>
+                  </Link>
+                )}
               </div>
             )}
 
@@ -515,6 +529,9 @@ export function OfferMessageCard({
     // Get buyer/seller IDs from metadata or fetched offer data
     const buyerId = metadata.buyerId || offerData?.buyerId;
     const sellerId = metadata.sellerId || offerData?.sellerId;
+    
+    // Determine the other user's ID (the person we want to view/review)
+    const otherUserId = user?.id === buyerId ? sellerId : buyerId;
 
     return (
       <>
@@ -529,16 +546,33 @@ export function OfferMessageCard({
               </h4>
               <p className="text-sm text-green-700 mb-3">{content}</p>
               
-              {/* Leave Review Button */}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleOpenReviewModal}
-                className="text-green-700 border-green-300 hover:bg-green-100"
-              >
-                <Star className="h-4 w-4 mr-1" />
-                Leave Review
-              </Button>
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-2">
+                {/* View Profile Button */}
+                {otherUserId && (
+                  <Link href={`/users/${otherUserId}`}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-blue-700 border-blue-300 hover:bg-blue-100"
+                    >
+                      <User className="h-4 w-4 mr-1" />
+                      View Profile
+                    </Button>
+                  </Link>
+                )}
+                
+                {/* Leave Review Button */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleOpenReviewModal}
+                  className="text-green-700 border-green-300 hover:bg-green-100"
+                >
+                  <Star className="h-4 w-4 mr-1" />
+                  Leave Review
+                </Button>
+              </div>
             </div>
           </div>
         </Card>
