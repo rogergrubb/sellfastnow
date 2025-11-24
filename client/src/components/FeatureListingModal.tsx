@@ -13,7 +13,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Sparkles, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY!);
 
@@ -72,16 +71,28 @@ function PaymentForm({
       } else if (paymentIntent && paymentIntent.status === "succeeded") {
         // Payment succeeded! Now activate the featured status
         try {
-          await apiRequest(
-            "POST",
+          const activateRes = await fetch(
             `/api/featured-listings/${listingId}/activate`,
             {
-              paymentIntentId: paymentIntent.id,
-              duration,
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify({
+                paymentIntentId: paymentIntent.id,
+                duration,
+              }),
             }
           );
+
+          if (!activateRes.ok) {
+            throw new Error(`Activation failed: ${activateRes.statusText}`);
+          }
+
           onSuccess();
         } catch (activateError: any) {
+          console.error("Activation error:", activateError);
           toast({
             title: "Activation Error",
             description: "Payment succeeded but failed to activate featured status. Please contact support.",
@@ -90,6 +101,7 @@ function PaymentForm({
         }
       }
     } catch (error: any) {
+      console.error("Payment error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to process payment",
@@ -140,15 +152,27 @@ export function FeatureListingModal({
   const handleContinue = async () => {
     setLoading(true);
     try {
-      const res = await apiRequest(
-        "POST",
+      const res = await fetch(
         `/api/featured-listings/${listingId}/feature`,
-        { duration: selectedDuration }
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ duration: selectedDuration }),
+        }
       );
-      const response = await res.json() as { clientSecret: string; amount: number; duration: string };
 
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to create payment (${res.status})`);
+      }
+
+      const response = await res.json() as { clientSecret: string; amount: number; duration: string };
       setClientSecret(response.clientSecret);
     } catch (error: any) {
+      console.error("Error creating payment:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to create payment",
