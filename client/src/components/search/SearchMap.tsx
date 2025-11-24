@@ -225,6 +225,8 @@ export default function SearchMap({ listings, center, radius, onRadiusChange }: 
             <Minus className="h-4 w-4" />
           </Button>
           <Input
+            id="manual-radius-miles"
+            name="manualRadiusMiles"
             type="number"
             value={manualMiles}
             onChange={(e) => handleManualMilesChange(e.target.value)}
@@ -283,6 +285,7 @@ export default function SearchMap({ listings, center, radius, onRadiusChange }: 
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          subdomains={['a', 'b', 'c']}
         />
 
         {/* Search Radius Circle */}
