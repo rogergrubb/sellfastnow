@@ -131,19 +131,19 @@ function AppContent() {
     }
   }, [user]);
   
-  // Show referral modal after login (once per session)
+  // Show referral modal after login (once per user, persisted)
   useEffect(() => {
     if (user?.id && !hasShownModal) {
-      // Check if user has seen the modal in this session
-      const hasSeenModal = sessionStorage.getItem('referral_modal_shown');
+      // Check if user has seen the modal ever (using localStorage with user-specific key)
+      const hasSeenModal = localStorage.getItem(`referral_modal_shown_${user.id}`);
       
       if (!hasSeenModal) {
-        // Delay showing modal by 1 second after login
+        // Delay showing modal by 2 seconds after login to let page settle
         const timer = setTimeout(() => {
           setShowReferralModal(true);
           setHasShownModal(true);
-          sessionStorage.setItem('referral_modal_shown', 'true');
-        }, 1000);
+          localStorage.setItem(`referral_modal_shown_${user.id}`, 'true');
+        }, 2000);
         
         return () => clearTimeout(timer);
       }
