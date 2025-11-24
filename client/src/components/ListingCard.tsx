@@ -1,4 +1,4 @@
-import { Heart, MapPin, Clock, Zap } from "lucide-react";
+import { Heart, MapPin, Clock, Zap, Star, ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -47,8 +47,11 @@ export default function ListingCard({
   const [favorite, setFavorite] = useState(isFavorite);
   
   const sellerName = seller 
-    ? `${seller.firstName || ''} ${seller.lastName || ''}`.trim() || 'Unknown Seller'
-    : 'Unknown Seller';
+    ? `${seller.firstName || ''} ${seller.lastName || ''}`.trim() || 'Seller'
+    : 'Seller';
+
+  const hasReviews = sellerStats?.totalReviews && sellerStats.totalReviews > 0;
+  const rating = sellerStats?.averageRating ? Number(sellerStats.averageRating) : 0;
 
   return (
     <Link href={`/listings/${id}`}>
@@ -73,12 +76,55 @@ export default function ListingCard({
             PROMOTED
           </div>
         )}
+        
+        {/* Seller Rating Badge - Top Right Corner (More Prominent) */}
+        {seller && (
+          <div 
+            className="absolute bottom-2 left-2 right-2 bg-white/95 backdrop-blur-sm rounded-lg px-2 py-1.5 shadow-md"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              window.location.href = `/users/${seller.id}`;
+            }}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-xs font-medium text-gray-700 truncate">{sellerName}</span>
+                <VerificationBadges user={seller} size="sm" showLabels={false} />
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {hasReviews ? (
+                  <>
+                    <div className="flex items-center">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`h-3 w-3 ${
+                            star <= Math.round(rating)
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs font-semibold text-gray-800">{rating.toFixed(1)}</span>
+                    <span className="text-xs text-gray-500">({sellerStats?.totalReviews})</span>
+                  </>
+                ) : (
+                  <span className="text-xs text-gray-500 italic">New seller</span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        
         <Button
           size="icon"
           variant="ghost"
           className="absolute top-2 right-2 bg-white/80 backdrop-blur-sm hover:bg-white"
           onClick={(e) => {
             e.stopPropagation();
+            e.preventDefault();
             setFavorite(!favorite);
             console.log(`Favorite toggled for ${id}`);
           }}
@@ -96,25 +142,27 @@ export default function ListingCard({
           {title}
         </h3>
         
+        {/* View Seller Profile Link */}
         {seller && (
-          <div className="mb-3 pb-3 border-b bg-gray-50/50 -mx-4 px-4 py-3 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-gray-900">Seller: {sellerName}</p>
-              <VerificationBadges user={seller} size="sm" />
-            </div>
-            <ReviewBadge
-              userId={seller.id}
-              userName={sellerName}
-              rating={sellerStats?.averageRating}
-              reviewCount={sellerStats?.totalReviews || 0}
-              showLink={false}
-              size="medium"
-              variant="inline"
-            />
+          <div 
+            className="mb-3 flex items-center justify-between"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            <Link 
+              href={`/users/${seller.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+            >
+              View seller profile & reviews
+              <ExternalLink className="h-3 w-3" />
+            </Link>
             {sellerStats?.successRate !== undefined && sellerStats.successRate !== null && (
-              <p className="text-xs text-muted-foreground mt-2">
-                {Number(sellerStats.successRate).toFixed(0)}% success rate
-              </p>
+              <span className="text-xs text-green-600 font-medium">
+                {Number(sellerStats.successRate).toFixed(0)}% success
+              </span>
             )}
           </div>
         )}
