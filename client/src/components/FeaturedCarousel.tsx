@@ -175,7 +175,7 @@ export function FeaturedCarousel() {
               key={`${listing.id}-${index}`}
               className="carousel-item flex-shrink-0"
               style={{
-                width: 'calc((100% - 3rem) / 4)', // 4 items visible on desktop
+                width: 'calc((100% - 28px) / 8)', // 8 items visible on desktop
               }}
             >
               <Link href={`/listings/${listing.id}`}>
@@ -189,7 +189,7 @@ export function FeaturedCarousel() {
                   </div>
 
                   {/* Image Container */}
-                  <div className="relative w-full h-64 bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                  <div className="relative w-full h-48 bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                     {listing.primaryImage ? (
                       <img
                         src={listing.primaryImage}
@@ -204,14 +204,14 @@ export function FeaturedCarousel() {
 
                     {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                        <h3 className="font-semibold text-sm line-clamp-2 mb-1">
+                      <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
+                        <h3 className="font-semibold text-xs line-clamp-2 mb-1">
                           {listing.title}
                         </h3>
-                        <p className="text-lg font-bold">
+                        <p className="text-sm font-bold">
                           ${parseFloat(listing.price).toFixed(2)}
                         </p>
-                        <p className="text-xs text-gray-300 mt-1">
+                        <p className="text-xs text-gray-300 mt-0.5 line-clamp-1">
                           {listing.location}
                         </p>
                       </div>
@@ -242,15 +242,15 @@ export function FeaturedCarousel() {
           }
         }
 
-        @media (min-width: 641px) and (max-width: 768px) {
+        @media (min-width: 641px) and (max-width: 1024px) {
           .carousel-item {
-            width: calc((100% - 2rem) / 3) !important; /* 3 items on tablet */
+            width: calc((100% - 5rem) / 6) !important; /* 6 items on tablet */
           }
         }
 
-        @media (min-width: 769px) and (max-width: 1024px) {
+        @media (min-width: 1025px) {
           .carousel-item {
-            width: calc((100% - 2rem) / 3) !important; /* 3 items on small desktop */
+            width: calc((100% - 28px) / 8) !important; /* 8 items on desktop */
           }
         }
       `}</style>
