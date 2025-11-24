@@ -30,7 +30,7 @@ export default function SearchPage() {
     lng: number;
     address: string;
   } | null>(null);
-  const [radius, setRadius] = useState(25); // km
+  const [radius, setRadius] = useState(8); // km (default ~5 miles)
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('');
   const [minPrice, setMinPrice] = useState<number | undefined>();
@@ -169,11 +169,11 @@ export default function SearchPage() {
                 onChange={(e) => setRadius(parseInt(e.target.value))}
                 className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
               >
-                <option value={5}>5 km</option>
-                <option value={10}>10 km</option>
-                <option value={25}>25 km</option>
-                <option value={50}>50 km</option>
-                <option value={100}>100 km</option>
+                <option value={8}>5 mi</option>
+                <option value={16}>10 mi</option>
+                <option value={40}>25 mi</option>
+                <option value={80}>50 mi</option>
+                <option value={160}>100 mi</option>
               </select>
             </div>
 
@@ -311,7 +311,7 @@ export default function SearchPage() {
           <>
             {/* Results Count */}
             <div className="mb-4 text-sm text-gray-600">
-              Found {listings?.length || 0} listings within {radius}km
+              Found {listings?.length || 0} listings within {(radius * 0.621371).toFixed(0)} miles
             </div>
 
             {/* List or Map View */}
@@ -322,6 +322,7 @@ export default function SearchPage() {
                 listings={listings || []}
                 center={searchLocation}
                 radius={radius}
+                onRadiusChange={setRadius}
               />
             )}
           </>
