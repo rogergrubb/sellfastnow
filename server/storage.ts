@@ -1222,24 +1222,92 @@ export class DatabaseStorage implements IStorage {
 
   // Statistics operations
   async getUserStatistics(userId: string): Promise<UserStatistics | undefined> {
-    const [stats] = await db
-      .select()
-      .from(userStatistics)
-      .where(eq(userStatistics.userId, userId));
+    try {
+      const [stats] = await db
+        .select()
+        .from(userStatistics)
+        .where(eq(userStatistics.userId, userId));
 
-    if (!stats) {
-      // Create default statistics for new users
-      const [newStats] = await db
-        .insert(userStatistics)
-        .values({
-          userId,
-          memberSince: new Date(),
-        })
-        .returning();
-      return newStats;
+      if (!stats) {
+        // Create default statistics for new users
+        try {
+          const [newStats] = await db
+            .insert(userStatistics)
+            .values({
+              userId,
+              memberSince: new Date(),
+            })
+            .onConflictDoNothing()
+            .returning();
+          
+          if (newStats) {
+            return newStats;
+          }
+          
+          // If insert didn't return (conflict), try fetching again
+          const [existingStats] = await db
+            .select()
+            .from(userStatistics)
+            .where(eq(userStatistics.userId, userId));
+          return existingStats;
+        } catch (insertError) {
+          console.error("Error creating user statistics:", insertError);
+          // Return a default object if insert fails
+          return {
+            id: '',
+            userId,
+            totalSales: 0,
+            successfulSales: 0,
+            cancelledBySeller: 0,
+            lastMinuteCancelsBySeller: 0,
+            cancelledByBuyerOnSeller: 0,
+            sellerNoShows: 0,
+            buyerNoShowsOnSeller: 0,
+            totalPurchases: 0,
+            successfulPurchases: 0,
+            cancelledByBuyer: 0,
+            lastMinuteCancelsByBuyer: 0,
+            cancelledBySellerOnBuyer: 0,
+            buyerNoShows: 0,
+            sellerNoShowsOnBuyer: 0,
+            recentTransactions90d: 0,
+            recentCancellations90d: 0,
+            recentNoShows90d: 0,
+            avgResponseTimeMinutes: null,
+            responseRatePercent: null,
+            responsesWithin15min: 0,
+            responsesWithin1hour: 0,
+            responsesWithin24hours: 0,
+            totalMessagesReceived: 0,
+            checkedInEarly: 0,
+            checkedInOnTime: 0,
+            checkedInLate: 0,
+            totalCheckins: 0,
+            totalReviewsReceived: 0,
+            fiveStarReviews: 0,
+            fourStarReviews: 0,
+            threeStarReviews: 0,
+            twoStarReviews: 0,
+            oneStarReviews: 0,
+            averageRating: null,
+            phoneVerified: false,
+            emailVerified: false,
+            idVerified: false,
+            stripeConnected: false,
+            sellerSuccessRate: null,
+            buyerSuccessRate: null,
+            overallSuccessRate: null,
+            memberSince: new Date(),
+            updatedAt: new Date(),
+          } as UserStatistics;
+        }
+      }
+
+      return stats;
+    } catch (error) {
+      console.error("Error in getUserStatistics:", error);
+      throw error;
     }
-
-    return stats;
   }
 
   async getUserStatisticsSummary(userId: string): Promise<any> {
@@ -1374,41 +1442,81 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserTransactionTimeline(userId: string): Promise<TransactionEvent[]> {
-    return await db
-      .select()
-      .from(transactionEvents)
-      .where(eq(transactionEvents.userId, userId))
-      .orderBy(desc(transactionEvents.createdAt));
+    try {
+      return await db
+        .select()
+        .from(transactionEvents)
+        .where(eq(transactionEvents.userId, userId))
+        .orderBy(desc(transactionEvents.createdAt));
+    } catch (error) {
+      console.error("Error in getUserTransactionTimeline:", error);
+      return [];
+    }
   }
 
   async getUserMonthlyStatistics(userId: string, months: number = 3): Promise<any[]> {
-    const monthsAgo = new Date();
-    monthsAgo.setMonth(monthsAgo.getMonth() - months);
+    try {
+      const monthsAgo = new Date();
+      monthsAgo.setMonth(monthsAgo.getMonth() - months);
 
-    const result = await db.execute(sql`
-      SELECT 
-        TO_CHAR(created_at, 'YYYY-MM') as month,
-        COUNT(*) as total,
-        COUNT(*) FILTER (WHERE event_type = 'completed') as completed,
-        COUNT(*) FILTER (WHERE event_type = 'cancelled') as cancelled,
-        COUNT(*) FILTER (WHERE event_type = 'no_show') as no_shows
-      FROM transaction_events te
-      WHERE 
-        (te.user_id = ${userId} OR 
-         te.listing_id IN (SELECT id FROM listings WHERE user_id = ${userId}))
-        AND te.created_at >= ${monthsAgo.toISOString()}
-      GROUP BY TO_CHAR(created_at, 'YYYY-MM')
-      ORDER BY month DESC
-      LIMIT ${months}
-    `);
+      const result = await db.execute(sql`
+        SELECT 
+          TO_CHAR(created_at, 'YYYY-MM') as month,
+          COUNT(*) as total,
+          COUNT(*) FILTER (WHERE event_type = 'completed') as completed,
+          COUNT(*) FILTER (WHERE event_type = 'cancelled') as cancelled,
+          COUNT(*) FILTER (WHERE event_type = 'no_show') as no_shows
+        FROM transaction_events te
+        WHERE 
+          (te.user_id = ${userId} OR 
+           te.listing_id IN (SELECT id FROM listings WHERE user_id = ${userId}))
+          AND te.created_at >= ${monthsAgo.toISOString()}
+        GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+        ORDER BY month DESC
+        LIMIT ${months}
+      `);
 
-    return result.rows.map((row: any) => ({
-      month: row.month,
-      total: Number(row.total),
-      completed: Number(row.completed),
-      cancelled: Number(row.cancelled),
-      noShows: Number(row.no_shows),
-    }));
+      if (!result.rows || result.rows.length === 0) {
+        // Return placeholder months with zero data
+        const placeholders = [];
+        for (let i = 0; i < months; i++) {
+          const date = new Date();
+          date.setMonth(date.getMonth() - i);
+          placeholders.push({
+            month: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+            total: 0,
+            completed: 0,
+            cancelled: 0,
+            noShows: 0,
+          });
+        }
+        return placeholders;
+      }
+
+      return result.rows.map((row: any) => ({
+        month: row.month,
+        total: Number(row.total),
+        completed: Number(row.completed),
+        cancelled: Number(row.cancelled),
+        noShows: Number(row.no_shows),
+      }));
+    } catch (error) {
+      console.error("Error in getUserMonthlyStatistics:", error);
+      // Return placeholder months on error
+      const placeholders = [];
+      for (let i = 0; i < months; i++) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        placeholders.push({
+          month: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+          total: 0,
+          completed: 0,
+          cancelled: 0,
+          noShows: 0,
+        });
+      }
+      return placeholders;
+    }
   }
 
   async recalculateUserStatistics(userId: string): Promise<UserStatistics> {

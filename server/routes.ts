@@ -1642,7 +1642,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/statistics/user/:userId", async (req, res) => {
     try {
       const { userId } = req.params;
-      const stats = await storage.getUserStatistics(userId);
+      
+      // First check if user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Try to get statistics, create default if not exists
+      let stats;
+      try {
+        stats = await storage.getUserStatistics(userId);
+      } catch (dbError: any) {
+        console.error("Error fetching user statistics from DB:", dbError);
+        // Return default stats if DB fails
+        stats = {
+          userId,
+          totalSales: 0,
+          successfulSales: 0,
+          cancelledBySeller: 0,
+          lastMinuteCancelsBySeller: 0,
+          cancelledByBuyerOnSeller: 0,
+          sellerNoShows: 0,
+          buyerNoShowsOnSeller: 0,
+          totalPurchases: 0,
+          successfulPurchases: 0,
+          cancelledByBuyer: 0,
+          lastMinuteCancelsByBuyer: 0,
+          cancelledBySellerOnBuyer: 0,
+          buyerNoShows: 0,
+          sellerNoShowsOnBuyer: 0,
+          recentTransactions90d: 0,
+          recentCancellations90d: 0,
+          recentNoShows90d: 0,
+          avgResponseTimeMinutes: null,
+          responseRatePercent: null,
+          responsesWithin15min: 0,
+          responsesWithin1hour: 0,
+          responsesWithin24hours: 0,
+          totalMessagesReceived: 0,
+          checkedInEarly: 0,
+          checkedInOnTime: 0,
+          checkedInLate: 0,
+          totalCheckins: 0,
+          totalReviewsReceived: 0,
+          fiveStarReviews: 0,
+          fourStarReviews: 0,
+          threeStarReviews: 0,
+          twoStarReviews: 0,
+          oneStarReviews: 0,
+          averageRating: null,
+          phoneVerified: user.phoneVerified || false,
+          emailVerified: user.emailVerified || false,
+          idVerified: user.idVerified || false,
+          stripeConnected: false,
+          sellerSuccessRate: null,
+          buyerSuccessRate: null,
+          overallSuccessRate: null,
+          memberSince: user.createdAt || new Date(),
+          updatedAt: new Date(),
+        };
+      }
+      
       res.json(stats);
     } catch (error) {
       console.error("Error fetching user statistics:", error);
@@ -1654,7 +1715,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/statistics/user/:userId/timeline", async (req, res) => {
     try {
       const { userId } = req.params;
-      const timeline = await storage.getUserTransactionTimeline(userId);
+      let timeline = [];
+      try {
+        timeline = await storage.getUserTransactionTimeline(userId);
+      } catch (dbError) {
+        console.error("Error fetching user timeline from DB:", dbError);
+        // Return empty timeline
+      }
       res.json(timeline);
     } catch (error) {
       console.error("Error fetching user timeline:", error);
@@ -1667,7 +1734,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const months = req.query.months ? parseInt(req.query.months as string) : 3;
-      const monthlyStats = await storage.getUserMonthlyStatistics(userId, months);
+      
+      let monthlyStats: any[] = [];
+      try {
+        monthlyStats = await storage.getUserMonthlyStatistics(userId, months);
+      } catch (dbError) {
+        console.error("Error fetching user monthly statistics from DB:", dbError);
+        // Return empty monthly stats - generate placeholder months
+        const result = [];
+        for (let i = 0; i < months; i++) {
+          const date = new Date();
+          date.setMonth(date.getMonth() - i);
+          result.push({
+            month: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+            total: 0,
+            completed: 0,
+            cancelled: 0,
+            noShows: 0,
+          });
+        }
+        monthlyStats = result;
+      }
+      
       res.json(monthlyStats);
     } catch (error) {
       console.error("Error fetching user monthly statistics:", error);
