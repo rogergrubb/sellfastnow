@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet.markercluster';
 import './MapView.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,7 +36,7 @@ interface MapViewProps {
 export default function MapView({ listings, userLocation, onListingClick, onClose }: MapViewProps) {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const markerClusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
+  const markersRef = useRef<L.Marker[]>([]);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
@@ -91,18 +90,9 @@ export default function MapView({ listings, userLocation, onListingClick, onClos
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Clear existing marker cluster group
-    if (markerClusterGroupRef.current) {
-      mapRef.current.removeLayer(markerClusterGroupRef.current);
-    }
-
-    // Create new marker cluster group
-    markerClusterGroupRef.current = L.markerClusterGroup({
-      maxClusterRadius: 50,
-      spiderfyOnMaxZoom: true,
-      showCoverageOnHover: false,
-      zoomToBoundsOnClick: true,
-    });
+    // Clear existing markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
 
     // Add listing markers
     const validListings = listings.filter(
@@ -114,6 +104,7 @@ export default function MapView({ listings, userLocation, onListingClick, onClos
       const lon = parseFloat(listing.locationLongitude!);
 
       const marker = L.marker([lat, lon]).addTo(mapRef.current!);
+      markersRef.current.push(marker);
 
       // Create popup content
       const imageUrl = listing.images[0] || '/placeholder.png';
@@ -139,12 +130,7 @@ export default function MapView({ listings, userLocation, onListingClick, onClos
         maxWidth: 250,
         className: 'listing-popup'
       });
-
-      markerClusterGroupRef.current!.addLayer(marker);
     });
-
-    // Add cluster group to map
-    mapRef.current.addLayer(markerClusterGroupRef.current);
 
     // Fit bounds to show all markers
     if (validListings.length > 0) {
