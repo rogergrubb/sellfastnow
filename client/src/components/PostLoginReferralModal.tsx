@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserPlus, Gift, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface PostLoginReferralModalProps {
   isOpen: boolean;
@@ -17,20 +18,7 @@ export function PostLoginReferralModal({ isOpen, onClose }: PostLoginReferralMod
 
   const sendReferral = useMutation({
     mutationFn: async (friendEmail: string) => {
-      const response = await fetch("/api/referrals", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ friendEmail }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to send referral");
-      }
-
+      const response = await apiRequest("POST", "/api/referrals", { friendEmail });
       return response.json();
     },
     onSuccess: () => {
