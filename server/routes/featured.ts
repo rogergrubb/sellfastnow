@@ -57,12 +57,12 @@ router.post("/:id/feature", isAuthenticated, async (req: any, res) => {
   console.log("✅ Feature listing endpoint called");
   console.log("Request params:", req.params);
   console.log("Request body:", req.body);
-  console.log("Auth user ID:", req.user?.userId);
+  console.log("Auth user ID:", req.user?.id);
   
   try {
     const { id } = req.params;
     const { duration } = req.body as { duration: "24h" | "48h" | "7d" };
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
     
     console.log("Processing feature request for listing:", id, "duration:", duration, "user:", userId);
 
@@ -191,7 +191,7 @@ router.post("/:id/activate", isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
     const { paymentIntentId, duration } = req.body as { paymentIntentId: string; duration: string };
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -308,3 +308,4 @@ router.post("/webhook", async (req, res) => {
 
 
 export default router;
+
