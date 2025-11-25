@@ -343,4 +343,94 @@ export function getPerformanceMetrics(): PerformanceMetrics[] {
   return performanceLog;
 }
 
+/**
+ * Generate a bundle summary for multiple products
+ */
+export async function generateMultiItemBundleSummary(products: any[]): Promise<{
+  title: string;
+  description: string;
+  suggestedBundlePrice: number;
+}> {
+  const startTime = startMetric('generateMultiItemBundleSummary');
+  
+  try {
+    if (!products || products.length === 0) {
+      throw new Error("No products provided for bundle");
+    }
+    
+    // Create a summary of products for context
+    const productSummary = products
+      .map((p, i) => `${i + 1}. ${p.title || 'Untitled'} - $${p.usedPrice || p.price || 'N/A'}`)
+      .join('\n');
+    
+    // Get individual prices to calculate bundle discount
+    const individualPrices = products.map(p => parseFloat(p.usedPrice || p.price || '0'));
+    const totalIndividualPrice = individualPrices.reduce((sum, price) => sum + price, 0);
+    
+    const genAI = getGemini();
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    const prompt = `You are an e-commerce expert. I have the following items that a seller wants to bundle together:
+
+${productSummary}
+
+Total individual value: $${totalIndividualPrice.toFixed(2)}
+
+Generate a compelling bundle offer. Respond in JSON format ONLY (no markdown, no extra text):
+{
+  "title": "A catchy, descriptive bundle title (e.g., 'Complete Home Studio Bundle')",
+  "description": "A 2-3 sentence marketing description explaining the bundle value and what buyer gets",
+  "suggestedBundlePrice": A recommended bundle price that offers 10-20% discount from individual items (as a number, not string)
+}
+
+Rules:
+- Title should be under 80 characters
+- Description should be 2-3 sentences, marketing-focused
+- suggestedBundlePrice should be 10-20% less than the sum of individual prices ($${totalIndividualPrice.toFixed(2)})
+- Respond ONLY with valid JSON, no additional text`;
+
+    const response = await model.generateContent(prompt);
+    const responseText = response.response.text();
+    
+    console.log('🎁 Gemini bundle response:', responseText);
+    
+    // Parse the JSON response
+    let bundleSummary;
+    try {
+      bundleSummary = JSON.parse(responseText);
+    } catch (parseError) {
+      // If JSON parsing fails, try to extract JSON from the response
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        bundleSummary = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error("Failed to parse bundle summary response");
+      }
+    }
+    
+    // Validate the response
+    if (!bundleSummary.title || !bundleSummary.description || !bundleSummary.suggestedBundlePrice) {
+      throw new Error("Invalid bundle summary structure");
+    }
+    
+    // Ensure price is a number
+    bundleSummary.suggestedBundlePrice = Number(bundleSummary.suggestedBundlePrice);
+    
+    // Validate price is reasonable (10-90% of individual total)
+    if (bundleSummary.suggestedBundlePrice < totalIndividualPrice * 0.1 || 
+        bundleSummary.suggestedBundlePrice > totalIndividualPrice * 0.9) {
+      console.warn(`⚠️ Bundle price ${bundleSummary.suggestedBundlePrice} seems unusual, adjusting...`);
+      bundleSummary.suggestedBundlePrice = totalIndividualPrice * 0.85; // Default to 15% discount
+    }
+    
+    endMetric(startTime, 'generateMultiItemBundleSummary');
+    
+    return bundleSummary;
+  } catch (error: any) {
+    endMetric(startTime, 'generateMultiItemBundleSummary');
+    console.error("❌ ERROR generating bundle summary:", error.message);
+    throw new Error(`Failed to generate bundle summary: ${error.message}`);
+  }
+}
+
 // Force rebuild Mon Nov  3 03:51:37 EST 2025
