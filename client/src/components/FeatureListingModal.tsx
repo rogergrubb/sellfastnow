@@ -13,6 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Sparkles, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY!);
 
@@ -71,14 +72,21 @@ function PaymentForm({
       } else if (paymentIntent && paymentIntent.status === "succeeded") {
         // Payment succeeded! Now activate the featured status
         try {
+          const session = await supabase.auth.getSession();
+          const token = session.data.session?.access_token;
+
+          if (!token) {
+            throw new Error("Authentication failed. Please log in again.");
+          }
+
           const activateRes = await fetch(
             `/api/featured-listings/${listingId}/activate`,
             {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
               },
-              credentials: "include",
               body: JSON.stringify({
                 paymentIntentId: paymentIntent.id,
                 duration,
@@ -87,7 +95,8 @@ function PaymentForm({
           );
 
           if (!activateRes.ok) {
-            throw new Error(`Activation failed: ${activateRes.statusText}`);
+            const errorData = await activateRes.json().catch(() => ({}));
+            throw new Error(errorData.message || `Activation failed: ${activateRes.statusText}`);
           }
 
           onSuccess();
@@ -95,7 +104,7 @@ function PaymentForm({
           console.error("Activation error:", activateError);
           toast({
             title: "Activation Error",
-            description: "Payment succeeded but failed to activate featured status. Please contact support.",
+            description: activateError.message || "Payment succeeded but failed to activate featured status. Please contact support.",
             variant: "destructive",
           });
         }
@@ -152,14 +161,22 @@ export function FeatureListingModal({
   const handleContinue = async () => {
     setLoading(true);
     try {
+      // Get the access token from Supabase session
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+
+      if (!token) {
+        throw new Error("Authentication failed. Please log in again.");
+      }
+
       const res = await fetch(
         `/api/featured-listings/${listingId}/feature`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
           },
-          credentials: "include",
           body: JSON.stringify({ duration: selectedDuration }),
         }
       );
