@@ -8,7 +8,7 @@ import ListingCard from "@/components/ListingCard";
 import { FeaturedCarousel } from "@/components/FeaturedCarousel";
 import { 
   Search, Plus, TrendingUp, Zap, DollarSign, 
-  Package, Sparkles, CheckCircle, ArrowRight, Share2 
+  Package, Sparkles, CheckCircle, ArrowRight, Share2, Clock, Star, Flame 
 } from "lucide-react";
 import { SocialMediaShareModal } from "@/components/SocialMediaShareModal";
 import type { Listing } from "@shared/schema";
@@ -54,7 +54,7 @@ export default function HomeNew() {
                 Sell Even Faster Now With Quick Social Media Links!
               </p>
               <p className="text-base sm:text-lg md:text-xl text-green-600 dark:text-green-400 font-semibold mb-6 md:mb-8">
-                Post for FREE* <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-normal">(Limitations apply)</span>
+                Post for Free • Keep 99%+ of Sales
               </p>
 
               {/* Quick Actions - Craigslist Style */}
@@ -84,22 +84,150 @@ export default function HomeNew() {
               </div>
             </div>
 
+            {/* Featured Listings Value Proposition Card - ABOVE Carousel */}
+            <div className="mb-12 md:mb-16">
+              <div className="bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 dark:from-yellow-600 dark:via-orange-600 dark:to-red-600 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl">
+                <div className="grid md:grid-cols-3 gap-6 md:gap-8 mb-6">
+                  {/* Stat 1 */}
+                  <div className="bg-white dark:bg-gray-900 rounded-lg p-4 md:p-6 text-center">
+                    <div className="flex justify-center mb-2">
+                      <Flame className="w-8 h-8 text-red-500" />
+                    </div>
+                    <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-1">
+                      3X
+                    </div>
+                    <p className="text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">
+                      Faster Sales
+                    </p>
+                  </div>
+
+                  {/* Stat 2 */}
+                  <div className="bg-white dark:bg-gray-900 rounded-lg p-4 md:p-6 text-center">
+                    <div className="flex justify-center mb-2">
+                      <TrendingUp className="w-8 h-8 text-green-500" />
+                    </div>
+                    <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-1">
+                      5K+
+                    </div>
+                    <p className="text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">
+                      Views/Week
+                    </p>
+                  </div>
+
+                  {/* Stat 3 */}
+                  <div className="bg-white dark:bg-gray-900 rounded-lg p-4 md:p-6 text-center">
+                    <div className="flex justify-center mb-2">
+                      <Clock className="w-8 h-8 text-blue-500" />
+                    </div>
+                    <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-1">
+                      24hrs
+                    </div>
+                    <p className="text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">
+                      Only $5
+                    </p>
+                  </div>
+                </div>
+
+                {/* CTA Section */}
+                <div className="bg-white dark:bg-gray-900 rounded-lg p-6 md:p-8">
+                  <div className="grid md:grid-cols-3 gap-4 mb-6">
+                    {/* Price Option 1 */}
+                    <div className="border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center hover:border-orange-400 transition-colors">
+                      <div className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                        $5
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        24 Hours
+                      </p>
+                      <p className="text-xs text-gray-500 mb-3">
+                        Perfect for quick sales
+                      </p>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => navigate('/post-ad')}
+                      >
+                        Start Now
+                      </Button>
+                    </div>
+
+                    {/* Price Option 2 */}
+                    <div className="border-2 border-orange-400 bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 text-center relative">
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                        BEST VALUE
+                      </div>
+                      <div className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                        $10
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        48 Hours
+                      </p>
+                      <p className="text-xs text-gray-500 mb-3">
+                        Most popular choice
+                      </p>
+                      <Button 
+                        size="sm" 
+                        className="w-full bg-orange-500 hover:bg-orange-600"
+                        onClick={() => navigate('/post-ad')}
+                      >
+                        Feature Now
+                      </Button>
+                    </div>
+
+                    {/* Price Option 3 */}
+                    <div className="border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center hover:border-orange-400 transition-colors">
+                      <div className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                        $25
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        7 Days
+                      </p>
+                      <p className="text-xs text-gray-500 mb-3">
+                        Maximum visibility
+                      </p>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => navigate('/post-ad')}
+                      >
+                        Start Now
+                      </Button>
+                    </div>
+                  </div>
+
+                  <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+                    💡 Featured listings appear in our carousel at the top of the homepage. Get maximum exposure.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Featured Listings Carousel */}
             <div className="mt-8 md:mt-12">
+              <div className="mb-6">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                  🔥 Currently Featured
+                </h2>
+                <p className="text-gray-600 dark:text-gray-300">
+                  These items are selling fast. See what's trending right now.
+                </p>
+              </div>
               <FeaturedCarousel />
             </div>
           </div>
         </section>
 
         {/* Bulk Sellers Section - Top Priority */}
-        <section className="py-12 md:py-16 lg:py-20 bg-white dark:bg-gray-900">
+        <section className="py-12 md:py-16 lg:py-20 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8 md:mb-12">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3 md:mb-4 px-2">
                 Built for Business Sellers
               </h2>
               <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-300 px-4">
-                Liquidators, estate sales, realtors, and bulk sellers save thousands
+                Liquidators, estate sales, realtors, and bulk sellers save thousands per year
               </p>
             </div>
 
