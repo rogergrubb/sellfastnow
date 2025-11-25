@@ -107,10 +107,10 @@ export default function HomeNew() {
                       <TrendingUp className="w-8 h-8 text-green-500" />
                     </div>
                     <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-1">
-                      5K+
+                      #1
                     </div>
                     <p className="text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">
-                      Views/Week
+                      More Visibility
                     </p>
                   </div>
 
@@ -198,7 +198,7 @@ export default function HomeNew() {
                   </div>
 
                   <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                    💡 Featured listings appear in our carousel at the top of the homepage. Get maximum exposure.
+                    💡 Featured listings appear in our carousel at the top of the homepage. Customers see trending items first.
                   </p>
                 </div>
               </div>
