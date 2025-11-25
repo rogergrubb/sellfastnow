@@ -38,7 +38,7 @@ export default function ListingPaymentSuccess() {
           throw new Error('Failed to verify payment');
         }
 
-        const { status: paymentStatus, paymentIntentId, sessionId } = await verifyResponse.json();
+        const { status: paymentStatus, paymentIntentId } = await verifyResponse.json();
 
         if (paymentStatus !== 'paid') {
           setStatus('error');
