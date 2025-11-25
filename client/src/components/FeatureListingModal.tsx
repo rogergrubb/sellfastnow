@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Sparkles, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { apiRequest } from "@/lib/queryClient";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY!);
 
@@ -72,33 +72,14 @@ function PaymentForm({
       } else if (paymentIntent && paymentIntent.status === "succeeded") {
         // Payment succeeded! Now activate the featured status
         try {
-          const session = await supabase.auth.getSession();
-          const token = session.data.session?.access_token;
-
-          if (!token) {
-            throw new Error("Authentication failed. Please log in again.");
-          }
-
-          const activateRes = await fetch(
+          await apiRequest(
+            "POST",
             `/api/featured-listings/${listingId}/activate`,
             {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                paymentIntentId: paymentIntent.id,
-                duration,
-              }),
+              paymentIntentId: paymentIntent.id,
+              duration,
             }
           );
-
-          if (!activateRes.ok) {
-            const errorData = await activateRes.json().catch(() => ({}));
-            throw new Error(errorData.message || `Activation failed: ${activateRes.statusText}`);
-          }
-
           onSuccess();
         } catch (activateError: any) {
           console.error("Activation error:", activateError);
@@ -161,33 +142,14 @@ export function FeatureListingModal({
   const handleContinue = async () => {
     setLoading(true);
     try {
-      // Get the access token from Supabase session
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
-
-      if (!token) {
-        throw new Error("Authentication failed. Please log in again.");
-      }
-
-      const res = await fetch(
+      const response = await apiRequest(
+        "POST",
         `/api/featured-listings/${listingId}/feature`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify({ duration: selectedDuration }),
-        }
+        { duration: selectedDuration }
       );
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || `Failed to create payment (${res.status})`);
-      }
-
-      const response = await res.json() as { clientSecret: string; amount: number; duration: string };
-      setClientSecret(response.clientSecret);
+      const data = await response.json() as { clientSecret: string; amount: number; duration: string };
+      setClientSecret(data.clientSecret);
     } catch (error: any) {
       console.error("Error creating payment:", error);
       toast({
