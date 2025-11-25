@@ -89,6 +89,7 @@ router.get("/verify-session/:sessionId", isAuthenticated, async (req: any, res) 
     res.json({
       status: session.payment_status,
       paymentIntentId: session.payment_intent as string,
+      sessionId: sessionId,
       amount: session.amount_total ? session.amount_total / 100 : 0,
       listingPrice: parseFloat(session.metadata?.listingPrice || "0"),
       listingData: session.metadata?.listingData ? JSON.parse(session.metadata.listingData) : null,

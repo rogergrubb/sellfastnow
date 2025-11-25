@@ -38,7 +38,7 @@ export default function ListingPaymentSuccess() {
           throw new Error('Failed to verify payment');
         }
 
-        const { status: paymentStatus, paymentIntentId } = await verifyResponse.json();
+        const { status: paymentStatus, paymentIntentId, sessionId } = await verifyResponse.json();
 
         if (paymentStatus !== 'paid') {
           setStatus('error');
@@ -57,7 +57,7 @@ export default function ListingPaymentSuccess() {
         // Clean up localStorage
         localStorage.removeItem(`pending_listing_${sessionId}`);
 
-        // Create the listing with the payment intent ID
+        // Create the listing with the session ID for verification
         const listingResponse = await fetch('/api/listings', {
           method: 'POST',
           headers: {
@@ -66,7 +66,7 @@ export default function ListingPaymentSuccess() {
           },
           body: JSON.stringify({
             ...listingData,
-            paymentIntentId, // Include payment intent ID for verification
+            paymentSessionId: sessionId, // Pass session ID instead of payment intent ID
           }),
         });
 

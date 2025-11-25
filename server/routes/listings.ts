@@ -119,7 +119,7 @@ const router = Router();
   router.post("/", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { title, description, price, category, condition, location, images, status, folderId, imageRotations, paymentIntentId } = req.body;
+      const { title, description, price, category, condition, location, images, status, folderId, imageRotations, paymentSessionId, paymentIntentId } = req.body;
 
       const isDraft = status === 'draft';
       
@@ -132,7 +132,8 @@ const router = Router();
         // PAYMENT ENFORCEMENT: Free under $100, 1% fee for $100 and above
         const listingPrice = parseFloat(price);
         if (listingPrice >= 100) {
-          if (!paymentIntentId) {
+          // Must have either paymentSessionId (new) or paymentIntentId (legacy)
+          if (!paymentSessionId && !paymentIntentId) {
             return res.status(402).json({ 
               message: "Payment required for listings $100 and above",
               requiresPayment: true,
@@ -143,34 +144,68 @@ const router = Router();
           // Verify payment with Stripe
           try {
             const { stripe } = await import("../stripe");
-            const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
             
-            if (paymentIntent.status !== 'succeeded') {
-              return res.status(402).json({ 
-                message: "Payment not completed",
-                paymentStatus: paymentIntent.status
-              });
+            if (paymentSessionId) {
+              // Verify using Checkout Session (preferred method)
+              const session = await stripe.checkout.sessions.retrieve(paymentSessionId);
+              
+              if (session.payment_status !== 'paid') {
+                return res.status(402).json({ 
+                  message: "Payment not completed",
+                  paymentStatus: session.payment_status
+                });
+              }
+              
+              // Verify session belongs to this user
+              if (session.metadata?.userId !== userId) {
+                console.warn(`⚠️ Payment session userId mismatch: expected ${userId}, got ${session.metadata?.userId}`);
+                return res.status(403).json({ message: "Payment does not belong to this user" });
+              }
+              
+              // Verify payment amount matches listing fee (1%)
+              const expectedFee = Math.round(listingPrice * 0.01 * 100); // in cents
+              if (session.amount_total !== expectedFee) {
+                return res.status(400).json({ 
+                  message: "Payment amount mismatch",
+                  expected: expectedFee,
+                  received: session.amount_total
+                });
+              }
+              
+              console.log(`✅ Payment verified via Checkout Session for listing: $${listingPrice}, fee: $${(listingPrice * 0.01).toFixed(2)}`);
+            } else {
+              // Legacy: verify using PaymentIntent
+              const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+              
+              if (paymentIntent.status !== 'succeeded') {
+                return res.status(402).json({ 
+                  message: "Payment not completed",
+                  paymentStatus: paymentIntent.status
+                });
+              }
+              
+              // Verify payment amount matches listing fee (1%)
+              const expectedFee = Math.round(listingPrice * 0.01 * 100); // in cents
+              if (paymentIntent.amount !== expectedFee) {
+                return res.status(400).json({ 
+                  message: "Payment amount mismatch",
+                  expected: expectedFee,
+                  received: paymentIntent.amount
+                });
+              }
+              
+              // Verify payment belongs to this user - check metadata (may be on PaymentIntent or in the metadata)
+              const paymentUserId = paymentIntent.metadata?.userId || paymentIntent.client?.metadata?.userId;
+              if (paymentUserId && paymentUserId !== userId) {
+                console.warn(`⚠️ Payment userId mismatch: expected ${userId}, got ${paymentUserId}`);
+                return res.status(403).json({ message: "Payment does not belong to this user" });
+              }
+              
+              console.log(`✅ Payment verified via PaymentIntent for listing: $${listingPrice}, fee: $${(listingPrice * 0.01).toFixed(2)}`);
             }
-            
-            // Verify payment amount matches listing fee (1%)
-            const expectedFee = Math.round(listingPrice * 0.01 * 100); // in cents
-            if (paymentIntent.amount !== expectedFee) {
-              return res.status(400).json({ 
-                message: "Payment amount mismatch",
-                expected: expectedFee,
-                received: paymentIntent.amount
-              });
-            }
-            
-            // Verify payment metadata matches this listing
-            if (paymentIntent.metadata.userId !== userId) {
-              return res.status(403).json({ message: "Payment does not belong to this user" });
-            }
-            
-            console.log(`✅ Payment verified for listing: $${listingPrice}, fee: $${(listingPrice * 0.01).toFixed(2)}`);
           } catch (error: any) {
             console.error("Error verifying payment:", error);
-            return res.status(500).json({ message: "Failed to verify payment" });
+            return res.status(500).json({ message: "Failed to verify payment", details: error.message });
           }
         }
       } else {
