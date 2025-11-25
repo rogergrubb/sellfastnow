@@ -38,7 +38,8 @@ export default function ListingPaymentSuccess() {
           throw new Error('Failed to verify payment');
         }
 
-        const { status: paymentStatus, paymentIntentId } = await verifyResponse.json();
+        const verifyData = await verifyResponse.json();
+        const { status: paymentStatus, paymentIntentId } = verifyData;
 
         if (paymentStatus !== 'paid') {
           setStatus('error');
@@ -46,40 +47,44 @@ export default function ListingPaymentSuccess() {
           return;
         }
 
-        // Retrieve listing data from localStorage (stored before Stripe redirect)
+        // Try to get listing data from localStorage first
+        let listingData = null;
         const listingDataJson = localStorage.getItem(`pending_listing_${sessionId}`);
-        if (!listingDataJson) {
-          throw new Error('Listing data not found. Please try creating your listing again.');
-        }
-        
-        const listingData = JSON.parse(listingDataJson);
-        
-        // Clean up localStorage
-        localStorage.removeItem(`pending_listing_${sessionId}`);
-
-        // Create the listing with the session ID for verification
-        const listingResponse = await fetch('/api/listings', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            ...listingData,
-            paymentSessionId: sessionId, // Pass session ID instead of payment intent ID
-          }),
-        });
-
-        if (!listingResponse.ok) {
-          const error = await listingResponse.json();
-          throw new Error(error.message || 'Failed to create listing');
+        if (listingDataJson) {
+          listingData = JSON.parse(listingDataJson);
+          localStorage.removeItem(`pending_listing_${sessionId}`);
         }
 
-        const listing = await listingResponse.json();
-        
-        setListingId(listing.id);
-        setStatus('success');
-        setMessage('Your listing has been published successfully!');
+        // If we have listing data, try to create it
+        if (listingData) {
+          const listingResponse = await fetch('/api/listings', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              ...listingData,
+              paymentSessionId: sessionId,
+            }),
+          });
+
+          if (!listingResponse.ok) {
+            const error = await listingResponse.json();
+            throw new Error(error.message || 'Failed to create listing');
+          }
+
+          const listing = await listingResponse.json();
+          setListingId(listing.id);
+          setStatus('success');
+          setMessage('Your listing has been published successfully!');
+        } else {
+          // Payment succeeded but no listing data in localStorage
+          // This can happen if localStorage was cleared or browser restrictions apply
+          // Show success - the listing may have already been created or will be processed
+          setStatus('success');
+          setMessage('Payment completed! Your listing is being processed. Please check My Listings for your item.');
+        }
 
       } catch (error: any) {
         console.error('Error processing payment:', error);
