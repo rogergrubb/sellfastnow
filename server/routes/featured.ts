@@ -108,27 +108,44 @@ router.post("/:id/feature", isAuthenticated, async (req: any, res) => {
     console.log("Creating Stripe PaymentIntent with amount:", amount);
     console.log("Stripe instance available:", !!stripe);
 
-    // Create Stripe PaymentIntent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount,
-      currency: "usd",
-      automatic_payment_methods: {
-        enabled: true,
-      },
-      metadata: {
-        listing_id: id,
-        duration,
-        feature_type: "homepage_carousel",
-        user_id: userId,
-      },
-      description: `Feature listing: ${listing.title} for ${duration}`,
-    });
+    try {
+      // Create Stripe PaymentIntent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount,
+        currency: "usd",
+        automatic_payment_methods: {
+          enabled: true,
+        },
+        metadata: {
+          listing_id: id,
+          duration,
+          feature_type: "homepage_carousel",
+          user_id: userId,
+        },
+        description: `Feature listing: ${listing.title} for ${duration}`,
+      });
 
-    res.json({
-      clientSecret: paymentIntent.client_secret,
-      amount,
-      duration,
-    });
+      console.log("✅ Stripe PaymentIntent created:", {
+        id: paymentIntent.id,
+        amount: paymentIntent.amount,
+        status: paymentIntent.status,
+        clientSecretPresent: !!paymentIntent.client_secret,
+      });
+
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        amount,
+        duration,
+      });
+    } catch (stripeError: any) {
+      console.error("❌ Stripe PaymentIntent creation failed:", {
+        message: stripeError.message,
+        type: stripeError.type,
+        code: stripeError.code,
+        statusCode: stripeError.statusCode,
+      });
+      throw stripeError;
+    }
   } catch (error: any) {
     console.error("❌ Error creating feature payment:", error);
     console.error("Error details:", {
@@ -306,7 +323,4 @@ router.post("/webhook", async (req, res) => {
   }
 });
 
-
 export default router;
-
-
