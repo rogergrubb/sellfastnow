@@ -18,7 +18,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import type { UserCredits } from "@shared/schema";
 
 export default function Navbar() {
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { user, session, loading, signOut, getToken } = useAuth();
   const queryClient = useQueryClient();
   const { socket } = useWebSocket();
@@ -113,18 +113,32 @@ export default function Navbar() {
     <>
       <nav className="sticky top-0 z-50 bg-[#1d1d1f] text-white">
       <div className="max-w-[1440px] mx-auto px-4">
-        <div className="flex items-center justify-between h-11">
+        <div className="flex items-center justify-between gap-4 h-14">
           {/* Logo */}
           <button 
-            className="text-lg font-medium hover:text-gray-300 transition-colors flex-shrink-0"
+            className="text-lg font-medium hover:text-gray-300 transition-colors flex-shrink-0 whitespace-nowrap"
             data-testid="link-home"
             onClick={() => window.location.href = '/'}
           >
             SellFast.Now
           </button>
 
+          {/* Search Bar - Always visible */}
+          <form onSubmit={handleSearch} className="flex-1 max-w-md hidden sm:block">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Search listings..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 text-sm rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+              />
+            </div>
+          </form>
+
           {/* Desktop Navigation - Six Dropdowns */}
-          <div className="hidden lg:flex items-center gap-6 flex-1 justify-center">
+          <div className="hidden lg:flex items-center gap-6">
             {/* Sell Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -400,16 +414,7 @@ export default function Navbar() {
           )}
 
           {/* Right Section */}
-          <div className="flex items-center gap-4">
-            {/* Search Icon */}
-            <button
-              className="hidden lg:block hover:text-gray-300 transition-colors"
-              onClick={() => setSearchOpen(!searchOpen)}
-              data-testid="button-search"
-            >
-              <Search className="h-4 w-4" />
-            </button>
-
+          <div className="flex items-center gap-3 lg:gap-4">
             {!isLoaded ? (
               <div className="w-20 h-9" />
             ) : isSignedIn ? (
@@ -481,57 +486,7 @@ export default function Navbar() {
             </button>
           </div>
         </div>
-
-        {/* Search Overlay */}
-        {searchOpen && (
-          <div className="absolute left-0 right-0 top-11 bg-[#1d1d1f] border-t border-gray-700 p-4">
-            <div className="max-w-[1440px] mx-auto">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
-                <input
-                  type="search"
-                  placeholder="Search listings..."
-                  className="w-full bg-white text-black placeholder:text-gray-500 pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
-                  style={{ color: 'black', WebkitTextFillColor: 'black' }}
-                  data-testid="input-search"
-                  autoFocus
-                  onBlur={() => setTimeout(() => setSearchOpen(false), 200)}
-                />
-              </div>
-            </div>
-          </div>
-        )}
       </nav>
-
-      {/* Secondary Header - Search & Post Button Bar (Amazon-style) */}
-      <div className="sticky top-11 z-40 bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-[1440px] mx-auto px-4">
-          <div className="flex items-center gap-3 py-3 flex-col sm:flex-row">
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="flex-1 w-full sm:max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  type="text"
-                  placeholder="Search for anything..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 text-sm rounded-lg bg-white dark:bg-gray-800 dark:text-white"
-                />
-              </div>
-            </form>
-
-            {/* Post Ad Button */}
-            <Button 
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-6 py-2 rounded-lg"
-              onClick={() => window.location.href = '/post-ad'}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Post Ad
-            </Button>
-          </div>
-        </div>
-      </div>
     </>
   );
 }
