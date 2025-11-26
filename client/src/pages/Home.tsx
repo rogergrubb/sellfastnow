@@ -1,21 +1,17 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import ListingCard from "@/components/ListingCard";
 import { FeaturedCarousel } from "@/components/FeaturedCarousel";
 import { 
-  Search, Plus, TrendingUp, Zap, DollarSign, 
+  TrendingUp, Zap, DollarSign, 
   Package, Sparkles, CheckCircle, ArrowRight, Share2, Clock, Star, Flame 
 } from "lucide-react";
 import { SocialMediaShareModal } from "@/components/SocialMediaShareModal";
 import type { Listing } from "@shared/schema";
 
 export default function HomeNew() {
-  const [, navigate] = useLocation();
-  const [searchQuery, setSearchQuery] = useState("");
   const [showShareModal, setShowShareModal] = useState(false);
 
   // Fetch recent listings
@@ -28,13 +24,6 @@ export default function HomeNew() {
     },
   });
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
-
   return (
     <>
       <Helmet>
@@ -44,47 +33,21 @@ export default function HomeNew() {
 
       <div className="min-h-screen">
         {/* Hero Section - Clean & Minimal */}
-        <section className="relative bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 pt-16 md:pt-24 pb-12 md:pb-20">
+        <section className="relative bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 pt-12 md:pt-16 pb-12 md:pb-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8 md:mb-12">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-4 px-2">
+          <div className="text-center mb-6 md:mb-8">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-2 px-2">
                 Sell Smart. Sell Safe. SellFast.Now
               </h1>
-              <p className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-700 dark:text-gray-300 mb-4 px-2">
+              <p className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-700 dark:text-gray-300 mb-4 px-2">
                 Sell Even Faster Now With Quick Social Media Links!
               </p>
-              <p className="text-base sm:text-lg md:text-xl text-green-600 dark:text-green-400 font-semibold mb-2">
+              <p className="text-base sm:text-lg md:text-lg text-green-600 dark:text-green-400 font-semibold mb-1">
                 Post for Free
               </p>
-              <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-400 mb-6 md:mb-8">
+              <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-400 mb-6">
                 Keep 100% of sales on items under $100
               </p>
-
-              {/* Quick Actions - Craigslist Style */}
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center mb-8 md:mb-12 max-w-4xl mx-auto px-4">
-                <form onSubmit={handleSearch} className="w-full sm:flex-1 sm:max-w-md">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
-                    <Input
-                      type="text"
-                      placeholder="Search for anything..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9 sm:pl-10 py-5 sm:py-6 text-base sm:text-lg shadow-md"
-                    />
-                  </div>
-                </form>
-
-                <Button 
-                  size="lg" 
-                  variant="default"
-                  className="w-full sm:w-auto text-sm sm:text-base px-4 sm:px-6 py-5 sm:py-6 shadow-md hover:shadow-lg"
-                  onClick={() => navigate('/post-ad')}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Post 1 or 100 new items HERE
-                </Button>
-              </div>
             </div>
 
             {/* Featured Listings Carousel */}

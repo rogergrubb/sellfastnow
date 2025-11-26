@@ -1,5 +1,6 @@
 import { Search, Plus, ListChecks, Sparkles, User, LogOut, Settings, MessageCircle, Bell, Menu, Package, Zap, Store, ChevronDown, ShoppingBag, Briefcase, Wrench, BookOpen, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -99,8 +100,18 @@ export default function Navbar() {
     return user.email.charAt(0).toUpperCase();
   };
 
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`;
+    }
+  };
+
   return (
-    <nav className="sticky top-0 z-50 bg-[#1d1d1f] text-white">
+    <>
+      <nav className="sticky top-0 z-50 bg-[#1d1d1f] text-white">
       <div className="max-w-[1440px] mx-auto px-4">
         <div className="flex items-center justify-between h-11">
           {/* Logo */}
@@ -490,7 +501,37 @@ export default function Navbar() {
             </div>
           </div>
         )}
+      </nav>
+
+      {/* Secondary Header - Search & Post Button Bar (Amazon-style) */}
+      <div className="sticky top-11 z-40 bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-[1440px] mx-auto px-4">
+          <div className="flex items-center gap-3 py-3 flex-col sm:flex-row">
+            {/* Search Bar */}
+            <form onSubmit={handleSearch} className="flex-1 w-full sm:max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  type="text"
+                  placeholder="Search for anything..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 text-sm rounded-lg bg-white dark:bg-gray-800 dark:text-white"
+                />
+              </div>
+            </form>
+
+            {/* Post Ad Button */}
+            <Button 
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-6 py-2 rounded-lg"
+              onClick={() => window.location.href = '/post-ad'}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Post Ad
+            </Button>
+          </div>
+        </div>
       </div>
-    </nav>
+    </>
   );
 }
