@@ -2,13 +2,13 @@
 // Centralized configuration for Stripe-related settings
 
 export const STRIPE_CONFIG = {
-  // Credit Bundles - Pricing and names
+  // Credit Bundles - Pricing and names (50% reduced)
   CREDIT_BUNDLES: {
-    25: { price: 2.99, name: "25 AI Credits" },
-    50: { price: 4.99, name: "50 AI Credits" },
-    75: { price: 6.99, name: "75 AI Credits" },
-    100: { price: 8.99, name: "100 AI Credits" },
-    500: { price: 39.99, name: "500 AI Credits" },
+    25: { price: 1.50, name: "25 AI Credits" },
+    50: { price: 2.50, name: "50 AI Credits" },
+    75: { price: 3.50, name: "75 AI Credits" },
+    100: { price: 4.50, name: "100 AI Credits" },
+    500: { price: 20.00, name: "500 AI Credits" },
   } as Record<number, { price: number; name: string }>,
 
   // Platform Fee (5%)

@@ -9,11 +9,11 @@ import type { UserCredits } from "@shared/schema";
 import { useState, useEffect } from "react";
 
 const CREDIT_BUNDLES = [
-  { credits: 25, price: 2.99, pricePerCredit: 0.12, popular: true, badge: "POPULAR" },
-  { credits: 50, price: 4.99, pricePerCredit: 0.10, popular: false, badge: "17% off" },
-  { credits: 75, price: 6.99, pricePerCredit: 0.09, popular: false, badge: "25% off" },
-  { credits: 100, price: 8.99, pricePerCredit: 0.09, popular: false, badge: "25% off" },
-  { credits: 500, price: 39.99, pricePerCredit: 0.08, popular: false, badge: "BEST VALUE - 34% off" },
+  { credits: 25, price: 1.50, pricePerCredit: 0.06, popular: true, badge: "POPULAR" },
+  { credits: 50, price: 2.50, pricePerCredit: 0.05, popular: false, badge: "17% off" },
+  { credits: 75, price: 3.50, pricePerCredit: 0.05, popular: false, badge: "25% off" },
+  { credits: 100, price: 4.50, pricePerCredit: 0.05, popular: false, badge: "25% off" },
+  { credits: 500, price: 20.00, pricePerCredit: 0.04, popular: false, badge: "BEST VALUE - 34% off" },
 ];
 
 export default function Credits() {

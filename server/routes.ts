@@ -1113,13 +1113,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           creditsToAdd = parseInt(session.metadata.credits);
           console.log(`   Credits from metadata: ${creditsToAdd}`);
         } else {
-          // Fallback for old Payment Links
+          // Fallback for old Payment Links (50% reduced pricing)
           const amount = (session.amount_total || 0) / 100;
-          if (amount === 2.99) creditsToAdd = 25;
-          else if (amount === 4.99) creditsToAdd = 50;
-          else if (amount === 6.99) creditsToAdd = 75;
-          else if (amount === 8.99) creditsToAdd = 100;
-          else if (amount === 39.99) creditsToAdd = 500;
+          if (amount === 1.50) creditsToAdd = 25;
+          else if (amount === 2.50) creditsToAdd = 50;
+          else if (amount === 3.50) creditsToAdd = 75;
+          else if (amount === 4.50) creditsToAdd = 100;
+          else if (amount === 20.00) creditsToAdd = 500;
           console.log(`   Credits from amount ($${amount}): ${creditsToAdd}`);
         }
         

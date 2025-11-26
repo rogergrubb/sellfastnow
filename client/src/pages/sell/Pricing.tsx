@@ -41,41 +41,41 @@ export default function PricingPage() {
   const presetTiers = [
     {
       credits: 10,
-      basePrice: 0.49,
+      basePrice: 0.245,
       discount: 0.10,
-      pricePerCredit: 0.44,
-      totalPrice: 4.41,
+      pricePerCredit: 0.22,
+      totalPrice: 2.21,
       badge: null,
     },
     {
       credits: 25,
-      basePrice: 0.49,
+      basePrice: 0.245,
       discount: 0.20,
-      pricePerCredit: 0.39,
-      totalPrice: 9.80,
+      pricePerCredit: 0.20,
+      totalPrice: 4.90,
       badge: null,
     },
     {
       credits: 50,
-      basePrice: 0.49,
+      basePrice: 0.245,
       discount: 0.30,
-      pricePerCredit: 0.34,
-      totalPrice: 17.15,
+      pricePerCredit: 0.17,
+      totalPrice: 8.58,
       badge: "⭐ Most Popular",
     },
     {
       credits: 100,
-      basePrice: 0.49,
+      basePrice: 0.245,
       discount: 0.40,
-      pricePerCredit: 0.29,
-      totalPrice: 29.40,
+      pricePerCredit: 0.15,
+      totalPrice: 14.70,
       badge: null,
     },
   ];
 
   // Calculate price based on credits (50% reduced base price)
   const calculatePrice = (credits: number) => {
-    const basePrice = 0.49;
+    const basePrice = 0.245;
     let discount = 0;
     
     if (credits >= 100) {
