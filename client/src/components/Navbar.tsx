@@ -474,13 +474,13 @@ export default function Navbar() {
         </div>
 
         {/* Second Row: Search Bar - ALWAYS VISIBLE */}
-        <div className="w-full py-3 border-t border-gray-600 bg-[#1d1d1f]">
-          <form onSubmit={handleSearch} className="w-full">
-            <div className="flex items-center bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200">
+        <div className="block w-full bg-[#1d1d1f] border-t border-gray-600 py-3 min-h-[70px]">
+          <form onSubmit={handleSearch} className="w-full block">
+            <div className="flex items-center gap-0 bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200 w-full">
               {/* Category Dropdown */}
               <button 
                 type="button"
-                className="flex items-center gap-2 px-4 py-3 text-gray-700 text-sm hover:bg-gray-100 border-r border-gray-300 transition-colors font-medium"
+                className="flex items-center gap-2 px-4 py-3 text-gray-700 text-sm hover:bg-gray-100 border-r border-gray-300 transition-colors font-medium flex-shrink-0"
               >
                 <span>All</span>
                 <ChevronDown className="w-4 h-4" />
@@ -494,7 +494,7 @@ export default function Navbar() {
                   placeholder="Search SellFast.Now"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 ml-3 py-1 text-base bg-transparent text-gray-900 placeholder:text-gray-500 focus:outline-none font-normal"
+                  className="flex-1 ml-3 py-1 text-base bg-transparent text-gray-900 placeholder:text-gray-500 focus:outline-none font-normal w-full"
                 />
               </div>
               
