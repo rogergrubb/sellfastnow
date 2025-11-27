@@ -474,24 +474,10 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Second Row: Search Bar - FULL WIDTH, ALWAYS VISIBLE */}
-      <div style={{display: 'block', width: '100%', backgroundColor: '#1d1d1f', borderTop: '1px solid #4b5563', padding: '12px 16px', position: 'static', zIndex: 40}}>
-        <div className="max-w-[1440px] mx-auto px-4">
-          <form onSubmit={handleSearch} style={{width: '100%', display: 'flex', alignItems: 'center', minHeight: '50px'}}>
-            <input
-              type="text"
-              placeholder="Search SellFast.Now"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{flex: 1, padding: '12px 16px', fontSize: '15px', backgroundColor: 'white', color: '#111827', border: 'none', borderRadius: '6px 0 0 6px', outline: 'none'}}
-            />
-            <button
-              type="submit"
-              style={{padding: '12px 24px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '0 6px 6px 0', cursor: 'pointer', fontSize: '15px', fontWeight: '500'}}
-            >
-              Search
-            </button>
-          </form>
+      {/* TEST BAR - RED FOR VISIBILITY */}
+      <div style={{display: 'block', width: '100%', height: '60px', backgroundColor: '#FF0000', padding: '12px 16px', position: 'relative', zIndex: 30}}>
+        <div className="max-w-[1440px] mx-auto px-4" style={{height: '100%', display: 'flex', alignItems: 'center'}}>
+          <span style={{color: 'white', fontSize: '20px', fontWeight: 'bold'}}>SEARCH BAR TEST - IF YOU SEE THIS IN RED, IT'S RENDERING</span>
         </div>
       </div>
       </nav>
