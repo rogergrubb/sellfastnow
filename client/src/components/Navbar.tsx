@@ -113,7 +113,7 @@ export default function Navbar() {
     <>
       <nav className="sticky top-0 z-50 bg-[#1d1d1f] text-white">
       <div className="max-w-[1440px] mx-auto px-4">
-        <div className="flex items-center justify-between gap-4 h-14">
+        <div className="flex items-center justify-between gap-3 h-14">
           {/* Logo */}
           <button 
             className="text-lg font-medium hover:text-gray-300 transition-colors flex-shrink-0 whitespace-nowrap"
@@ -123,8 +123,8 @@ export default function Navbar() {
             SellFast.Now
           </button>
 
-          {/* Search Bar - Always visible */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-md hidden sm:block">
+          {/* Search Bar - ALWAYS VISIBLE */}
+          <form onSubmit={handleSearch} className="flex-1 min-w-0">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
