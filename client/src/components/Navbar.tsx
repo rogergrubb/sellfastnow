@@ -112,7 +112,8 @@ export default function Navbar() {
     <>
       <nav className="sticky top-0 z-50 bg-[#1d1d1f] text-white">
       <div className="max-w-[1440px] mx-auto px-4">
-        <div className="flex items-center justify-between gap-3 h-14">
+        {/* Top Row: Logo and Right Actions */}
+        <div className="flex items-center justify-between h-11">
           {/* Logo */}
           <button 
             className="text-lg font-medium hover:text-gray-300 transition-colors flex-shrink-0 whitespace-nowrap"
@@ -122,39 +123,8 @@ export default function Navbar() {
             SellFast.Now
           </button>
 
-          {/* Search Bar - ALWAYS VISIBLE */}
-          <form onSubmit={handleSearch} className="flex-1 min-w-0">
-            <div className="relative flex items-center bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-              {/* Category Dropdown */}
-              <button className="hidden sm:flex items-center gap-2 px-3 py-2 text-gray-700 text-sm hover:bg-gray-50 border-r border-gray-200 transition-colors">
-                <span className="font-medium">All</span>
-                <ChevronDown className="w-4 h-4" />
-              </button>
-              
-              {/* Search Input */}
-              <div className="flex-1 flex items-center px-3">
-                <Search className="text-gray-400 w-4 h-4 flex-shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Search SellFast.Now"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 ml-2 py-2 text-sm bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none"
-                />
-              </div>
-              
-              {/* Search Button */}
-              <button
-                type="submit"
-                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-r-lg transition-all flex-shrink-0"
-              >
-                <Search className="w-4 h-4" />
-              </button>
-            </div>
-          </form>
-
           {/* Desktop Navigation - Six Dropdowns */}
-          <div className="hidden lg:flex items-center gap-6">
+          <div className="hidden lg:flex items-center gap-6 flex-1 justify-center">
             {/* Sell Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -502,6 +472,43 @@ export default function Navbar() {
             </button>
           </div>
         </div>
+
+        {/* Second Row: Search Bar - ALWAYS VISIBLE */}
+        <div className="py-3 border-t border-gray-700">
+          <form onSubmit={handleSearch} className="w-full">
+            <div className="flex items-center bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+              {/* Category Dropdown */}
+              <button 
+                type="button"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 text-gray-700 text-sm hover:bg-gray-50 border-r border-gray-200 transition-colors"
+              >
+                <span className="font-medium">All</span>
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              
+              {/* Search Input */}
+              <div className="flex-1 flex items-center px-4">
+                <Search className="text-gray-400 w-5 h-5 flex-shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search SellFast.Now"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 ml-3 py-2.5 text-base bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none"
+                />
+              </div>
+              
+              {/* Search Button */}
+              <button
+                type="submit"
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-r-lg transition-all flex-shrink-0 flex items-center justify-center"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
       </nav>
     </>
   );
