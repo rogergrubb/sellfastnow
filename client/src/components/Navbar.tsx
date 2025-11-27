@@ -472,15 +472,17 @@ export default function Navbar() {
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Second Row: Search Bar - ALWAYS VISIBLE */}
-        <div style={{display: 'block', width: '100%', backgroundColor: '#1d1d1f', borderTop: '1px solid #4b5563', padding: '12px 0'}}>
-          <form onSubmit={handleSearch} style={{width: '100%', display: 'flex', alignItems: 'center', gap: '0'}}>
-            <div style={{display: 'flex', alignItems: 'center', backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', width: '100%', minHeight: '52px'}}>
+      {/* Second Row: Search Bar - FULL WIDTH, ALWAYS VISIBLE */}
+      <div style={{display: 'block', width: '100%', backgroundColor: '#1d1d1f', borderTop: '1px solid #4b5563', padding: '12px 16px'}}>
+        <div className="max-w-[1440px] mx-auto">
+          <form onSubmit={handleSearch} style={{width: '100%', display: 'flex', alignItems: 'center', gap: '0', minHeight: '52px'}}>
+            <div style={{display: 'flex', alignItems: 'center', backgroundColor: 'white', borderRadius: '6px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', width: '100%'}}>
               {/* Category Dropdown */}
               <button 
                 type="button"
-                style={{display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px', color: '#374151', fontSize: '14px', borderRight: '1px solid #d1d5db', cursor: 'pointer', backgroundColor: 'white'}}
+                style={{display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px', color: '#374151', fontSize: '14px', borderRight: '1px solid #d1d5db', cursor: 'pointer', backgroundColor: 'white', border: 'none'}}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
               >
@@ -489,21 +491,21 @@ export default function Navbar() {
               </button>
               
               {/* Search Input */}
-              <div style={{display: 'flex', alignItems: 'center', flex: 1, padding: '0 16px', gap: '12px'}}>
+              <div style={{display: 'flex', alignItems: 'center', flex: 1, padding: '0 16px', gap: '12px', minHeight: '52px'}}>
                 <Search size={20} color="#9ca3af" style={{flexShrink: 0}} />
                 <input
                   type="text"
                   placeholder="Search SellFast.Now"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{flex: 1, padding: '4px 0', fontSize: '16px', backgroundColor: 'transparent', color: '#111827', border: 'none', outline: 'none'}}
+                  style={{flex: 1, padding: '0', fontSize: '15px', backgroundColor: 'transparent', color: '#111827', border: 'none', outline: 'none', height: '100%'}}
                 />
               </div>
               
               {/* Search Button */}
               <button
                 type="submit"
-                style={{padding: '12px 24px', backgroundColor: '#3b82f6', color: 'white', borderRadius: '0 8px 8px 0', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0}}
+                style={{padding: '12px 24px', backgroundColor: '#3b82f6', color: 'white', borderRadius: '0 6px 6px 0', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, height: '100%'}}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
               >
