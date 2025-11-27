@@ -277,6 +277,80 @@ export default function Home() {
 
       {/* HERO SECTION - Apple inspired */}
       <section className="relative min-h-screen bg-white dark:bg-gray-900 flex flex-col items-center justify-center px-4 overflow-hidden">
+        <style>{`
+          @keyframes float-left {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+          }
+          @keyframes float-right {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+          }
+          @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(1deg); }
+            75% { transform: rotate(-1deg); }
+          }
+          .thought-bubble {
+            animation: float-left 6s ease-in-out infinite, wiggle 3s ease-in-out infinite;
+          }
+          .thought-bubble::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            bottom: -15px;
+            left: 20px;
+          }
+          .thought-bubble::before {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: white;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            bottom: -25px;
+            left: 12px;
+          }
+          .dark .thought-bubble::after,
+          .dark .thought-bubble::before {
+            background: rgb(17, 24, 39);
+          }
+          .thought-bubble-right {
+            animation: float-right 6s ease-in-out infinite 0.5s, wiggle 3s ease-in-out infinite 0.3s;
+          }
+          .thought-bubble-right::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            bottom: -15px;
+            right: 20px;
+          }
+          .thought-bubble-right::before {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: white;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            bottom: -25px;
+            right: 12px;
+          }
+          .dark .thought-bubble-right::after,
+          .dark .thought-bubble-right::before {
+            background: rgb(17, 24, 39);
+          }
+        `}</style>
+
         {/* Background gradient blob */}
         <div
           className="absolute top-0 right-0 w-96 h-96 bg-blue-100 dark:bg-blue-900/20 rounded-full blur-3xl opacity-50 mix-blend-multiply"
@@ -292,6 +366,24 @@ export default function Home() {
             transition: "transform 0.5s cubic-bezier(0.33, 0.66, 0.66, 1)",
           }}
         />
+
+        {/* LEFT THOUGHT BUBBLE - Trust & Verification */}
+        <div className="absolute left-4 sm:left-0 top-20 sm:top-1/4 w-56 sm:w-64 sm:-translate-x-12 lg:-translate-x-20 opacity-70 sm:opacity-100 z-20">
+          <div className="thought-bubble relative bg-white dark:bg-gray-800 border-2 border-blue-300 dark:border-blue-700 rounded-3xl p-4 sm:p-5 shadow-lg dark:shadow-blue-900/30 text-blue-900 dark:text-blue-100">
+            <p className="text-xs sm:text-sm font-semibold leading-snug">
+              ✓ Know who you're trading with. Every seller & buyer verified and rated.
+            </p>
+          </div>
+        </div>
+
+        {/* RIGHT THOUGHT BUBBLE - Cashless Security */}
+        <div className="absolute right-4 sm:right-0 top-40 sm:top-1/3 w-56 sm:w-64 sm:translate-x-12 lg:translate-x-20 opacity-70 sm:opacity-100 z-20">
+          <div className="thought-bubble-right relative bg-white dark:bg-gray-800 border-2 border-green-300 dark:border-green-700 rounded-3xl p-4 sm:p-5 shadow-lg dark:shadow-green-900/30 text-green-900 dark:text-green-100">
+            <p className="text-xs sm:text-sm font-semibold leading-snug">
+              💳 Never carry cash again. Secure, instant payments.
+            </p>
+          </div>
+        </div>
 
         {/* Hero Content */}
         <div className="relative z-10 text-center max-w-4xl mx-auto">
