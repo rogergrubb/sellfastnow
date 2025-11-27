@@ -9,6 +9,7 @@ export default function NavbarHover() {
   const { user, signOut } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch unread message count
   const { data: unreadData } = useQuery<{ unreadCount: number }>({
@@ -18,6 +19,13 @@ export default function NavbarHover() {
   });
 
   const unreadCount = unreadData?.unreadCount || 0;
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`;
+    }
+  };
 
   return (
     <nav className="apple-nav">
@@ -301,6 +309,25 @@ export default function NavbarHover() {
           <span></span>
           <span></span>
         </button>
+      </div>
+
+      {/* Persistent Search Bar Row */}
+      <div className="apple-search-bar-row">
+        <form onSubmit={handleSearch} className="apple-search-bar-form">
+          <button type="button" className="apple-search-category">
+            <span>All</span>
+          </button>
+          <input
+            type="text"
+            placeholder="Search SellFast.Now"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="apple-search-input-persistent"
+          />
+          <button type="submit" className="apple-search-submit">
+            <Search size={20} />
+          </button>
+        </form>
       </div>
 
       {/* Search Overlay */}
