@@ -13,58 +13,91 @@ const navigate = (path: string) => {
   window.location.href = path;
 };
 
-const MegaDropdown = ({ title, isOpen, onOpenChange, items }: any) => (
-  <div className="relative">
-    <button
-      onClick={() => onOpenChange(!isOpen)}
-      className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-    >
-      {title}
-      <ChevronDown 
-        className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
-      />
-    </button>
+const MegaDropdown = ({ title, isOpen, onOpenChange, items }: any) => {
+  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
 
-    {isOpen && (
-      <>
-        {/* Overlay */}
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => onOpenChange(false)}
+  const handleMouseEnter = () => {
+    // Clear any existing timeout
+    if (hoverTimeout) clearTimeout(hoverTimeout);
+    
+    // Open menu after 200ms delay
+    const timeout = setTimeout(() => {
+      onOpenChange(true);
+    }, 200);
+    setHoverTimeout(timeout);
+  };
+
+  const handleMouseLeave = () => {
+    // Clear any existing timeout
+    if (hoverTimeout) clearTimeout(hoverTimeout);
+    
+    // Close menu after 300ms delay (allows moving to submenu)
+    const timeout = setTimeout(() => {
+      onOpenChange(false);
+    }, 300);
+    setHoverTimeout(timeout);
+  };
+
+  return (
+    <div 
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button
+        className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+      >
+        {title}
+        <ChevronDown 
+          className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
         />
-        
-        {/* Mega Menu */}
-        <div className="absolute left-0 top-full mt-0 w-screen bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-xl z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {items.map((item: any, idx: number) => (
-                <div key={idx}>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                    {item.icon && <item.icon className="w-5 h-5 text-blue-600" />}
-                    {item.label}
-                  </h3>
-                  <ul className="space-y-3">
-                    {item.links.map((link: any, linkIdx: number) => (
-                      <li key={linkIdx}>
-                        <a
-                          href={link.href}
-                          className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                          onClick={() => onOpenChange(false)}
-                        >
-                          {link.name}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => onOpenChange(false)}
+          />
+          
+          {/* Mega Menu */}
+          <div 
+            className="absolute left-0 top-full mt-0 w-screen bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-xl z-50 opacity-100 transition-opacity duration-300"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                {items.map((item: any, idx: number) => (
+                  <div key={idx}>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                      {item.icon && <item.icon className="w-5 h-5 text-blue-600" />}
+                      {item.label}
+                    </h3>
+                    <ul className="space-y-3">
+                      {item.links.map((link: any, linkIdx: number) => (
+                        <li key={linkIdx}>
+                          <a
+                            href={link.href}
+                            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:translate-x-1 block"
+                            onClick={() => onOpenChange(false)}
+                          >
+                            {link.name}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </>
-    )}
-  </div>
-);
+        </>
+      )}
+    </div>
+  );
+};
 
 export default function Home() {
   const [scrollY, setScrollY] = useState(0);
