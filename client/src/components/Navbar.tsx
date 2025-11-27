@@ -474,36 +474,40 @@ export default function Navbar() {
         </div>
 
         {/* Second Row: Search Bar - ALWAYS VISIBLE */}
-        <div className="block w-full bg-[#1d1d1f] border-t border-gray-600 py-3 min-h-[70px]">
-          <form onSubmit={handleSearch} className="w-full block">
-            <div className="flex items-center gap-0 bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200 w-full">
+        <div style={{display: 'block', width: '100%', backgroundColor: '#1d1d1f', borderTop: '1px solid #4b5563', padding: '12px 0'}}>
+          <form onSubmit={handleSearch} style={{width: '100%', display: 'flex', alignItems: 'center', gap: '0'}}>
+            <div style={{display: 'flex', alignItems: 'center', backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', width: '100%', minHeight: '52px'}}>
               {/* Category Dropdown */}
               <button 
                 type="button"
-                className="flex items-center gap-2 px-4 py-3 text-gray-700 text-sm hover:bg-gray-100 border-r border-gray-300 transition-colors font-medium flex-shrink-0"
+                style={{display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px', color: '#374151', fontSize: '14px', borderRight: '1px solid #d1d5db', cursor: 'pointer', backgroundColor: 'white'}}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
               >
-                <span>All</span>
-                <ChevronDown className="w-4 h-4" />
+                <span style={{fontWeight: '500'}}>All</span>
+                <ChevronDown size={16} />
               </button>
               
               {/* Search Input */}
-              <div className="flex-1 flex items-center px-4 py-3">
-                <Search className="text-gray-400 w-5 h-5 flex-shrink-0" />
+              <div style={{display: 'flex', alignItems: 'center', flex: 1, padding: '0 16px', gap: '12px'}}>
+                <Search size={20} color="#9ca3af" style={{flexShrink: 0}} />
                 <input
                   type="text"
                   placeholder="Search SellFast.Now"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 ml-3 py-1 text-base bg-transparent text-gray-900 placeholder:text-gray-500 focus:outline-none font-normal w-full"
+                  style={{flex: 1, padding: '4px 0', fontSize: '16px', backgroundColor: 'transparent', color: '#111827', border: 'none', outline: 'none'}}
                 />
               </div>
               
               {/* Search Button */}
               <button
                 type="submit"
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-r-lg transition-all flex-shrink-0 flex items-center justify-center font-medium"
+                style={{padding: '12px 24px', backgroundColor: '#3b82f6', color: 'white', borderRadius: '0 8px 8px 0', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0}}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
               >
-                <Search className="w-5 h-5" />
+                <Search size={20} />
               </button>
             </div>
           </form>
