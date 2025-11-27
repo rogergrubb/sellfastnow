@@ -98,8 +98,8 @@ export default function Home() {
       links: [
         { name: "How to Post a Listing", href: "/post-ad" },
         { name: "Pricing & Fees", href: "/sell/pricing" },
-        { name: "Seller Tools", href: "/tools" },
-        { name: "Best Practices", href: "/resources" },
+        { name: "AI Listings", href: "/sell/ai-listings" },
+        { name: "Best Practices", href: "/sell/how-it-works" },
       ],
     },
     {
@@ -107,19 +107,19 @@ export default function Home() {
       icon: BarChart3,
       links: [
         { name: "Bulk Upload", href: "/post-ad" },
-        { name: "AI Descriptions", href: "/credits" },
-        { name: "Business Plans", href: "/business" },
-        { name: "API Access", href: "/tools" },
+        { name: "AI Credits", href: "/credits" },
+        { name: "Business Plans", href: "/business/estate-sales" },
+        { name: "Seller Analytics", href: "/seller-analytics" },
       ],
     },
     {
       label: "Manage Your Business",
       icon: Gauge,
       links: [
-        { name: "My Listings", href: "/my-listings" },
-        { name: "Sales Dashboard", href: "/my-listings" },
+        { name: "My Listings", href: "/dashboard" },
+        { name: "Sales Dashboard", href: "/seller-analytics" },
         { name: "Messages", href: "/messages" },
-        { name: "Account Settings", href: "/account" },
+        { name: "Settings", href: "/settings" },
       ],
     },
   ];
@@ -129,20 +129,20 @@ export default function Home() {
       label: "Browse",
       icon: TrendingUp,
       links: [
-        { name: "All Listings", href: "/buy" },
-        { name: "Search by Category", href: "/buy" },
-        { name: "Near Me", href: "/buy" },
-        { name: "Deals & Featured", href: "/buy?featured=true" },
+        { name: "All Listings", href: "/search" },
+        { name: "Search by Category", href: "/search" },
+        { name: "Trending Items", href: "/#trending" },
+        { name: "Saved Searches", href: "/saved-searches" },
       ],
     },
     {
       label: "Smart Buying",
       icon: Sparkles,
       links: [
-        { name: "Saved Searches", href: "/account" },
-        { name: "Price Alerts", href: "/account" },
-        { name: "Bulk Purchases", href: "/buy" },
-        { name: "Business Accounts", href: "/business" },
+        { name: "Saved Searches", href: "/saved-searches" },
+        { name: "My Collections", href: "/dashboard" },
+        { name: "How to Buy", href: "/how-it-works" },
+        { name: "Buyer Protection", href: "/how-it-works" },
       ],
     },
   ];
@@ -152,20 +152,20 @@ export default function Home() {
       label: "Safety & Trust",
       icon: Lock,
       links: [
-        { name: "Buyer Protection", href: "/resources" },
-        { name: "Seller Verification", href: "/resources" },
-        { name: "Reviews & Ratings", href: "/resources" },
-        { name: "Report Issues", href: "/resources" },
+        { name: "How It Works", href: "/how-it-works" },
+        { name: "Seller Verification", href: "/verification" },
+        { name: "Reviews & Ratings", href: "/dashboard" },
+        { name: "Report Issues", href: "/settings" },
       ],
     },
     {
       label: "Learn More",
       icon: Users,
       links: [
-        { name: "About SellFast.Now", href: "/resources" },
-        { name: "Blog & Articles", href: "/resources" },
-        { name: "Contact Support", href: "/resources" },
-        { name: "Community Guidelines", href: "/resources" },
+        { name: "About SellFast.Now", href: "/#" },
+        { name: "FAQ & Support", href: "/how-it-works" },
+        { name: "Contact Us", href: "/settings" },
+        { name: "Community Guidelines", href: "/how-it-works" },
       ],
     },
   ];
@@ -225,7 +225,7 @@ export default function Home() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate("/account")}
+                onClick={() => navigate("/settings")}
                 className="hidden sm:flex"
               >
                 Account
@@ -309,7 +309,7 @@ export default function Home() {
               Start Selling Now
             </Button>
             <Button
-              onClick={() => navigate("/buy")}
+              onClick={() => navigate("/search")}
               variant="outline"
               className="px-8 py-3 font-semibold rounded-lg border-2 transform hover:scale-105 transition-all duration-200"
             >
@@ -340,7 +340,7 @@ export default function Home() {
 
           <div className="text-center mt-12">
             <Button
-              onClick={() => navigate("/buy")}
+              onClick={() => navigate("/search")}
               variant="outline"
               className="px-8 py-3 font-semibold rounded-lg border-2"
             >
