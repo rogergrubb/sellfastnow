@@ -474,34 +474,34 @@ export default function Navbar() {
         </div>
 
         {/* Second Row: Search Bar - ALWAYS VISIBLE */}
-        <div className="py-3 border-t border-gray-700">
+        <div className="w-full py-3 border-t border-gray-600 bg-[#1d1d1f]">
           <form onSubmit={handleSearch} className="w-full">
-            <div className="flex items-center bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200">
               {/* Category Dropdown */}
               <button 
                 type="button"
-                className="hidden sm:flex items-center gap-2 px-4 py-2 text-gray-700 text-sm hover:bg-gray-50 border-r border-gray-200 transition-colors"
+                className="flex items-center gap-2 px-4 py-3 text-gray-700 text-sm hover:bg-gray-100 border-r border-gray-300 transition-colors font-medium"
               >
-                <span className="font-medium">All</span>
+                <span>All</span>
                 <ChevronDown className="w-4 h-4" />
               </button>
               
               {/* Search Input */}
-              <div className="flex-1 flex items-center px-4">
+              <div className="flex-1 flex items-center px-4 py-3">
                 <Search className="text-gray-400 w-5 h-5 flex-shrink-0" />
                 <input
                   type="text"
                   placeholder="Search SellFast.Now"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 ml-3 py-2.5 text-base bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none"
+                  className="flex-1 ml-3 py-1 text-base bg-transparent text-gray-900 placeholder:text-gray-500 focus:outline-none font-normal"
                 />
               </div>
               
               {/* Search Button */}
               <button
                 type="submit"
-                className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-r-lg transition-all flex-shrink-0 flex items-center justify-center"
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-r-lg transition-all flex-shrink-0 flex items-center justify-center font-medium"
               >
                 <Search className="w-5 h-5" />
               </button>
