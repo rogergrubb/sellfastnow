@@ -31,10 +31,10 @@ const MegaDropdown = ({ title, isOpen, onOpenChange, items }: any) => {
     // Clear any existing timeout
     if (hoverTimeout) clearTimeout(hoverTimeout);
     
-    // Close menu after 300ms delay (allows moving to submenu)
+    // Close menu after 500ms delay (allows moving to submenu)
     const timeout = setTimeout(() => {
       onOpenChange(false);
-    }, 300);
+    }, 500);
     setHoverTimeout(timeout);
   };
 
