@@ -278,11 +278,7 @@ export default function Home() {
       {/* HERO SECTION - Apple inspired */}
       <section className="relative min-h-screen bg-white dark:bg-gray-900 flex flex-col items-center justify-center px-4 overflow-hidden">
         <style>{`
-          @keyframes float-left {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-          }
-          @keyframes float-right {
+          @keyframes float-bubble {
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-15px); }
           }
@@ -292,7 +288,7 @@ export default function Home() {
             75% { transform: rotate(-1deg); }
           }
           .thought-bubble {
-            animation: float-left 6s ease-in-out infinite, wiggle 3s ease-in-out infinite;
+            animation: float-bubble 6s ease-in-out infinite, wiggle 3s ease-in-out infinite;
           }
           .thought-bubble::after {
             content: '';
@@ -321,7 +317,7 @@ export default function Home() {
             background: rgb(17, 24, 39);
           }
           .thought-bubble-right {
-            animation: float-right 6s ease-in-out infinite 0.5s, wiggle 3s ease-in-out infinite 0.3s;
+            animation: float-bubble 6s ease-in-out infinite 0.3s, wiggle 3s ease-in-out infinite 0.2s;
           }
           .thought-bubble-right::after {
             content: '';
@@ -367,21 +363,26 @@ export default function Home() {
           }}
         />
 
-        {/* LEFT THOUGHT BUBBLE - Trust & Verification */}
-        <div className="absolute left-4 sm:left-0 top-20 sm:top-1/4 w-56 sm:w-64 sm:-translate-x-12 lg:-translate-x-20 opacity-70 sm:opacity-100 z-20">
-          <div className="thought-bubble relative bg-white dark:bg-gray-800 border-2 border-blue-300 dark:border-blue-700 rounded-3xl p-4 sm:p-5 shadow-lg dark:shadow-blue-900/30 text-blue-900 dark:text-blue-100">
-            <p className="text-xs sm:text-sm font-semibold leading-snug">
-              ✓ Know who you're trading with. Every seller & buyer verified and rated.
-            </p>
-          </div>
-        </div>
+        {/* THOUGHT BUBBLES - Top Center Below Search */}
+        <div className="absolute top-32 left-1/2 -translate-x-1/2 w-full max-w-5xl px-4 z-20">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            {/* LEFT THOUGHT BUBBLE - Trust & Verification */}
+            <div className="w-full sm:w-auto">
+              <div className="thought-bubble relative bg-white dark:bg-gray-800 border-2 border-blue-300 dark:border-blue-700 rounded-3xl p-4 sm:p-5 shadow-lg dark:shadow-blue-900/30 text-blue-900 dark:text-blue-100 w-full sm:w-72">
+                <p className="text-xs sm:text-sm font-semibold leading-snug">
+                  ✓ Know who you're trading with. Every seller & buyer verified and rated.
+                </p>
+              </div>
+            </div>
 
-        {/* RIGHT THOUGHT BUBBLE - Cashless Security */}
-        <div className="absolute right-4 sm:right-0 top-40 sm:top-1/3 w-56 sm:w-64 sm:translate-x-12 lg:translate-x-20 opacity-70 sm:opacity-100 z-20">
-          <div className="thought-bubble-right relative bg-white dark:bg-gray-800 border-2 border-green-300 dark:border-green-700 rounded-3xl p-4 sm:p-5 shadow-lg dark:shadow-green-900/30 text-green-900 dark:text-green-100">
-            <p className="text-xs sm:text-sm font-semibold leading-snug">
-              💳 Never carry cash again. Secure, instant payments.
-            </p>
+            {/* RIGHT THOUGHT BUBBLE - Cashless Security */}
+            <div className="w-full sm:w-auto">
+              <div className="thought-bubble-right relative bg-white dark:bg-gray-800 border-2 border-green-300 dark:border-green-700 rounded-3xl p-4 sm:p-5 shadow-lg dark:shadow-green-900/30 text-green-900 dark:text-green-100 w-full sm:w-72">
+                <p className="text-xs sm:text-sm font-semibold leading-snug">
+                  💳 Never carry cash again. Secure, instant payments.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
