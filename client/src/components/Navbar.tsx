@@ -1,6 +1,5 @@
 import { Search, Plus, ListChecks, Sparkles, User, LogOut, Settings, MessageCircle, Bell, Menu, Package, Zap, Store, ChevronDown, ShoppingBag, Briefcase, Wrench, BookOpen, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -125,15 +124,32 @@ export default function Navbar() {
 
           {/* Search Bar - ALWAYS VISIBLE */}
           <form onSubmit={handleSearch} className="flex-1 min-w-0">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                type="text"
-                placeholder="Search listings..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-sm rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
-              />
+            <div className="relative flex items-center bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+              {/* Category Dropdown */}
+              <button className="hidden sm:flex items-center gap-2 px-3 py-2 text-gray-700 text-sm hover:bg-gray-50 border-r border-gray-200 transition-colors">
+                <span className="font-medium">All</span>
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              
+              {/* Search Input */}
+              <div className="flex-1 flex items-center px-3">
+                <Search className="text-gray-400 w-4 h-4 flex-shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search SellFast.Now"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 ml-2 py-2 text-sm bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none"
+                />
+              </div>
+              
+              {/* Search Button */}
+              <button
+                type="submit"
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-r-lg transition-all flex-shrink-0"
+              >
+                <Search className="w-4 h-4" />
+              </button>
             </div>
           </form>
 
