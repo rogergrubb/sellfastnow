@@ -363,25 +363,23 @@ export default function Home() {
           }}
         />
 
-        {/* THOUGHT BUBBLES - Top Center Below Search */}
-        <div className="absolute top-32 left-1/2 -translate-x-1/2 w-full max-w-5xl px-4 z-20">
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-            {/* LEFT THOUGHT BUBBLE - Trust & Verification */}
-            <div className="w-full sm:w-auto">
-              <div className="thought-bubble relative bg-white dark:bg-gray-800 border-2 border-blue-300 dark:border-blue-700 rounded-2xl p-2 sm:p-3 shadow-lg dark:shadow-blue-900/30 text-blue-900 dark:text-blue-100 w-full sm:w-36">
-                <p className="text-xs font-semibold leading-snug">
-                  ✓ Know who you're trading with. Every seller & buyer verified and rated.
-                </p>
-              </div>
+        {/* THOUGHT BUBBLES - Bottom Sides (Left & Right) */}
+        <div className="absolute bottom-20 left-0 right-0 w-full px-4 z-20 flex justify-between pointer-events-none">
+          {/* LEFT THOUGHT BUBBLE - Trust & Verification */}
+          <div className="w-48 pointer-events-auto">
+            <div className="thought-bubble relative bg-white dark:bg-gray-800 border-2 border-blue-300 dark:border-blue-700 rounded-2xl p-2 sm:p-3 shadow-lg dark:shadow-blue-900/30 text-blue-900 dark:text-blue-100">
+              <p className="text-xs font-semibold leading-snug">
+                ✓ Know who you're trading with. Every seller & buyer verified and rated.
+              </p>
             </div>
+          </div>
 
-            {/* RIGHT THOUGHT BUBBLE - Cashless Security */}
-            <div className="w-full sm:w-auto">
-              <div className="thought-bubble-right relative bg-white dark:bg-gray-800 border-2 border-green-300 dark:border-green-700 rounded-2xl p-2 sm:p-3 shadow-lg dark:shadow-green-900/30 text-green-900 dark:text-green-100 w-full sm:w-36">
-                <p className="text-xs font-semibold leading-snug">
-                  💳 Never carry cash again. Secure, instant payments.
-                </p>
-              </div>
+          {/* RIGHT THOUGHT BUBBLE - Cashless Security */}
+          <div className="w-48 pointer-events-auto">
+            <div className="thought-bubble-right relative bg-white dark:bg-gray-800 border-2 border-green-300 dark:border-green-700 rounded-2xl p-2 sm:p-3 shadow-lg dark:shadow-green-900/30 text-green-900 dark:text-green-100">
+              <p className="text-xs font-semibold leading-snug">
+                💳 Never carry cash again. Secure, instant payments.
+              </p>
             </div>
           </div>
         </div>
