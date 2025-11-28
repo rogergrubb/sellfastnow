@@ -43,13 +43,24 @@ async function searchListings(params: SearchParams): Promise<Listing[]> {
   if (params.sortBy) queryParams.set('sortBy', params.sortBy);
   if (params.order) queryParams.set('order', params.order);
 
-  const response = await fetch(`/api/listings/search?${queryParams.toString()}`);
-  
-  if (!response.ok) {
-    throw new Error('Failed to search listings');
-  }
+  try {
+    const response = await fetch(`/api/listings/search?${queryParams.toString()}`);
+    
+    // Public endpoint - should never return 401, but handle gracefully
+    if (response.status === 401) {
+      console.warn('Unauthorized access to search endpoint');
+      return [];
+    }
+    
+    if (!response.ok) {
+      throw new Error(`Failed to search listings: ${response.status}`);
+    }
 
-  return response.json();
+    return response.json();
+  } catch (error) {
+    console.error('Error searching listings:', error);
+    return [];
+  }
 }
 
 export function useSearchListings(params: SearchParams) {
@@ -59,6 +70,10 @@ export function useSearchListings(params: SearchParams) {
     enabled: !!params.lat && !!params.lng, // Only run query if location is set
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
+    retry: 1, // Retry once on failure
+    onError: (error) => {
+      console.error('Search listings error:', error);
+    },
   });
 }
 
