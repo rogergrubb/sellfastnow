@@ -42,6 +42,7 @@ export const users = pgTable("users", {
   locationPostalCode: varchar("location_postal_code", { length: 20 }),
   locationLatitude: decimal("location_latitude", { precision: 10, scale: 7 }),
   locationLongitude: decimal("location_longitude", { precision: 10, scale: 7 }),
+  locationAddress: varchar("location_address", { length: 255 }), // Full address for search location
   locationDisplayPrecision: varchar("location_display_precision", { length: 20 }).default("city"), // exact, neighborhood, city, region
   
   stripeCustomerId: varchar("stripe_customer_id"),

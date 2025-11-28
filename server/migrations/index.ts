@@ -6,6 +6,7 @@ import { up as runFreeListingsTrackingMigration } from "./005_free_listings_trac
 import { up as runSavedSearchesMigration } from "./006_saved_searches";
 import { up as runSmsPreferencesMigration } from "./007_sms_preferences";
 import { up as runFeaturedListingsMigration } from "./008_featured_listings";
+import { up as runLocationAddressMigration } from "./009_location_address";
 
 /**
  * Run all pending migrations
@@ -38,6 +39,9 @@ export async function runMigrations() {
     
     console.log("Running migration 008: featured_listings...");
     await runFeaturedListingsMigration();
+    
+    console.log("Running migration 009: location_address...");
+    await runLocationAddressMigration();
     
     console.log("✅ All migrations completed successfully");
   } catch (error) {

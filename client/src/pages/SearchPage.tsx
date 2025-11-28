@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
+import { getQueryFn, apiRequest } from '@/lib/queryClient';
 import { MapPin, List, Map, Search, SlidersHorizontal } from 'lucide-react';
 import SearchFilters from '../components/search/SearchFilters';
 import SearchResults from '../components/search/SearchResults';
@@ -9,6 +11,13 @@ import { useSearchListings } from '../hooks/useSearchListings';
 
 export default function SearchPage() {
   const [, setLocation] = useLocation();
+  
+  // Fetch current user (if authenticated)
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/auth/user"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    retry: false,
+  });
   
   // Parse URL search params manually
   const getSearchParams = () => {
@@ -38,7 +47,7 @@ export default function SearchPage() {
   const [sortBy, setSortBy] = useState<'distance' | 'price' | 'date'>('distance');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  // Initialize from URL params, localStorage, or user profile
+  // Initialize from URL params, user profile, or localStorage
   useEffect(() => {
     const params = getSearchParams();
     const lat = params.get('lat');
@@ -56,7 +65,20 @@ export default function SearchPage() {
     }
 
     // Priority 2: Check user profile (if authenticated)
-    // This would require fetching user data, skip for now and use localStorage first
+    if (currentUser?.locationLatitude && currentUser?.locationLongitude) {
+      setSearchLocation({
+        lat: parseFloat(currentUser.locationLatitude as string),
+        lng: parseFloat(currentUser.locationLongitude as string),
+        address: currentUser.locationAddress || 'Saved Location'
+      });
+      // Update URL with user's saved location
+      const updatedParams = new URLSearchParams(window.location.search);
+      updatedParams.set('lat', currentUser.locationLatitude.toString());
+      updatedParams.set('lng', currentUser.locationLongitude.toString());
+      updatedParams.set('address', currentUser.locationAddress || 'Saved Location');
+      window.history.replaceState({}, '', `/search?${updatedParams.toString()}`);
+      return;
+    }
 
     // Priority 3: Check localStorage for last known location
     const savedLocation = localStorage.getItem('lastSearchLocation');
@@ -75,7 +97,7 @@ export default function SearchPage() {
         console.error('Error parsing saved location:', error);
       }
     }
-  }, []);
+  }, [currentUser]);
 
   // Initialize other params from URL
   useEffect(() => {
@@ -107,8 +129,19 @@ export default function SearchPage() {
   useEffect(() => {
     if (searchLocation) {
       localStorage.setItem('lastSearchLocation', JSON.stringify(searchLocation));
+      
+      // Save to user profile if authenticated
+      if (currentUser?.id) {
+        apiRequest('PATCH', '/api/auth/user', {
+          locationLatitude: searchLocation.lat,
+          locationLongitude: searchLocation.lng,
+          locationAddress: searchLocation.address,
+        }).catch((error) => {
+          console.error('Error saving location to profile:', error);
+        });
+      }
     }
-  }, [searchLocation]);
+  }, [searchLocation, currentUser?.id]);
 
   // Fetch search results
   const { data: listings, isLoading, error } = useSearchListings({
