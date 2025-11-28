@@ -69,13 +69,13 @@ export default function SearchPage() {
       setSearchLocation({
         lat: parseFloat(currentUser.locationLatitude as string),
         lng: parseFloat(currentUser.locationLongitude as string),
-        address: currentUser.locationAddress || 'Saved Location'
+        address: currentUser.location || 'Saved Location' // Use existing location field for now
       });
       // Update URL with user's saved location
       const updatedParams = new URLSearchParams(window.location.search);
       updatedParams.set('lat', currentUser.locationLatitude.toString());
       updatedParams.set('lng', currentUser.locationLongitude.toString());
-      updatedParams.set('address', currentUser.locationAddress || 'Saved Location');
+      updatedParams.set('address', currentUser.location || 'Saved Location');
       window.history.replaceState({}, '', `/search?${updatedParams.toString()}`);
       return;
     }
@@ -130,12 +130,12 @@ export default function SearchPage() {
     if (searchLocation) {
       localStorage.setItem('lastSearchLocation', JSON.stringify(searchLocation));
       
-      // Save to user profile if authenticated
+      // Save to user profile if authenticated (after migration is complete)
       if (currentUser?.id) {
         apiRequest('PATCH', '/api/auth/user', {
           locationLatitude: searchLocation.lat,
           locationLongitude: searchLocation.lng,
-          locationAddress: searchLocation.address,
+          // locationAddress will be added after migration runs
         }).catch((error) => {
           console.error('Error saving location to profile:', error);
         });
