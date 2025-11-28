@@ -38,20 +38,48 @@ export default function SearchPage() {
   const [sortBy, setSortBy] = useState<'distance' | 'price' | 'date'>('distance');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  // Initialize from URL params
+  // Initialize from URL params, localStorage, or user profile
   useEffect(() => {
     const params = getSearchParams();
     const lat = params.get('lat');
     const lng = params.get('lng');
     const address = params.get('address');
     
+    // Priority 1: Check URL params
     if (lat && lng) {
       setSearchLocation({
         lat: parseFloat(lat),
         lng: parseFloat(lng),
         address: address || 'Selected Location'
       });
+      return;
     }
+
+    // Priority 2: Check user profile (if authenticated)
+    // This would require fetching user data, skip for now and use localStorage first
+
+    // Priority 3: Check localStorage for last known location
+    const savedLocation = localStorage.getItem('lastSearchLocation');
+    if (savedLocation) {
+      try {
+        const locationData = JSON.parse(savedLocation);
+        setSearchLocation(locationData);
+        // Update URL with saved location
+        const updatedParams = new URLSearchParams(window.location.search);
+        updatedParams.set('lat', locationData.lat.toString());
+        updatedParams.set('lng', locationData.lng.toString());
+        updatedParams.set('address', locationData.address);
+        window.history.replaceState({}, '', `/search?${updatedParams.toString()}`);
+        return;
+      } catch (error) {
+        console.error('Error parsing saved location:', error);
+      }
+    }
+  }, []);
+
+  // Initialize other params from URL
+  useEffect(() => {
+    const params = getSearchParams();
 
     const radiusParam = params.get('radius');
     if (radiusParam) setRadius(parseInt(radiusParam));
@@ -74,6 +102,13 @@ export default function SearchPage() {
     const sortOrderParam = params.get('order') as 'asc' | 'desc';
     if (sortOrderParam) setSortOrder(sortOrderParam);
   }, []);
+
+  // Save location to localStorage whenever it changes
+  useEffect(() => {
+    if (searchLocation) {
+      localStorage.setItem('lastSearchLocation', JSON.stringify(searchLocation));
+    }
+  }, [searchLocation]);
 
   // Fetch search results
   const { data: listings, isLoading, error } = useSearchListings({
