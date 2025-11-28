@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { getQueryFn } from "@/lib/queryClient";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, Package, DollarSign, User, ArrowRight } from "lucide-react";
@@ -20,6 +21,7 @@ interface Transaction {
 export function PendingDeals() {
   const { data: user } = useQuery<{ id: string }>({ 
     queryKey: ['/api/auth/user'],
+    queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
   });
   
