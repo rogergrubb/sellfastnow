@@ -39,10 +39,27 @@ export default function FilterSidebar({ filters, onFiltersChange }: FilterSideba
   const [location, setLocation] = useState(filters.location || "");
   const [distance, setDistance] = useState(filters.distance || "25");
 
-  // Fetch current user's location
+  // Fetch current user's location - gracefully handle unauthenticated users
   const { data: currentUser } = useQuery<any>({
     queryKey: ['/api/auth/user'],
     retry: false,
+    queryFn: async ({ queryKey }) => {
+      try {
+        const res = await fetch(queryKey.join("/") as string, {
+          credentials: "include",
+        });
+        if (res.status === 401) {
+          return null; // User not authenticated, return null instead of throwing
+        }
+        if (!res.ok) {
+          throw new Error(`${res.status}: ${res.statusText}`);
+        }
+        return await res.json();
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        return null;
+      }
+    },
   });
 
   const hasUserLocation = currentUser?.locationLatitude && currentUser?.locationLongitude;
