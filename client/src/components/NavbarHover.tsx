@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, User, MessageSquare, Sparkles } from "lucide-react";
@@ -7,6 +7,7 @@ import "./NavbarHover.css";
 
 export default function NavbarHover() {
   const { user, signOut } = useAuth();
+  const [location] = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -311,24 +312,26 @@ export default function NavbarHover() {
         </button>
       </div>
 
-      {/* Persistent Search Bar Row */}
-      <div className="apple-search-bar-row">
-        <form onSubmit={handleSearch} className="apple-search-bar-form">
-          <button type="button" className="apple-search-category">
-            <span>All</span>
-          </button>
-          <input
-            type="text"
-            placeholder="Search SellFast.Now"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="apple-search-input-persistent"
-          />
-          <button type="submit" className="apple-search-submit">
-            <Search size={20} />
-          </button>
-        </form>
-      </div>
+      {/* Persistent Search Bar Row - Hidden on /search page */}
+      {!location.startsWith('/search') && (
+        <div className="apple-search-bar-row">
+          <form onSubmit={handleSearch} className="apple-search-bar-form">
+            <button type="button" className="apple-search-category">
+              <span>All</span>
+            </button>
+            <input
+              type="text"
+              placeholder="Search SellFast.Now"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="apple-search-input-persistent"
+            />
+            <button type="submit" className="apple-search-submit">
+              <Search size={20} />
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* Search Overlay */}
       {searchOpen && (
