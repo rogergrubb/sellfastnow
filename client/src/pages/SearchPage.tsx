@@ -6,7 +6,7 @@ import { MapPin, List, Map, Search, SlidersHorizontal } from 'lucide-react';
 import SearchFilters from '../components/search/SearchFilters';
 import SearchResults from '../components/search/SearchResults';
 import SearchMap from '../components/search/SearchMap';
-import LocationInput from '../components/search/LocationInput';
+
 import { useSearchListings } from '../hooks/useSearchListings';
 
 export default function SearchPage() {
@@ -219,47 +219,6 @@ export default function SearchPage() {
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          {/* Location Search */}
-          <div className="flex items-center gap-4 mb-4">
-            <div className="flex-1">
-              <LocationInput
-                value={searchLocation}
-                onChange={setSearchLocation}
-                onUseCurrentLocation={handleUseMyLocation}
-              />
-            </div>
-            
-            {/* Radius Selector */}
-            <div className="flex items-center gap-2">
-              <label htmlFor="search-radius" className="text-sm text-gray-600">
-                Within
-              </label>
-              <select
-                id="search-radius"
-                name="searchRadius"
-                value={radius}
-                onChange={(e) => setRadius(parseInt(e.target.value))}
-                className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value={8}>5 mi</option>
-                <option value={16}>10 mi</option>
-                <option value={40}>25 mi</option>
-                <option value={80}>50 mi</option>
-                <option value={160}>100 mi</option>
-              </select>
-            </div>
-
-            {/* Search Button */}
-            <button
-              onClick={updateSearchParams}
-              disabled={!searchLocation}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              <Search className="w-4 h-4" />
-              Search
-            </button>
-          </div>
-
           {/* Search Bar and Controls */}
           <div className="flex items-center gap-4">
             {/* Keyword Search */}
@@ -276,6 +235,21 @@ export default function SearchPage() {
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
+
+            {/* Radius Selector */}
+            <select
+              id="search-radius"
+              name="searchRadius"
+              value={radius}
+              onChange={(e) => setRadius(parseInt(e.target.value))}
+              className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={8}>5 mi</option>
+              <option value={16}>10 mi</option>
+              <option value={40}>25 mi</option>
+              <option value={80}>50 mi</option>
+              <option value={160}>100 mi</option>
+            </select>
 
             {/* Filters Toggle */}
             <button
@@ -307,18 +281,36 @@ export default function SearchPage() {
                 Map
               </button>
             </div>
+
+            {/* Search Button */}
+            <button
+              onClick={updateSearchParams}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            >
+              <Search className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Active Location Display */}
-          {searchLocation && (
+          {searchLocation ? (
             <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
               <MapPin className="w-4 h-4" />
               <span>Searching near: {searchLocation.address}</span>
               <button
-                onClick={() => setSearchLocation(null)}
+                onClick={handleUseMyLocation}
                 className="text-blue-600 hover:underline"
               >
                 Change
+              </button>
+            </div>
+          ) : (
+            <div className="mt-3 flex items-center gap-2 text-sm">
+              <MapPin className="w-4 h-4 text-gray-400" />
+              <button
+                onClick={handleUseMyLocation}
+                className="text-blue-600 hover:underline"
+              >
+                Set your location to see nearby items
               </button>
             </div>
           )}
