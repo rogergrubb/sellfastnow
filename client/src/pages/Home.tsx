@@ -3,105 +3,16 @@ import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { FeaturedCarousel } from "@/components/FeaturedCarousel";
-import { 
-  ChevronDown, Zap, TrendingUp, Sparkles, 
-  BarChart3, Lock, Gauge, Users, Rocket
-} from "lucide-react";
+import { Zap, Sparkles, Lock, Gauge } from "lucide-react";
 import type { Listing } from "@shared/schema";
 
 const navigate = (path: string) => {
   window.location.href = path;
 };
 
-const MegaDropdown = ({ title, isOpen, onOpenChange, items }: any) => {
-  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
-
-  const handleMouseEnter = () => {
-    // Clear any existing timeout
-    if (hoverTimeout) clearTimeout(hoverTimeout);
-    
-    // Open menu after 200ms delay
-    const timeout = setTimeout(() => {
-      onOpenChange(true);
-    }, 200);
-    setHoverTimeout(timeout);
-  };
-
-  const handleMouseLeave = () => {
-    // Clear any existing timeout
-    if (hoverTimeout) clearTimeout(hoverTimeout);
-    
-    // Close menu after 1000ms delay (allows moving to submenu)
-    const timeout = setTimeout(() => {
-      onOpenChange(false);
-    }, 1000);
-    setHoverTimeout(timeout);
-  };
-
-  return (
-    <div 
-      className="relative"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <button
-        className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-      >
-        {title}
-        <ChevronDown 
-          className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
-        />
-      </button>
-
-      {isOpen && (
-        <>
-          {/* Overlay */}
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => onOpenChange(false)}
-          />
-          
-          {/* Mega Menu */}
-          <div 
-            className="absolute left-0 top-full mt-0 w-screen bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-xl z-50 opacity-100 transition-opacity duration-300"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                {items.map((item: any, idx: number) => (
-                  <div key={idx}>
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                      {item.icon && <item.icon className="w-5 h-5 text-blue-600" />}
-                      {item.label}
-                    </h3>
-                    <ul className="space-y-3">
-                      {item.links.map((link: any, linkIdx: number) => (
-                        <li key={linkIdx}>
-                          <a
-                            href={link.href}
-                            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:translate-x-1 block"
-                            onClick={() => onOpenChange(false)}
-                          >
-                            {link.name}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
 
 export default function Home() {
   const [scrollY, setScrollY] = useState(0);
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   // Track scroll for animations
   useEffect(() => {
@@ -124,85 +35,6 @@ export default function Home() {
     },
   });
 
-  const sellItems = [
-    {
-      label: "Getting Started",
-      icon: Rocket,
-      links: [
-        { name: "How to Post a Listing", href: "/post-ad" },
-        { name: "Pricing & Fees", href: "/sell/pricing" },
-        { name: "AI Listings", href: "/sell/ai-listings" },
-        { name: "Best Practices", href: "/sell/how-it-works" },
-      ],
-    },
-    {
-      label: "For Bulk Sellers",
-      icon: BarChart3,
-      links: [
-        { name: "Bulk Upload", href: "/post-ad" },
-        { name: "AI Credits", href: "/credits" },
-        { name: "Business Plans", href: "/business/estate-sales" },
-        { name: "Seller Analytics", href: "/seller-analytics" },
-      ],
-    },
-    {
-      label: "Manage Your Business",
-      icon: Gauge,
-      links: [
-        { name: "My Listings", href: "/dashboard" },
-        { name: "Sales Dashboard", href: "/seller-analytics" },
-        { name: "Messages", href: "/messages" },
-        { name: "Settings", href: "/settings" },
-      ],
-    },
-  ];
-
-  const buyItems = [
-    {
-      label: "Browse",
-      icon: TrendingUp,
-      links: [
-        { name: "All Listings", href: "/search" },
-        { name: "Search by Category", href: "/search" },
-        { name: "Trending Items", href: "/#trending" },
-        { name: "Saved Searches", href: "/saved-searches" },
-      ],
-    },
-    {
-      label: "Smart Buying",
-      icon: Sparkles,
-      links: [
-        { name: "Saved Searches", href: "/saved-searches" },
-        { name: "My Collections", href: "/dashboard" },
-        { name: "How to Buy", href: "/how-it-works" },
-        { name: "Buyer Protection", href: "/how-it-works" },
-      ],
-    },
-  ];
-
-  const trustItems = [
-    {
-      label: "Safety & Trust",
-      icon: Lock,
-      links: [
-        { name: "How It Works", href: "/how-it-works" },
-        { name: "Seller Verification", href: "/verification" },
-        { name: "Reviews & Ratings", href: "/dashboard" },
-        { name: "Report Issues", href: "/settings" },
-      ],
-    },
-    {
-      label: "Learn More",
-      icon: Users,
-      links: [
-        { name: "About SellFast.Now", href: "/#" },
-        { name: "FAQ & Support", href: "/how-it-works" },
-        { name: "Contact Us", href: "/settings" },
-        { name: "Community Guidelines", href: "/how-it-works" },
-      ],
-    },
-  ];
-
   return (
     <>
       <Helmet>
@@ -210,70 +42,6 @@ export default function Home() {
         <meta name="description" content="The modern way to sell. Bulk upload, AI pricing, keep 100% on items under $100. No hidden fees. Simple. Fast. Honest." />
       </Helmet>
 
-      {/* MEGA NAVIGATION BAR */}
-      <nav className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200/20 dark:border-gray-800/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14">
-            {/* Logo */}
-            <button
-              onClick={() => navigate("/")}
-              className="flex items-center gap-2 hover:opacity-70 transition-opacity"
-            >
-              <div className="text-xl font-bold text-gray-900 dark:text-white">SellFast</div>
-              <div className="text-sm font-semibold text-blue-600 dark:text-blue-400">.Now</div>
-            </button>
-
-            {/* Mega Menu Navigation */}
-            <div className="hidden md:flex items-center gap-1">
-              <MegaDropdown
-                title="Sell"
-                isOpen={openMenu === "sell"}
-                onOpenChange={(open: boolean) => setOpenMenu(open ? "sell" : null)}
-                items={sellItems}
-              />
-              <MegaDropdown
-                title="Buy"
-                isOpen={openMenu === "buy"}
-                onOpenChange={(open: boolean) => setOpenMenu(open ? "buy" : null)}
-                items={buyItems}
-              />
-              <MegaDropdown
-                title="Trust & Safety"
-                isOpen={openMenu === "trust"}
-                onOpenChange={(open: boolean) => setOpenMenu(open ? "trust" : null)}
-                items={trustItems}
-              />
-            </div>
-
-            {/* Right Side Actions */}
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/messages")}
-                className="hidden sm:flex"
-              >
-                Messages
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/settings")}
-                className="hidden sm:flex"
-              >
-                Account
-              </Button>
-              <Button
-                onClick={() => navigate("/post-ad")}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-                size="sm"
-              >
-                Post Ad
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
 
       {/* HERO SECTION - Apple inspired */}
       <section className="relative bg-white dark:bg-gray-900 flex flex-col items-center pt-16 pb-24 px-4 overflow-hidden">
