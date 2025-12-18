@@ -276,7 +276,7 @@ export default function Home() {
       </nav>
 
       {/* HERO SECTION - Apple inspired */}
-      <section className="relative min-h-screen bg-white dark:bg-gray-900 flex flex-col items-center justify-center px-4 overflow-hidden">
+      <section className="relative bg-white dark:bg-gray-900 flex flex-col items-center pt-16 pb-24 px-4 overflow-hidden">
         <style>{`
           @keyframes float-bubble {
             0%, 100% { transform: translateY(0px); }
