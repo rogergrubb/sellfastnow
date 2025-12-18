@@ -312,27 +312,6 @@ export default function NavbarHover() {
         </button>
       </div>
 
-      {/* Persistent Search Bar Row - Hidden on /search page */}
-      {!location.startsWith('/search') && (
-        <div className="apple-search-bar-row">
-          <form onSubmit={handleSearch} className="apple-search-bar-form">
-            <button type="button" className="apple-search-category">
-              <span>All</span>
-            </button>
-            <input
-              type="text"
-              placeholder="Search SellFast.Now"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="apple-search-input-persistent"
-            />
-            <button type="submit" className="apple-search-submit">
-              <Search size={20} />
-            </button>
-          </form>
-        </div>
-      )}
-
       {/* Search Overlay */}
       {searchOpen && (
         <div className="apple-search-overlay">
