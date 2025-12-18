@@ -36,64 +36,49 @@ export default function NavbarHover() {
           <a className="apple-nav-logo">SellFast.Now</a>
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation - Simplified */}
         <ul className="apple-nav-menu">
-          {/* Sell Dropdown */}
+          {/* For Sellers Dropdown */}
           <li className="apple-nav-item">
             <a href="#" className="apple-nav-link">
-              Sell
+              For Sellers
             </a>
             <ul className="apple-dropdown">
               <li>
                 <a href="/post-ad" className="apple-dropdown-item">
                   <span className="apple-dropdown-icon">⚡</span>
                   <div>
-                    <div className="apple-dropdown-title">1 to 100 items upload</div>
-                    <div className="apple-dropdown-desc">Quick AI listing</div>
+                    <div className="apple-dropdown-title">Start Selling</div>
+                    <div className="apple-dropdown-desc">List items with AI assistance</div>
                   </div>
                 </a>
               </li>
               <li>
-                <a href="/partner/bulk-upload" className="apple-dropdown-item">
-                  <span className="apple-dropdown-icon">📦</span>
-                  <div>
-                    <div className="apple-dropdown-title">Bulk Upload</div>
-                    <div className="apple-dropdown-desc">100+ items at once</div>
-                  </div>
+                <a href="/sell/pricing" className="apple-dropdown-item-simple">
+                  💰 Pricing & Fees
                 </a>
               </li>
-              <li>
-                <a href="/sell/ai-listings" className="apple-dropdown-item">
-                  <span className="apple-dropdown-icon">✨</span>
-                  <div>
-                    <div className="apple-dropdown-title">AI-Powered Listings</div>
-                    <div className="apple-dropdown-desc">Auto-generate content</div>
-                  </div>
-                </a>
-              </li>
-              <li className="apple-dropdown-divider"></li>
               <li>
                 <a href="/sell/how-it-works" className="apple-dropdown-item-simple">
-                  ❓ How It Works
+                  📖 How It Works
                 </a>
               </li>
             </ul>
           </li>
 
-          {/* Buy Dropdown */}
+          {/* For Buyers Dropdown */}
           <li className="apple-nav-item">
             <a href="#" className="apple-nav-link">
-              Buy
+              For Buyers
             </a>
             <ul className="apple-dropdown">
               <li>
-                <a href="/search" className="apple-dropdown-item-simple">
-                  🔍 Browse All Listings
-                </a>
-              </li>
-              <li>
-                <a href="/search" className="apple-dropdown-item-simple">
-                  📍 Search by Location
+                <a href="/search" className="apple-dropdown-item">
+                  <span className="apple-dropdown-icon">🔍</span>
+                  <div>
+                    <div className="apple-dropdown-title">Browse Listings</div>
+                    <div className="apple-dropdown-desc">Search items near you</div>
+                  </div>
                 </a>
               </li>
               <li>
@@ -101,104 +86,19 @@ export default function NavbarHover() {
                   📂 Categories
                 </a>
               </li>
-            </ul>
-          </li>
-
-          {/* Business Dropdown */}
-          <li className="apple-nav-item">
-            <a href="#" className="apple-nav-link">
-              Business
-            </a>
-            <ul className="apple-dropdown">
               <li>
-                <a href="/business/realtors" className="apple-dropdown-item">
-                  <span className="apple-dropdown-icon">🏠</span>
-                  <div>
-                    <div className="apple-dropdown-title">For Realtors</div>
-                    <div className="apple-dropdown-desc">Estate & property sales</div>
-                  </div>
-                </a>
-              </li>
-              <li>
-                <a href="/business/estate-sales" className="apple-dropdown-item">
-                  <span className="apple-dropdown-icon">🏛️</span>
-                  <div>
-                    <div className="apple-dropdown-title">For Estate Liquidators</div>
-                    <div className="apple-dropdown-desc">Bulk estate liquidation</div>
-                  </div>
-                </a>
-              </li>
-              <li>
-                <a href="/business/liquidators" className="apple-dropdown-item">
-                  <span className="apple-dropdown-icon">🏢</span>
-                  <div>
-                    <div className="apple-dropdown-title">For Business Liquidators</div>
-                    <div className="apple-dropdown-desc">Commercial inventory</div>
-                  </div>
-                </a>
-              </li>
-              <li className="apple-dropdown-divider"></li>
-              <li>
-                <a href="/partner/onboard" className="apple-dropdown-item-simple">
-                  🤝 Partnership Program
-                </a>
-              </li>
-              <li>
-                <a href="/sell/pricing" className="apple-dropdown-item-simple">
-                  📊 Volume Pricing
+                <a href="/how-it-works" className="apple-dropdown-item-simple">
+                  🛡️ Buyer Protection
                 </a>
               </li>
             </ul>
           </li>
 
-          {/* Pricing - Standalone Link */}
+          {/* How It Works - Standalone Link */}
           <li className="apple-nav-item">
-            <a href="/sell/pricing" className="apple-nav-link">
-              Pricing
+            <a href="/how-it-works" className="apple-nav-link">
+              How It Works
             </a>
-          </li>
-
-          {/* Tools Dropdown */}
-          <li className="apple-nav-item">
-            <a href="#" className="apple-nav-link">
-              Tools
-            </a>
-            <ul className="apple-dropdown">
-              <li>
-                <a href="/bulk-edit" className="apple-dropdown-item-simple">
-                  ✏️ Bulk Editor
-                </a>
-              </li>
-              <li>
-                <a href="/sell/ai-listings" className="apple-dropdown-item-simple">
-                  🤖 AI Description Generator
-                </a>
-              </li>
-              <li>
-                <a href="/dashboard" className="apple-dropdown-item-simple">
-                  📊 Analytics Dashboard
-                </a>
-              </li>
-            </ul>
-          </li>
-
-          {/* Resources Dropdown */}
-          <li className="apple-nav-item">
-            <a href="#" className="apple-nav-link">
-              Resources
-            </a>
-            <ul className="apple-dropdown">
-              <li>
-                <a href="/sell/how-it-works" className="apple-dropdown-item-simple">
-                  📖 How It Works
-                </a>
-              </li>
-              <li>
-                <a href="/help" className="apple-dropdown-item-simple">
-                  ❓ Help Center
-                </a>
-              </li>
-            </ul>
           </li>
 
           {/* Account Dropdown - Logged In */}
