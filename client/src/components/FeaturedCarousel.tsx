@@ -26,12 +26,51 @@ export function FeaturedCarousel() {
 
   const fetchFeaturedListings = async () => {
     try {
+      // First try to get featured listings
       const res = await fetch("/api/featured-listings");
       if (!res.ok) throw new Error("Failed to fetch featured listings");
       const response = await res.json() as FeaturedListing[];
+      
+      // If no featured listings, fall back to regular listings
+      if (response.length === 0) {
+        const regularRes = await fetch("/api/listings?limit=12");
+        if (regularRes.ok) {
+          const regularListings = await regularRes.json();
+          // Transform to match FeaturedListing interface
+          const transformed = regularListings.map((listing: any) => ({
+            id: listing.id,
+            title: listing.title,
+            price: listing.price,
+            primaryImage: listing.primaryImage || listing.images?.[0] || null,
+            location: listing.location || 'Local pickup',
+            featuredUntil: null,
+          }));
+          setListings(transformed);
+          return;
+        }
+      }
+      
       setListings(response);
     } catch (error) {
       console.error("Error fetching featured listings:", error);
+      // Try regular listings as fallback
+      try {
+        const regularRes = await fetch("/api/listings?limit=12");
+        if (regularRes.ok) {
+          const regularListings = await regularRes.json();
+          const transformed = regularListings.map((listing: any) => ({
+            id: listing.id,
+            title: listing.title,
+            price: listing.price,
+            primaryImage: listing.primaryImage || listing.images?.[0] || null,
+            location: listing.location || 'Local pickup',
+            featuredUntil: null,
+          }));
+          setListings(transformed);
+        }
+      } catch (e) {
+        console.error("Error fetching regular listings:", e);
+      }
     } finally {
       setLoading(false);
     }
@@ -180,13 +219,15 @@ export function FeaturedCarousel() {
             >
               <Link href={`/listings/${listing.id}`}>
                 <div className="group relative cursor-pointer h-full">
-                  {/* Featured Badge */}
-                  <div className="absolute top-2 left-2 z-10">
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-500 text-white shadow-lg">
-                      <Sparkles className="h-3 w-3" />
-                      FEATURED
-                    </span>
-                  </div>
+                  {/* Featured Badge - only show for actual featured listings */}
+                  {listing.featuredUntil && (
+                    <div className="absolute top-2 left-2 z-10">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-500 text-white shadow-lg">
+                        <Sparkles className="h-3 w-3" />
+                        FEATURED
+                      </span>
+                    </div>
+                  )}
 
                   {/* Image Container */}
                   <div className="relative w-full h-48 bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
