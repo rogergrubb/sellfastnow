@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { FeaturedCarousel } from "@/components/FeaturedCarousel";
-import { Zap, Sparkles, Lock, Gauge } from "lucide-react";
+import { Zap, Sparkles, Lock, Gauge, TrendingUp } from "lucide-react";
 import type { Listing } from "@shared/schema";
 
 const navigate = (path: string) => {
