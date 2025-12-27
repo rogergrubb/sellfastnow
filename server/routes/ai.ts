@@ -319,8 +319,16 @@ router.post("/analyze-bulk-images", isAuthenticated, async (req: any, res) => {
             console.log(`⏳ Batch complete. Waiting ${BATCH_DELAY_MS/1000}s before next batch to respect rate limits...`);
             await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
           }
-        } catch (error) {
-          console.error(`❌ [${i + 1}/${itemsWithAI}] AI generation failed:`, error);
+        } catch (error: any) {
+          console.error(`❌ [${i + 1}/${itemsWithAI}] AI generation failed:`);
+          console.error(`❌ Error message:`, error.message);
+          console.error(`❌ Error name:`, error.name);
+          if (error.message?.includes('API key')) {
+            console.error(`⚠️ GEMINI_API_KEY may be missing or invalid`);
+          }
+          if (error.message?.includes('quota')) {
+            console.error(`⚠️ GEMINI API QUOTA EXCEEDED`);
+          }
           // On error, return empty item
           allProducts.push({
             imageIndices: product.imageIndices,
@@ -334,6 +342,7 @@ router.post("/analyze-bulk-images", isAuthenticated, async (req: any, res) => {
             condition: '',
             confidence: 0,
             isAIGenerated: false,
+            error: error.message || 'AI generation failed',
           });
         }
       } else {
@@ -480,16 +489,23 @@ router.post("/identify-product", isAuthenticated, async (req: any, res) => {
         confidence: analysis.confidence,
       });
     } catch (aiError: any) {
-      // If Gemini API fails, log the error but return empty data instead of 500
+      // If Gemini API fails, log the error and return detailed error info
       console.error("❌ Gemini API error for image:", imageUrl.substring(0, 80));
       console.error("❌ Error details:", aiError.message);
+      console.error("❌ Error name:", aiError.name);
+      console.error("❌ Full error:", JSON.stringify(aiError, null, 2));
       
       // Check if it's a quota error
       if (aiError.message && aiError.message.includes('quota')) {
         console.error("⚠️ QUOTA EXCEEDED - Consider upgrading Gemini API plan");
       }
       
-      // Return empty data so frontend can continue processing other items
+      // Check if API key is missing
+      if (aiError.message && aiError.message.includes('API key')) {
+        console.error("⚠️ GEMINI_API_KEY may be missing or invalid in Railway environment");
+      }
+      
+      // Return error info so frontend can show meaningful message
       res.json({
         title: '',
         description: '',
@@ -499,7 +515,8 @@ router.post("/identify-product", isAuthenticated, async (req: any, res) => {
         usedPrice: 0,
         condition: '',
         confidence: 0,
-        error: 'AI generation failed'
+        error: aiError.message || 'AI generation failed',
+        errorType: aiError.name || 'Unknown'
       });
     }
   } catch (error: any) {
