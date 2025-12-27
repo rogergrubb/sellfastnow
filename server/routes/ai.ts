@@ -5,6 +5,64 @@ import { storage } from "../storage";
 const router = Router();
 
 /**
+ * GET /api/ai/diagnostic
+ * Test Gemini API connection and configuration
+ */
+router.get('/diagnostic', async (req, res) => {
+  try {
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
+    
+    const diagnostic = {
+      timestamp: new Date().toISOString(),
+      geminiKeyPresent: !!apiKey,
+      geminiKeyPrefix: apiKey ? apiKey.substring(0, 10) + '...' : 'NOT SET',
+      nodeEnv: process.env.NODE_ENV,
+    };
+    
+    // Try to actually call Gemini with a simple test
+    if (apiKey) {
+      try {
+        const { GoogleGenerativeAI } = await import("@google/generative-ai");
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+        
+        // Simple text-only test (no image)
+        const result = await model.generateContent("Say 'API working' in exactly 2 words");
+        const response = await result.response;
+        const text = response.text();
+        
+        diagnostic.geminiTest = 'SUCCESS';
+        diagnostic.geminiResponse = text.substring(0, 50);
+      } catch (geminiError: any) {
+        diagnostic.geminiTest = 'FAILED';
+        diagnostic.geminiError = geminiError.message;
+        diagnostic.geminiErrorName = geminiError.name;
+        
+        // Check for common errors
+        if (geminiError.message?.includes('quota')) {
+          diagnostic.diagnosis = 'QUOTA_EXCEEDED - Gemini API quota limit reached';
+        } else if (geminiError.message?.includes('API key')) {
+          diagnostic.diagnosis = 'INVALID_API_KEY - Check your GEMINI_API_KEY';
+        } else if (geminiError.message?.includes('404')) {
+          diagnostic.diagnosis = 'MODEL_NOT_FOUND - gemini-2.0-flash-exp may not be available';
+        } else {
+          diagnostic.diagnosis = 'UNKNOWN_ERROR - See geminiError for details';
+        }
+      }
+    } else {
+      diagnostic.geminiTest = 'SKIPPED';
+      diagnostic.diagnosis = 'NO_API_KEY - Set GEMINI_API_KEY in Railway environment variables';
+    }
+    
+    console.log('🔍 AI Diagnostic:', JSON.stringify(diagnostic, null, 2));
+    res.json(diagnostic);
+  } catch (error: any) {
+    console.error('❌ Diagnostic error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * GET /api/ai/usage
  * Get AI usage info for current user
  */
