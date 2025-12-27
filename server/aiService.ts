@@ -105,7 +105,7 @@ export async function analyzeProductImage(
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     const categoryInstruction = manualCategory
       ? `Category: "${manualCategory}"`
@@ -257,7 +257,7 @@ export async function analyzeMultipleImages(imageUrls: string[], manualCategory?
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     const prompt = `Analyze ${imageUrls.length} images. Group by product. Respond in JSON format.
 
