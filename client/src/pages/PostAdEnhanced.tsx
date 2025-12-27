@@ -1419,10 +1419,17 @@ export default function PostAdEnhanced() {
       clearInterval(updateInterval);
 
       if (response.ok) {
-        const { products, groupingInfo, remainingItems } = await response.json();
+        const data = await response.json();
+        const { products, groupingInfo, aiInfo } = data;
+        
         console.log('✅ Bulk analysis complete:', products.length, 'products detected');
         console.log('📦 Grouping info:', groupingInfo);
-        console.log('📦 Remaining items:', remainingItems);
+        console.log('📦 AI info:', aiInfo);
+        console.log('📦 First product sample:', products[0]);
+        
+        // Verify products have AI data
+        const hasAIData = products.every((p: any) => p.title && p.description);
+        console.log('📦 All products have AI data:', hasAIData);
         
         // Update analyzed items with actual titles
         setAnalyzedItems(products.map((p: any, i: number) => ({
@@ -1434,18 +1441,26 @@ export default function PostAdEnhanced() {
         setBulkProgress({ current: products.length, total: products.length });
         
         // Store products and grouping info for later use
+        console.log('📦 Setting bulkProducts with', products.length, 'items');
         setBulkProducts(products);
-        setGroupingInfo(groupingInfo);
+        setGroupingInfo({
+          ...groupingInfo,
+          totalProducts: products.length,
+          itemsWithAI: aiInfo?.itemsWithAI || products.length,
+          itemsWithoutAI: aiInfo?.itemsWithoutAI || 0,
+        });
         
         // Invalidate credits cache to update navbar with new balance
         queryClient.invalidateQueries({ queryKey: ['/api/user/credits'] });
         
-        // Store remaining items info
-        if (remainingItems && remainingItems.count > 0) {
+        // Store remaining items info (items without AI that need manual entry or upgrade)
+        const itemsWithoutAI = aiInfo?.itemsWithoutAI || 0;
+        if (itemsWithoutAI > 0) {
+          const manualProducts = products.filter((p: any) => !p.isAIGenerated);
           setRemainingItemsInfo({
-            count: remainingItems.count,
-            imageUrls: remainingItems.imageUrls || [],
-            products: remainingItems.products || []
+            count: itemsWithoutAI,
+            imageUrls: manualProducts.flatMap((p: any) => p.imageUrls || []),
+            products: manualProducts
           });
         }
         
