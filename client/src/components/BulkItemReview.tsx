@@ -109,6 +109,12 @@ function generateSuggestedTags(title: string, category: string): string[] {
 
 export function BulkItemReview({ products: initialProducts, onCancel, onUpgradeRemaining, userCredits }: BulkItemReviewProps) {
   const { getToken } = useAuth();
+  
+  // Debug: log what we receive
+  console.log('🎯 BulkItemReview mounted with', initialProducts.length, 'products');
+  console.log('🎯 First product:', initialProducts[0]);
+  console.log('🎯 Products have titles:', initialProducts.map(p => ({ title: p.title, hasTitle: !!p.title })));
+  
   const [products, setProducts] = useState<ProductWithState[]>(
     initialProducts.map(p => ({
       ...p,
