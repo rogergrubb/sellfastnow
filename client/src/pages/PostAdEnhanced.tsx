@@ -1442,6 +1442,22 @@ export default function PostAdEnhanced() {
         
         // Store products and grouping info for later use
         console.log('📦 Setting bulkProducts with', products.length, 'items');
+        
+        // Check for products with errors
+        const productsWithErrors = products.filter((p: any) => p.error);
+        if (productsWithErrors.length > 0) {
+          console.error('⚠️ Some products have errors:', productsWithErrors.map((p: any) => p.error));
+        }
+        
+        // Check if all products have empty titles (AI likely failed)
+        const emptyTitleCount = products.filter((p: any) => !p.title || p.title.trim() === '').length;
+        if (emptyTitleCount === products.length) {
+          console.error('❌ ALL products have empty titles - Gemini API may be failing!');
+          console.error('❌ Check Railway logs for GEMINI_API_KEY issues');
+        } else if (emptyTitleCount > 0) {
+          console.warn(`⚠️ ${emptyTitleCount}/${products.length} products have empty titles`);
+        }
+        
         setBulkProducts(products);
         setGroupingInfo({
           ...groupingInfo,
@@ -1703,6 +1719,10 @@ export default function PostAdEnhanced() {
             });
           } else {
             console.warn(`⚠️ [${i + 1}/${itemsToProcess.length}] AI returned empty data, keeping original`);
+            if (data.error) {
+              console.error(`⚠️ Server error: ${data.error}`);
+              console.error(`⚠️ Error type: ${data.errorType || 'Unknown'}`);
+            }
             newlyProcessed.push(item);
           }
         } else {
