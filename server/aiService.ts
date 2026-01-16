@@ -90,6 +90,34 @@ async function urlToBase64(url: string): Promise<{ data: string; mimeType: strin
   }
 }
 
+/**
+ * Robust JSON extraction from AI responses
+  * Handles multiple markdown formats and validates JSON structure
+   * Used by both analyzeProductImage and analyzeMultipleImages
+    */
+function extractJSON(text: string): string {
+    // Remove markdown code blocks
+    let cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+
+    // Find first { and last } to extract JSON object
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+
+    if (start === -1 || end === -1) {
+          throw new Error('No JSON object found in response');
+    }
+
+    const json = cleaned.substring(start, end + 1);
+
+    // Try to parse to validate it's valid JSON
+    try {
+          JSON.parse(json);
+          return json;
+    } catch (e) {
+          throw new Error(`Invalid JSON extracted: ${e.message}`);
+    }
+}
+
 // AI-powered product recognition from image
 export async function analyzeProductImage(
   imageUrl: string,
@@ -158,33 +186,33 @@ JSON OUTPUT FORMAT:
     const text = response.text();
     
     // Extract JSON from response (Gemini sometimes wraps it in markdown)
-let jsonText = text.trim();
-
-    // Better markdown extraction with fallback
-    if (text.includes('```json')) {
-          const jsonMatch = text.split('```json')[1]?.split('```')[0];
-          if (jsonMatch) {
-                    jsonText = jsonMatch.trim();
-          }
-    } else if (text.includes('```')) {
-          const jsonMatch = text.split('```')[1]?.split('```')[0];
-          if (jsonMatch) {
-                    jsonText = jsonMatch.trim();
-          }
+  // Extract JSON from response (Gemini sometimes wraps it in markdown)
+    let jsonText = '';
+    try {
+          jsonText = extractJSON(text);
+    } catch (extractError) {
+          // Log the actual response for debugging
+          console.error('❌ Failed to extract JSON from response:');
+          console.error('Response text:', text);
+          console.error('Extraction error:', extractError.message);
+          endMetric(startTime, 'analyzeProductImage', 0);
+          throw new Error(`JSON extraction failed: ${extractError.message}`);
     }
 
-    // Additional: Extract JSON if nested in text
-    if (!jsonText.startsWith('{')) {
-          const jsonMatch = text.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-                    jsonText = jsonMatch[0];
-          }
+      // Parse the extracted JSON
+      let analysis: ProductAnalysis;
+      try {
+            analysis = JSON.parse(jsonText);
+      } catch (parseError) {
+            console.error('❌ Failed to parse extracted JSON:');
+            console.error('JSON text:', jsonText);
+            console.error('Parse error:', parseError.message);
+            endMetric(startTime, 'analyzeProductImage', 0);
+            throw new Error(`JSON parsing failed: ${parseError.message}`);
+      }
     }
-    }
-}
 
-  try {
-    const analysis: ProductAnalysis = JSON.parse(jsonText);
+
     
     // Override category if manual category provided
     if (manualCategory) {
