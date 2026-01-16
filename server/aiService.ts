@@ -182,6 +182,7 @@ let jsonText = text.trim();
     }
     }
 
+  try {
     const analysis: ProductAnalysis = JSON.parse(jsonText);
     
     // Override category if manual category provided
