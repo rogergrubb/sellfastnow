@@ -181,6 +181,7 @@ let jsonText = text.trim();
           }
     }
     }
+}
 
   try {
     const analysis: ProductAnalysis = JSON.parse(jsonText);
