@@ -158,11 +158,28 @@ JSON OUTPUT FORMAT:
     const text = response.text();
     
     // Extract JSON from response (Gemini sometimes wraps it in markdown)
-    let jsonText = text;
+let jsonText = text.trim();
+
+    // Better markdown extraction with fallback
     if (text.includes('```json')) {
-      jsonText = text.split('```json')[1].split('```')[0].trim();
+          const jsonMatch = text.split('```json')[1]?.split('```')[0];
+          if (jsonMatch) {
+                    jsonText = jsonMatch.trim();
+          }
     } else if (text.includes('```')) {
-      jsonText = text.split('```')[1].split('```')[0].trim();
+          const jsonMatch = text.split('```')[1]?.split('```')[0];
+          if (jsonMatch) {
+                    jsonText = jsonMatch.trim();
+          }
+    }
+
+    // Additional: Extract JSON if nested in text
+    if (!jsonText.startsWith('{')) {
+          const jsonMatch = text.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+                    jsonText = jsonMatch[0];
+          }
+    }
     }
 
     const analysis: ProductAnalysis = JSON.parse(jsonText);
@@ -304,8 +321,10 @@ All imageIndices must cover 0-${imageUrls.length - 1}, no duplicates.`;
     try {
       analysis = JSON.parse(jsonText);
     } catch (parseError: any) {
-      console.error("❌ JSON parse error. Raw content:", jsonText.substring(0, 500));
-      throw new Error(`Invalid JSON response from Gemini: ${parseError.message}`);
+          console.error("❌ JSON parse error. Raw content:", text.substring(0, 500));
+          console.error("❌ Extracted jsonText:", jsonText.substring(0, 500));
+          throw new Error(`Invalid JSON response from Gemini: ${parseError.message}. Raw text: ${text.substring(0, 200)}`);
+    }
     }
     
     // Override categories with manual category if provided
