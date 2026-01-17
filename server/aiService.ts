@@ -186,7 +186,6 @@ JSON OUTPUT FORMAT:
     const text = response.text();
     
     // Extract JSON from response (Gemini sometimes wraps it in markdown)
-  // Extract JSON from response (Gemini sometimes wraps it in markdown)
     let jsonText = '';
     try {
           jsonText = extractJSON(text);
@@ -210,7 +209,6 @@ JSON OUTPUT FORMAT:
             endMetric(startTime, 'analyzeProductImage', 0);
             throw new Error(`JSON parsing failed: ${parseError.message}`);
       }
-    }
 
 
     
