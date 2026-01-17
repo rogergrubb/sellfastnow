@@ -92,30 +92,30 @@ async function urlToBase64(url: string): Promise<{ data: string; mimeType: strin
 
 /**
  * Robust JSON extraction from AI responses
-  * Handles multiple markdown formats and validates JSON structure
-   * Used by both analyzeProductImage and analyzeMultipleImages
-    */
+ * Handles multiple markdown formats and validates JSON structure
+ * Used by both analyzeProductImage and analyzeMultipleImages
+ */
 function extractJSON(text: string): string {
-    // Remove markdown code blocks
-    let cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+  // Remove markdown code blocks
+  let cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '');
 
-    // Find first { and last } to extract JSON object
-    const start = cleaned.indexOf('{');
-    const end = cleaned.lastIndexOf('}');
+  // Find first { and last } to extract JSON object
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
 
-    if (start === -1 || end === -1) {
-          throw new Error('No JSON object found in response');
-    }
+  if (start === -1 || end === -1) {
+    throw new Error('No JSON object found in response');
+  }
 
-    const json = cleaned.substring(start, end + 1);
+  const json = cleaned.substring(start, end + 1);
 
-    // Try to parse to validate it's valid JSON
-    try {
-          JSON.parse(json);
-          return json;
-    } catch (e) {
-          throw new Error(`Invalid JSON extracted: ${e.message}`);
-    }
+  // Try to parse to validate it's valid JSON
+  try {
+    JSON.parse(json);
+    return json;
+  } catch (e: any) {
+    throw new Error(`Invalid JSON extracted: ${e.message}`);
+  }
 }
 
 // AI-powered product recognition from image
@@ -188,30 +188,28 @@ JSON OUTPUT FORMAT:
     // Extract JSON from response (Gemini sometimes wraps it in markdown)
     let jsonText = '';
     try {
-          jsonText = extractJSON(text);
-    } catch (extractError) {
-          // Log the actual response for debugging
-          console.error('❌ Failed to extract JSON from response:');
-          console.error('Response text:', text);
-          console.error('Extraction error:', extractError.message);
-          endMetric(startTime, 'analyzeProductImage', 0);
-          throw new Error(`JSON extraction failed: ${extractError.message}`);
+      jsonText = extractJSON(text);
+    } catch (extractError: any) {
+      // Log the actual response for debugging
+      console.error('❌ Failed to extract JSON from response:');
+      console.error('Response text:', text);
+      console.error('Extraction error:', extractError.message);
+      endMetric(startTime, 'analyzeProductImage', 0);
+      throw new Error(`JSON extraction failed: ${extractError.message}`);
     }
 
-      // Parse the extracted JSON
-      let analysis: ProductAnalysis;
-      try {
-            analysis = JSON.parse(jsonText);
-      } catch (parseError) {
-            console.error('❌ Failed to parse extracted JSON:');
-            console.error('JSON text:', jsonText);
-            console.error('Parse error:', parseError.message);
-            endMetric(startTime, 'analyzeProductImage', 0);
-            throw new Error(`JSON parsing failed: ${parseError.message}`);
-      }
+    // Parse the extracted JSON
+    let analysis: ProductAnalysis;
+    try {
+      analysis = JSON.parse(jsonText);
+    } catch (parseError: any) {
+      console.error('❌ Failed to parse extracted JSON:');
+      console.error('JSON text:', jsonText);
+      console.error('Parse error:', parseError.message);
+      endMetric(startTime, 'analyzeProductImage', 0);
+      throw new Error(`JSON parsing failed: ${parseError.message}`);
+    }
 
-
-    
     // Override category if manual category provided
     if (manualCategory) {
       analysis.category = manualCategory;
@@ -349,10 +347,9 @@ All imageIndices must cover 0-${imageUrls.length - 1}, no duplicates.`;
     try {
       analysis = JSON.parse(jsonText);
     } catch (parseError: any) {
-          console.error("❌ JSON parse error. Raw content:", text.substring(0, 500));
-          console.error("❌ Extracted jsonText:", jsonText.substring(0, 500));
-          throw new Error(`Invalid JSON response from Gemini: ${parseError.message}. Raw text: ${text.substring(0, 200)}`);
-    }
+      console.error("❌ JSON parse error. Raw content:", text.substring(0, 500));
+      console.error("❌ Extracted jsonText:", jsonText.substring(0, 500));
+      throw new Error(`Invalid JSON response from Gemini: ${parseError.message}. Raw text: ${text.substring(0, 200)}`);
     }
     
     // Override categories with manual category if provided
