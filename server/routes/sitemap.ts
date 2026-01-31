@@ -11,7 +11,7 @@ const router = Router();
  */
 router.get("/sitemap.xml", async (req, res) => {
   try {
-    const baseUrl = process.env.BASE_URL || "https://sellfast.now";
+    const baseUrl = process.env.BASE_URL || "https://sellfastnow-production.up.railway.app";
     
     // Get all active listings
     const activeListings = await db
