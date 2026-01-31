@@ -20,5 +20,5 @@ Disallow: /payment/
 Disallow: /post-ad
 
 # Sitemap location
-Sitemap: https://sellfast.now/sitemap.xml
+Sitemap: https://sellfastnow-production.up.railway.app/sitemap.xml
 
