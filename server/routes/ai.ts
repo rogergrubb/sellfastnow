@@ -24,8 +24,8 @@ router.get('/diagnostic', async (req, res) => {
       try {
         const { GoogleGenerativeAI } = await import("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(apiKey);
-        // Use gemini-2.0-flash-exp for text-only test (gemini-2.0-flash-exp-vision requires images)
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+        // Use gemini-1.5-flash for text-only test (gemini-1.5-flash-vision requires images)
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         
         // Simple text-only test (no image)
         const result = await model.generateContent("Say 'API working' in exactly 2 words");
@@ -45,7 +45,7 @@ router.get('/diagnostic', async (req, res) => {
         } else if (geminiError.message?.includes('API key')) {
           diagnostic.diagnosis = 'INVALID_API_KEY - Check your GEMINI_API_KEY';
         } else if (geminiError.message?.includes('404')) {
-          diagnostic.diagnosis = 'MODEL_NOT_FOUND - gemini-2.0-flash-exp-vision may not be available';
+          diagnostic.diagnosis = 'MODEL_NOT_FOUND - gemini-1.5-flash-vision may not be available';
         } else {
           diagnostic.diagnosis = 'UNKNOWN_ERROR - See geminiError for details';
         }
