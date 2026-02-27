@@ -52,8 +52,6 @@ import LiquidatorsPage from "./pages/business/Liquidators";
 import AiListingsPage from "./pages/sell/AiListings";
 import PricingPage from "./pages/sell/Pricing";
 import HowItWorksPageSell from "./pages/sell/HowItWorks";
-import Categories from "./pages/Categories";
-import Resources from "./pages/Resources";
 import NavbarHover from "@/components/NavbarHover";
 import { NotificationManager } from "@/components/NotificationManager";
 import { useQuery } from "@tanstack/react-query";

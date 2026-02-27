@@ -357,10 +357,10 @@ export default function SearchPage() {
           <div className="text-center py-20">
             <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-              Find items near you
+              {viewMode === 'map' ? 'Set a location to view the map' : 'Find items near you'}
             </h2>
             <p className="text-gray-500 mb-6">
-              Enter a location or use your current location to start searching
+              Enter a location or use your current location to {viewMode === 'map' ? 'see items on the map' : 'start searching'}
             </p>
             <button
               onClick={handleUseMyLocation}

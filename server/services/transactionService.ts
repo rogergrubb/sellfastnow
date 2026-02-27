@@ -510,23 +510,53 @@ export const transactionService = {
    * Get transactions where user is the buyer (purchases)
    */
   async getBuyerTransactions(buyerId: string, options?: { limit?: number; offset?: number }) {
-    return db.query.transactions.findMany({
+    // First, get the transactions
+    const transactionsList = await db.query.transactions.findMany({
       where: eq(transactions.buyerId, buyerId),
       limit: options?.limit || 50,
       offset: options?.offset || 0,
       orderBy: (transactions, { desc }) => [desc(transactions.createdAt)],
-      with: {
-        listing: true,
-        seller: {
-          columns: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            profileImageUrl: true,
-          },
-        },
-      },
     });
+
+    // Import listings and users tables
+    const { listings, users } = await import("../../shared/schema");
+    
+    // Enrich each transaction with listing and seller data
+    const enrichedTransactions = await Promise.all(
+      transactionsList.map(async (transaction) => {
+        // Fetch listing data
+        let listing = null;
+        if (transaction.listingId) {
+          const listingResult = await db.query.listings.findFirst({
+            where: eq(listings.id, transaction.listingId),
+          });
+          listing = listingResult || null;
+        }
+
+        // Fetch seller data
+        let seller = null;
+        if (transaction.sellerId) {
+          const sellerResult = await db.query.users.findFirst({
+            where: eq(users.id, transaction.sellerId),
+            columns: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              profileImageUrl: true,
+            },
+          });
+          seller = sellerResult || null;
+        }
+
+        return {
+          ...transaction,
+          listing,
+          seller,
+        };
+      })
+    );
+
+    return enrichedTransactions;
   },
 
   /**
