@@ -272,7 +272,13 @@ export default function SearchPage() {
                 List
               </button>
               <button
-                onClick={() => setViewMode('map')}
+                onClick={() => {
+                  setViewMode('map');
+                  // If no location set, prompt user to set one
+                  if (!searchLocation) {
+                    handleUseMyLocation();
+                  }
+                }}
                 className={`px-4 py-2 flex items-center gap-2 ${
                   viewMode === 'map' ? 'bg-blue-600 text-white' : 'bg-white hover:bg-gray-50'
                 }`}

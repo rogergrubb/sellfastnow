@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { FeaturedCarousel } from "@/components/FeaturedCarousel";
 import { Zap, Sparkles, Lock, Gauge, TrendingUp } from "lucide-react";
@@ -194,19 +195,21 @@ export default function Home() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button
-              onClick={() => navigate("/post-ad")}
-              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transform hover:scale-105 transition-all duration-200"
-            >
-              Start Selling Now
-            </Button>
-            <Button
-              onClick={() => navigate("/search")}
-              variant="outline"
-              className="px-8 py-3 font-semibold rounded-lg border-2 transform hover:scale-105 transition-all duration-200"
-            >
-              Browse Listings
-            </Button>
+            <Link href="/post-ad">
+              <Button
+                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transform hover:scale-105 transition-all duration-200"
+              >
+                Start Selling Now
+              </Button>
+            </Link>
+            <Link href="/search">
+              <Button
+                variant="outline"
+                className="px-8 py-3 font-semibold rounded-lg border-2 transform hover:scale-105 transition-all duration-200"
+              >
+                Browse Listings
+              </Button>
+            </Link>
           </div>
 
           {/* Trust Line */}
@@ -361,7 +364,7 @@ export default function Home() {
                   ))}
                 </ul>
                 <Button
-                  onClick={() => navigate(idx === 0 ? "/post-ad" : "/credits")}
+                  onClick={() => navigate(idx === 0 ? "/post-ad" : idx === 1 ? "/credits" : "/resources#contact")}
                   className={`w-full ${
                     plan.highlight
                       ? "bg-blue-600 hover:bg-blue-700"
@@ -409,9 +412,9 @@ export default function Home() {
             <div>
               <h3 className="text-white font-semibold mb-4">Buying</h3>
               <ul className="space-y-2 text-sm">
-                <li><a href="/buy" className="hover:text-white transition-colors">Browse Listings</a></li>
-                <li><a href="/resources" className="hover:text-white transition-colors">Buyer Protection</a></li>
-                <li><a href="/resources" className="hover:text-white transition-colors">Saved Searches</a></li>
+                <li><a href="/search" className="hover:text-white transition-colors">Browse Listings</a></li>
+                <li><a href="/resources#buyer-protection" className="hover:text-white transition-colors">Buyer Protection</a></li>
+                <li><a href="/saved-searches" className="hover:text-white transition-colors">Saved Searches</a></li>
               </ul>
             </div>
             <div>

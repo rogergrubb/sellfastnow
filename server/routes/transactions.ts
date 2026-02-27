@@ -573,12 +573,63 @@ router.get("/buyer/:buyerId", async (req, res) => {
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = parseInt(req.query.offset as string) || 0;
 
-    const transactions = await transactionService.getBuyerTransactions(buyerId, {
-      limit,
-      offset,
-    });
+    const { db } = await import("../db");
+    const { transactions, listings, users } = await import("../../shared/schema");
+    const { eq, desc } = await import("drizzle-orm");
 
-    res.json(transactions);
+    // Get transactions with manual joins for listing and seller data
+    const buyerTransactions = await db
+      .select({
+        id: transactions.id,
+        buyerId: transactions.buyerId,
+        sellerId: transactions.sellerId,
+        listingId: transactions.listingId,
+        amount: transactions.amount,
+        status: transactions.status,
+        createdAt: transactions.createdAt,
+        completedAt: transactions.completedAt,
+        // Listing data
+        listingTitle: listings.title,
+        listingImages: listings.images,
+        listingPrice: listings.price,
+        // Seller data
+        sellerFirstName: users.firstName,
+        sellerLastName: users.lastName,
+        sellerProfileImage: users.profileImageUrl,
+      })
+      .from(transactions)
+      .leftJoin(listings, eq(transactions.listingId, listings.id))
+      .leftJoin(users, eq(transactions.sellerId, users.id))
+      .where(eq(transactions.buyerId, buyerId))
+      .orderBy(desc(transactions.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    // Transform to match expected frontend format
+    const formattedTransactions = buyerTransactions.map((t) => ({
+      id: t.id,
+      buyerId: t.buyerId,
+      sellerId: t.sellerId,
+      listingId: t.listingId,
+      amount: t.amount,
+      status: t.status,
+      createdAt: t.createdAt,
+      completedAt: t.completedAt,
+      listing: t.listingTitle ? {
+        id: t.listingId,
+        title: t.listingTitle,
+        images: t.listingImages,
+        price: t.listingPrice,
+      } : null,
+      seller: t.sellerFirstName ? {
+        id: t.sellerId,
+        firstName: t.sellerFirstName,
+        lastName: t.sellerLastName,
+        profileImageUrl: t.sellerProfileImage,
+      } : null,
+    }));
+
+    res.json(formattedTransactions);
   } catch (error) {
     console.error("Error fetching buyer transactions:", error);
     res.status(500).json({ 

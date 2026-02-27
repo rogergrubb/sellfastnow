@@ -59,7 +59,7 @@ export default function HowItWorks() {
           <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
             Our AI does the heavy lifting so you can sell in bulk, save time, and make more money
           </p>
-          <Link href="/post">
+          <Link href="/post-ad">
             <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50">
               Start Selling Now<ArrowRight className="ml-2 h-5 w-5" />
             </Button>
@@ -242,7 +242,7 @@ export default function HowItWorks() {
       <section className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 text-center">
         <h2 className="text-4xl font-bold mb-4">Ready to Sell Smarter?</h2>
         <p className="text-xl text-muted-foreground mb-8">Join thousands of sellers saving time and making more money</p>
-        <Link href="/post">
+        <Link href="/post-ad">
           <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
             Start Selling Now<ArrowRight className="ml-2 h-5 w-5" />
           </Button>

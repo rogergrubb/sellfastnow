@@ -44,12 +44,16 @@ import PartnerStorefront from "./pages/PartnerStorefrontEnhanced";
 import PartnerOnboarding from "./pages/PartnerOnboarding";
 import PartnerDashboard from "./pages/PartnerDashboard";
 import PartnerBulkUpload from "./pages/PartnerBulkUpload";
+import Categories from "./pages/Categories";
+import Resources from "./pages/Resources";
 import RealtorsPage from "./pages/business/Realtors";
 import EstateSalesPage from "./pages/business/EstateSales";
 import LiquidatorsPage from "./pages/business/Liquidators";
 import AiListingsPage from "./pages/sell/AiListings";
 import PricingPage from "./pages/sell/Pricing";
 import HowItWorksPageSell from "./pages/sell/HowItWorks";
+import Categories from "./pages/Categories";
+import Resources from "./pages/Resources";
 import NavbarHover from "@/components/NavbarHover";
 import { NotificationManager } from "@/components/NotificationManager";
 import { useQuery } from "@tanstack/react-query";
@@ -106,6 +110,8 @@ function Router() {
       <Route path="/sell/ai-listings" component={AiListingsPage} />
       <Route path="/sell/pricing" component={PricingPage} />
       <Route path="/sell/how-it-works" component={HowItWorksPageSell} />
+      <Route path="/categories" component={Categories} />
+      <Route path="/resources" component={Resources} />
       <Route component={NotFound} />
     </Switch>
   );
