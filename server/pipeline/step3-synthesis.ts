@@ -233,7 +233,7 @@ Return ONLY the JSON object, no additional text.`;
     logger.info('STEP3', 'Generating content with native Gemini...');
 
     try {
-      const model = this.geminiClient.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+      const model = this.geminiClient.getGenerativeModel({ model: "gemini-2.5-flash" });
       const result = await model.generateContent(prompt);
       const response = result.response;
       const text = response.text();
@@ -303,7 +303,7 @@ Return ONLY the JSON object, no additional text.`;
   async execute(
     step1Result: Step1Result,
     step2Result: Step2Result,
-    llmModel: 'gpt-5' | 'gemini-2.0-flash' = 'gemini-2.0-flash'
+    llmModel: 'gpt-5' | 'gemini-2.5-flash' = 'gemini-2.5-flash'
   ): Promise<Step3Result> {
     logger.startStep('STEP3');
     const startTime = Date.now();
@@ -325,7 +325,7 @@ Return ONLY the JSON object, no additional text.`;
           model = 'gemini-2.5-flash';
         } else if (this.geminiEnabled) {
           generated = await this.generateWithGemini(prompt);
-          model = 'gemini-2.0-flash-exp';
+          model = 'gemini-2.5-flash';
         } else {
           throw new Error('No LLM API configured');
         }

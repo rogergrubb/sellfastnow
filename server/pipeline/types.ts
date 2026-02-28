@@ -2,7 +2,7 @@
 
 export interface PipelineOptions {
   skipPricing?: boolean;
-  llmModel?: 'gpt-5' | 'gemini-2.0-flash';
+  llmModel?: 'gpt-5' | 'gemini-2.5-flash';
   skipStep1?: boolean;
   skipStep2?: boolean;
   skipStep3?: boolean;

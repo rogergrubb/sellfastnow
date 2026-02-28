@@ -48,7 +48,7 @@ export class GeminiVisionProvider implements VisionProvider {
       const base64Image = Buffer.from(response.data).toString('base64');
       const mimeType = response.headers['content-type'] || 'image/jpeg';
 
-      const model = this.client.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+      const model = this.client.getGenerativeModel({ model: "gemini-2.5-flash" });
 
       const prompt = `Analyze this product image and provide:
 1. Main object/product name

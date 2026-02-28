@@ -133,7 +133,7 @@ export async function analyzeProductImage(
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     const categoryInstruction = manualCategory
       ? `Category: "${manualCategory}"`
@@ -300,7 +300,7 @@ export async function analyzeMultipleImages(imageUrls: string[], manualCategory?
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     const prompt = `Analyze ${imageUrls.length} images. Group by product. Respond in JSON format.
 
@@ -412,7 +412,7 @@ export async function generateMultiItemBundleSummary(products: any[]): Promise<{
     const totalIndividualPrice = individualPrices.reduce((sum, price) => sum + price, 0);
     
     const genAI = getGemini();
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     const prompt = `You are an e-commerce expert. I have the following items that a seller wants to bundle together:
 

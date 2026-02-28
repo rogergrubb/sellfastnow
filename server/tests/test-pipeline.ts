@@ -87,7 +87,7 @@ async function runTests() {
     try {
       // Process image through pipeline
       const result = await pipeline.processImage(testImage.url, {
-        llmModel: 'gemini-2.0-flash',
+        llmModel: 'gemini-2.5-flash',
       });
 
       if (result.status === 'success') {

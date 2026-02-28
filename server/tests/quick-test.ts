@@ -17,7 +17,7 @@ async function quickTest() {
     process.env.GOOGLE_CLOUD_PROJECT_ID = 'gen-lang-client-0109172671';
     
     const result = await pipeline.processImage(testImageUrl, {
-      llmModel: 'gemini-2.0-flash',
+      llmModel: 'gemini-2.5-flash',
     });
     
     console.log('\n📊 RESULT:');
